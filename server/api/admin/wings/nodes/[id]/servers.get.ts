@@ -1,0 +1,122 @@
+import { createError, defineEventHandler, getQuery } from 'h3'
+import { and, desc, like, or, sql } from 'drizzle-orm'
+
+import type { AdminPaginatedMeta, AdminWingsNodeServerSummary, AdminWingsNodeServersPayload } from '#shared/types/admin-wings-node'
+
+import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { getServerSession } from '#auth'
+import { isAdmin } from '~~/server/utils/session'
+
+function toIsoTimestamp(value: unknown): string {
+  if (value instanceof Date) {
+    return value.toISOString()
+  }
+
+  if (typeof value === 'number') {
+    return new Date(value).toISOString()
+  }
+
+  if (typeof value === 'bigint') {
+    return new Date(Number(value)).toISOString()
+  }
+
+  if (typeof value === 'string') {
+    const numeric = Number(value)
+    if (!Number.isNaN(numeric) && numeric > 0) {
+      return new Date(numeric).toISOString()
+    }
+
+    const parsed = Date.parse(value)
+    if (!Number.isNaN(parsed)) {
+      return new Date(parsed).toISOString()
+    }
+  }
+
+  return new Date().toISOString()
+}
+
+export default defineEventHandler(async (event): Promise<AdminWingsNodeServersPayload> => {
+  const { id } = event.context.params ?? {}
+  if (!id || typeof id !== 'string') {
+    throw createError({ statusCode: 400, statusMessage: 'Missing node id' })
+  }
+
+  const session = await getServerSession(event)
+
+  if (!isAdmin(session)) {
+    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+  }
+
+  const query = getQuery(event)
+  const pageParam = typeof query.page === 'string' ? Number.parseInt(query.page, 10) : 1
+  const perPageParam = typeof query.perPage === 'string' ? Number.parseInt(query.perPage, 10) : 25
+  const search = typeof query.search === 'string' ? query.search.trim() : ''
+
+  const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam
+  const perPage = Number.isNaN(perPageParam) ? 25 : Math.min(Math.max(perPageParam, 1), 100)
+  const offset = (page - 1) * perPage
+
+  const db = useDrizzle()
+
+  const nodeFilter = eq(tables.servers.nodeId, id)
+  const whereClause = search.length > 0
+    ? and(
+      nodeFilter,
+      or(
+        like(tables.servers.name, `%${search}%`),
+        like(tables.servers.identifier, `%${search}%`),
+      ),
+    )
+    : nodeFilter
+
+  const totalRow = db.select({ count: sql<number>`COUNT(*)` })
+    .from(tables.servers)
+    .where(whereClause)
+    .get()
+
+  const rows = db.select({
+    id: tables.servers.id,
+    uuid: tables.servers.uuid,
+    identifier: tables.servers.identifier,
+    name: tables.servers.name,
+    createdAt: tables.servers.createdAt,
+    updatedAt: tables.servers.updatedAt,
+    primaryIp: tables.serverAllocations.ip,
+    primaryPort: tables.serverAllocations.port,
+  })
+    .from(tables.servers)
+    .leftJoin(
+      tables.serverAllocations,
+      sql`${tables.serverAllocations.serverId} = ${tables.servers.id} AND ${tables.serverAllocations.isPrimary} = 1`,
+    )
+    .where(whereClause)
+    .orderBy(desc(tables.servers.updatedAt))
+    .limit(perPage)
+    .offset(offset)
+    .all()
+
+  const data: AdminWingsNodeServerSummary[] = rows.map(row => ({
+    id: row.id,
+    uuid: row.uuid,
+    identifier: row.identifier,
+    name: row.name,
+    createdAt: toIsoTimestamp(row.createdAt),
+    updatedAt: toIsoTimestamp(row.updatedAt),
+    primaryAllocation: row.primaryIp && row.primaryPort
+      ? { ip: row.primaryIp, port: row.primaryPort }
+      : null,
+  }))
+
+  const total = totalRow?.count ?? 0
+  const pagination: AdminPaginatedMeta = {
+    page,
+    perPage,
+    total,
+    hasMore: offset + data.length < total,
+  }
+
+  return {
+    data,
+    pagination,
+  }
+})

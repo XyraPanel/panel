@@ -1,0 +1,37 @@
+import { createError, type H3Event } from 'h3'
+import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { getNodeIdFromAuth } from '~~/server/utils/wings/auth'
+
+interface BackupRemoteUploadResponse {
+  parts: string[]
+  part_size: number
+}
+
+export default defineEventHandler(async (event: H3Event) => {
+  const db = useDrizzle()
+  const { backupId } = event.context.params ?? {}
+
+  if (!backupId || typeof backupId !== 'string') {
+    throw createError({ statusCode: 400, statusMessage: 'Missing backup ID' })
+  }
+
+  await getNodeIdFromAuth(event)
+
+  const backup = db
+    .select()
+    .from(tables.serverBackups)
+    .where(eq(tables.serverBackups.uuid, backupId))
+    .limit(1)
+    .get()
+
+  if (!backup) {
+    throw createError({ statusCode: 404, statusMessage: 'Backup not found' })
+  }
+
+  const response: BackupRemoteUploadResponse = {
+    parts: [],
+    part_size: 5 * 1024 * 1024 * 1024,
+  }
+
+  return response
+})

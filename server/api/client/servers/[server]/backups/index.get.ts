@@ -1,0 +1,41 @@
+import { getServerSession } from '#auth'
+import { getServerWithAccess } from '~~/server/utils/server-helpers'
+import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+
+export default defineEventHandler(async (event) => {
+  const session = await getServerSession(event)
+  const serverId = getRouterParam(event, 'server')
+
+  if (!serverId) {
+    throw createError({
+      statusCode: 400,
+      message: 'Server identifier is required',
+    })
+  }
+
+  const { server } = await getServerWithAccess(serverId, session)
+
+  const db = useDrizzle()
+  const backups = db.select()
+    .from(tables.serverBackups)
+    .where(eq(tables.serverBackups.serverId, server.id))
+    .all()
+
+  return {
+    object: 'list',
+    data: backups.map(backup => ({
+      object: 'backup',
+      attributes: {
+        uuid: backup.uuid,
+        name: backup.name,
+        ignored_files: backup.ignoredFiles ? JSON.parse(backup.ignoredFiles) : [],
+        sha256_hash: backup.checksum,
+        bytes: backup.bytes,
+        created_at: backup.createdAt,
+        completed_at: backup.completedAt,
+        is_successful: backup.isSuccessful,
+        is_locked: backup.isLocked,
+      },
+    })),
+  }
+})

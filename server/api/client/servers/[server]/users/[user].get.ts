@@ -1,0 +1,58 @@
+import { getServerSession } from '#auth'
+import { getServerWithAccess } from '~~/server/utils/server-helpers'
+import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
+
+export default defineEventHandler(async (event) => {
+  const session = await getServerSession(event)
+  const serverId = getRouterParam(event, 'server')
+  const subuserId = getRouterParam(event, 'user')
+
+  if (!serverId || !subuserId) {
+    throw createError({
+      statusCode: 400,
+      message: 'Server and user identifiers are required',
+    })
+  }
+
+  const { server } = await getServerWithAccess(serverId, session)
+
+  const db = useDrizzle()
+  const result = db
+    .select({
+      subuser: tables.serverSubusers,
+      user: tables.users,
+    })
+    .from(tables.serverSubusers)
+    .leftJoin(tables.users, eq(tables.serverSubusers.userId, tables.users.id))
+    .where(
+      and(
+        eq(tables.serverSubusers.id, subuserId),
+        eq(tables.serverSubusers.serverId, server.id)
+      )
+    )
+    .get()
+
+  if (!result) {
+    throw createError({
+      statusCode: 404,
+      message: 'Subuser not found',
+    })
+  }
+
+  const { subuser, user } = result
+
+  return {
+    data: {
+      id: subuser.id,
+      user: {
+        id: user!.id,
+        username: user!.username,
+        email: user!.email,
+        image: user!.image,
+      },
+      permissions: JSON.parse(subuser.permissions),
+      created_at: subuser.createdAt,
+      updated_at: subuser.updatedAt,
+    },
+  }
+})
