@@ -45,7 +45,7 @@
     "jose": "^6.1.0",
     "jsonwebtoken": "^9.0.2",
     "monaco-editor": "^0.54.0",
-    "next-auth": "4.21.1",
+    "next-auth": "4.24.12",
     "nodemailer": "^7.0.10",
     "nuxt": "^4.2.0",
     "nuxt-charts": "1.0.2",
