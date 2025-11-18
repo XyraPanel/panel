@@ -185,25 +185,38 @@ const authHandler = NuxtAuthHandler({
 
   callbacks: {
     async redirect({ url, baseUrl }) {
+      const configuredOrigin = typeof runtimeConfig.authOrigin === 'string'
+        && /^https?:\/\//.test(runtimeConfig.authOrigin)
+        ? runtimeConfig.authOrigin.replace(/\/$/, '')
+        : null
+
+      const normalizedBase = configuredOrigin
+        ?? (typeof baseUrl === 'string' && /^https?:\/\//.test(baseUrl)
+          ? new URL(baseUrl).origin.replace(/\/$/, '')
+          : 'http://localhost:3000')
+
       if (!url) {
-        return `${baseUrl}/`
+        return `${normalizedBase}/`
       }
 
       if (url.startsWith('/')) {
-        return `${baseUrl}${url}`
+        return `${normalizedBase}${url}`
       }
 
       try {
-        const target = new URL(url)
-        if (target.origin === baseUrl) {
-          return target.toString()
+        const absoluteTarget = /^https?:\/\//.test(url)
+          ? new URL(url)
+          : new URL(url, `${normalizedBase}/`)
+
+        if (absoluteTarget.origin === normalizedBase) {
+          return absoluteTarget.toString()
         }
       }
       catch (error) {
-        console.error('Invalid URL:', error)
+        console.error('Invalid redirect URL', { url, baseUrl, normalizedBase, error })
       }
 
-      return `${baseUrl}/`
+      return `${normalizedBase}/`
     },
 
     async jwt({ token, user }) {

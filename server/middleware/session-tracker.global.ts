@@ -35,6 +35,10 @@ function parseUserAgent(userAgent: string | undefined | null) {
 }
 
 export default defineEventHandler(async (event) => {
+  const path = event.path || event.node.req.url || ''
+  if (path.startsWith('/api/auth'))
+    return
+
   const contextAuth = (event.context as { auth?: AuthContext }).auth
   const session = contextAuth?.session ?? await getServerSession(event)
   const resolvedUser = contextAuth?.user ?? resolveSessionUser(session)

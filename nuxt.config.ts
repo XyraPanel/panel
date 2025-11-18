@@ -8,7 +8,14 @@ const redisStorageConfig = {
   tls: process.env.REDIS_TLS === 'true',
 }
 
-const appOrigin = process.env.NUXT_SECURITY_CORS_ORIGIN || process.env.AUTH_ORIGIN || 'http://localhost:3000'
+const authOrigin = process.env.AUTH_ORIGIN
+  || process.env.NUXT_AUTH_ORIGIN
+  || 'http://localhost:3000'
+
+const authBaseUrl = `${authOrigin.replace(/\/$/, '')}/api/auth`
+
+const appOrigin = process.env.NUXT_SECURITY_CORS_ORIGIN
+  || authOrigin
 
 const extraConnectSources = process.env.NUXT_SECURITY_CONNECT_SRC
   ? process.env.NUXT_SECURITY_CONNECT_SRC.split(',').map(entry => entry.trim()).filter(Boolean)
@@ -32,13 +39,13 @@ export default defineNuxtConfig({
   modules: ['@nuxt/ui', 'nuxt-qrcode', '@nuxt/eslint', '@sidebase/nuxt-auth', 'nuxt-security'],
 
   auth: {
-    isEnabled: true,
-    disableServerSideAuth: false,
+    origin: authOrigin,
     originEnvKey: 'AUTH_ORIGIN',
-    baseURL: process.env.NUXT_PUBLIC_AUTH_BASE_URL || undefined,
+    baseURL: authBaseUrl,
+    disableInternalRouting: true,
     provider: {
       type: 'authjs',
-      trustHost: true,
+      trustHost: false, // TODO: come back to this via docs
       defaultProvider: 'credentials',
       addDefaultCallbackUrl: false,
       pages: {
@@ -57,12 +64,11 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    authOrigin: process.env.AUTH_ORIGIN || '',
+    authOrigin,
     authSecret: process.env.NUXT_AUTH_SECRET,
     redis: redisStorageConfig,
     public: {
-      appName: process.env.NUXT_APP_NAME,
-      authBaseURL: process.env.NUXT_PUBLIC_AUTH_BASE_URL || '',
+      appName: process.env.NUXT_APP_NAME
     },
   },
 
