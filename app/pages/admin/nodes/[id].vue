@@ -23,10 +23,29 @@ definePageMeta({
 const nodeId = computed(() => route.params.id as string)
 
 const maintenanceActions = [
-  { label: 'Sync node', icon: 'i-lucide-refresh-ccw' },
-  { label: 'Rotate tokens', icon: 'i-lucide-key-round' },
-  { label: 'Transfer servers', icon: 'i-lucide-truck' },
+  { label: 'Sync node', icon: 'i-lucide-refresh-ccw', action: 'sync' },
+  { label: 'Rotate tokens', icon: 'i-lucide-key-round', action: 'rotate' },
+  { label: 'Transfer servers', icon: 'i-lucide-truck', action: 'transfer' },
 ]
+
+const actionLoading = ref<string | null>(null)
+const showTransferModal = ref(false)
+const transferForm = reactive({
+  targetNodeId: '',
+  serverIds: [] as string[],
+})
+
+const { data: availableNodes } = await useAsyncData(
+  'available-nodes',
+  () => $fetch<{ data: Array<{ id: string; name: string }> }>('/api/wings/nodes'),
+  { default: () => ({ data: [] }) },
+)
+
+const nodeOptions = computed(() => {
+  return (availableNodes.value?.data ?? [])
+    .filter(n => n.id !== nodeId.value)
+    .map(n => ({ label: n.name, value: n.id }))
+})
 
 const tab = ref<'overview' | 'servers' | 'allocations' | 'settings' | 'configuration' | 'system'>('overview')
 
@@ -219,44 +238,227 @@ watchDebounced(() => allocationQuery.search, async () => {
   }
 }, { debounce: 300, maxWait: 1000 })
 
+async function handleMaintenanceAction(action: string) {
+  if (!node.value) return
+
+  actionLoading.value = action
+
+  try {
+    switch (action) {
+      case 'sync': {
+        const response = await $fetch<{ success: boolean; connected: boolean; message: string }>(
+          `/api/admin/nodes/${nodeId.value}/test-connection`,
+          { method: 'POST' },
+        )
+
+        if (response.connected) {
+          toast.add({
+            title: 'Node synced',
+            description: 'Successfully connected to Wings daemon and updated node status.',
+            color: 'success',
+          })
+          await nodeResponse.refresh()
+        } else {
+          toast.add({
+            title: 'Sync failed',
+            description: response.message || 'Failed to connect to Wings daemon',
+            color: 'error',
+          })
+        }
+        break
+      }
+      case 'rotate': {
+        if (!confirm('Are you sure you want to rotate the node tokens? This will require reconfiguring Wings on the node.')) {
+          return
+        }
+
+        await $fetch(`/api/admin/wings/nodes/${nodeId.value}/token`, {
+          method: 'POST',
+        })
+
+        toast.add({
+          title: 'Tokens rotated',
+          description: 'New deployment token has been generated. Update your Wings configuration.',
+          color: 'success',
+        })
+        await nodeResponse.refresh()
+        break
+      }
+      case 'transfer': {
+        showTransferModal.value = true
+        break
+      }
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : `Failed to ${action} node`
+    toast.add({
+      title: 'Error',
+      description: message,
+      color: 'error',
+    })
+  } finally {
+    actionLoading.value = null
+  }
+}
+
 function handleViewServer(row: AdminWingsNodeServerSummary) {
-  toast.add({
-    title: 'View server not implemented',
-    description: `Server “${row.name}” actions will be available once lifecycle endpoints are ready.`,
-    color: 'neutral',
-  })
+  navigateTo(`/admin/servers/${row.id}`)
 }
 
-function handleUnlinkServer(row: AdminWingsNodeServerSummary) {
-  toast.add({
-    title: 'Unlink server',
-    description: `Server “${row.name}” cannot be unlinked yet. This action will be enabled soon.`,
-    color: 'warning',
-  })
+async function handleUnlinkServer(row: AdminWingsNodeServerSummary) {
+  if (!confirm(`Are you sure you want to unlink server "${row.name}" from this node? This will require manual intervention to reassign the server.`)) {
+    return
+  }
+
+  try {
+    // For now, we'll show a warning
+    toast.add({
+      title: 'Unlink server',
+      description: 'To unlink a server, please transfer it to another node using the server management page.',
+      color: 'warning',
+    })
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to unlink server'
+    toast.add({
+      title: 'Error',
+      description: message,
+      color: 'error',
+    })
+  }
 }
 
-function togglePrimaryAllocation(row: AdminWingsNodeAllocationSummary) {
-  toast.add({
-    title: row.isPrimary ? 'Demote primary allocation' : 'Promote to primary',
-    description: 'Allocation management is coming soon.',
-    color: 'neutral',
-  })
+async function togglePrimaryAllocation(row: AdminWingsNodeAllocationSummary) {
+  if (!row.serverId) {
+    toast.add({
+      title: 'Error',
+      description: 'Cannot set primary allocation for unassigned allocation',
+      color: 'error',
+    })
+    return
+  }
+
+  const action = row.isPrimary ? 'demote' : 'promote'
+  if (!confirm(`Are you sure you want to ${action} allocation ${row.ip}:${row.port}?`)) {
+    return
+  }
+
+  try {
+    await $fetch(`/api/client/servers/${row.serverId}/network/allocations/${row.id}/primary`, {
+      method: 'POST',
+    })
+
+    toast.add({
+      title: row.isPrimary ? 'Allocation demoted' : 'Allocation promoted',
+      description: `Allocation ${row.ip}:${row.port} is now ${row.isPrimary ? 'secondary' : 'primary'}.`,
+      color: 'success',
+    })
+
+    await allocationTable.refresh()
+    await nodeResponse.refresh()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to update allocation'
+    toast.add({
+      title: 'Error',
+      description: message,
+      color: 'error',
+    })
+  }
 }
 
 function handleTransferAllocation(row: AdminWingsNodeAllocationSummary) {
+  if (!row.serverId) {
+    toast.add({
+      title: 'Error',
+      description: 'Cannot transfer unassigned allocation. Delete it instead.',
+      color: 'error',
+    })
+    return
+  }
+
   toast.add({
     title: 'Transfer allocation',
-    description: `Transferring allocation ${row.ip}:${row.port} will be available soon.`,
-    color: 'warning',
+    description: 'To transfer an allocation, transfer the server that uses it to another node.',
+    color: 'info',
   })
 }
 
-function handleDeleteAllocation(row: AdminWingsNodeAllocationSummary) {
-  toast.add({
-    title: 'Delete allocation',
-    description: `Removing allocation ${row.ip}:${row.port} will be possible once lifecycle APIs are wired.`,
-    color: 'error',
-  })
+async function handleDeleteAllocation(row: AdminWingsNodeAllocationSummary) {
+  if (row.serverId) {
+    toast.add({
+      title: 'Cannot delete',
+      description: 'Cannot delete allocation that is assigned to a server. Unassign it first.',
+      color: 'error',
+    })
+    return
+  }
+
+  if (!confirm(`Are you sure you want to delete allocation ${row.ip}:${row.port}? This action cannot be undone.`)) {
+    return
+  }
+
+  try {
+    await $fetch(`/api/admin/allocations/${row.id}`, {
+      method: 'DELETE',
+    })
+
+    toast.add({
+      title: 'Allocation deleted',
+      description: `Allocation ${row.ip}:${row.port} has been removed.`,
+      color: 'success',
+    })
+
+    await allocationTable.refresh()
+    await nodeResponse.refresh()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to delete allocation'
+    toast.add({
+      title: 'Error',
+      description: message,
+      color: 'error',
+    })
+  }
+}
+
+async function handleTransferServers() {
+  if (!transferForm.targetNodeId || transferForm.serverIds.length === 0) {
+    return
+  }
+
+  actionLoading.value = 'transfer'
+  try {
+    const transferPromises = transferForm.serverIds.map(serverId =>
+      $fetch(`/api/admin/servers/${serverId}/transfer`, {
+        method: 'POST',
+        body: {
+          nodeId: transferForm.targetNodeId,
+        },
+      }),
+    )
+
+    await Promise.all(transferPromises)
+
+    toast.add({
+      title: 'Transfer initiated',
+      description: `Transferring ${transferForm.serverIds.length} server(s) to target node...`,
+      color: 'success',
+    })
+
+    showTransferModal.value = false
+    transferForm.targetNodeId = ''
+    transferForm.serverIds = []
+
+    await serverTable.refresh()
+    await nodeResponse.refresh()
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to initiate transfer'
+    toast.add({
+      title: 'Error',
+      description: message,
+      color: 'error',
+    })
+  } finally {
+    actionLoading.value = null
+  }
 }
 
 </script>
@@ -287,8 +489,16 @@ function handleDeleteAllocation(row: AdminWingsNodeAllocationSummary) {
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <UBadge :color="statusBadge.color" size="xs">{{ statusBadge.label }}</UBadge>
-              <UButton v-for="action in maintenanceActions" :key="action.label" :icon="action.icon" color="neutral"
-                variant="ghost">
+              <UButton
+                v-for="action in maintenanceActions"
+                :key="action.label"
+                :icon="action.icon"
+                :loading="actionLoading === action.action"
+                :disabled="actionLoading !== null"
+                color="neutral"
+                variant="ghost"
+                @click="handleMaintenanceAction(action.action)"
+              >
                 {{ action.label }}
               </UButton>
             </div>
@@ -556,4 +766,57 @@ function handleDeleteAllocation(row: AdminWingsNodeAllocationSummary) {
       </section>
     </UPageBody>
   </UPage>
+
+  <UModal v-model:open="showTransferModal" title="Transfer Servers" description="Select servers to transfer to another node">
+    <template #body>
+      <div class="space-y-4">
+        <UAlert icon="i-lucide-info">
+          <template #title>Server Transfer</template>
+          <template #description>
+            Select servers from this node to transfer to another node. This action will move the servers and their allocations.
+          </template>
+        </UAlert>
+        <UFormField label="Target Node" name="targetNodeId" required>
+          <USelect
+            v-model="transferForm.targetNodeId"
+            :options="nodeOptions"
+            placeholder="Select target node"
+            searchable
+          />
+          <template #help>
+            Choose the node to transfer servers to
+          </template>
+        </UFormField>
+        <UFormField label="Servers to Transfer" name="serverIds">
+          <div class="space-y-2">
+            <div v-for="server in serverRows" :key="server.id" class="flex items-center gap-2">
+              <UCheckbox
+                :model-value="transferForm.serverIds.includes(server.id)"
+                @update:model-value="(checked) => {
+                  if (checked) {
+                    transferForm.serverIds.push(server.id)
+                  } else {
+                    transferForm.serverIds = transferForm.serverIds.filter(id => id !== server.id)
+                  }
+                }"
+              />
+              <label class="text-sm">{{ server.name }}</label>
+            </div>
+          </div>
+        </UFormField>
+      </div>
+    </template>
+    <template #footer>
+      <div class="flex justify-end gap-2">
+        <UButton variant="ghost" @click="showTransferModal = false">Cancel</UButton>
+        <UButton
+          color="primary"
+          :disabled="!transferForm.targetNodeId || transferForm.serverIds.length === 0"
+          @click="handleTransferServers"
+        >
+          Transfer Servers
+        </UButton>
+      </div>
+    </template>
+  </UModal>
 </template>

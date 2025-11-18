@@ -16,6 +16,10 @@ const { data: configData, refresh } = await useFetch<{ data: WingsNodeConfigurat
 const configuration = computed(() => configData.value?.data)
 
 async function generateToken() {
+  if (!confirm('Generate a new deployment token? The previous token will be invalidated and Wings will need to be reconfigured.')) {
+    return
+  }
+
   isGenerating.value = true
 
   try {
@@ -25,7 +29,7 @@ async function generateToken() {
 
     toast.add({
       title: 'Token generated',
-      description: 'A new deployment token has been generated',
+      description: 'A new deployment token has been generated. Save the configuration below.',
       color: 'success',
     })
 
@@ -45,13 +49,25 @@ async function generateToken() {
   }
 }
 
-function copyToClipboard(text: string) {
-  navigator.clipboard.writeText(text)
-  toast.add({
-    title: 'Copied',
-    description: 'Configuration copied to clipboard',
-    color: 'success',
-  })
+async function copyToClipboard(text: string) {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.clipboard) {
+      await navigator.clipboard.writeText(text)
+      toast.add({
+        title: 'Copied',
+        description: 'Configuration copied to clipboard',
+        color: 'success',
+      })
+    } else {
+      throw new Error('Clipboard API not available')
+    }
+  } catch (error) {
+    toast.add({
+      title: 'Copy failed',
+      description: error instanceof Error ? error.message : 'Unable to copy to clipboard',
+      color: 'error',
+    })
+  }
 }
 
 const configYaml = computed(() => {

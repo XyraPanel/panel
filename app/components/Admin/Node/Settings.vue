@@ -26,8 +26,62 @@ const form = reactive({
   daemonBase: props.node.daemonBase,
 })
 
+const validationErrors = ref<Record<string, string>>({})
+
+function validateForm(): boolean {
+  validationErrors.value = {}
+
+  if (!form.name || form.name.trim().length === 0) {
+    validationErrors.value.name = 'Node name is required'
+  } else if (form.name.length > 100) {
+    validationErrors.value.name = 'Node name must be 100 characters or less'
+  }
+
+  if (!form.fqdn || form.fqdn.trim().length === 0) {
+    validationErrors.value.fqdn = 'FQDN is required'
+  }
+
+  if (!form.scheme || !['http', 'https'].includes(form.scheme)) {
+    validationErrors.value.scheme = 'Valid scheme (http/https) is required'
+  }
+
+  if (form.memory <= 0) {
+    validationErrors.value.memory = 'Memory must be greater than 0'
+  }
+
+  if (form.disk <= 0) {
+    validationErrors.value.disk = 'Disk must be greater than 0'
+  }
+
+  if (form.daemonListen < 1 || form.daemonListen > 65535) {
+    validationErrors.value.daemonListen = 'Daemon port must be between 1 and 65535'
+  }
+
+  if (form.daemonSftp < 1 || form.daemonSftp > 65535) {
+    validationErrors.value.daemonSftp = 'SFTP port must be between 1 and 65535'
+  }
+
+  if (!form.daemonBase || form.daemonBase.trim().length === 0) {
+    validationErrors.value.daemonBase = 'Daemon base directory is required'
+  } else if (!form.daemonBase.startsWith('/')) {
+    validationErrors.value.daemonBase = 'Daemon base directory must be an absolute path'
+  }
+
+  return Object.keys(validationErrors.value).length === 0
+}
+
 async function handleSubmit() {
+  if (!validateForm()) {
+    toast.add({
+      title: 'Validation error',
+      description: 'Please fix the errors in the form before submitting',
+      color: 'error',
+    })
+    return
+  }
+
   isSubmitting.value = true
+  validationErrors.value = {}
 
   try {
     await $fetch(`/api/admin/wings/nodes/${props.node.id}`, {
@@ -42,7 +96,14 @@ async function handleSubmit() {
     })
   }
   catch (error) {
-    const err = error as { data?: { message?: string } }
+    const err = error as { data?: { message?: string; errors?: Record<string, string[]> } }
+    
+    if (err.data?.errors) {
+      validationErrors.value = Object.fromEntries(
+        Object.entries(err.data.errors).map(([key, values]) => [key, values[0] || ''])
+      )
+    }
+
     toast.add({
       title: 'Error',
       description: err.data?.message || 'Failed to update node settings',
@@ -62,11 +123,11 @@ async function handleSubmit() {
       <h3 class="text-sm font-semibold">Basic Information</h3>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="Node Name" name="name" required>
+        <UFormField label="Node Name" name="name" required :error="validationErrors.name">
           <UInput v-model="form.name" placeholder="Production Node 1" :disabled="isSubmitting" />
         </UFormField>
 
-        <UFormField label="FQDN" name="fqdn" required>
+        <UFormField label="FQDN" name="fqdn" required :error="validationErrors.fqdn">
           <UInput v-model="form.fqdn" placeholder="node1.example.com" :disabled="isSubmitting" />
         </UFormField>
       </div>
@@ -76,15 +137,18 @@ async function handleSubmit() {
       </UFormField>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="Scheme" name="scheme" required>
+        <UFormField label="Scheme" name="scheme" required :error="validationErrors.scheme">
           <USelect v-model="form.scheme" :items="[
             { label: 'HTTP', value: 'http' },
             { label: 'HTTPS', value: 'https' },
           ]" value-key="value" :disabled="isSubmitting" />
         </UFormField>
 
-        <UFormField label="Upload Size Limit (MB)" name="uploadSize">
-          <UInput v-model.number="form.uploadSize" type="number" placeholder="100" :disabled="isSubmitting" />
+        <UFormField label="Upload Size Limit (MB)" name="uploadSize" :error="validationErrors.uploadSize">
+          <UInput v-model.number="form.uploadSize" type="number" placeholder="100" min="1" max="1024" :disabled="isSubmitting" />
+          <template #help>
+            Maximum file upload size in megabytes (1-1024 MB)
+          </template>
         </UFormField>
       </div>
     </div>
@@ -135,25 +199,25 @@ async function handleSubmit() {
       <h3 class="text-sm font-semibold">Resource Limits</h3>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="Total Memory (MB)" name="memory" required>
-          <UInput v-model.number="form.memory" type="number" placeholder="8192" :disabled="isSubmitting" />
+        <UFormField label="Total Memory (MB)" name="memory" required :error="validationErrors.memory">
+          <UInput v-model.number="form.memory" type="number" placeholder="8192" min="1" :disabled="isSubmitting" />
         </UFormField>
 
-        <UFormField label="Memory Overallocate (%)" name="memoryOverallocate">
-          <UInput v-model.number="form.memoryOverallocate" type="number" placeholder="0" :disabled="isSubmitting" />
+        <UFormField label="Memory Overallocate (%)" name="memoryOverallocate" :error="validationErrors.memoryOverallocate">
+          <UInput v-model.number="form.memoryOverallocate" type="number" placeholder="0" min="-1" :disabled="isSubmitting" />
           <template #help>
-            Percentage to overallocate memory (0 = no overallocation)
+            Percentage to overallocate memory (-1 to allow unlimited, 0 = no overallocation)
           </template>
         </UFormField>
 
-        <UFormField label="Total Disk (MB)" name="disk" required>
-          <UInput v-model.number="form.disk" type="number" placeholder="102400" :disabled="isSubmitting" />
+        <UFormField label="Total Disk (MB)" name="disk" required :error="validationErrors.disk">
+          <UInput v-model.number="form.disk" type="number" placeholder="102400" min="1" :disabled="isSubmitting" />
         </UFormField>
 
-        <UFormField label="Disk Overallocate (%)" name="diskOverallocate">
-          <UInput v-model.number="form.diskOverallocate" type="number" placeholder="0" :disabled="isSubmitting" />
+        <UFormField label="Disk Overallocate (%)" name="diskOverallocate" :error="validationErrors.diskOverallocate">
+          <UInput v-model.number="form.diskOverallocate" type="number" placeholder="0" min="-1" :disabled="isSubmitting" />
           <template #help>
-            Percentage to overallocate disk (0 = no overallocation)
+            Percentage to overallocate disk (-1 to allow unlimited, 0 = no overallocation)
           </template>
         </UFormField>
       </div>
@@ -163,16 +227,25 @@ async function handleSubmit() {
       <h3 class="text-sm font-semibold">Daemon Configuration</h3>
 
       <div class="grid gap-4 md:grid-cols-3">
-        <UFormField label="Daemon Port" name="daemonListen" required>
-          <UInput v-model.number="form.daemonListen" type="number" placeholder="8080" :disabled="isSubmitting" />
+        <UFormField label="Daemon Port" name="daemonListen" required :error="validationErrors.daemonListen">
+          <UInput v-model.number="form.daemonListen" type="number" placeholder="8080" min="1" max="65535" :disabled="isSubmitting" />
+          <template #help>
+            Port for Wings daemon API (1-65535)
+          </template>
         </UFormField>
 
-        <UFormField label="SFTP Port" name="daemonSftp" required>
-          <UInput v-model.number="form.daemonSftp" type="number" placeholder="2022" :disabled="isSubmitting" />
+        <UFormField label="SFTP Port" name="daemonSftp" required :error="validationErrors.daemonSftp">
+          <UInput v-model.number="form.daemonSftp" type="number" placeholder="2022" min="1" max="65535" :disabled="isSubmitting" />
+          <template #help>
+            Port for SFTP service (1-65535)
+          </template>
         </UFormField>
 
-        <UFormField label="Daemon Base Directory" name="daemonBase" required>
+        <UFormField label="Daemon Base Directory" name="daemonBase" required :error="validationErrors.daemonBase">
           <UInput v-model="form.daemonBase" placeholder="/var/lib/pterodactyl" :disabled="isSubmitting" />
+          <template #help>
+            Absolute path where server data is stored
+          </template>
         </UFormField>
       </div>
     </div>
