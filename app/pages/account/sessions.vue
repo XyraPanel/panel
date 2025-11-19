@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import type { AccountSessionsResponse, UserSessionSummary } from '#shared/types/auth'
 
 definePageMeta({
@@ -14,7 +15,8 @@ const updatingSessions = ref(false)
 const hasSessions = computed(() => sessions.value.length > 0)
 const toast = useToast()
 
-const { status, getSession } = useAuth()
+const authStore = useAuthStore()
+const { status } = storeToRefs(authStore)
 
 const {
   data: sessionsResponse,
@@ -48,7 +50,7 @@ watch(sessionsFetchError, (err) => {
 
 watch(status, async (value, previous) => {
   if (value === 'authenticated') {
-    await getSession()
+    await authStore.syncSession()
     await fetchSessions()
     return
   }
@@ -61,7 +63,7 @@ watch(status, async (value, previous) => {
 }, { immediate: true })
 
 async function loadSessions() {
-  await getSession()
+  await authStore.syncSession()
   await fetchSessions()
 }
 

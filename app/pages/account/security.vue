@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { accountPasswordFormSchema, type AccountPasswordFormInput } from '#shared/schema/account'
 import type { TotpSetupResponse, TotpVerifyRequest, TotpDisableRequest } from '#shared/types/2fa'
@@ -10,7 +11,8 @@ definePageMeta({
 
 const toast = useToast()
 
-const { data: authData, status, getSession } = useAuth()
+const authStore = useAuthStore()
+const { status, user } = storeToRefs(authStore)
 
 const passwordError = ref<string | null>(null)
 const isSavingPassword = ref(false)
@@ -95,8 +97,8 @@ const totpEnabled = computed(() => {
   if (totpStateOverride.value !== null)
     return totpStateOverride.value
 
-  const user = authData.value?.user
-  return Boolean(user && typeof user === 'object' && 'useTotp' in user && (user as { useTotp?: boolean }).useTotp)
+  const sessionUser = user.value
+  return Boolean(sessionUser && 'useTotp' in sessionUser && (sessionUser as { useTotp?: boolean }).useTotp)
 })
 
 watch(totpEnabled, (enabled) => {
@@ -104,7 +106,7 @@ watch(totpEnabled, (enabled) => {
     clearSetupState()
 })
 
-watch(authData, () => {
+watch(user, () => {
   totpStateOverride.value = null
 })
 
@@ -170,11 +172,7 @@ async function verifyTotp() {
 
     totpSetup.value = null
     totpStateOverride.value = true
-    const user = (authData.value as unknown as Record<string, unknown> & { user?: Record<string, unknown> })?.user
-    if (user && typeof user === 'object') {
-      (user as Record<string, unknown>).useTotp = true
-    }
-    await getSession()
+    await authStore.syncSession()
     toast.add({
       title: 'Two-factor enabled',
       description: 'Keep your recovery tokens in a safe location.',
@@ -215,12 +213,8 @@ async function disableTotp() {
       body: payload,
     })
 
-    await getSession()
+    await authStore.syncSession()
     totpStateOverride.value = false
-    const user = (authData.value as unknown as Record<string, unknown> & { user?: Record<string, unknown> })?.user
-    if (user && typeof user === 'object') {
-      (user as Record<string, unknown>).useTotp = false
-    }
     toast.add({
       title: 'Two-factor disabled',
       description: 'Authenticator requirements have been removed.',

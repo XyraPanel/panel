@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import type { NavigationMenuItem } from '@nuxt/ui'
-import type { SanitizedUser } from '#shared/types/auth'
 
-const { signOut, data: session } = useAuth()
+const authStore = useAuthStore()
+const { user, displayName, avatar, isAdmin: isAdminRef } = storeToRefs(authStore)
 const signOutLoading = ref(false)
 
 async function handleSignOut() {
@@ -13,7 +14,7 @@ async function handleSignOut() {
 
   signOutLoading.value = true
   try {
-    await signOut({ redirect: false })
+    await authStore.logout({ redirect: false })
     await navigateTo('/auth/login')
   }
   catch (error) {
@@ -48,26 +49,9 @@ const navigationItems = computed<NavigationMenuItem[]>(() => {
   return items
 })
 
-const authUser = computed<Partial<SanitizedUser> | null>(() => {
-  const data = session.value as unknown
-  if (data && typeof data === 'object' && 'user' in (data as Record<string, unknown>)) {
-    const { user } = data as { user?: Partial<SanitizedUser> }
-    return user ?? null
-  }
-  return null
-})
-
-const userLabel = computed(() => authUser.value?.username || authUser.value?.email || 'Account')
-const userAvatar = computed(() => {
-  const user = authUser.value
-  const fallback = user?.username || user?.email || 'User'
-  return {
-    alt: fallback,
-    text: fallback.slice(0, 2).toUpperCase(),
-  }
-})
-
-const isAdminUser = computed(() => authUser.value?.role === 'admin')
+const userLabel = computed(() => displayName.value || user.value?.email || 'Account')
+const userAvatar = computed(() => avatar.value)
+const isAdminUser = computed(() => isAdminRef.value)
 </script>
 
 <template>

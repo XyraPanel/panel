@@ -110,6 +110,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { storeToRefs } from 'pinia'
 
 import type { ButtonProps } from '#ui/types'
 
@@ -117,7 +118,6 @@ import type {
   ClientDashboardMetric,
   ClientDashboardActivity,
   ClientDashboardResponse,
-  DashboardUserIdentity,
   MeResponse,
   DashboardData,
 } from '#shared/types/dashboard'
@@ -144,7 +144,8 @@ const headerLinks: ButtonProps[] = [
   },
 ]
 
-const { data: session } = useAuth()
+const authStore = useAuthStore()
+const { displayName } = storeToRefs(authStore)
 
 const requestFetch = useRequestFetch()
 
@@ -237,13 +238,12 @@ const loading = computed(() => dashboardPending.value)
 const error = computed<string | null>(() => toErrorMessage(dashboardError.value, 'Failed to load dashboard overview.'))
 
 const userName = computed(() => {
-  const sessionUser = session.value?.user as DashboardUserIdentity | undefined
+  const resolved = displayName.value
+  if (resolved && resolved.length > 0) {
+    return resolved
+  }
+
   const meUser = dashboardData.value?.user ?? null
-  const resolved =
-    sessionUser?.username ||
-    sessionUser?.email ||
-    meUser?.username ||
-    meUser?.email
-  return resolved ?? ''
+  return meUser?.username || meUser?.email || ''
 })
 </script>

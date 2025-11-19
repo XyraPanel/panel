@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import type { SessionUser } from '#shared/types/auth'
 import type { SecuritySettings } from '#shared/types/admin-settings'
 import type { AdminNavItem } from '#shared/types/admin-navigation'
@@ -92,7 +93,14 @@ const ADMIN_NAV_ITEMS: AdminNavItem[] = [
 
 const route = useRoute()
 const router = useRouter()
-const { data: session, status, getSession, signOut } = useAuth()
+const authStore = useAuthStore()
+const {
+  user: storeUser,
+  permissions: userPermissions,
+  isSuperUser: storeIsSuperUser,
+  isAuthenticating,
+  status: authStatus,
+} = storeToRefs(authStore)
 
 const createDefaultSecuritySettings = (): SecuritySettings => ({
   enforceTwoFactor: false,
@@ -107,7 +115,7 @@ const { data: securitySettings } = await useFetch<SecuritySettings>('/api/admin/
   default: () => createDefaultSecuritySettings(),
 })
 
-const rawSessionUser = computed<SessionUser | null>(() => (session.value?.user as SessionUser | undefined) ?? null)
+const rawSessionUser = computed<SessionUser | null>(() => storeUser.value ?? null)
 
 const sessionUser = computed<SessionUser | null>(() => {
   const user = rawSessionUser.value
@@ -126,9 +134,6 @@ const sessionUser = computed<SessionUser | null>(() => {
   }
 })
 
-const permissions = computed(() => rawSessionUser.value?.permissions ?? [])
-const isSuperUser = computed(() => rawSessionUser.value?.role === 'admin' || Boolean(rawSessionUser.value?.remember))
-
 const announcement = computed(() => (securitySettings.value?.announcementEnabled ? securitySettings.value?.announcementMessage?.trim() : ''))
 const maintenanceMessage = computed(() => securitySettings.value?.maintenanceMessage?.trim() || 'The panel is currently undergoing maintenance. Please check back soon.')
 
@@ -144,11 +149,9 @@ const requiresTwoFactor = computed(() => Boolean(securitySettings.value?.enforce
 const hasTwoFactor = computed(() => Boolean(rawSessionUser.value && 'useTotp' in rawSessionUser.value && rawSessionUser.value.useTotp))
 const showTwoFactorPrompt = computed(() => requiresTwoFactor.value && !hasTwoFactor.value)
 
-const isAuthenticating = computed(() => status.value === 'loading')
-
-watch(status, async (value) => {
+watch(authStatus, async (value) => {
   if (value === 'authenticated') {
-    await getSession()
+    await authStore.syncSession()
   }
   else if (value === 'unauthenticated') {
     await router.replace({ path: '/auth/login', query: { redirect: route.fullPath } })
@@ -171,17 +174,17 @@ const navItems = computed(() => {
       return true
     }
 
-    const userPermissions = permissions.value
+    const values = userPermissions.value
 
     if (Array.isArray(permission)) {
-      return permission.some(value => userPermissions.includes(value))
+      return permission.some(value => values.includes(value))
     }
 
-    return userPermissions.includes(permission)
+    return values.includes(permission)
   }
 
   return ADMIN_NAV_ITEMS
-    .filter(item => isSuperUser.value || canAccess(item.permission))
+    .filter(item => storeIsSuperUser.value || canAccess(item.permission))
     .sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY))
 })
 
@@ -190,7 +193,7 @@ const navigateToSecuritySettings = () => {
 }
 
 const handleSignOut = async () => {
-  await signOut({ callbackUrl: '/auth/login' })
+  await authStore.logout({ callbackUrl: '/auth/login' })
 }
 
 const userLabel = computed(() => sessionUser.value?.username || sessionUser.value?.email || 'Administrator')
@@ -282,7 +285,7 @@ const accountMenuItems = computed(() => [
                 color="error" class="uppercase tracking-wide text-[10px]">
                 {{ sessionUser.role }}
               </UBadge>
-              <UButton v-if="status === 'authenticated'" size="xs" variant="ghost" color="error"
+              <UButton v-if="authStatus === 'authenticated'" size="xs" variant="ghost" color="error"
                 icon="i-lucide-log-out" @click="handleSignOut" />
             </div>
           </div>

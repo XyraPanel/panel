@@ -3,8 +3,10 @@ import * as z from 'zod'
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
 
 import { until } from '@vueuse/core'
+import { storeToRefs } from 'pinia'
 
-const { signIn, getSession, status } = useAuth()
+const authStore = useAuthStore()
+const { status, user } = storeToRefs(authStore)
 const runtimeConfig = useRuntimeConfig()
 const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel')
 const route = useRoute()
@@ -89,7 +91,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       throw new Error('Two-factor authentication token required.')
     }
 
-    const result = await signIn('credentials', {
+    const result = await authStore.login('credentials', {
       redirect: false,
       identity,
       password,
@@ -116,8 +118,8 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       throw new Error(result.error)
     }
 
-    const session = await getSession({ force: true })
-    if (!session || !session.user) {
+    await authStore.syncSession({ force: true })
+    if (!user.value) {
       throw new Error('Invalid credentials. Please check your details and try again.')
     }
 

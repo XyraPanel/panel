@@ -53,6 +53,8 @@ export default defineNuxtConfig({
     'nuxt-charts',
     '@vite-pwa/nuxt',
     '@nuxtjs/robots',
+    '@pinia/nuxt',
+    '@pinia/colada-nuxt',
   ],
 
   auth: {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent } from 'vue'
+import { storeToRefs } from 'pinia'
 
 definePageMeta({
   auth: true,
@@ -10,7 +11,8 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
-const { data: sessionData } = useAuth()
+const authStore = useAuthStore()
+const { user: sessionUser, permissions } = storeToRefs(authStore)
 
 const baseTabs: AdminSettingsTabDefinition[] = [
   {
@@ -44,10 +46,10 @@ const baseTabs: AdminSettingsTabDefinition[] = [
 ]
 
 const availableTabs = computed(() => {
-  const permissions = sessionData.value?.user?.permissions ?? []
+  const userPermissions = permissions.value ?? sessionUser.value?.permissions ?? []
 
   return baseTabs
-    .filter(tab => !tab.permission || permissions.includes(tab.permission))
+    .filter(tab => !tab.permission || userPermissions.includes(tab.permission))
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 })
 

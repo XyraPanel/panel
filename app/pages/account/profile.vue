@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import { accountProfileFormSchema, type AccountProfileFormInput } from '#shared/schema/account'
 import type { AccountProfileResponse, SanitizedUser } from '#shared/types/auth'
@@ -9,7 +10,8 @@ definePageMeta({
 })
 
 const toast = useToast()
-const { status, getSession } = useAuth()
+const authStore = useAuthStore()
+const { status } = storeToRefs(authStore)
 
 const {
   data: profileResponse,
@@ -86,7 +88,7 @@ watch(() => status.value, (value, previous) => {
     })
   }
   else if (value === 'unauthenticated' && previous === 'authenticated') {
-    profileResponse.value = null
+    profileResponse.value = undefined
     transientError.value = 'You need to sign in to view profile details.'
     Object.assign(form, createFormState(null))
   }
@@ -119,7 +121,7 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
     profileResponse.value = updated
     Object.assign(form, createFormState(updated.data))
 
-    await getSession({ force: true })
+    await authStore.syncSession({ force: true })
     await refreshProfile()
 
     toast.add({
