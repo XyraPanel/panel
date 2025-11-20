@@ -64,7 +64,7 @@ export default defineNuxtConfig({
     disableInternalRouting: true,
     provider: {
       type: 'authjs',
-      trustHost: false, // TODO: come back to this via docs
+      trustHost: isDev,
       defaultProvider: 'credentials',
       addDefaultCallbackUrl: false,
       pages: {
@@ -95,14 +95,7 @@ export default defineNuxtConfig({
     ? {
       strict: false,
       headers: {
-        contentSecurityPolicy: {
-          'default-src': ["'self'"],
-          'connect-src': connectSrcDirectives,
-          'img-src': ["'self'", 'data:', 'https:', 'blob:'],
-          'style-src': ["'self'", 'https:', "'unsafe-inline'"],
-          'font-src': ["'self'", 'https:', 'data:'],
-          'frame-src': ["'self'", 'http://localhost:3000'],
-        },
+        contentSecurityPolicy: false,
         crossOriginEmbedderPolicy: 'unsafe-none',
         crossOriginOpenerPolicy: 'unsafe-none',
         crossOriginResourcePolicy: 'same-origin',
@@ -115,7 +108,7 @@ export default defineNuxtConfig({
         },
       },
       corsHandler: {
-        origin: appOrigin,
+        origin: '*',
         methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE'],
         preflight: { statusCode: 204 },
       },

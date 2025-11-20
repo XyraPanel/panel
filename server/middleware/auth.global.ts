@@ -34,6 +34,8 @@ const PUBLIC_API_PATTERNS = [
   /^\/api\/auth(?:\/|$)/,
   /^\/api\/account\/register(?:\/|$)/,
   /^\/api\/branding(?:\/|$)/,
+  /^\/api\/remote(?:\/|$)/,
+  /^\/api\/application(?:\/|$)/,
 ]
 
 function isAssetPath(path: string): boolean {
