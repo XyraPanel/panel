@@ -120,9 +120,6 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
   else if (type === 'public_key') {
-
-    const { createHash } = await import('node:crypto')
-
     try {
       const cleanKey = credential.trim().split(/\s+/)
       if (cleanKey.length < 2) {
@@ -135,17 +132,24 @@ export default defineEventHandler(async (event: H3Event) => {
       }
 
       const validKeyData = keyData as string
-      const keyBuffer = Buffer.from(validKeyData, 'base64')
-      const hash = createHash('sha256').update(keyBuffer).digest('base64')
-      const fingerprint = `SHA256:${hash}`
+      const keyType = cleanKey[0]
 
       const sshKey = db
-        .select()
+        .select({ fingerprint: tables.sshKeys.fingerprint, publicKey: tables.sshKeys.publicKey })
         .from(tables.sshKeys)
         .where(eq(tables.sshKeys.userId, user.id))
         .limit(1)
         .all()
-        .find(key => key.fingerprint === fingerprint)
+        .find((key) => {
+          const storedParts = key.publicKey.trim().split(/\s+/)
+          if (storedParts.length < 2)
+            return false
+
+          const storedType = storedParts[0]
+          const storedData = storedParts[1]
+
+          return storedType === keyType && storedData === validKeyData
+        })
 
       if (!sshKey) {
         throw createError({
