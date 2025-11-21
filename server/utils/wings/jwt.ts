@@ -95,7 +95,7 @@ export async function generateWebSocketCredentials(
 }
 
 function hashIdentifier(value: string): string {
-  return createHash('md5').update(value).digest('hex')
+  return createHash('sha256').update(value).digest('hex')
 }
 
 function randomIdentifier(): string {
