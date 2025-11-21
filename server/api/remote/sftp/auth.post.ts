@@ -39,7 +39,7 @@ export default defineEventHandler(async (event: H3Event) => {
     })
   }
 
-  const { type, username, password } = body
+  const { type, username, password: credential } = body
 
   if (!username) {
     throw createError({
@@ -57,7 +57,7 @@ export default defineEventHandler(async (event: H3Event) => {
     })
   }
 
-  if (!password) {
+  if (!credential) {
     throw createError({
       statusCode: 400,
       statusMessage: 'Bad Request',
@@ -110,7 +110,7 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   if (type === 'password') {
-    const isValidPassword = await bcrypt.compare(password, user.password)
+    const isValidPassword = await bcrypt.compare(credential, user.password)
     if (!isValidPassword) {
       throw createError({
         statusCode: 401,
@@ -124,7 +124,7 @@ export default defineEventHandler(async (event: H3Event) => {
     const { createHash } = await import('node:crypto')
 
     try {
-      const cleanKey = password.trim().split(/\s+/)
+      const cleanKey = credential.trim().split(/\s+/)
       if (cleanKey.length < 2) {
         throw new Error('Invalid key format')
       }

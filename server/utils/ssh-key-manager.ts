@@ -15,18 +15,19 @@ export class SSHKeyManager {
     if (keyParts.length < 2) {
       throw new Error('Invalid SSH public key format')
     }
-    
+
     const keyData = keyParts[1]
     if (!keyData) {
       throw new Error('Invalid SSH public key format')
     }
-    
+
     try {
       const keyBuffer = Buffer.from(keyData, 'base64')
-      const hash = createHash('md5').update(keyBuffer).digest('hex')
-      
-      return hash.match(/.{2}/g)?.join(':') || hash
-    } catch {
+      const hash = createHash('sha256').update(keyBuffer).digest('base64')
+
+      return `SHA256:${hash}`
+    }
+    catch {
       throw new Error('Invalid SSH public key format')
     }
   }
