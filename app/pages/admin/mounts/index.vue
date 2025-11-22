@@ -118,68 +118,71 @@ async function handleDelete(mount: MountWithRelations) {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">All Mounts</h2>
-              <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="openCreateModal">
-                Create Mount
-              </UButton>
+      <UContainer>
+        <section class="space-y-6">
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">All Mounts</h2>
+                <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="openCreateModal">
+                  Create Mount
+                </UButton>
+              </div>
+            </template>
+
+            <div v-if="pending" class="space-y-2">
+              <USkeleton v-for="i in 3" :key="i" class="h-20 w-full" />
             </div>
-          </template>
 
-          <div v-if="pending" class="space-y-2">
-            <USkeleton v-for="i in 3" :key="i" class="h-20 w-full" />
-          </div>
+            <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
+              <template #title>Failed to load mounts</template>
+              <template #description>{{ error.message }}</template>
+            </UAlert>
 
-          <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
-            <template #title>Failed to load mounts</template>
-            <template #description>{{ error.message }}</template>
-          </UAlert>
+            <div v-else-if="mounts.length === 0" class="py-12 text-center">
+              <UIcon name="i-lucide-folder-tree" class="mx-auto size-12 text-muted-foreground opacity-50" />
+              <p class="mt-4 text-sm text-muted-foreground">No mounts yet</p>
+              <p class="mt-1 text-xs text-muted-foreground">
+                Mounts allow sharing directories between servers
+              </p>
+            </div>
 
-          <div v-else-if="mounts.length === 0" class="py-12 text-center">
-            <UIcon name="i-lucide-folder-tree" class="mx-auto size-12 text-muted-foreground opacity-50" />
-            <p class="mt-4 text-sm text-muted-foreground">No mounts yet</p>
-            <p class="mt-1 text-xs text-muted-foreground">
-              Mounts allow sharing directories between servers
-            </p>
-          </div>
-
-          <div v-else class="divide-y divide-default">
-            <div v-for="mount in mounts" :key="mount.id" class="flex items-start justify-between py-4">
-              <div class="flex-1">
-                <div class="flex items-center gap-2">
-                  <UIcon name="i-lucide-folder-tree" class="size-4 text-primary" />
-                  <span class="font-medium">{{ mount.name }}</span>
-                  <UBadge v-if="mount.readOnly" size="xs" color="neutral">Read Only</UBadge>
-                  <UBadge v-if="mount.userMountable" size="xs" color="primary">User Mountable</UBadge>
-                </div>
-                <p v-if="mount.description" class="mt-1 text-sm text-muted-foreground">
-                  {{ mount.description }}
-                </p>
-                <div class="mt-2 space-y-1 text-xs text-muted-foreground">
+            <div v-else class="divide-y divide-default">
+              <div v-for="mount in mounts" :key="mount.id" class="flex items-start justify-between py-4">
+                <div class="flex-1">
                   <div class="flex items-center gap-2">
-                    <span>Source:</span>
-                    <code class="rounded bg-muted px-1 py-0.5">{{ mount.source }}</code>
-                    <span>→</span>
-                    <code class="rounded bg-muted px-1 py-0.5">{{ mount.target }}</code>
+                    <UIcon name="i-lucide-folder-tree" class="size-4 text-primary" />
+                    <span class="font-medium">{{ mount.name }}</span>
+                    <UBadge v-if="mount.readOnly" size="xs" color="neutral">Read Only</UBadge>
+                    <UBadge v-if="mount.userMountable" size="xs" color="primary">User Mountable</UBadge>
                   </div>
-                  <div class="flex items-center gap-3">
-                    <span>{{ mount.eggs.length }} egg(s)</span>
-                    <span>{{ mount.nodes.length }} node(s)</span>
-                    <span>{{ mount.servers.length }} server(s)</span>
+                  <p v-if="mount.description" class="mt-1 text-sm text-muted-foreground">
+                    {{ mount.description }}
+                  </p>
+                  <div class="mt-2 space-y-1 text-xs text-muted-foreground">
+                    <div class="flex items-center gap-2">
+                      <span>Source:</span>
+                      <code class="rounded bg-muted px-1 py-0.5">{{ mount.source }}</code>
+                      <span>→</span>
+                      <code class="rounded bg-muted px-1 py-0.5">{{ mount.target }}</code>
+                    </div>
+                    <div class="flex items-center gap-3">
+                      <span>{{ mount.eggs.length }} egg(s)</span>
+                      <span>{{ mount.nodes.length }} node(s)</span>
+                      <span>{{ mount.servers.length }} server(s)</span>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              <div class="flex items-center gap-2">
-                <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error" @click="handleDelete(mount)" />
+                <div class="flex items-center gap-2">
+                  <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
+                    @click="handleDelete(mount)" />
+                </div>
               </div>
             </div>
-          </div>
-        </UCard>
-      </section>
+          </UCard>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <UModal v-model:open="showCreateModal" title="Create Mount" description="Create a shared directory mount">

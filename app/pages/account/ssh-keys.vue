@@ -93,13 +93,15 @@ function formatDate(date: Date | string | number | null | undefined) {
 
 <template>
   <UPage>
-    <UPageHeader title="SSH Keys" description="Manage SSH keys for SFTP access to your servers">
-      <template #links>
-        <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
-          Add SSH Key
-        </UButton>
-      </template>
-    </UPageHeader>
+    <UContainer>
+      <UPageHeader title="SSH Keys" description="Manage SSH keys for SFTP access to your servers">
+        <template #links>
+          <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
+            Add SSH Key
+          </UButton>
+        </template>
+      </UPageHeader>
+    </UContainer>
 
     <UModal
       v-model:open="showCreateModal"
@@ -159,53 +161,54 @@ function formatDate(date: Date | string | number | null | undefined) {
     </UModal>
 
     <UPageBody>
-      <UCard :ui="{ body: 'space-y-3' }">
-        <template #header>
-          <div class="space-y-1">
-            <h2 class="text-lg font-semibold">Configured SSH Keys</h2>
-            <p class="text-sm text-muted-foreground">Add SSH keys to access your servers over SFTP.</p>
-          </div>
-        </template>
-        <UEmpty
-          v-if="sshKeys.length === 0"
-          icon="i-lucide-key-round"
-          title="No SSH keys yet"
-          description="Add an SSH key to securely access your servers via SFTP"
-        />
-
-        <div v-else class="divide-y">
-          <div v-for="key in sshKeys" :key="key.id" class="py-4 flex items-start justify-between gap-4">
-            <div class="flex-1 min-w-0">
-              <div class="flex items-center gap-2">
-                <h3 class="font-medium">{{ key.name }}</h3>
-              </div>
-              <div class="mt-2 space-y-1">
-                <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span class="font-medium">Fingerprint:</span>
-                  <code class="text-xs">{{ key.fingerprint }}</code>
-                </div>
-                <div class="text-xs text-muted-foreground">
-                  Added: {{ formatDate(key.created_at) }}
-                </div>
-              </div>
-              <details class="mt-2">
-                <summary class="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
-                  Show public key
-                </summary>
-                <pre class="mt-2 p-2 bg-muted rounded text-xs overflow-x-auto">{{ key.public_key }}</pre>
-              </details>
+      <UContainer>
+        <UCard :ui="{ body: 'space-y-3' }">
+          <template #header>
+            <div class="space-y-1">
+              <h2 class="text-lg font-semibold">Configured SSH Keys</h2>
+              <p class="text-sm text-muted-foreground">Add SSH keys to access your servers over SFTP.</p>
             </div>
-            <UButton
-              icon="i-lucide-trash"
-              color="error"
-              variant="ghost"
-              size="sm"
-              @click="deleteKey(key.id)"
-            />
-          </div>
-        </div>
-      </UCard>
+          </template>
+          <UEmpty
+            v-if="sshKeys.length === 0"
+            icon="i-lucide-key-round"
+            title="No SSH keys yet"
+            description="Add an SSH key to securely access your servers via SFTP"
+          />
 
+          <div v-else class="divide-y">
+            <div v-for="key in sshKeys" :key="key.id" class="py-4 flex items-start justify-between gap-4">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <h3 class="font-medium">{{ key.name }}</h3>
+                </div>
+                <div class="mt-2 space-y-1">
+                  <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span class="font-medium">Fingerprint:</span>
+                    <code class="text-xs">{{ key.fingerprint }}</code>
+                  </div>
+                  <div class="text-xs text-muted-foreground">
+                    Added: {{ formatDate(key.created_at) }}
+                  </div>
+                </div>
+                <details class="mt-2">
+                  <summary class="text-xs text-muted-foreground cursor-pointer hover:text-foreground">
+                    Show public key
+                  </summary>
+                  <pre class="mt-2 p-2 bg-muted rounded text-xs overflow-x-auto">{{ key.public_key }}</pre>
+                </details>
+              </div>
+              <UButton
+                icon="i-lucide-trash"
+                color="error"
+                variant="ghost"
+                size="sm"
+                @click="deleteKey(key.id)"
+              />
+            </div>
+          </div>
+        </UCard>
+      </UContainer>
     </UPageBody>
   </UPage>
 </template>

@@ -159,145 +159,146 @@ async function handleExportEgg() {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <div v-if="pending" class="space-y-4">
-          <USkeleton class="h-8 w-64" />
-          <USkeleton class="h-48 w-full" />
-        </div>
+      <UContainer>
+        <section class="space-y-6">
+          <div v-if="pending" class="space-y-4">
+            <USkeleton class="h-8 w-64" />
+            <USkeleton class="h-48 w-full" />
+          </div>
 
-        <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
-          <template #title>Failed to load egg</template>
-          <template #description>{{ error.message }}</template>
-        </UAlert>
+          <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
+            <template #title>Failed to load egg</template>
+            <template #description>{{ error.message }}</template>
+          </UAlert>
 
-        <template v-else-if="egg">
-          <header class="flex flex-wrap items-start justify-between gap-4">
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <UButton icon="i-lucide-arrow-left" size="xs" variant="ghost" :to="`/admin/nests/${egg.nestId}`" />
-                <h1 class="text-xl font-semibold">{{ egg.name }}</h1>
-              </div>
-              <p v-if="egg.description" class="mt-1 text-sm text-muted-foreground">
-                {{ egg.description }}
-              </p>
-              <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                <span>Author: {{ egg.author }}</span>
-                <span>UUID: {{ egg.uuid }}</span>
-              </div>
-            </div>
-            <div class="flex items-center gap-2">
-              <UButton icon="i-lucide-download" size="sm" variant="outline" @click="handleExportEgg">
-                Export Egg
-              </UButton>
-            </div>
-          </header>
-
-          <UCard>
-            <template #header>
-              <h2 class="text-lg font-semibold">Configuration</h2>
-            </template>
-
-            <div class="space-y-4">
-              <div>
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Docker Image</label>
-                <p class="mt-1 font-mono text-sm">{{ egg.dockerImage }}</p>
-              </div>
-
-              <div>
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Startup
-                  Command</label>
-                <pre class="mt-1 overflow-auto rounded bg-muted/40 p-3 text-xs">{{ egg.startup }}</pre>
-              </div>
-
-              <div v-if="egg.configStop">
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Stop Command</label>
-                <p class="mt-1 font-mono text-sm">{{ egg.configStop }}</p>
-              </div>
-            </div>
-          </UCard>
-
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
+          <template v-else-if="egg">
+            <header class="flex flex-wrap items-start justify-between gap-4">
+              <div class="flex-1">
                 <div class="flex items-center gap-2">
-                  <h2 class="text-lg font-semibold">Environment Variables</h2>
-                  <UBadge color="neutral">{{ egg.variables.length }} total</UBadge>
+                  <UButton icon="i-lucide-arrow-left" size="xs" variant="ghost" :to="`/admin/nests/${egg.nestId}`" />
+                  <h1 class="text-xl font-semibold">{{ egg.name }}</h1>
                 </div>
-                <UButton icon="i-lucide-plus" size="xs" @click="openCreateVariableModal">
-                  Add Variable
+                <p v-if="egg.description" class="mt-1 text-sm text-muted-foreground">
+                  {{ egg.description }}
+                </p>
+                <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                  <span>Author: {{ egg.author }}</span>
+                  <span>UUID: {{ egg.uuid }}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <UButton icon="i-lucide-download" size="sm" variant="outline" @click="handleExportEgg">
+                  Export Egg
                 </UButton>
               </div>
-            </template>
+            </header>
 
-            <div v-if="egg.variables.length === 0" class="py-8 text-center">
-              <UIcon name="i-lucide-variable" class="mx-auto size-10 text-muted-foreground opacity-50" />
-              <p class="mt-3 text-sm text-muted-foreground">No variables defined</p>
-              <UButton class="mt-4" size="sm" @click="openCreateVariableModal">Add your first variable</UButton>
-            </div>
+            <UCard>
+              <template #header>
+                <h2 class="text-lg font-semibold">Configuration</h2>
+              </template>
 
-            <div v-else class="divide-y divide-default">
-              <div v-for="variable in egg.variables" :key="variable.id" class="py-4">
-                <div class="flex items-start justify-between">
-                  <div class="flex-1">
-                    <div class="flex items-center gap-2">
-                      <span class="font-medium">{{ variable.name }}</span>
-                      <UBadge v-if="variable.userEditable" size="xs" color="primary">User Editable</UBadge>
-                      <UBadge v-if="!variable.userViewable" size="xs" color="neutral">Hidden</UBadge>
-                    </div>
-                    <p v-if="variable.description" class="mt-1 text-sm text-muted-foreground">
-                      {{ variable.description }}
-                    </p>
-                    <div class="mt-2 space-y-1 text-xs">
-                      <div class="flex items-center gap-2">
-                        <span class="text-muted-foreground">Environment Variable:</span>
-                        <code class="rounded bg-muted px-1 py-0.5">{{ variable.envVariable }}</code>
-                      </div>
-                      <div v-if="variable.defaultValue" class="flex items-center gap-2">
-                        <span class="text-muted-foreground">Default Value:</span>
-                        <code class="rounded bg-muted px-1 py-0.5">{{ variable.defaultValue }}</code>
-                      </div>
-                      <div v-if="variable.rules" class="flex items-center gap-2">
-                        <span class="text-muted-foreground">Validation:</span>
-                        <code class="rounded bg-muted px-1 py-0.5">{{ variable.rules }}</code>
-                      </div>
-                    </div>
-                  </div>
+              <div class="space-y-4">
+                <div>
+                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Docker Image</label>
+                  <p class="mt-1 font-mono text-sm">{{ egg.dockerImage }}</p>
+                </div>
 
+                <div>
+                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Startup Command</label>
+                  <pre class="mt-1 overflow-auto rounded bg-muted/40 p-3 text-xs">{{ egg.startup }}</pre>
+                </div>
+
+                <div v-if="egg.configStop">
+                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Stop Command</label>
+                  <p class="mt-1 font-mono text-sm">{{ egg.configStop }}</p>
+                </div>
+              </div>
+            </UCard>
+
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
-                    <UButton icon="i-lucide-pencil" size="xs" variant="ghost"
-                      @click="openEditVariableModal(variable)" />
-                    <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                      @click="handleDeleteVariable(variable)" />
+                    <h2 class="text-lg font-semibold">Environment Variables</h2>
+                    <UBadge color="neutral">{{ egg.variables.length }} total</UBadge>
+                  </div>
+                  <UButton icon="i-lucide-plus" size="xs" @click="openCreateVariableModal">
+                    Add Variable
+                  </UButton>
+                </div>
+              </template>
+
+              <div v-if="egg.variables.length === 0" class="py-8 text-center">
+                <UIcon name="i-lucide-variable" class="mx-auto size-10 text-muted-foreground opacity-50" />
+                <p class="mt-3 text-sm text-muted-foreground">No variables defined</p>
+                <UButton class="mt-4" size="sm" @click="openCreateVariableModal">Add your first variable</UButton>
+              </div>
+
+              <div v-else class="divide-y divide-default">
+                <div v-for="variable in egg.variables" :key="variable.id" class="py-4">
+                  <div class="flex items-start justify-between">
+                    <div class="flex-1">
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium">{{ variable.name }}</span>
+                        <UBadge v-if="variable.userEditable" size="xs" color="primary">User Editable</UBadge>
+                        <UBadge v-if="!variable.userViewable" size="xs" color="neutral">Hidden</UBadge>
+                      </div>
+                      <p v-if="variable.description" class="mt-1 text-sm text-muted-foreground">
+                        {{ variable.description }}
+                      </p>
+                      <div class="mt-2 space-y-1 text-xs">
+                        <div class="flex items-center gap-2">
+                          <span class="text-muted-foreground">Environment Variable:</span>
+                          <code class="rounded bg-muted px-1 py-0.5">{{ variable.envVariable }}</code>
+                        </div>
+                        <div v-if="variable.defaultValue" class="flex items-center gap-2">
+                          <span class="text-muted-foreground">Default Value:</span>
+                          <code class="rounded bg-muted px-1 py-0.5">{{ variable.defaultValue }}</code>
+                        </div>
+                        <div v-if="variable.rules" class="flex items-center gap-2">
+                          <span class="text-muted-foreground">Validation:</span>
+                          <code class="rounded bg-muted px-1 py-0.5">{{ variable.rules }}</code>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                      <UButton icon="i-lucide-pencil" size="xs" variant="ghost"
+                        @click="openEditVariableModal(variable)" />
+                      <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
+                        @click="handleDeleteVariable(variable)" />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </UCard>
+            </UCard>
 
-          <UCard v-if="egg.scriptInstall">
-            <template #header>
-              <h2 class="text-lg font-semibold">Install Script</h2>
-            </template>
+            <UCard v-if="egg.scriptInstall">
+              <template #header>
+                <h2 class="text-lg font-semibold">Install Script</h2>
+              </template>
 
-            <div class="space-y-4">
-              <div v-if="egg.scriptContainer">
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Container</label>
-                <p class="mt-1 font-mono text-sm">{{ egg.scriptContainer }}</p>
+              <div class="space-y-4">
+                <div v-if="egg.scriptContainer">
+                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Container</label>
+                  <p class="mt-1 font-mono text-sm">{{ egg.scriptContainer }}</p>
+                </div>
+
+                <div v-if="egg.scriptEntry">
+                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Entrypoint</label>
+                  <p class="mt-1 font-mono text-sm">{{ egg.scriptEntry }}</p>
+                </div>
+
+                <div>
+                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Script</label>
+                  <pre class="mt-1 max-h-96 overflow-auto rounded bg-muted/40 p-3 text-xs">{{ egg.scriptInstall }}</pre>
+                </div>
               </div>
-
-              <div v-if="egg.scriptEntry">
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Entrypoint</label>
-                <p class="mt-1 font-mono text-sm">{{ egg.scriptEntry }}</p>
-              </div>
-
-              <div>
-                <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Script</label>
-                <pre class="mt-1 max-h-96 overflow-auto rounded bg-muted/40 p-3 text-xs">{{ egg.scriptInstall }}</pre>
-              </div>
-            </div>
-          </UCard>
-        </template>
-      </section>
+            </UCard>
+          </template>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <UModal v-model:open="showVariableModal" :title="editingVariable ? 'Edit Variable' : 'Create Variable'"

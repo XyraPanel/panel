@@ -202,129 +202,131 @@ async function deleteBackup(backupId: string) {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <header class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p class="text-xs text-muted-foreground">Server {{ serverId }} · Backups</p>
-            <h1 class="text-xl font-semibold">Backup history</h1>
-          </div>
-          <div class="flex gap-2">
-            <UButton
-              icon="i-lucide-archive"
-              color="primary"
-              :loading="creating"
-              @click="createBackup"
-            >
-              Create backup
-            </UButton>
-          </div>
-        </header>
-
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">Recent backups</h2>
+      <UContainer>
+        <section class="space-y-6">
+          <header class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p class="text-xs text-muted-foreground">Server {{ serverId }} · Backups</p>
+              <h1 class="text-xl font-semibold">Backup history</h1>
             </div>
-          </template>
-
-          <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
-            <div class="flex items-start gap-2">
-              <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
-              <div>
-                <p class="font-medium">Failed to load backups</p>
-                <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div v-else-if="pending" class="flex items-center justify-center py-12">
-            <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
-          </div>
-
-          <div v-else-if="backups.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
-            <UIcon name="i-lucide-archive" class="mx-auto size-12 text-muted-foreground/50" />
-            <p class="mt-3 text-sm font-medium">No backups</p>
-            <p class="mt-1 text-xs text-muted-foreground">Create your first backup to protect your server data.</p>
-          </div>
-
-          <div v-else class="overflow-hidden rounded-lg border border-default">
-            <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <span class="col-span-4">Backup</span>
-              <span class="col-span-2">Size</span>
-              <span class="col-span-3">Created</span>
-              <span class="col-span-2">Storage</span>
-              <span class="col-span-1 text-right">Status</span>
-            </div>
-            <div class="divide-y divide-default">
-              <div
-                v-for="backup in backups"
-                :key="backup.id"
-                class="grid grid-cols-12 items-center px-4 py-3 text-sm"
+            <div class="flex gap-2">
+              <UButton
+                icon="i-lucide-archive"
+                color="primary"
+                :loading="creating"
+                @click="createBackup"
               >
-                <div class="col-span-4">
-                  <div class="flex items-center gap-2">
-                    <p class="font-medium">{{ backup.name }}</p>
-                    <UIcon v-if="backup.isLocked" name="i-lucide-lock" class="size-3 text-muted-foreground" />
-                  </div>
-                  <p class="text-xs text-muted-foreground">{{ backup.uuid }}</p>
-                </div>
-                <span class="col-span-2 text-sm text-muted-foreground">{{ formatBytes(backup.bytes) }}</span>
-                <span class="col-span-3 text-sm text-muted-foreground">{{ formatDate(backup.completedAt || backup.createdAt) }}</span>
-                <span class="col-span-2 text-sm text-muted-foreground">{{ getStorageLabel(backup.disk) }}</span>
-                <div class="col-span-1">
-                  <UBadge :color="getBackupStatus(backup).color" size="xs">
-                    {{ getBackupStatus(backup).label }}
-                  </UBadge>
-                </div>
-                <div class="col-span-12 flex items-center justify-end gap-2">
-                  <UButton
-                    :icon="backup.isLocked ? 'i-lucide-unlock' : 'i-lucide-lock'"
-                    size="xs"
-                    variant="ghost"
-                    :loading="operatingBackupId === backup.id"
-                    @click="toggleLock(backup.id)"
-                  >
-                    {{ backup.isLocked ? 'Unlock' : 'Lock' }}
-                  </UButton>
-                  <UButton
-                    icon="i-lucide-download"
-                    size="xs"
-                    variant="ghost"
-                    color="primary"
-                    :loading="operatingBackupId === backup.id"
-                    :disabled="!backup.completedAt || !backup.isSuccessful"
-                    @click="downloadBackup(backup.id)"
-                  >
-                    Download
-                  </UButton>
-                  <UButton
-                    icon="i-lucide-rotate-ccw"
-                    size="xs"
-                    variant="ghost"
-                    color="warning"
-                    :loading="operatingBackupId === backup.id"
-                    :disabled="!backup.completedAt || !backup.isSuccessful"
-                    @click="restoreBackup(backup.id)"
-                  >
-                    Restore
-                  </UButton>
-                  <UButton
-                    icon="i-lucide-trash-2"
-                    size="xs"
-                    variant="ghost"
-                    color="error"
-                    :loading="operatingBackupId === backup.id"
-                    :disabled="backup.isLocked"
-                    @click="deleteBackup(backup.id)"
-                  >
-                    Delete
-                  </UButton>
+                Create backup
+              </UButton>
+            </div>
+          </header>
+
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Recent backups</h2>
+              </div>
+            </template>
+
+            <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
+              <div class="flex items-start gap-2">
+                <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
+                <div>
+                  <p class="font-medium">Failed to load backups</p>
+                  <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
                 </div>
               </div>
             </div>
-          </div>
-        </UCard>
-      </section>
+
+            <div v-else-if="pending" class="flex items-center justify-center py-12">
+              <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
+            </div>
+
+            <div v-else-if="backups.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
+              <UIcon name="i-lucide-archive" class="mx-auto size-12 text-muted-foreground/50" />
+              <p class="mt-3 text-sm font-medium">No backups</p>
+              <p class="mt-1 text-xs text-muted-foreground">Create your first backup to protect your server data.</p>
+            </div>
+
+            <div v-else class="overflow-hidden rounded-lg border border-default">
+              <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <span class="col-span-4">Backup</span>
+                <span class="col-span-2">Size</span>
+                <span class="col-span-3">Created</span>
+                <span class="col-span-2">Storage</span>
+                <span class="col-span-1 text-right">Status</span>
+              </div>
+              <div class="divide-y divide-default">
+                <div
+                  v-for="backup in backups"
+                  :key="backup.id"
+                  class="grid grid-cols-12 items-center px-4 py-3 text-sm"
+                >
+                  <div class="col-span-4">
+                    <div class="flex items-center gap-2">
+                      <p class="font-medium">{{ backup.name }}</p>
+                      <UIcon v-if="backup.isLocked" name="i-lucide-lock" class="size-3 text-muted-foreground" />
+                    </div>
+                    <p class="text-xs text-muted-foreground">{{ backup.uuid }}</p>
+                  </div>
+                  <span class="col-span-2 text-sm text-muted-foreground">{{ formatBytes(backup.bytes) }}</span>
+                  <span class="col-span-3 text-sm text-muted-foreground">{{ formatDate(backup.completedAt || backup.createdAt) }}</span>
+                  <span class="col-span-2 text-sm text-muted-foreground">{{ getStorageLabel(backup.disk) }}</span>
+                  <div class="col-span-1">
+                    <UBadge :color="getBackupStatus(backup).color" size="xs">
+                      {{ getBackupStatus(backup).label }}
+                    </UBadge>
+                  </div>
+                  <div class="col-span-12 flex items-center justify-end gap-2">
+                    <UButton
+                      :icon="backup.isLocked ? 'i-lucide-unlock' : 'i-lucide-lock'"
+                      size="xs"
+                      variant="ghost"
+                      :loading="operatingBackupId === backup.id"
+                      @click="toggleLock(backup.id)"
+                    >
+                      {{ backup.isLocked ? 'Unlock' : 'Lock' }}
+                    </UButton>
+                    <UButton
+                      icon="i-lucide-download"
+                      size="xs"
+                      variant="ghost"
+                      color="primary"
+                      :loading="operatingBackupId === backup.id"
+                      :disabled="!backup.completedAt || !backup.isSuccessful"
+                      @click="downloadBackup(backup.id)"
+                    >
+                      Download
+                    </UButton>
+                    <UButton
+                      icon="i-lucide-rotate-ccw"
+                      size="xs"
+                      variant="ghost"
+                      color="warning"
+                      :loading="operatingBackupId === backup.id"
+                      :disabled="!backup.completedAt || !backup.isSuccessful"
+                      @click="restoreBackup(backup.id)"
+                    >
+                      Restore
+                    </UButton>
+                    <UButton
+                      icon="i-lucide-trash-2"
+                      size="xs"
+                      variant="ghost"
+                      color="error"
+                      :loading="operatingBackupId === backup.id"
+                      :disabled="backup.isLocked"
+                      @click="deleteBackup(backup.id)"
+                    >
+                      Delete
+                    </UButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </UCard>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <template #right>

@@ -170,125 +170,131 @@ async function handleSignOutAll(includeCurrent = false) {
 
 <template>
   <UPage>
-    <UPageHeader
-      title="Sessions"
-      description="Manage devices currently authenticated with your XyraPanel account."
-    >
-      <template #links>
-        <UButton variant="ghost" color="neutral" :loading="updatingSessions"
-          :disabled="!hasSessions || updatingSessions" @click="handleSignOutAll(false)">
-          Sign out others
-        </UButton>
-        <UButton variant="soft" color="neutral" :loading="updatingSessions"
-          :disabled="!hasSessions || updatingSessions" @click="handleSignOutAll(true)">
-          Sign out all
-        </UButton>
-      </template>
-    </UPageHeader>
+    <UContainer>
+      <UPageHeader
+        title="Sessions"
+        description="Manage devices currently authenticated with your XyraPanel account."
+      >
+        <template #links>
+          <UButton
+            variant="ghost"
+            color="neutral"
+            :loading="updatingSessions"
+            :disabled="!hasSessions || updatingSessions"
+            @click="handleSignOutAll(false)"
+          >
+            Sign out others
+          </UButton>
+          <UButton
+            variant="soft"
+            color="neutral"
+            :loading="updatingSessions"
+            :disabled="!hasSessions || updatingSessions"
+            @click="handleSignOutAll(true)"
+          >
+            Sign out all
+          </UButton>
+        </template>
+      </UPageHeader>
+    </UContainer>
 
     <UPageBody>
-      <UCard :ui="{ body: 'space-y-3' }">
-        <template #header>
-          <div>
-            <h2 class="text-lg font-semibold">Active sessions</h2>
-            <p class="text-sm text-muted-foreground">Browser tokens issued for your account.</p>
+      <UContainer>
+        <UCard :ui="{ body: 'space-y-3' }">
+          <template #header>
+            <div>
+              <h2 class="text-lg font-semibold">Active sessions</h2>
+              <p class="text-sm text-muted-foreground">Browser tokens issued for your account.</p>
+            </div>
+          </template>
+
+          <div v-if="sessionsPending" class="space-y-3">
+            <USkeleton v-for="i in 3" :key="`session-skeleton-${i}`" class="h-16 w-full rounded-lg" />
           </div>
-        </template>
-
-      <div v-if="sessionsPending" class="space-y-3">
-        <USkeleton v-for="i in 3" :key="`session-skeleton-${i}`" class="h-16 w-full rounded-lg" />
-      </div>
-      <template v-else>
-        <UAlert v-if="sessionsError" icon="i-lucide-alert-triangle" color="error" :title="sessionsError" />
-
-        <UEmpty
-          v-else-if="!hasSessions"
-          icon="i-lucide-monitor"
-          title="No active sessions"
-          description="No browser sessions found for your account"
-          variant="subtle"
-        />
-
-        <div v-else class="space-y-3">
-          <div v-for="session in sortedSessions" :key="session.token"
-            class="flex flex-col gap-3 rounded-lg border border-default p-4">
-            <div class="flex items-start justify-between">
-              <div class="space-y-2">
-                <div class="flex items-center gap-2">
-                  <UIcon 
-                    :name="session.device === 'Mobile' ? 'i-lucide-smartphone' : 
-                          session.device === 'Tablet' ? 'i-lucide-tablet' : 'i-lucide-monitor'" 
-                    class="size-4 text-muted-foreground" 
-                  />
-                  <span class="font-medium text-sm">{{ session.browser }} on {{ session.os }}</span>
-                  <UBadge v-if="session.isCurrent" color="primary" variant="soft" size="xs">
-                    Current
-                  </UBadge>
-                </div>
-                
-                <div class="space-y-1 text-xs text-muted-foreground">
+          <UAlert v-else-if="sessionsError" icon="i-lucide-alert-triangle" color="error" :title="sessionsError" />
+          <UEmpty
+            v-else-if="!hasSessions"
+            icon="i-lucide-monitor"
+            title="No active sessions"
+            description="No browser sessions found for your account"
+            variant="subtle"
+          />
+          <div v-else class="space-y-3">
+            <div
+              v-for="session in sortedSessions"
+              :key="session.token"
+              class="flex flex-col gap-3 rounded-lg border border-default p-4"
+            >
+              <div class="flex items-start justify-between">
+                <div class="space-y-2">
                   <div class="flex items-center gap-2">
-                    <UIcon name="i-lucide-map-pin" class="size-3" />
-                    <span>{{ displayIp(session.ipAddress, session.token) }}</span>
-                    <UButton
-                      variant="ghost"
-                      size="xs"
-                      color="neutral"
-                      @click="toggleIpReveal(session.token)"
-                    >
-                      {{ isIpRevealed(session.token) ? 'Hide' : 'Reveal' }}
+                    <UIcon
+                      :name="session.device === 'Mobile' ? 'i-lucide-smartphone' : session.device === 'Tablet' ? 'i-lucide-tablet' : 'i-lucide-monitor'"
+                      class="size-4 text-primary"
+                    />
+                    <span class="text-sm font-semibold">{{ session.device ?? 'Unknown device' }}</span>
+                    <UBadge v-if="session.token === currentSessionToken" color="primary" variant="soft" size="xs">
+                      Current session
+                    </UBadge>
+                  </div>
+
+                  <p class="text-xs text-muted-foreground">{{ session.os }} • {{ session.browser }}</p>
+
+                  <div class="text-xs text-muted-foreground">
+                    <span>IP Address: {{ displayIp(session.ipAddress ?? 'Unknown', session.token) }}</span>
+                    <UButton variant="link" size="xs" class="ml-1" @click="toggleIpReveal(session.token)">
+                      {{ isIpRevealed(session.token) ? 'Hide' : 'Show' }}
                     </UButton>
                   </div>
-                  <div class="flex items-center gap-2">
-                    <UIcon name="i-lucide-clock" class="size-3" />
-                    <span>
+
+                  <div class="text-xs text-muted-foreground">
+                    <p>
+                      Last active:
+                      <template v-if="session.lastSeenAt">
+                        <NuxtTime :datetime="session.lastSeenAt" class="ml-1 font-medium" />
+                      </template>
+                      <span v-else class="ml-1">Unknown</span>
+                    </p>
+                    <p>
                       Expires:
-                      <NuxtTime
-                        v-if="session.expiresAt"
-                        :datetime="session.expiresAt"
-                        relative
-                        class="font-medium"
-                      />
-                      <span v-else>Unknown</span>
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <UIcon name="i-lucide-fingerprint" class="size-3" />
-                    <span class="font-mono">{{ session.fingerprint }}</span>
+                      <template v-if="session.expiresAtTimestamp">
+                        <NuxtTime :datetime="session.expiresAtTimestamp * 1000" class="ml-1 font-medium" />
+                      </template>
+                      <span v-else class="ml-1">Unknown</span>
+                    </p>
                   </div>
                 </div>
+
+                <UButton
+                  variant="ghost"
+                  color="error"
+                  size="xs"
+                  :loading="updatingSessions"
+                  :disabled="session.token === currentSessionToken && updatingSessions"
+                  @click="handleSignOut(session.token)"
+                >
+                  Revoke
+                </UButton>
               </div>
-              
-              <UButton 
-                variant="ghost" 
-                color="error" 
-                size="xs"
-                icon="i-lucide-log-out"
-                :disabled="session.isCurrent || updatingSessions"
-                @click="handleSignOut(session.token)"
-              >
-                Sign out
-              </UButton>
+
+              <details v-if="session.token === currentSessionToken" class="text-xs">
+                <summary class="cursor-pointer text-muted-foreground hover:text-foreground">
+                  Show session details
+                </summary>
+                <div class="mt-2 space-y-1 text-muted-foreground">
+                  <div><strong>Token:</strong> <code class="break-all">{{ session.token }}</code></div>
+                  <div><strong>User Agent:</strong> {{ session.userAgent }}</div>
+                  <div>
+                    <strong>Issued:</strong>
+                    <NuxtTime v-if="session.issuedAt" :datetime="session.issuedAt" relative class="font-medium" />
+                    <span v-else>Unknown</span>
+                  </div>
+                </div>
+              </details>
             </div>
-            
-            <details v-if="session.isCurrent" class="text-xs">
-              <summary class="cursor-pointer text-muted-foreground hover:text-foreground">
-                Show session details
-              </summary>
-              <div class="mt-2 space-y-1 text-muted-foreground">
-                <div><strong>Token:</strong> <code class="break-all">{{ session.token }}</code></div>
-                <div><strong>User Agent:</strong> {{ session.userAgent }}</div>
-                <div>
-                  <strong>Issued:</strong>
-                  <NuxtTime v-if="session.issuedAt" :datetime="session.issuedAt" relative class="font-medium" />
-                  <span v-else>Unknown</span>
-                </div>
-              </div>
-            </details>
           </div>
-        </div>
-      </template>
-    </UCard>
+        </UCard>
+      </UContainer>
     </UPageBody>
   </UPage>
 </template>

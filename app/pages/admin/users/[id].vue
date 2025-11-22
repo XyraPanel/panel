@@ -365,43 +365,44 @@ async function impersonateUser() {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <header class="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 class="text-xl font-semibold">
-              <template v-if="user">
-                {{ user.name || user.username }}
-              </template>
-              <template v-else>
-                Loading user…
-              </template>
-            </h1>
-            <p class="text-xs text-muted-foreground">
-              Review account metadata, owned servers, and recent audit activity.
-            </p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <UButton v-if="user" icon="i-lucide-rotate-ccw" variant="outline" color="neutral"
-              @click="() => refresh()">
-              Refresh
-            </UButton>
-            <UButton
-              icon="i-lucide-sliders-horizontal"
-              color="warning"
-              variant="subtle"
-              @click="controlsOpen = true"
-            >
-              User controls
-            </UButton>
-          </div>
-        </header>
+      <UContainer>
+        <section class="space-y-6">
+          <header class="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 class="text-xl font-semibold">
+                <template v-if="user">
+                  {{ user.name || user.username }}
+                </template>
+                <template v-else>
+                  Loading user…
+                </template>
+              </h1>
+              <p class="text-xs text-muted-foreground">
+                Review account metadata, owned servers, and recent audit activity.
+              </p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <UButton v-if="user" icon="i-lucide-rotate-ccw" variant="outline" color="neutral"
+                @click="() => refresh()">
+                Refresh
+              </UButton>
+              <UButton
+                icon="i-lucide-sliders-horizontal"
+                color="warning"
+                variant="subtle"
+                @click="controlsOpen = true"
+              >
+                User controls
+              </UButton>
+            </div>
+          </header>
 
-        <USlideover
-          v-model:open="controlsOpen"
-          title="User controls"
-          description="Reset passwords, toggle verification, suspension, and impersonation actions."
-          :ui="{ body: 'space-y-6', footer: 'justify-end gap-2' }"
-        >
+          <USlideover
+            v-model:open="controlsOpen"
+            title="User controls"
+            description="Reset passwords, toggle verification, suspension, and impersonation actions."
+            :ui="{ body: 'space-y-6', footer: 'justify-end gap-2' }"
+          >
           <template #body>
             <div class="flex flex-col gap-4">
               <UCard variant="outline" :ui="{ body: 'space-y-3' }">
@@ -822,8 +823,9 @@ async function impersonateUser() {
               </UCard>
             </ul>
           </UCard>
-        </div>
-      </section>
+          </div>
+        </section>
+      </UContainer>
     </UPageBody>
   </UPage>
 </template>

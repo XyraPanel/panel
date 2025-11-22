@@ -87,27 +87,30 @@ const infoStats = computed(() => {
 
 <template>
   <UPage>
-    <UPageHeader
-      v-if="server"
-      :title="server.name"
-      :description="server.description || 'No description provided.'"
-    >
-      <template #headline>
-        <div class="flex items-center gap-2">
-          <UBreadcrumb :links="breadcrumbLinks" size="xs" />
-          <UBadge color="primary" size="xs">{{ server.status ?? 'Unknown' }}</UBadge>
-        </div>
-      </template>
-    </UPageHeader>
+    <UContainer>
+      <UPageHeader
+        v-if="server"
+        :title="server.name"
+        :description="server.description || 'No description provided.'"
+      >
+        <template #headline>
+          <div class="flex items-center gap-2">
+            <UBreadcrumb :links="breadcrumbLinks" size="xs" />
+            <UBadge color="primary" size="xs">{{ server.status ?? 'Unknown' }}</UBadge>
+          </div>
+        </template>
+      </UPageHeader>
+    </UContainer>
 
     <UPageBody>
-      <UAlert v-if="error" color="error" title="Failed to load server">
-        {{ error.message }}
-      </UAlert>
+      <UContainer>
+        <UAlert v-if="error" color="error" title="Failed to load server">
+          {{ error.message }}
+        </UAlert>
 
-      <USkeleton v-else-if="pending" class="h-72 w-full" />
+        <USkeleton v-else-if="pending" class="h-72 w-full" />
 
-      <div v-else-if="server" class="space-y-6">
+        <div v-else-if="server" class="space-y-6">
         <UCard :ui="{ body: 'space-y-4' }">
           <template #header>
             <div class="flex items-center justify-between">
@@ -182,9 +185,10 @@ const infoStats = computed(() => {
         </UCard>
       </div>
 
-      <div v-else class="text-sm text-muted-foreground">
-        Server details not available.
-      </div>
+        <div v-else class="text-sm text-muted-foreground">
+          Server details not available.
+        </div>
+      </UContainer>
     </UPageBody>
 
     <template #right>

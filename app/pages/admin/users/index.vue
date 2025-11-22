@@ -169,90 +169,92 @@ function formatDate(value: string) {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <UCard :ui="{ body: 'space-y-3' }">
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">Accounts</h2>
-              <UButton icon="i-lucide-user-plus" color="primary" variant="subtle" @click="openCreateModal">
-                Create User
-              </UButton>
+      <UContainer>
+        <section class="space-y-6">
+          <UCard :ui="{ body: 'space-y-3' }">
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Accounts</h2>
+                <UButton icon="i-lucide-user-plus" color="primary" variant="subtle" @click="openCreateModal">
+                  Create User
+                </UButton>
+              </div>
+            </template>
+
+            <div class="space-y-3">
+              <UAlert
+                v-if="errorMessage"
+                color="error"
+                variant="soft"
+                icon="i-lucide-alert-triangle"
+                :description="errorMessage"
+                title="Failed to load users"
+              />
+
+              <UTable
+                :data="users"
+                :columns="columns"
+                :loading="loading"
+                sticky
+                class="w-full"
+              >
+                <template #loading>
+                  <div class="space-y-2 p-4">
+                    <USkeleton v-for="i in 4" :key="`row-skeleton-${i}`" class="h-10 w-full" />
+                  </div>
+                </template>
+
+                <template #empty>
+                  <div class="px-4 py-6 text-center text-sm text-muted-foreground">
+                    No users found.
+                  </div>
+                </template>
+
+                <template #username-cell="{ row }">
+                  <div class="flex flex-col">
+                    <NuxtLink :to="`/admin/users/${row.original.id}`" class="font-semibold hover:text-primary">
+                      {{ row.original.username }}
+                    </NuxtLink>
+                    <p v-if="row.original.name" class="text-xs text-muted-foreground">{{ row.original.name }}</p>
+                  </div>
+                </template>
+
+                <template #email-cell="{ row }">
+                  <span class="text-xs text-muted-foreground">{{ row.original.email }}</span>
+                </template>
+
+                <template #role-cell="{ row }">
+                  <UBadge :color="row.original.role === 'admin' ? 'primary' : 'neutral'" size="sm" variant="subtle">
+                    {{ row.original.role }}
+                  </UBadge>
+                </template>
+
+                <template #createdAt-cell="{ row }">
+                  <span class="text-xs text-muted-foreground">{{ formatDate(row.original.createdAt) }}</span>
+                </template>
+
+                <template #actions-header>
+                  <span class="sr-only">Actions</span>
+                </template>
+
+                <template #actions-cell="{ row }">
+                  <div class="flex gap-1 justify-end">
+                    <UButton icon="i-lucide-user-circle" size="xs" variant="ghost" :to="`/admin/users/${row.original.id}`" />
+                    <UButton icon="i-lucide-pencil" size="xs" variant="ghost" @click="openEditModal(row.original)" />
+                    <UButton
+                      icon="i-lucide-trash"
+                      size="xs"
+                      variant="ghost"
+                      color="error"
+                      @click="handleDelete(row.original)"
+                    />
+                  </div>
+                </template>
+              </UTable>
             </div>
-          </template>
-
-          <div class="space-y-3">
-            <UAlert
-              v-if="errorMessage"
-              color="error"
-              variant="soft"
-              icon="i-lucide-alert-triangle"
-              :description="errorMessage"
-              title="Failed to load users"
-            />
-
-            <UTable
-              :data="users"
-              :columns="columns"
-              :loading="loading"
-              sticky
-              class="w-full"
-            >
-              <template #loading>
-                <div class="space-y-2 p-4">
-                  <USkeleton v-for="i in 4" :key="`row-skeleton-${i}`" class="h-10 w-full" />
-                </div>
-              </template>
-
-              <template #empty>
-                <div class="px-4 py-6 text-center text-sm text-muted-foreground">
-                  No users found.
-                </div>
-              </template>
-
-              <template #username-cell="{ row }">
-                <div class="flex flex-col">
-                  <NuxtLink :to="`/admin/users/${row.original.id}`" class="font-semibold hover:text-primary">
-                    {{ row.original.username }}
-                  </NuxtLink>
-                  <p v-if="row.original.name" class="text-xs text-muted-foreground">{{ row.original.name }}</p>
-                </div>
-              </template>
-
-              <template #email-cell="{ row }">
-                <span class="text-xs text-muted-foreground">{{ row.original.email }}</span>
-              </template>
-
-              <template #role-cell="{ row }">
-                <UBadge :color="row.original.role === 'admin' ? 'primary' : 'neutral'" size="sm" variant="subtle">
-                  {{ row.original.role }}
-                </UBadge>
-              </template>
-
-              <template #createdAt-cell="{ row }">
-                <span class="text-xs text-muted-foreground">{{ formatDate(row.original.createdAt) }}</span>
-              </template>
-
-              <template #actions-header>
-                <span class="sr-only">Actions</span>
-              </template>
-
-              <template #actions-cell="{ row }">
-                <div class="flex gap-1 justify-end">
-                  <UButton icon="i-lucide-user-circle" size="xs" variant="ghost" :to="`/admin/users/${row.original.id}`" />
-                  <UButton icon="i-lucide-pencil" size="xs" variant="ghost" @click="openEditModal(row.original)" />
-                  <UButton
-                    icon="i-lucide-trash"
-                    size="xs"
-                    variant="ghost"
-                    color="error"
-                    @click="handleDelete(row.original)"
-                  />
-                </div>
-              </template>
-            </UTable>
-          </div>
-        </UCard>
-      </section>
+          </UCard>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <UModal v-model:open="showUserModal" :title="editingUser ? 'Edit User' : 'Create User'"

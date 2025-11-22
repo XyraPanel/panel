@@ -177,113 +177,115 @@ async function deleteDatabase() {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <header class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p class="text-xs text-muted-foreground">Server {{ serverId }} · Databases</p>
-            <h1 class="text-xl font-semibold">Linked databases</h1>
-          </div>
-          <div class="flex gap-2">
-            <UButton
-              icon="i-lucide-plus"
-              color="primary"
-              @click="showCreateModal = true"
-            >
-              Create Database
-            </UButton>
-          </div>
-        </header>
-
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">Linked databases</h2>
+      <UContainer>
+        <section class="space-y-6">
+          <header class="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p class="text-xs text-muted-foreground">Server {{ serverId }} · Databases</p>
+              <h1 class="text-xl font-semibold">Linked databases</h1>
             </div>
-          </template>
-
-          <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
-            <div class="flex items-start gap-2">
-              <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
-              <div>
-                <p class="font-medium">Failed to load databases</p>
-                <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div v-else-if="pending" class="flex items-center justify-center py-12">
-            <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
-          </div>
-
-          <ServerEmptyState
-            v-else-if="databases.length === 0"
-            icon="i-lucide-database"
-            title="No databases"
-            description="Create a database to get started."
-          >
-            <UButton icon="i-lucide-plus" @click="showCreateModal = true">
-              Create Database
-            </UButton>
-          </ServerEmptyState>
-
-          <div v-else class="overflow-hidden rounded-lg border border-default">
-            <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-              <span class="col-span-3">Name</span>
-              <span class="col-span-3">Host</span>
-              <span class="col-span-3">Username</span>
-              <span class="col-span-2">Remote</span>
-              <span class="col-span-1">Status</span>
-            </div>
-            <div class="divide-y divide-default">
-              <div
-                v-for="db in databases"
-                :key="db.id"
-                class="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm"
+            <div class="flex gap-2">
+              <UButton
+                icon="i-lucide-plus"
+                color="primary"
+                @click="showCreateModal = true"
               >
-                <div class="col-span-3">
-                  <div class="font-medium">{{ db.name }}</div>
-                </div>
-                <div class="col-span-3 text-sm text-muted-foreground">
-                  {{ db.host.hostname }}:{{ db.host.port }}
-                </div>
-                <div class="col-span-3">
-                  <code class="rounded bg-muted px-2 py-1 text-xs">{{ db.username }}</code>
-                </div>
-                <div class="col-span-2 text-xs text-muted-foreground">
-                  {{ db.remote }}
-                </div>
-                <div class="col-span-1">
-                  <UBadge :color="getStatusColor(db.status)" size="xs">
-                    {{ getStatusLabel(db.status) }}
-                  </UBadge>
-                </div>
-                <div class="col-span-12 flex items-center justify-end gap-2">
-                  <UButton
-                    icon="i-lucide-key-round"
-                    size="xs"
-                    variant="ghost"
-                    color="primary"
-                    :loading="operatingDatabaseId === db.id"
-                    @click="rotatePassword(db.id)"
-                  >
-                    Rotate Password
-                  </UButton>
-                  <UButton
-                    icon="i-lucide-trash-2"
-                    size="xs"
-                    variant="ghost"
-                    color="error"
-                    :loading="operatingDatabaseId === db.id"
-                    @click="confirmDelete(db.id)"
-                  >
-                    Delete
-                  </UButton>
+                Create Database
+              </UButton>
+            </div>
+          </header>
+
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Linked databases</h2>
+              </div>
+            </template>
+
+            <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
+              <div class="flex items-start gap-2">
+                <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
+                <div>
+                  <p class="font-medium">Failed to load databases</p>
+                  <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
                 </div>
               </div>
             </div>
-          </div>
-        </UCard>
-      </section>
+
+            <div v-else-if="pending" class="flex items-center justify-center py-12">
+              <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
+            </div>
+
+            <ServerEmptyState
+              v-else-if="databases.length === 0"
+              icon="i-lucide-database"
+              title="No databases"
+              description="Create a database to get started."
+            >
+              <UButton icon="i-lucide-plus" @click="showCreateModal = true">
+                Create Database
+              </UButton>
+            </ServerEmptyState>
+
+            <div v-else class="overflow-hidden rounded-lg border border-default">
+              <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <span class="col-span-3">Name</span>
+                <span class="col-span-3">Host</span>
+                <span class="col-span-3">Username</span>
+                <span class="col-span-2">Remote</span>
+                <span class="col-span-1">Status</span>
+              </div>
+              <div class="divide-y divide-default">
+                <div
+                  v-for="db in databases"
+                  :key="db.id"
+                  class="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm"
+                >
+                  <div class="col-span-3">
+                    <div class="font-medium">{{ db.name }}</div>
+                  </div>
+                  <div class="col-span-3 text-sm text-muted-foreground">
+                    {{ db.host.hostname }}:{{ db.host.port }}
+                  </div>
+                  <div class="col-span-3">
+                    <code class="rounded bg-muted px-2 py-1 text-xs">{{ db.username }}</code>
+                  </div>
+                  <div class="col-span-2 text-xs text-muted-foreground">
+                    {{ db.remote }}
+                  </div>
+                  <div class="col-span-1">
+                    <UBadge :color="getStatusColor(db.status)" size="xs">
+                      {{ getStatusLabel(db.status) }}
+                    </UBadge>
+                  </div>
+                  <div class="col-span-12 flex items-center justify-end gap-2">
+                    <UButton
+                      icon="i-lucide-key-round"
+                      size="xs"
+                      variant="ghost"
+                      color="primary"
+                      :loading="operatingDatabaseId === db.id"
+                      @click="rotatePassword(db.id)"
+                    >
+                      Rotate Password
+                    </UButton>
+                    <UButton
+                      icon="i-lucide-trash-2"
+                      size="xs"
+                      variant="ghost"
+                      color="error"
+                      :loading="operatingDatabaseId === db.id"
+                      @click="confirmDelete(db.id)"
+                    >
+                      Delete
+                    </UButton>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </UCard>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <template #right>

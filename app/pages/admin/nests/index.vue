@@ -94,64 +94,66 @@ function viewNest(nest: NestWithEggCount) {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">All Nests</h2>
-              <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="openCreateModal">
-                Create Nest
-              </UButton>
+      <UContainer>
+        <section class="space-y-6">
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">All Nests</h2>
+                <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="openCreateModal">
+                  Create Nest
+                </UButton>
+              </div>
+            </template>
+
+            <div v-if="pending" class="space-y-2">
+              <USkeleton v-for="i in 3" :key="i" class="h-24 w-full" />
             </div>
-          </template>
 
-          <div v-if="pending" class="space-y-2">
-            <USkeleton v-for="i in 3" :key="i" class="h-24 w-full" />
-          </div>
+            <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
+              <template #title>Failed to load nests</template>
+              <template #description>{{ error.message }}</template>
+            </UAlert>
 
-          <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
-            <template #title>Failed to load nests</template>
-            <template #description>{{ error.message }}</template>
-          </UAlert>
+            <div v-else-if="nests.length === 0" class="py-12 text-center">
+              <UIcon name="i-lucide-box" class="mx-auto size-12 text-muted-foreground opacity-50" />
+              <p class="mt-4 text-sm text-muted-foreground">No nests yet</p>
+              <p class="mt-1 text-xs text-muted-foreground">
+                Nests are categories of game servers (e.g., Minecraft, Source Engine)
+              </p>
+            </div>
 
-          <div v-else-if="nests.length === 0" class="py-12 text-center">
-            <UIcon name="i-lucide-box" class="mx-auto size-12 text-muted-foreground opacity-50" />
-            <p class="mt-4 text-sm text-muted-foreground">No nests yet</p>
-            <p class="mt-1 text-xs text-muted-foreground">
-              Nests are categories of game servers (e.g., Minecraft, Source Engine)
-            </p>
-          </div>
-
-          <div v-else class="divide-y divide-default">
-            <div v-for="nest in nests" :key="nest.id"
-              class="flex items-start justify-between py-4 hover:bg-muted/50 cursor-pointer transition-colors"
-              @click="viewNest(nest)">
-              <div class="flex-1">
-                <div class="flex items-center gap-2">
-                  <UIcon name="i-lucide-box" class="size-5 text-primary" />
-                  <span class="font-semibold">{{ nest.name }}</span>
-                  <UBadge size="xs" color="neutral">
-                    {{ nest.eggCount }} egg{{ nest.eggCount !== 1 ? 's' : '' }}
-                  </UBadge>
+            <div v-else class="divide-y divide-default">
+              <div v-for="nest in nests" :key="nest.id"
+                class="flex items-start justify-between py-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                @click="viewNest(nest)">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-box" class="size-5 text-primary" />
+                    <span class="font-semibold">{{ nest.name }}</span>
+                    <UBadge size="xs" color="neutral">
+                      {{ nest.eggCount }} egg{{ nest.eggCount !== 1 ? 's' : '' }}
+                    </UBadge>
+                  </div>
+                  <p v-if="nest.description" class="mt-1 text-sm text-muted-foreground">
+                    {{ nest.description }}
+                  </p>
+                  <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                    <span>Author: {{ nest.author }}</span>
+                    <span>UUID: {{ nest.uuid.slice(0, 8) }}</span>
+                  </div>
                 </div>
-                <p v-if="nest.description" class="mt-1 text-sm text-muted-foreground">
-                  {{ nest.description }}
-                </p>
-                <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                  <span>Author: {{ nest.author }}</span>
-                  <span>UUID: {{ nest.uuid.slice(0, 8) }}</span>
+
+                <div class="flex items-center gap-2" @click.stop>
+                  <UButton icon="i-lucide-arrow-right" size="xs" variant="ghost" @click="viewNest(nest)" />
+                  <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
+                    :disabled="nest.eggCount > 0" @click="handleDelete(nest)" />
                 </div>
               </div>
-
-              <div class="flex items-center gap-2" @click.stop>
-                <UButton icon="i-lucide-arrow-right" size="xs" variant="ghost" @click="viewNest(nest)" />
-                <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error" :disabled="nest.eggCount > 0"
-                  @click="handleDelete(nest)" />
-              </div>
             </div>
-          </div>
-        </UCard>
-      </section>
+          </UCard>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <UModal v-model:open="showCreateModal" title="Create Nest" description="Create a new game server category">

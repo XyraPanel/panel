@@ -109,55 +109,57 @@ async function handleDelete(location: LocationWithNodeCount) {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">All Locations</h2>
-              <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="openCreateModal">
-                Create Location
-              </UButton>
+      <UContainer>
+        <section class="space-y-6">
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">All Locations</h2>
+                <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="openCreateModal">
+                  Create Location
+                </UButton>
+              </div>
+            </template>
+
+            <div v-if="pending" class="space-y-2">
+              <USkeleton v-for="i in 3" :key="i" class="h-16 w-full" />
             </div>
-          </template>
 
-          <div v-if="pending" class="space-y-2">
-            <USkeleton v-for="i in 3" :key="i" class="h-16 w-full" />
-          </div>
+            <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
+              <template #title>Failed to load locations</template>
+              <template #description>{{ error.message }}</template>
+            </UAlert>
 
-          <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
-            <template #title>Failed to load locations</template>
-            <template #description>{{ error.message }}</template>
-          </UAlert>
+            <div v-else-if="locations.length === 0" class="py-12 text-center">
+              <UIcon name="i-lucide-map-pin" class="mx-auto size-12 text-muted-foreground opacity-50" />
+              <p class="mt-4 text-sm text-muted-foreground">No locations yet</p>
+            </div>
 
-          <div v-else-if="locations.length === 0" class="py-12 text-center">
-            <UIcon name="i-lucide-map-pin" class="mx-auto size-12 text-muted-foreground opacity-50" />
-            <p class="mt-4 text-sm text-muted-foreground">No locations yet</p>
-          </div>
-
-          <div v-else class="divide-y divide-default">
-            <div v-for="location in locations" :key="location.id" class="flex items-center justify-between py-4">
-              <div class="flex-1">
-                <div class="flex items-center gap-2">
-                  <UIcon name="i-lucide-map-pin" class="size-4 text-primary" />
-                  <span class="font-medium">{{ location.short }}</span>
-                  <UBadge v-if="location.nodeCount > 0" size="xs" color="neutral">
-                    {{ location.nodeCount }} node{{ location.nodeCount !== 1 ? 's' : '' }}
-                  </UBadge>
+            <div v-else class="divide-y divide-default">
+              <div v-for="location in locations" :key="location.id" class="flex items-center justify-between py-4">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-map-pin" class="size-4 text-primary" />
+                    <span class="font-medium">{{ location.short }}</span>
+                    <UBadge v-if="location.nodeCount > 0" size="xs" color="neutral">
+                      {{ location.nodeCount }} node{{ location.nodeCount !== 1 ? 's' : '' }}
+                    </UBadge>
+                  </div>
+                  <p v-if="location.long" class="mt-1 text-sm text-muted-foreground">
+                    {{ location.long }}
+                  </p>
                 </div>
-                <p v-if="location.long" class="mt-1 text-sm text-muted-foreground">
-                  {{ location.long }}
-                </p>
-              </div>
 
-              <div class="flex items-center gap-2">
-                <UButton icon="i-lucide-pencil" size="xs" variant="ghost" @click="openEditModal(location)" />
-                <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                  :disabled="location.nodeCount > 0" @click="handleDelete(location)" />
+                <div class="flex items-center gap-2">
+                  <UButton icon="i-lucide-pencil" size="xs" variant="ghost" @click="openEditModal(location)" />
+                  <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
+                    :disabled="location.nodeCount > 0" @click="handleDelete(location)" />
+                </div>
               </div>
             </div>
-          </div>
-        </UCard>
-      </section>
+          </UCard>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <UModal v-model:open="showCreateModal" :title="editingLocation ? 'Edit Location' : 'Create Location'"

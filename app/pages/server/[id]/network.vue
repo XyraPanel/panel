@@ -29,117 +29,119 @@ function formatIp(allocation: ServerAllocation): string {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <header class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p class="text-xs text-muted-foreground">Server {{ serverId }} · Network</p>
-            <h1 class="text-xl font-semibold">Network Allocations</h1>
-            <p class="text-sm text-muted-foreground mt-1">Manage IP addresses and ports for this server</p>
-          </div>
-        </header>
-
-        <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
-          <div class="flex items-start gap-2">
-            <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
+      <UContainer>
+        <section class="space-y-6">
+          <header class="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p class="font-medium">Failed to load network data</p>
-              <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
+              <p class="text-xs text-muted-foreground">Server {{ serverId }} · Network</p>
+              <h1 class="text-xl font-semibold">Network Allocations</h1>
+              <p class="text-sm text-muted-foreground mt-1">Manage IP addresses and ports for this server</p>
+            </div>
+          </header>
+
+          <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
+            <div class="flex items-start gap-2">
+              <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
+              <div>
+                <p class="font-medium">Failed to load network data</p>
+                <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div v-else-if="pending" class="flex items-center justify-center py-12">
-          <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
-        </div>
+          <div v-else-if="pending" class="flex items-center justify-center py-12">
+            <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
+          </div>
 
-        <template v-else>
-          <UCard>
-            <template #header>
-              <div class="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <h2 class="text-lg font-semibold">Primary allocation</h2>
-                  <p class="text-xs text-muted-foreground">Main server connection endpoint</p>
-                </div>
-              </div>
-            </template>
-
-            <ServerEmptyState
-              v-if="!primaryAllocation"
-              icon="i-lucide-network"
-              title="No primary allocation"
-              description="Configure a primary allocation for this server."
-            />
-
-            <div v-else class="flex flex-col gap-4 lg:flex-row">
-              <div class="flex-1 space-y-3">
-                <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                  <p class="text-xs uppercase tracking-wide text-muted-foreground">IP address</p>
-                  <div class="mt-1 flex items-center justify-between gap-2">
-                    <p class="text-lg font-semibold text-foreground">{{ formatIp(primaryAllocation) }}</p>
-                    <ServerCopyButton :text="formatIp(primaryAllocation)" label="IP address" />
+          <template v-else>
+            <UCard>
+              <template #header>
+                <div class="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <h2 class="text-lg font-semibold">Primary allocation</h2>
+                    <p class="text-xs text-muted-foreground">Main server connection endpoint</p>
                   </div>
                 </div>
-                <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                  <p class="text-xs uppercase tracking-wide text-muted-foreground">Port</p>
-                  <div class="mt-1 flex items-center justify-between gap-2">
-                    <p class="text-lg font-semibold text-foreground">{{ primaryAllocation.port }}</p>
-                    <ServerCopyButton :text="String(primaryAllocation.port)" label="Port" />
-                  </div>
-                </div>
-              </div>
-              <div class="flex-1 space-y-3">
-                <UAlert title="Connection String" icon="i-lucide-info">
-                  <template #description>
-                    <div class="flex items-center justify-between gap-2">
-                      <code class="text-xs">{{ formatIp(primaryAllocation) }}:{{ primaryAllocation.port }}</code>
-                      <ServerCopyButton
-                        :text="`${formatIp(primaryAllocation)}:${primaryAllocation.port}`"
-                        label="Connection string"
-                      />
+              </template>
+
+              <ServerEmptyState
+                v-if="!primaryAllocation"
+                icon="i-lucide-network"
+                title="No primary allocation"
+                description="Configure a primary allocation for this server."
+              />
+
+              <div v-else class="flex flex-col gap-4 lg:flex-row">
+                <div class="flex-1 space-y-3">
+                  <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
+                    <p class="text-xs uppercase tracking-wide text-muted-foreground">IP address</p>
+                    <div class="mt-1 flex items-center justify-between gap-2">
+                      <p class="text-lg font-semibold text-foreground">{{ formatIp(primaryAllocation) }}</p>
+                      <ServerCopyButton :text="formatIp(primaryAllocation)" label="IP address" />
                     </div>
-                  </template>
-                </UAlert>
-                <div v-if="primaryAllocation.notes" class="rounded-md border border-dashed border-default px-4 py-3 text-xs text-muted-foreground">
-                  {{ primaryAllocation.notes }}
+                  </div>
+                  <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
+                    <p class="text-xs uppercase tracking-wide text-muted-foreground">Port</p>
+                    <div class="mt-1 flex items-center justify-between gap-2">
+                      <p class="text-lg font-semibold text-foreground">{{ primaryAllocation.port }}</p>
+                      <ServerCopyButton :text="String(primaryAllocation.port)" label="Port" />
+                    </div>
+                  </div>
+                </div>
+                <div class="flex-1 space-y-3">
+                  <UAlert title="Connection String" icon="i-lucide-info">
+                    <template #description>
+                      <div class="flex items-center justify-between gap-2">
+                        <code class="text-xs">{{ formatIp(primaryAllocation) }}:{{ primaryAllocation.port }}</code>
+                        <ServerCopyButton
+                          :text="`${formatIp(primaryAllocation)}:${primaryAllocation.port}`"
+                          label="Connection string"
+                        />
+                      </div>
+                    </template>
+                  </UAlert>
+                  <div v-if="primaryAllocation.notes" class="rounded-md border border-dashed border-default px-4 py-3 text-xs text-muted-foreground">
+                    {{ primaryAllocation.notes }}
+                  </div>
                 </div>
               </div>
-            </div>
-          </UCard>
+            </UCard>
 
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Additional allocations</h2>
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <h2 class="text-lg font-semibold">Additional allocations</h2>
+                </div>
+              </template>
+
+              <div v-if="additionalAllocations.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
+                <UIcon name="i-lucide-network" class="mx-auto size-12 text-muted-foreground/50" />
+                <p class="mt-3 text-sm font-medium">No additional allocations</p>
+                <p class="mt-1 text-xs text-muted-foreground">Request additional ports for plugins or services.</p>
               </div>
-            </template>
 
-            <div v-if="additionalAllocations.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
-              <UIcon name="i-lucide-network" class="mx-auto size-12 text-muted-foreground/50" />
-              <p class="mt-3 text-sm font-medium">No additional allocations</p>
-              <p class="mt-1 text-xs text-muted-foreground">Request additional ports for plugins or services.</p>
-            </div>
-
-            <div v-else class="overflow-hidden rounded-lg border border-default">
-              <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <span class="col-span-4">IP</span>
-                <span class="col-span-2">Port</span>
-                <span class="col-span-6">Notes</span>
-              </div>
-              <div class="divide-y divide-default">
-                <div
-                  v-for="allocation in additionalAllocations"
-                  :key="allocation.id"
-                  class="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm"
-                >
-                  <span class="col-span-4 font-medium">{{ formatIp(allocation) }}</span>
-                  <span class="col-span-2 text-muted-foreground">{{ allocation.port }}</span>
-                  <span class="col-span-6 text-xs text-muted-foreground">{{ allocation.notes || '—' }}</span>
+              <div v-else class="overflow-hidden rounded-lg border border-default">
+                <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span class="col-span-4">IP</span>
+                  <span class="col-span-2">Port</span>
+                  <span class="col-span-6">Notes</span>
+                </div>
+                <div class="divide-y divide-default">
+                  <div
+                    v-for="allocation in additionalAllocations"
+                    :key="allocation.id"
+                    class="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm"
+                  >
+                    <span class="col-span-4 font-medium">{{ formatIp(allocation) }}</span>
+                    <span class="col-span-2 text-muted-foreground">{{ allocation.port }}</span>
+                    <span class="col-span-6 text-xs text-muted-foreground">{{ allocation.notes || '—' }}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </UCard>
-        </template>
-      </section>
+            </UCard>
+          </template>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <template #right>

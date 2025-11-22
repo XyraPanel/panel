@@ -166,7 +166,8 @@ onBeforeRouteLeave((to, from, next) => {
 <template>
   <UPage>
     <UPageBody>
-      <div class="space-y-4">
+      <UContainer>
+        <div class="space-y-4">
 
         <div class="flex items-center justify-between">
           <div class="flex items-center gap-3">
@@ -240,7 +241,8 @@ onBeforeRouteLeave((to, from, next) => {
         <div class="text-xs text-muted-foreground">
           <p>Press <kbd class="rounded bg-muted px-1.5 py-0.5 font-mono">Ctrl+S</kbd> (or <kbd class="rounded bg-muted px-1.5 py-0.5 font-mono">Cmd+S</kbd> on Mac) to save your changes.</p>
         </div>
-      </div>
+        </div>
+      </UContainer>
     </UPageBody>
   </UPage>
 </template>

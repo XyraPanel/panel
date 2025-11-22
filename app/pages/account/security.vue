@@ -240,203 +240,203 @@ async function disableTotp() {
 
 <template>
   <UPage>
-    <UPageHeader
-      title="Security"
-      description="Harden your account with strong passwords and multifactor authentication."
-    />
+    <UContainer>
+      <UPageHeader
+        title="Security"
+        description="Harden your account with strong passwords and multifactor authentication."
+      />
+    </UContainer>
 
     <UPageBody>
-      <div class="grid gap-6 lg:grid-cols-[2fr,1fr]">
-      <div class="space-y-6">
-        <UCard :ui="{ body: 'space-y-4' }">
-          <template #header>
-            <h2 class="text-lg font-semibold">Password</h2>
-          </template>
-
-          <UAlert v-if="passwordErrorMessage" icon="i-lucide-alert-triangle" color="error" :title="passwordErrorMessage" />
-
-          <UForm
-            :schema="passwordSchema"
-            :state="passwordForm"
-            class="space-y-4"
-            :disabled="isSavingPassword"
-            @submit="handlePasswordSubmit"
-          >
-            <UFormField label="Current password" name="currentPassword" required>
-              <UInput
-                v-model="passwordForm.currentPassword"
-                type="password"
-                autocomplete="current-password"
-                icon="i-lucide-lock"
-                placeholder="Enter current password"
-                class="w-full"
-              />
-            </UFormField>
-            <UFormField label="New password" name="newPassword" required>
-              <UInput
-                v-model="passwordForm.newPassword"
-                type="password"
-                autocomplete="new-password"
-                icon="i-lucide-key"
-                placeholder="Enter new password"
-                class="w-full"
-              />
-              <template #help>
-                {{ passwordStrengthHint }}
+      <UContainer>
+        <div class="space-y-6">
               </template>
-            </UFormField>
-            <UFormField label="Confirm password" name="confirmPassword" required>
-              <UInput
-                v-model="passwordForm.confirmPassword"
-                type="password"
-                autocomplete="new-password"
-                icon="i-lucide-shield-check"
-                placeholder="Confirm new password"
-                class="w-full"
-              />
-            </UFormField>
-            <div class="flex items-center gap-2">
-              <UButton
-                type="submit"
-                color="primary"
-                variant="subtle"
-                icon="i-lucide-save"
-                :loading="isSavingPassword"
-                :disabled="isSavingPassword || !passwordIsValid"
+
+              <UAlert v-if="passwordErrorMessage" icon="i-lucide-alert-triangle" color="error" :title="passwordErrorMessage" />
+
+              <UForm
+                :schema="passwordSchema"
+                :state="passwordForm"
+                class="space-y-4"
+                :disabled="isSavingPassword"
+                @submit="handlePasswordSubmit"
               >
-                Update password
-              </UButton>
-            </div>
-          </UForm>
-        </UCard>
-
-        <UCard :ui="{ body: 'space-y-4' }">
-          <template #header>
-            <div class="flex items-center justify-between">
-              <div>
-                <h2 class="text-lg font-semibold">Two-factor authentication</h2>
-                <p class="text-xs text-muted-foreground">
-                  Protect your account with TOTP-compatible authenticator apps (Google Authenticator, 1Password, etc.).
-                </p>
-              </div>
-              <UBadge :color="totpEnabled ? 'success' : 'warning'" variant="subtle">
-                {{ totpEnabled ? 'Enabled' : 'Disabled' }}
-              </UBadge>
-            </div>
-          </template>
-
-          <UAlert v-if="twoFactorError" icon="i-lucide-alert-triangle" color="error">
-            <template #description>{{ twoFactorError }}</template>
-          </UAlert>
-
-          <div v-if="isAuthLoading" class="space-y-2 text-sm text-muted-foreground">
-            <USkeleton class="h-32 rounded-md" />
-            <USkeleton class="h-10 rounded-md" />
-          </div>
-
-          <template v-else>
-            <div v-if="!totpEnabled && !totpSetup" class="space-y-4">
-              <p class="text-sm text-muted-foreground">
-                Click the button below to generate a TOTP secret and recovery codes. You’ll scan a QR code and confirm with a 6-digit token.
-              </p>
-              <UButton color="primary" variant="subtle" icon="i-lucide-shield" @click="beginTotpSetup">
-                Start setup
-              </UButton>
-            </div>
-
-            <div v-else-if="totpSetup" class="grid gap-4 md:grid-cols-[160px,1fr]">
-              <div class="flex flex-col items-center gap-3 rounded-md border border-default p-4">
-                <ClientOnly>
-                  <Qrcode
-                    v-if="totpSetup.uri"
-                    :value="totpSetup.uri"
-                    :width="120"
-                    :height="120"
-                    :margin="1"
-                    class="rounded-md"
-                  />
-                </ClientOnly>
-                <p class="text-xs text-muted-foreground text-center">
-                  Scan this QR code or use the secret below.
-                </p>
-                <code class="break-all rounded bg-muted px-2 py-1 text-xs text-muted-foreground">
-                  {{ totpSetup.secret }}
-                </code>
-              </div>
-
-              <div class="space-y-3">
-                <UFormField label="Authenticator code" name="verificationCode" required>
+                <UFormField label="Current password" name="currentPassword" required>
                   <UInput
-                    v-model="verificationCode"
-                    placeholder="Enter 6-digit code"
-                    inputmode="numeric"
-                    maxlength="6"
-                    icon="i-lucide-smartphone"
+                    v-model="passwordForm.currentPassword"
+                    type="password"
+                    autocomplete="current-password"
+                    icon="i-lucide-lock"
+                    placeholder="Enter current password"
                     class="w-full"
-                    :disabled="verifyingToken"
+                  />
+                </UFormField>
+                <UFormField label="New password" name="newPassword" required>
+                  <UInput
+                    v-model="passwordForm.newPassword"
+                    type="password"
+                    autocomplete="new-password"
+                    icon="i-lucide-key"
+                    placeholder="Enter new password"
+                    class="w-full"
                   />
                   <template #help>
-                    Enter the code from your authenticator app
+                    {{ passwordStrengthHint }}
                   </template>
                 </UFormField>
-                <UButton
-                  color="primary"
-                  variant="subtle"
-                  icon="i-lucide-check-circle"
-                  :loading="verifyingToken"
-                  :disabled="verifyingToken || verificationCode.length < 6"
-                  @click="verifyTotp"
-                >
-                  Verify & Enable
-                </UButton>
-                <div>
-                  <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recovery tokens</h3>
-                  <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                    <code v-for="token in totpSetup.recoveryTokens" :key="token"
-                      class="rounded bg-muted px-2 py-1">
-                      {{ token }}
+                <UFormField label="Confirm password" name="confirmPassword" required>
+                  <UInput
+                    v-model="passwordForm.confirmPassword"
+                    type="password"
+                    autocomplete="new-password"
+                    icon="i-lucide-shield-check"
+                    placeholder="Confirm new password"
+                    class="w-full"
+                  />
+                </UFormField>
+                <div class="flex items-center gap-2">
+                  <UButton
+                    type="submit"
+                    color="primary"
+                    variant="subtle"
+                    icon="i-lucide-save"
+                    :loading="isSavingPassword"
+                    :disabled="isSavingPassword || !passwordIsValid"
+                  >
+                    Update password
+                  </UButton>
+                </div>
+              </UForm>
+            </UCard>
+
+            <UCard :ui="{ body: 'space-y-4' }">
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <div>
+                    <h2 class="text-lg font-semibold">Two-factor authentication</h2>
+                    <p class="text-xs text-muted-foreground">
+                      Protect your account with TOTP-compatible authenticator apps (Google Authenticator, 1Password, etc.).
+                    </p>
+                  </div>
+                  <UBadge :color="totpEnabled ? 'success' : 'warning'" variant="subtle">
+                    {{ totpEnabled ? 'Enabled' : 'Disabled' }}
+                  </UBadge>
+                </div>
+              </template>
+
+              <UAlert v-if="twoFactorError" icon="i-lucide-alert-triangle" color="error">
+                <template #description>{{ twoFactorError }}</template>
+              </UAlert>
+
+              <div v-if="isAuthLoading" class="space-y-2 text-sm text-muted-foreground">
+                <USkeleton class="h-32 rounded-md" />
+                <USkeleton class="h-10 rounded-md" />
+              </div>
+
+              <template v-else>
+                <div v-if="!totpEnabled && !totpSetup" class="space-y-4">
+                  <p class="text-sm text-muted-foreground">
+                    Click the button below to generate a TOTP secret and recovery codes. You’ll scan a QR code and confirm with a 6-digit token.
+                  </p>
+                  <UButton color="primary" variant="subtle" icon="i-lucide-shield" @click="beginTotpSetup">
+                    Start setup
+                  </UButton>
+                </div>
+
+                <div v-else-if="totpSetup" class="grid gap-4 md:grid-cols-[160px,1fr]">
+                  <div class="flex flex-col items-center gap-3 rounded-md border border-default p-4">
+                    <ClientOnly>
+                      <Qrcode
+                        v-if="totpSetup.uri"
+                        :value="totpSetup.uri"
+                        :width="120"
+                        :height="120"
+                        :margin="1"
+                        class="rounded-md"
+                      />
+                    </ClientOnly>
+                    <p class="text-xs text-muted-foreground text-center">
+                      Scan this QR code or use the secret below.
+                    </p>
+                    <code class="break-all rounded bg-muted px-2 py-1 text-xs text-muted-foreground">
+                      {{ totpSetup.secret }}
                     </code>
                   </div>
-                  <p class="mt-2 text-[11px] text-muted-foreground">Save these codes in a secure password manager. Each token can be used once.</p>
+
+                  <div class="space-y-3">
+                    <UFormField label="Authenticator code" name="verificationCode" required>
+                      <UInput
+                        v-model="verificationCode"
+                        placeholder="Enter 6-digit code"
+                        inputmode="numeric"
+                        maxlength="6"
+                        icon="i-lucide-smartphone"
+                        class="w-full"
+                        :disabled="verifyingToken"
+                      />
+                      <template #help>
+                        Enter the code from your authenticator app
+                      </template>
+                    </UFormField>
+                    <UButton
+                      color="primary"
+                      variant="subtle"
+                      icon="i-lucide-check-circle"
+                      :loading="verifyingToken"
+                      :disabled="verifyingToken || verificationCode.length < 6"
+                      @click="verifyTotp"
+                    >
+                      Verify & Enable
+                    </UButton>
+                    <div>
+                      <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recovery tokens</h3>
+                      <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                        <code v-for="token in totpSetup.recoveryTokens" :key="token"
+                          class="rounded bg-muted px-2 py-1">
+                          {{ token }}
+                        </code>
+                      </div>
+                      <p class="mt-2 text-[11px] text-muted-foreground">Save these codes in a secure password manager. Each token can be used once.</p>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div v-else>
-              <p class="text-sm text-muted-foreground">
-                Two-factor authentication is active. You’ll be prompted for a 6-digit code (or recovery token) on new logins.
-              </p>
+                <div v-else>
+                  <p class="text-sm text-muted-foreground">
+                    Two-factor authentication is active. You’ll be prompted for a 6-digit code (or recovery token) on new logins.
+                  </p>
 
-              <div class="space-y-3">
-                <UFormField label="Password confirmation" name="disablePassword" required>
-                  <UInput
-                    v-model="disableForm.password"
-                    type="password"
-                    placeholder="Enter your password"
-                    icon="i-lucide-lock"
-                    class="w-full"
-                    :disabled="disableSubmitting"
-                  />
-                  <template #help>
-                    Confirm your password to disable two-factor authentication
-                  </template>
-                </UFormField>
-                <UButton
-                  color="error"
-                  variant="subtle"
-                  icon="i-lucide-shield-off"
-                  :loading="disableSubmitting"
-                  :disabled="!disableForm.password"
-                  @click="disableTotp"
-                >
-                  Disable Two-Factor
-                </UButton>
-              </div>
-            </div>
-          </template>
-        </UCard>
-      </div>
-      </div>
+                  <div class="space-y-3">
+                    <UFormField label="Password confirmation" name="disablePassword" required>
+                      <UInput
+                        v-model="disableForm.password"
+                        type="password"
+                        placeholder="Enter your password"
+                        icon="i-lucide-lock"
+                        class="w-full"
+                        :disabled="disableSubmitting"
+                      />
+                      <template #help>
+                        Confirm your password to disable two-factor authentication
+                      </template>
+                    </UFormField>
+                    <UButton
+                      color="error"
+                      variant="subtle"
+                      icon="i-lucide-shield-off"
+                      :loading="disableSubmitting"
+                      :disabled="!disableForm.password"
+                      @click="disableTotp"
+                    >
+                      Disable Two-Factor
+                    </UButton>
+                  </div>
+                </div>
+              </template>
+            </UCard>
+          </div>
+        </UContainer>
+      </UContainer>
     </UPageBody>
   </UPage>
 </template>

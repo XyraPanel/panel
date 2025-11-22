@@ -108,58 +108,61 @@ function copyToClipboard(text: string) {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <div>
-                <h2 class="text-lg font-semibold">Active keys</h2>
-                <p class="text-xs text-muted-foreground">Existing API keys issued for programmatic access.</p>
-              </div>
-              <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="showCreateModal = true">
-                Create API key
-              </UButton>
-            </div>
-          </template>
-
-          <UEmpty v-if="apiKeys.length === 0" icon="i-lucide-key" title="No API keys"
-            description="Create an API key for external integrations" variant="subtle" />
-
-          <div v-else class="divide-y divide-default">
-            <div v-for="key in apiKeys" :key="key.id" class="flex items-center justify-between gap-4 py-4">
-              <div class="flex-1 space-y-1">
-                <div class="flex items-center gap-2">
-                  <code class="text-sm font-mono">{{ key.identifier }}</code>
-                  <UBadge v-if="key.expiresAt" :color="new Date(key.expiresAt) < new Date() ? 'error' : 'neutral'"
-                    size="xs" variant="soft">
-                    {{ new Date(key.expiresAt) < new Date() ? 'Expired' : 'Active' }} </UBadge>
+      <UContainer>
+        <section class="space-y-6">
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <div>
+                  <h2 class="text-lg font-semibold">Active keys</h2>
+                  <p class="text-xs text-muted-foreground">Existing API keys issued for programmatic access.</p>
                 </div>
-                <p v-if="key.memo" class="text-sm text-muted-foreground">{{ key.memo }}</p>
-                <div class="flex items-center gap-4 text-xs text-muted-foreground">
-                  <span>
-                    Created:
-                    <NuxtTime v-if="key.createdAt" :datetime="key.createdAt" relative class="font-medium" />
-                    <span v-else>Unknown</span>
-                  </span>
-                  <span>
-                    Last used:
-                    <NuxtTime v-if="key.lastUsedAt" :datetime="key.lastUsedAt" relative class="font-medium" />
-                    <span v-else>Never used</span>
-                  </span>
-                  <span v-if="key.expiresAt">
-                    Expires:
-                    <NuxtTime :datetime="key.expiresAt" relative class="font-medium" />
-                  </span>
-                </div>
+                <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="showCreateModal = true">
+                  Create API key
+                </UButton>
               </div>
+            </template>
 
-              <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="sm" @click="handleDelete(key)">
-                Revoke
-              </UButton>
+            <UEmpty v-if="apiKeys.length === 0" icon="i-lucide-key" title="No API keys"
+              description="Create an API key for external integrations" variant="subtle" />
+
+            <div v-else class="divide-y divide-default">
+              <div v-for="key in apiKeys" :key="key.id" class="flex items-center justify-between gap-4 py-4">
+                <div class="flex-1 space-y-1">
+                  <div class="flex items-center gap-2">
+                    <code class="text-sm font-mono">{{ key.identifier }}</code>
+                    <UBadge v-if="key.expiresAt" :color="new Date(key.expiresAt) < new Date() ? 'error' : 'neutral'"
+                      size="xs" variant="soft">
+                      {{ new Date(key.expiresAt) < new Date() ? 'Expired' : 'Active' }}
+                    </UBadge>
+                  </div>
+                  <p v-if="key.memo" class="text-sm text-muted-foreground">{{ key.memo }}</p>
+                  <div class="flex items-center gap-4 text-xs text-muted-foreground">
+                    <span>
+                      Created:
+                      <NuxtTime v-if="key.createdAt" :datetime="key.createdAt" relative class="font-medium" />
+                      <span v-else>Unknown</span>
+                    </span>
+                    <span>
+                      Last used:
+                      <NuxtTime v-if="key.lastUsedAt" :datetime="key.lastUsedAt" relative class="font-medium" />
+                      <span v-else>Never used</span>
+                    </span>
+                    <span v-if="key.expiresAt">
+                      Expires:
+                      <NuxtTime :datetime="key.expiresAt" relative class="font-medium" />
+                    </span>
+                  </div>
+                </div>
+
+                <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="sm" @click="handleDelete(key)">
+                  Revoke
+                </UButton>
+              </div>
             </div>
-          </div>
-        </UCard>
-      </section>
+          </UCard>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <UModal v-model:open="showCreateModal" title="Create API Key">

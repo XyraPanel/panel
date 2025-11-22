@@ -123,7 +123,8 @@ function formatIo(io: number | null): string {
  <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
+      <UContainer>
+        <section class="space-y-6">
         <header class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p class="text-xs text-muted-foreground">Server {{ serverId }} · Settings</p>
@@ -273,7 +274,8 @@ function formatIo(io: number | null): string {
             </UAlert>
           </UCard>
         </template>
-      </section>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <UModal v-model="showReinstallModal">

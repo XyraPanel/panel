@@ -85,150 +85,152 @@ const diskPercent = computed(() => {
 <template>
   <UPage>
     <UPageBody>
-      <ServerStatusBanner
-        :is-installing="false"
-        :is-transferring="false"
-        :is-suspended="false"
-        :is-node-under-maintenance="false"
-      />
+      <UContainer>
+        <ServerStatusBanner
+          :is-installing="false"
+          :is-transferring="false"
+          :is-suspended="false"
+          :is-node-under-maintenance="false"
+        />
 
-      <div class="space-y-4">
+        <div class="space-y-4">
 
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <UBadge :color="getStateColor(serverState)" size="lg">
-              <UIcon :name="getStateIcon(serverState)" :class="{ 'animate-spin': serverState === 'starting' || serverState === 'stopping' }" />
-              <span class="ml-2 capitalize">{{ serverState }}</span>
-            </UBadge>
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <UBadge :color="getStateColor(serverState)" size="lg">
+                <UIcon :name="getStateIcon(serverState)" :class="{ 'animate-spin': serverState === 'starting' || serverState === 'stopping' }" />
+                <span class="ml-2 capitalize">{{ serverState }}</span>
+              </UBadge>
 
-            <UBadge v-if="!connected" color="error" size="sm">
-              <UIcon name="i-lucide-wifi-off" />
-              <span class="ml-1">Disconnected</span>
-            </UBadge>
+              <UBadge v-if="!connected" color="error" size="sm">
+                <UIcon name="i-lucide-wifi-off" />
+                <span class="ml-1">Disconnected</span>
+              </UBadge>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <UButton
+                icon="i-lucide-play"
+                color="success"
+                size="sm"
+                :disabled="!connected || serverState === 'running' || serverState === 'starting'"
+                @click="() => handlePowerAction('start')"
+              >
+                Start
+              </UButton>
+              <UButton
+                icon="i-lucide-rotate-cw"
+                color="warning"
+                size="sm"
+                :disabled="!connected || serverState !== 'running'"
+                @click="() => handlePowerAction('restart')"
+              >
+                Restart
+              </UButton>
+              <UButton
+                icon="i-lucide-square"
+                color="error"
+                size="sm"
+                :disabled="!connected || serverState === 'offline' || serverState === 'stopping'"
+                @click="() => handlePowerAction('stop')"
+              >
+                Stop
+              </UButton>
+              <UButton
+                icon="i-lucide-zap-off"
+                color="error"
+                variant="ghost"
+                size="sm"
+                :disabled="!connected || serverState === 'offline'"
+                @click="() => handlePowerAction('kill')"
+              >
+                Kill
+              </UButton>
+            </div>
           </div>
 
-          <div class="flex items-center gap-2">
-            <UButton
-              icon="i-lucide-play"
-              color="success"
-              size="sm"
-              :disabled="!connected || serverState === 'running' || serverState === 'starting'"
-              @click="() => handlePowerAction('start')"
-            >
-              Start
-            </UButton>
-            <UButton
-              icon="i-lucide-rotate-cw"
-              color="warning"
-              size="sm"
-              :disabled="!connected || serverState !== 'running'"
-              @click="() => handlePowerAction('restart')"
-            >
-              Restart
-            </UButton>
-            <UButton
-              icon="i-lucide-square"
-              color="error"
-              size="sm"
-              :disabled="!connected || serverState === 'offline' || serverState === 'stopping'"
-              @click="() => handlePowerAction('stop')"
-            >
-              Stop
-            </UButton>
-            <UButton
-              icon="i-lucide-zap-off"
-              color="error"
-              variant="ghost"
-              size="sm"
-              :disabled="!connected || serverState === 'offline'"
-              @click="() => handlePowerAction('kill')"
-            >
-              Kill
-            </UButton>
-          </div>
-        </div>
+          <UAlert v-if="wsError" color="error" icon="i-lucide-alert-circle">
+            <template #title>Connection Error</template>
+            <template #description>
+              {{ wsError }}
+            </template>
+            <template #actions>
+              <UButton color="error" variant="ghost" size="xs" @click="reconnect">
+                Reconnect
+              </UButton>
+            </template>
+          </UAlert>
 
-        <UAlert v-if="wsError" color="error" icon="i-lucide-alert-circle">
-          <template #title>Connection Error</template>
-          <template #description>
-            {{ wsError }}
-          </template>
-          <template #actions>
-            <UButton color="error" variant="ghost" size="xs" @click="reconnect">
-              Reconnect
-            </UButton>
-          </template>
-        </UAlert>
+          <UAlert v-else-if="!connected && !wsError" color="warning" icon="i-lucide-wifi-off">
+            <template #title>Connecting...</template>
+            <template #description>
+              Establishing connection to server console
+            </template>
+          </UAlert>
 
-        <UAlert v-else-if="!connected && !wsError" color="warning" icon="i-lucide-wifi-off">
-          <template #title>Connecting...</template>
-          <template #description>
-            Establishing connection to server console
-          </template>
-        </UAlert>
+          <ServerStatsChart v-if="showStats && stats" :stats="stats" :history="statsHistory" />
 
-        <ServerStatsChart v-if="showStats && stats" :stats="stats" :history="statsHistory" />
-
-        <div v-if="showStats && stats" class="grid gap-4 md:grid-cols-2">
-          <UCard>
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted-foreground">Disk Usage</span>
-                <UIcon name="i-lucide-hard-drive" class="size-4 text-primary" />
-              </div>
-              <div class="text-2xl font-bold">{{ formatBytes(stats.diskBytes) }}</div>
-              <UProgress :value="diskPercent" size="xs" />
-            </div>
-          </UCard>
-
-          <UCard>
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted-foreground">Uptime</span>
-                <UIcon name="i-lucide-clock" class="size-4 text-primary" />
-              </div>
-              <div class="text-2xl font-bold">{{ formatUptime(stats.uptime) }}</div>
-            </div>
-          </UCard>
-        </div>
-
-        <UCard>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">Console</h2>
-              <div class="flex items-center gap-2">
-                <UButton
-                  icon="i-lucide-bar-chart-3"
-                  size="xs"
-                  variant="ghost"
-                  :color="showStats ? 'primary' : 'neutral'"
-                  @click="showStats = !showStats"
-                >
-                  Stats
-                </UButton>
-              </div>
-            </div>
-          </template>
-
-          <div class="h-[500px] overflow-hidden rounded-md bg-black">
-            <ClientOnly>
-              <ServerXTerminal
-                :logs="logs"
-                :connected="connected"
-                @command="handleCommand"
-              />
-              <template #fallback>
-                <div class="flex h-full items-center justify-center text-muted-foreground">
-                  <div class="text-center">
-                    <UIcon name="i-lucide-terminal" class="mx-auto size-12 opacity-50" />
-                    <p class="mt-2">Loading terminal...</p>
-                  </div>
+          <div v-if="showStats && stats" class="grid gap-4 md:grid-cols-2">
+            <UCard>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-muted-foreground">Disk Usage</span>
+                  <UIcon name="i-lucide-hard-drive" class="size-4 text-primary" />
                 </div>
-              </template>
-            </ClientOnly>
+                <div class="text-2xl font-bold">{{ formatBytes(stats.diskBytes) }}</div>
+                <UProgress :value="diskPercent" size="xs" />
+              </div>
+            </UCard>
+
+            <UCard>
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-muted-foreground">Uptime</span>
+                  <UIcon name="i-lucide-clock" class="size-4 text-primary" />
+                </div>
+                <div class="text-2xl font-bold">{{ formatUptime(stats.uptime) }}</div>
+              </div>
+            </UCard>
           </div>
-        </UCard>
-      </div>
+
+          <UCard>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Console</h2>
+                <div class="flex items-center gap-2">
+                  <UButton
+                    icon="i-lucide-bar-chart-3"
+                    size="xs"
+                    variant="ghost"
+                    :color="showStats ? 'primary' : 'neutral'"
+                    @click="showStats = !showStats"
+                  >
+                    Stats
+                  </UButton>
+                </div>
+              </div>
+            </template>
+
+            <div class="h-[500px] overflow-hidden rounded-md bg-black">
+              <ClientOnly>
+                <ServerXTerminal
+                  :logs="logs"
+                  :connected="connected"
+                  @command="handleCommand"
+                />
+                <template #fallback>
+                  <div class="flex h-full items-center justify-center text-muted-foreground">
+                    <div class="text-center">
+                      <UIcon name="i-lucide-terminal" class="mx-auto size-12 opacity-50" />
+                      <p class="mt-2">Loading terminal...</p>
+                    </div>
+                  </div>
+                </template>
+              </ClientOnly>
+            </div>
+          </UCard>
+        </div>
+      </UContainer>
     </UPageBody>
 
     <template #right>

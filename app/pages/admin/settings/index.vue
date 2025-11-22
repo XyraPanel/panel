@@ -95,19 +95,21 @@ const currentTabComponent = computed(() => {
 <template>
   <UPage>
     <UPageBody>
-      <div class="space-y-4">
-        <UTabs v-model="activeTab" variant="link" :items="tabItems" class="w-full" />
-        <div v-if="currentTabComponent" key="settings-tab">
-          <component :is="currentTabComponent" />
+      <UContainer>
+        <div class="space-y-4">
+          <UTabs v-model="activeTab" variant="link" :items="tabItems" class="w-full" />
+          <div v-if="currentTabComponent" key="settings-tab">
+            <component :is="currentTabComponent" />
+          </div>
+          <UAlert v-else color="warning" variant="soft" icon="i-lucide-alert-triangle">
+            <template #title>No settings available</template>
+            <template #description>
+              There are no settings sections available for your account. Contact an administrator if you believe this is
+              an error.
+            </template>
+          </UAlert>
         </div>
-        <UAlert v-else color="warning" variant="soft" icon="i-lucide-alert-triangle">
-          <template #title>No settings available</template>
-          <template #description>
-            There are no settings sections available for your account. Contact an administrator if you believe this is
-            an error.
-          </template>
-        </UAlert>
-      </div>
+      </UContainer>
     </UPageBody>
   </UPage>
 </template>

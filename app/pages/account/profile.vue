@@ -149,54 +149,58 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
 
 <template>
   <UPage>
-    <UPageHeader
-      title="Profile"
-      description="Manage your account information."
-    />
+    <UContainer>
+      <UPageHeader
+        title="Profile"
+        description="Manage your account information."
+      />
+    </UContainer>
 
     <UPageBody>
-      <UCard :ui="{ body: 'space-y-4' }">
-        <template #header>
-          <div>
-            <h2 class="text-lg font-semibold">Profile details</h2>
-            <p class="text-sm text-muted-foreground">Keep your account information up to date.</p>
-          </div>
-        </template>
-
-        <div v-if="showSkeleton" class="space-y-3">
-          <USkeleton class="h-10 w-full" />
-          <USkeleton class="h-10 w-full" />
-          <USkeleton class="h-10 w-44" />
-        </div>
-        <template v-else>
-          <UAlert v-if="loadError" color="error" icon="i-lucide-alert-triangle">
-            <template #title>Profile unavailable</template>
-            <template #description>{{ loadError }}</template>
-          </UAlert>
-
-          <UForm
-            :schema="schema"
-            :state="form"
-            class="grid gap-4 md:grid-cols-2"
-            :disabled="isSaving"
-            @submit="handleSubmit"
-          >
-            <UFormField label="Username" name="username" required>
-              <UInput v-model="form.username" placeholder="Username" class="w-full" />
-            </UFormField>
-
-            <UFormField label="Email" name="email" required>
-              <UInput v-model="form.email" type="email" placeholder="name@example.com" class="w-full" />
-            </UFormField>
-
-            <div class="md:col-span-2">
-              <UButton type="submit" variant="subtle" color="primary" :loading="isSaving" :disabled="disableSubmit">
-                Save changes
-              </UButton>
+      <UContainer>
+        <UCard :ui="{ body: 'space-y-4' }">
+          <template #header>
+            <div>
+              <h2 class="text-lg font-semibold">Profile details</h2>
+              <p class="text-sm text-muted-foreground">Keep your account information up to date.</p>
             </div>
-          </UForm>
-        </template>
-      </UCard>
+          </template>
+
+          <div v-if="showSkeleton" class="space-y-3">
+            <USkeleton class="h-10 w-full" />
+            <USkeleton class="h-10 w-full" />
+            <USkeleton class="h-10 w-44" />
+          </div>
+          <template v-else>
+            <UAlert v-if="loadError" color="error" icon="i-lucide-alert-triangle">
+              <template #title>Profile unavailable</template>
+              <template #description>{{ loadError }}</template>
+            </UAlert>
+
+            <UForm
+              :schema="schema"
+              :state="form"
+              class="grid gap-4 md:grid-cols-2"
+              :disabled="isSaving"
+              @submit="handleSubmit"
+            >
+              <UFormField label="Username" name="username" required>
+                <UInput v-model="form.username" placeholder="Username" class="w-full" />
+              </UFormField>
+
+              <UFormField label="Email" name="email" required>
+                <UInput v-model="form.email" type="email" placeholder="name@example.com" class="w-full" />
+              </UFormField>
+
+              <div class="md:col-span-2">
+                <UButton type="submit" variant="subtle" color="primary" :loading="isSaving" :disabled="disableSubmit">
+                  Save changes
+                </UButton>
+              </div>
+            </UForm>
+          </template>
+        </UCard>
+      </UContainer>
     </UPageBody>
   </UPage>
 </template>

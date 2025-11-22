@@ -64,64 +64,66 @@ function formatAction(action: string): string {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <header class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p class="text-xs text-muted-foreground">Server {{ serverId }} · Activity</p>
-            <h1 class="text-xl font-semibold">Audit trail</h1>
-          </div>
-        </header>
-
-        <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
-          <div class="flex items-start gap-2">
-            <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
+      <UContainer>
+        <section class="space-y-6">
+          <header class="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p class="font-medium">Failed to load activity</p>
-              <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
+              <p class="text-xs text-muted-foreground">Server {{ serverId }} · Activity</p>
+              <h1 class="text-xl font-semibold">Audit trail</h1>
+            </div>
+          </header>
+
+          <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
+            <div class="flex items-start gap-2">
+              <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
+              <div>
+                <p class="font-medium">Failed to load activity</p>
+                <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div v-else-if="pending" class="flex items-center justify-center py-12">
-          <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
-        </div>
-
-        <UCard v-else>
-          <template #header>
-            <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">Recent events</h2>
-            </div>
-          </template>
-
-          <div v-if="events.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
-            <UIcon name="i-lucide-activity" class="mx-auto size-12 text-muted-foreground/50" />
-            <p class="mt-3 text-sm font-medium">No activity recorded</p>
-            <p class="mt-1 text-xs text-muted-foreground">Server activity will appear here once actions are performed.</p>
+          <div v-else-if="pending" class="flex items-center justify-center py-12">
+            <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
           </div>
 
-          <ul v-else class="space-y-4">
-            <li
-              v-for="event in events"
-              :key="event.id"
-              class="flex flex-col gap-3 rounded-md border border-default px-4 py-3 lg:flex-row lg:items-center lg:justify-between"
-            >
-              <div class="flex items-start gap-3">
-                <UIcon :name="getActionIcon(event.action)" class="mt-0.5 size-4" :class="`text-${getActionColor(event.action)}`" />
-                <div>
-                  <div class="flex flex-wrap items-center gap-2">
-                    <h3 class="font-semibold">{{ formatAction(event.action) }}</h3>
-                    <UBadge size="xs" :color="getActionColor(event.action)">{{ event.actor }}</UBadge>
+          <UCard v-else>
+            <template #header>
+              <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold">Recent events</h2>
+              </div>
+            </template>
+
+            <div v-if="events.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
+              <UIcon name="i-lucide-activity" class="mx-auto size-12 text-muted-foreground/50" />
+              <p class="mt-3 text-sm font-medium">No activity recorded</p>
+              <p class="mt-1 text-xs text-muted-foreground">Server activity will appear here once actions are performed.</p>
+            </div>
+
+            <ul v-else class="space-y-4">
+              <li
+                v-for="event in events"
+                :key="event.id"
+                class="flex flex-col gap-3 rounded-md border border-default px-4 py-3 lg:flex-row lg:items-center lg:justify-between"
+              >
+                <div class="flex items-start gap-3">
+                  <UIcon :name="getActionIcon(event.action)" class="mt-0.5 size-4" :class="`text-${getActionColor(event.action)}`" />
+                  <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                      <h3 class="font-semibold">{{ formatAction(event.action) }}</h3>
+                      <UBadge size="xs" :color="getActionColor(event.action)">{{ event.actor }}</UBadge>
+                    </div>
+                    <p class="text-sm text-muted-foreground">{{ event.actorType }}</p>
                   </div>
-                  <p class="text-sm text-muted-foreground">{{ event.actorType }}</p>
                 </div>
-              </div>
-              <div class="flex flex-col items-start gap-1 text-xs text-muted-foreground lg:items-end">
-                <span>{{ formatDate(event.occurredAt) }}</span>
-              </div>
-            </li>
-          </ul>
-        </UCard>
-      </section>
+                <div class="flex flex-col items-start gap-1 text-xs text-muted-foreground lg:items-end">
+                  <span>{{ formatDate(event.occurredAt) }}</span>
+                </div>
+              </li>
+            </ul>
+          </UCard>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <template #right>

@@ -136,88 +136,90 @@ function handleFileChange(event: Event) {
 <template>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
-        <div v-if="pending" class="space-y-4">
-          <USkeleton class="h-8 w-64" />
-          <USkeleton class="h-24 w-full" />
-        </div>
+      <UContainer>
+        <section class="space-y-6">
+          <div v-if="pending" class="space-y-4">
+            <USkeleton class="h-8 w-64" />
+            <USkeleton class="h-24 w-full" />
+          </div>
 
-        <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
-          <template #title>Failed to load nest</template>
-          <template #description>{{ error.message }}</template>
-        </UAlert>
+          <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
+            <template #title>Failed to load nest</template>
+            <template #description>{{ error.message }}</template>
+          </UAlert>
 
-        <template v-else-if="nest">
-          <header class="flex flex-wrap items-start justify-between gap-4">
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <UButton icon="i-lucide-arrow-left" size="xs" variant="ghost" to="/admin/nests" />
-                <h1 class="text-xl font-semibold">{{ nest.name }}</h1>
-              </div>
-              <p v-if="nest.description" class="mt-1 text-sm text-muted-foreground">
-                {{ nest.description }}
-              </p>
-              <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                <span>Author: {{ nest.author }}</span>
-                <span>UUID: {{ nest.uuid }}</span>
-              </div>
-            </div>
-            <div class="flex gap-2">
-              <UButton icon="i-lucide-upload" variant="outline" @click="openImportEggModal">
-                Import Egg
-              </UButton>
-              <UButton icon="i-lucide-plus" color="primary" @click="openCreateEggModal">
-                Create Egg
-              </UButton>
-            </div>
-          </header>
-
-          <UCard>
-            <template #header>
-              <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Eggs</h2>
-                <UBadge color="neutral">{{ eggs.length }} total</UBadge>
-              </div>
-            </template>
-
-            <div v-if="eggs.length === 0" class="py-12 text-center">
-              <UIcon name="i-lucide-egg" class="mx-auto size-12 text-muted-foreground opacity-50" />
-              <p class="mt-4 text-sm text-muted-foreground">No eggs in this nest yet</p>
-              <p class="mt-1 text-xs text-muted-foreground">
-                Eggs define specific server types (e.g., Vanilla, Paper, Forge)
-              </p>
-              <UButton class="mt-4" size="sm" @click="openCreateEggModal">Create your first egg</UButton>
-            </div>
-
-            <div v-else class="divide-y divide-default">
-              <div v-for="egg in eggs" :key="egg.id"
-                class="flex items-start justify-between py-4 hover:bg-muted/50 cursor-pointer transition-colors"
-                @click="viewEgg(egg)">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2">
-                    <UIcon name="i-lucide-egg" class="size-4 text-primary" />
-                    <span class="font-medium">{{ egg.name }}</span>
-                  </div>
-                  <p v-if="egg.description" class="mt-1 text-sm text-muted-foreground">
-                    {{ egg.description }}
-                  </p>
-                  <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                    <span class="flex items-center gap-1">
-                      <UIcon name="i-lucide-container" class="size-3" />
-                      {{ egg.dockerImage }}
-                    </span>
-                    <span>Author: {{ egg.author }}</span>
-                  </div>
+          <template v-else-if="nest">
+            <header class="flex flex-wrap items-start justify-between gap-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <UButton icon="i-lucide-arrow-left" size="xs" variant="ghost" to="/admin/nests" />
+                  <h1 class="text-xl font-semibold">{{ nest.name }}</h1>
                 </div>
-
-                <div class="flex items-center gap-2" @click.stop>
-                  <UButton icon="i-lucide-arrow-right" size="xs" variant="ghost" @click="viewEgg(egg)" />
+                <p v-if="nest.description" class="mt-1 text-sm text-muted-foreground">
+                  {{ nest.description }}
+                </p>
+                <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                  <span>Author: {{ nest.author }}</span>
+                  <span>UUID: {{ nest.uuid }}</span>
                 </div>
               </div>
-            </div>
-          </UCard>
-        </template>
-      </section>
+              <div class="flex gap-2">
+                <UButton icon="i-lucide-upload" variant="outline" @click="openImportEggModal">
+                  Import Egg
+                </UButton>
+                <UButton icon="i-lucide-plus" color="primary" @click="openCreateEggModal">
+                  Create Egg
+                </UButton>
+              </div>
+            </header>
+
+            <UCard>
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <h2 class="text-lg font-semibold">Eggs</h2>
+                  <UBadge color="neutral">{{ eggs.length }} total</UBadge>
+                </div>
+              </template>
+
+              <div v-if="eggs.length === 0" class="py-12 text-center">
+                <UIcon name="i-lucide-egg" class="mx-auto size-12 text-muted-foreground opacity-50" />
+                <p class="mt-4 text-sm text-muted-foreground">No eggs in this nest yet</p>
+                <p class="mt-1 text-xs text-muted-foreground">
+                  Eggs define specific server types (e.g., Vanilla, Paper, Forge)
+                </p>
+                <UButton class="mt-4" size="sm" @click="openCreateEggModal">Create your first egg</UButton>
+              </div>
+
+              <div v-else class="divide-y divide-default">
+                <div v-for="egg in eggs" :key="egg.id"
+                  class="flex items-start justify-between py-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                  @click="viewEgg(egg)">
+                  <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                      <UIcon name="i-lucide-egg" class="size-4 text-primary" />
+                      <span class="font-medium">{{ egg.name }}</span>
+                    </div>
+                    <p v-if="egg.description" class="mt-1 text-sm text-muted-foreground">
+                      {{ egg.description }}
+                    </p>
+                    <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                      <span class="flex items-center gap-1">
+                        <UIcon name="i-lucide-container" class="size-3" />
+                        {{ egg.dockerImage }}
+                      </span>
+                      <span>Author: {{ egg.author }}</span>
+                    </div>
+                  </div>
+
+                  <div class="flex items-center gap-2" @click.stop>
+                    <UButton icon="i-lucide-arrow-right" size="xs" variant="ghost" @click="viewEgg(egg)" />
+                  </div>
+                </div>
+              </div>
+            </UCard>
+          </template>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <UModal v-model:open="showCreateEggModal" title="Create Egg" description="Create a new server type configuration">

@@ -1080,7 +1080,8 @@ const isEditorDirty = computed(() => {
   <div>
   <UPage>
     <UPageBody>
-      <section class="space-y-6">
+      <UContainer>
+        <section class="space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <p class="text-xs text-muted-foreground">Server {{ serverId }} · Directory</p>
@@ -1360,7 +1361,8 @@ const isEditorDirty = computed(() => {
             </div>
           </div>
         </UCard>
-      </section>
+        </section>
+      </UContainer>
     </UPageBody>
 
     <template #right>

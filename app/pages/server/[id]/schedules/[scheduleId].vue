@@ -190,153 +190,153 @@ onMounted(() => {
 <template>
   <UPage>
     <UPageBody>
-      <div class="space-y-6">
+      <UContainer>
+        <div class="space-y-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <UButton
+                icon="i-lucide-arrow-left"
+                variant="ghost"
+                color="neutral"
+                :to="`/server/${serverId}/schedules`"
+              >
+                Back
+              </UButton>
+              <div>
+                <h1 class="text-xl font-semibold">{{ isNew ? 'Create Schedule' : 'Edit Schedule' }}</h1>
+                <p class="text-xs text-muted-foreground">Configure automated tasks for your server</p>
+              </div>
+            </div>
 
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <UButton
-              icon="i-lucide-arrow-left"
-              variant="ghost"
-              color="neutral"
-              :to="`/server/${serverId}/schedules`"
-            >
-              Back
-            </UButton>
-            <div>
-              <h1 class="text-xl font-semibold">{{ isNew ? 'Create Schedule' : 'Edit Schedule' }}</h1>
-              <p class="text-xs text-muted-foreground">Configure automated tasks for your server</p>
+            <div class="flex items-center gap-2">
+              <UButton
+                v-if="!isNew"
+                icon="i-lucide-trash-2"
+                color="error"
+                variant="ghost"
+                @click="deleteSchedule"
+              >
+                Delete
+              </UButton>
+              <UButton
+                icon="i-lucide-save"
+                color="primary"
+                :loading="saving"
+                :disabled="loading"
+                @click="saveSchedule"
+              >
+                {{ isNew ? 'Create' : 'Save' }}
+              </UButton>
             </div>
           </div>
 
-          <div class="flex items-center gap-2">
-            <UButton
-              v-if="!isNew"
-              icon="i-lucide-trash-2"
-              color="error"
-              variant="ghost"
-              @click="deleteSchedule"
-            >
-              Delete
-            </UButton>
-            <UButton
-              icon="i-lucide-save"
-              color="primary"
-              :loading="saving"
-              :disabled="loading"
-              @click="saveSchedule"
-            >
-              {{ isNew ? 'Create' : 'Save' }}
-            </UButton>
+          <UAlert v-if="error" color="error" icon="i-lucide-alert-circle" :title="error" />
+
+          <div v-if="loading" class="flex items-center justify-center rounded-lg border border-default bg-background p-12">
+            <div class="text-center">
+              <UIcon name="i-lucide-loader-2" class="mx-auto size-8 animate-spin text-primary" />
+              <p class="mt-2 text-sm text-muted-foreground">Loading schedule...</p>
+            </div>
           </div>
-        </div>
 
-        <UAlert v-if="error" color="error" icon="i-lucide-alert-circle" :title="error" />
+          <div v-else class="space-y-6">
+            <UCard>
+              <template #header>
+                <h2 class="text-lg font-semibold">Basic Information</h2>
+              </template>
 
-        <div v-if="loading" class="flex items-center justify-center rounded-lg border border-default bg-background p-12">
-          <div class="text-center">
-            <UIcon name="i-lucide-loader-2" class="mx-auto size-8 animate-spin text-primary" />
-            <p class="mt-2 text-sm text-muted-foreground">Loading schedule...</p>
-          </div>
-        </div>
+              <div class="space-y-4">
+                <div>
+                  <label class="mb-2 block text-sm font-medium">Schedule Name</label>
+                  <UInput
+                    v-model="form.name"
+                    placeholder="e.g., Daily Restart"
+                    size="lg"
+                  />
+                </div>
 
-        <div v-else class="space-y-6">
-
-          <UCard>
-            <template #header>
-              <h2 class="text-lg font-semibold">Basic Information</h2>
-            </template>
-
-            <div class="space-y-4">
-              <div>
-                <label class="mb-2 block text-sm font-medium">Schedule Name</label>
-                <UInput
-                  v-model="form.name"
-                  placeholder="e.g., Daily Restart"
-                  size="lg"
-                />
-              </div>
-
-              <div>
-                <label class="mb-2 block text-sm font-medium">Action Type</label>
-                <div class="grid gap-3 md:grid-cols-3">
-                  <div
-                    v-for="action in actionTypes"
-                    :key="action.value"
-                    class="cursor-pointer rounded-lg border p-4 transition"
-                    :class="form.action === action.value ? 'border-primary bg-primary/5' : 'border-default hover:border-primary/50'"
-                    @click="form.action = action.value"
-                  >
-                    <div class="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        :checked="form.action === action.value"
-                        class="text-primary"
-                      >
-                      <span class="font-medium">{{ action.label }}</span>
+                <div>
+                  <label class="mb-2 block text-sm font-medium">Action Type</label>
+                  <div class="grid gap-3 md:grid-cols-3">
+                    <div
+                      v-for="action in actionTypes"
+                      :key="action.value"
+                      class="cursor-pointer rounded-lg border p-4 transition"
+                      :class="form.action === action.value ? 'border-primary bg-primary/5' : 'border-default hover:border-primary/50'"
+                      @click="form.action = action.value"
+                    >
+                      <div class="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          :checked="form.action === action.value"
+                          class="text-primary"
+                        >
+                        <span class="font-medium">{{ action.label }}</span>
+                      </div>
+                      <p class="mt-1 text-xs text-muted-foreground">{{ action.description }}</p>
                     </div>
-                    <p class="mt-1 text-xs text-muted-foreground">{{ action.description }}</p>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <USwitch v-model="form.enabled" />
+                  <label class="text-sm font-medium">Enable this schedule</label>
+                </div>
+              </div>
+            </UCard>
+
+            <UCard>
+              <template #header>
+                <h2 class="text-lg font-semibold">Schedule Timing</h2>
+              </template>
+
+              <div class="space-y-4">
+                <div>
+                  <label class="mb-2 block text-sm font-medium">Cron Expression</label>
+                  <UInput
+                    v-model="form.cron"
+                    placeholder="* * * * *"
+                    size="lg"
+                    class="font-mono"
+                  />
+                  <p class="mt-2 text-xs text-muted-foreground">
+                    {{ parseCron(form.cron) }}
+                  </p>
+                </div>
+
+                <div>
+                  <label class="mb-2 block text-sm font-medium">Quick Presets</label>
+                  <div class="grid gap-2 md:grid-cols-3">
+                    <UButton
+                      v-for="preset in cronPresets"
+                      :key="preset.value"
+                      variant="outline"
+                      size="sm"
+                      block
+                      @click="form.cron = preset.value"
+                    >
+                      {{ preset.label }}
+                    </UButton>
+                  </div>
+                </div>
+
+                <div class="rounded-lg border border-default bg-muted/50 p-4">
+                  <h3 class="mb-2 text-sm font-semibold">Cron Format</h3>
+                  <div class="space-y-1 text-xs text-muted-foreground">
+                    <p><code class="rounded bg-background px-1 py-0.5">* * * * *</code></p>
+                    <p>│ │ │ │ │</p>
+                    <p>│ │ │ │ └─ Day of week (0-7, Sunday = 0 or 7)</p>
+                    <p>│ │ │ └─── Month (1-12)</p>
+                    <p>│ │ └───── Day of month (1-31)</p>
+                    <p>│ └─────── Hour (0-23)</p>
+                    <p>└───────── Minute (0-59)</p>
                   </div>
                 </div>
               </div>
-
-              <div class="flex items-center gap-2">
-                <USwitch v-model="form.enabled" />
-                <label class="text-sm font-medium">Enable this schedule</label>
-              </div>
-            </div>
-          </UCard>
-
-          <UCard>
-            <template #header>
-              <h2 class="text-lg font-semibold">Schedule Timing</h2>
-            </template>
-
-            <div class="space-y-4">
-              <div>
-                <label class="mb-2 block text-sm font-medium">Cron Expression</label>
-                <UInput
-                  v-model="form.cron"
-                  placeholder="* * * * *"
-                  size="lg"
-                  class="font-mono"
-                />
-                <p class="mt-2 text-xs text-muted-foreground">
-                  {{ parseCron(form.cron) }}
-                </p>
-              </div>
-
-              <div>
-                <label class="mb-2 block text-sm font-medium">Quick Presets</label>
-                <div class="grid gap-2 md:grid-cols-3">
-                  <UButton
-                    v-for="preset in cronPresets"
-                    :key="preset.value"
-                    variant="outline"
-                    size="sm"
-                    block
-                    @click="form.cron = preset.value"
-                  >
-                    {{ preset.label }}
-                  </UButton>
-                </div>
-              </div>
-
-              <div class="rounded-lg border border-default bg-muted/50 p-4">
-                <h3 class="mb-2 text-sm font-semibold">Cron Format</h3>
-                <div class="space-y-1 text-xs text-muted-foreground">
-                  <p><code class="rounded bg-background px-1 py-0.5">* * * * *</code></p>
-                  <p>│ │ │ │ │</p>
-                  <p>│ │ │ │ └─ Day of week (0-7, Sunday = 0 or 7)</p>
-                  <p>│ │ │ └─── Month (1-12)</p>
-                  <p>│ │ └───── Day of month (1-31)</p>
-                  <p>│ └─────── Hour (0-23)</p>
-                  <p>└───────── Minute (0-59)</p>
-                </div>
-              </div>
-            </div>
-          </UCard>
+            </UCard>
+          </div>
         </div>
-      </div>
+      </UContainer>
     </UPageBody>
   </UPage>
 </template>

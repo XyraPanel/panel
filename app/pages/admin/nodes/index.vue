@@ -247,75 +247,77 @@ watch(
   <div>
     <UPage>
       <UPageBody>
-        <section class="space-y-6">
-          <UCard :ui="{ body: 'space-y-3' }">
-            <template #header>
-              <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Node inventory</h2>
-                <UButton icon="i-lucide-plus" color="primary" variant="soft" @click="showCreate = true">
-                  Add node
-                </UButton>
-              </div>
-            </template>
-
-            <div v-if="pending" class="flex flex-col gap-3">
-              <USkeleton class="h-16" repeat="3" />
-            </div>
-            <div v-else-if="error"
-              class="rounded-md border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-              Unable to load nodes: {{ (error as Error).message || 'unknown error' }}
-            </div>
-            <div v-else>
-              <div v-if="nodes.length === 0"
-                class="rounded-md border border-dashed border-default p-6 text-center text-sm text-muted-foreground">
-                No nodes linked yet. Add one to start syncing with Wings.
-              </div>
-              <div v-else class="overflow-hidden rounded-lg border border-default">
-                <div
-                  class="grid grid-cols-12 bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  <span class="col-span-4">Name</span>
-                  <span class="col-span-4">Endpoint</span>
-                  <span class="col-span-2">Token</span>
-                  <span class="col-span-2 text-right">Actions</span>
+        <UContainer>
+          <section class="space-y-6">
+            <UCard :ui="{ body: 'space-y-3' }">
+              <template #header>
+                <div class="flex items-center justify-between">
+                  <h2 class="text-lg font-semibold">Node inventory</h2>
+                  <UButton icon="i-lucide-plus" color="primary" variant="soft" @click="showCreate = true">
+                    Add node
+                  </UButton>
                 </div>
-                <div class="divide-y divide-default">
-                  <div v-for="node in nodes" :key="node.id"
-                    class="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm">
-                    <div class="col-span-4 space-y-1">
-                      <NuxtLink :to="`/admin/nodes/${node.id}`"
-                        class="text-sm font-semibold text-primary hover:underline">
-                        {{ node.name }}
-                      </NuxtLink>
-                      <p class="text-xs text-muted-foreground">ID: {{ node.id }}</p>
-                      <p v-if="node.description" class="text-xs text-muted-foreground">{{ node.description }}</p>
-                    </div>
-                    <div class="col-span-4 space-y-1 text-xs text-muted-foreground">
-                      <code class="block truncate">{{ node.baseURL }}</code>
-                      <span>{{ node.allowInsecure ? 'TLS verification disabled' : 'TLS verification enforced' }}</span>
-                      <span>Updated {{ formatUpdatedAt(node.updatedAt) }}</span>
-                    </div>
-                    <div class="col-span-2">
-                      <UBadge :color="node.hasToken ? 'primary' : 'warning'" size="xs">
-                        {{ node.hasToken ? 'Configured' : 'Missing token' }}
-                      </UBadge>
-                    </div>
-                    <div class="col-span-2 flex justify-end gap-2">
-                      <UButton icon="i-lucide-activity" size="xs" variant="ghost"
-                        :loading="systemModal.loading && systemModal.nodeId === node.id"
-                        @click="handleViewSystemInfo(node)" />
-                      <UButton icon="i-lucide-download" size="xs" variant="ghost"
-                        :loading="loadingConfigFor === node.id" @click="handleDownloadConfiguration(node)" />
-                      <UButton icon="i-lucide-terminal" size="xs" color="primary" variant="ghost"
-                        :loading="issuingFor === node.id" @click="handleIssueToken(node)" />
-                      <UButton icon="i-lucide-trash" size="xs" color="error" variant="ghost"
-                        @click="handleDeleteNode(node.id)" />
+              </template>
+
+              <div v-if="pending" class="flex flex-col gap-3">
+                <USkeleton class="h-16" repeat="3" />
+              </div>
+              <div v-else-if="error"
+                class="rounded-md border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+                Unable to load nodes: {{ (error as Error).message || 'unknown error' }}
+              </div>
+              <div v-else>
+                <div v-if="nodes.length === 0"
+                  class="rounded-md border border-dashed border-default p-6 text-center text-sm text-muted-foreground">
+                  No nodes linked yet. Add one to start syncing with Wings.
+                </div>
+                <div v-else class="overflow-hidden rounded-lg border border-default">
+                  <div
+                    class="grid grid-cols-12 bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <span class="col-span-4">Name</span>
+                    <span class="col-span-4">Endpoint</span>
+                    <span class="col-span-2">Token</span>
+                    <span class="col-span-2 text-right">Actions</span>
+                  </div>
+                  <div class="divide-y divide-default">
+                    <div v-for="node in nodes" :key="node.id"
+                      class="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm">
+                      <div class="col-span-4 space-y-1">
+                        <NuxtLink :to="`/admin/nodes/${node.id}`"
+                          class="text-sm font-semibold text-primary hover:underline">
+                          {{ node.name }}
+                        </NuxtLink>
+                        <p class="text-xs text-muted-foreground">ID: {{ node.id }}</p>
+                        <p v-if="node.description" class="text-xs text-muted-foreground">{{ node.description }}</p>
+                      </div>
+                      <div class="col-span-4 space-y-1 text-xs text-muted-foreground">
+                        <code class="block truncate">{{ node.baseURL }}</code>
+                        <span>{{ node.allowInsecure ? 'TLS verification disabled' : 'TLS verification enforced' }}</span>
+                        <span>Updated {{ formatUpdatedAt(node.updatedAt) }}</span>
+                      </div>
+                      <div class="col-span-2">
+                        <UBadge :color="node.hasToken ? 'primary' : 'warning'" size="xs">
+                          {{ node.hasToken ? 'Configured' : 'Missing token' }}
+                        </UBadge>
+                      </div>
+                      <div class="col-span-2 flex justify-end gap-2">
+                        <UButton icon="i-lucide-activity" size="xs" variant="ghost"
+                          :loading="systemModal.loading && systemModal.nodeId === node.id"
+                          @click="handleViewSystemInfo(node)" />
+                        <UButton icon="i-lucide-download" size="xs" variant="ghost"
+                          :loading="loadingConfigFor === node.id" @click="handleDownloadConfiguration(node)" />
+                        <UButton icon="i-lucide-terminal" size="xs" color="primary" variant="ghost"
+                          :loading="issuingFor === node.id" @click="handleIssueToken(node)" />
+                        <UButton icon="i-lucide-trash" size="xs" color="error" variant="ghost"
+                          @click="handleDeleteNode(node.id)" />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </UCard>
-        </section>
+            </UCard>
+          </section>
+        </UContainer>
       </UPageBody>
     </UPage>
 

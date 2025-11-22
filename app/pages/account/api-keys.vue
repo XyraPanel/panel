@@ -183,13 +183,15 @@ function formatDate(date: Date | string | number | null | undefined) {
 
 <template>
   <UPage>
-    <UPageHeader title="API Keys" description="Manage your API keys for programmatic access">
-      <template #links>
-        <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
-          Create API Key
-        </UButton>
-      </template>
-    </UPageHeader>
+    <UContainer>
+      <UPageHeader title="API Keys" description="Manage your API keys for programmatic access">
+        <template #links>
+          <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
+            Create API Key
+          </UButton>
+        </template>
+      </UPageHeader>
+    </UContainer>
 
     <UModal
       v-model:open="showCreateModal"
@@ -308,66 +310,68 @@ function formatDate(date: Date | string | number | null | undefined) {
     </UModal>
 
     <UPageBody>
-      <UCard :ui="{ body: 'space-y-3' }">
-        <template #header>
-          <div class="space-y-1">
-            <h2 class="text-lg font-semibold">Active API Keys</h2>
-            <p class="text-sm text-muted-foreground">Manage existing keys or create new ones for API access.</p>
+      <UContainer>
+        <UCard :ui="{ body: 'space-y-3' }">
+          <template #header>
+            <div class="space-y-1">
+              <h2 class="text-lg font-semibold">Active API Keys</h2>
+              <p class="text-sm text-muted-foreground">Manage existing keys or create new ones for API access.</p>
+            </div>
+          </template>
+          <UAlert v-if="loadError" color="error" icon="i-lucide-alert-triangle" class="mb-4">
+            <template #title>Unable to load keys</template>
+            <template #description>{{ loadError }}</template>
+          </UAlert>
+
+          <div v-if="showSkeleton" class="space-y-3">
+            <USkeleton class="h-16 w-full rounded-md" />
+            <USkeleton class="h-16 w-full rounded-md" />
           </div>
-        </template>
-        <UAlert v-if="loadError" color="error" icon="i-lucide-alert-triangle" class="mb-4">
-          <template #title>Unable to load keys</template>
-          <template #description>{{ loadError }}</template>
-        </UAlert>
 
-        <div v-if="showSkeleton" class="space-y-3">
-          <USkeleton class="h-16 w-full rounded-md" />
-          <USkeleton class="h-16 w-full rounded-md" />
-        </div>
+          <UEmpty
+            v-else-if="apiKeys.length === 0"
+            icon="i-lucide-key"
+            title="No API keys yet"
+            description="Create an API key to access the panel programmatically"
+          />
 
-        <UEmpty
-          v-else-if="apiKeys.length === 0"
-          icon="i-lucide-key"
-          title="No API keys yet"
-          description="Create an API key to access the panel programmatically"
-        />
-
-        <div v-else class="divide-y">
-          <div v-for="key in apiKeys" :key="key.identifier" class="py-4 flex items-center justify-between">
-            <div class="flex-1">
-              <div class="flex items-center gap-2">
-                <code class="text-sm font-mono">{{ key.identifier }}</code>
-                <UBadge v-if="(key as any).allowed_ips?.length" color="primary" variant="soft">
-                  IP Restricted
-                </UBadge>
-              </div>
-              <p v-if="key.description" class="text-sm text-muted-foreground mt-1">
-                {{ key.description }}
-              </p>
-              <div class="flex gap-4 mt-2 text-xs text-muted-foreground">
-                <span>Created: {{ formatDate(key.created_at) }}</span>
-                <span v-if="key.last_used_at">Last used: {{ formatDate(key.last_used_at) }}</span>
-              </div>
-              <div v-if="(key as any).allowed_ips?.length" class="mt-2">
-                <p class="text-xs text-muted-foreground">Allowed IPs:</p>
-                <div class="flex flex-wrap gap-1 mt-1">
-                  <UBadge v-for="ip in (key as any).allowed_ips" :key="ip" size="xs" variant="soft">
-                    {{ ip }}
+          <div v-else class="divide-y">
+            <div v-for="key in apiKeys" :key="key.identifier" class="py-4 flex items-center justify-between">
+              <div class="flex-1">
+                <div class="flex items-center gap-2">
+                  <code class="text-sm font-mono">{{ key.identifier }}</code>
+                  <UBadge v-if="(key as any).allowed_ips?.length" color="primary" variant="soft">
+                    IP Restricted
                   </UBadge>
                 </div>
+                <p v-if="key.description" class="text-sm text-muted-foreground mt-1">
+                  {{ key.description }}
+                </p>
+                <div class="flex gap-4 mt-2 text-xs text-muted-foreground">
+                  <span>Created: {{ formatDate(key.created_at) }}</span>
+                  <span v-if="key.last_used_at">Last used: {{ formatDate(key.last_used_at) }}</span>
+                </div>
+                <div v-if="(key as any).allowed_ips?.length" class="mt-2">
+                  <p class="text-xs text-muted-foreground">Allowed IPs:</p>
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    <UBadge v-for="ip in (key as any).allowed_ips" :key="ip" size="xs" variant="soft">
+                      {{ ip }}
+                    </UBadge>
+                  </div>
+                </div>
               </div>
+              <UButton
+                icon="i-lucide-trash-2"
+                color="error"
+                variant="ghost"
+                size="sm"
+                aria-label="Delete API key"
+                @click="deleteKey(key.identifier)"
+              />
             </div>
-            <UButton
-              icon="i-lucide-trash-2"
-              color="error"
-              variant="ghost"
-              size="sm"
-              aria-label="Delete API key"
-              @click="deleteKey(key.identifier)"
-            />
           </div>
-        </div>
-      </UCard>
+        </UCard>
+      </UContainer>
     </UPageBody>
   </UPage>
 </template>
