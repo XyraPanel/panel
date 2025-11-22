@@ -55,8 +55,12 @@ const isAdminUser = computed(() => isAdminRef.value)
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-muted/30">
-    <UDashboardSidebar collapsible resizable :ui="{ footer: 'border-t border-default' }">
+  <UDashboardGroup class="min-h-screen bg-muted/30" storage="local" storage-key="client-dashboard">
+    <UDashboardSidebar
+      collapsible
+      :toggle="{ icon: 'i-lucide-menu', label: 'Navigation', color: 'neutral', variant: 'ghost' }"
+      :ui="{ footer: 'border-t border-default' }"
+    >
       <template #header="{ collapsed }">
         <NuxtLink v-if="!collapsed" to="/" class="group inline-flex items-center gap-2">
           <h1 class="text-lg font-semibold text-muted-foreground group-hover:text-foreground transition">
@@ -100,26 +104,28 @@ const isAdminUser = computed(() => isAdminRef.value)
       </template>
     </UDashboardSidebar>
 
-    <div class="flex flex-1 flex-col">
-      <header class="border-b border-default bg-background/80 backdrop-blur">
-        <div class="mx-auto flex w-full max-w-6xl items-center justify-end gap-4 px-6 py-4">
-          <div class="flex items-center gap-2">
-            <UButton v-if="isAdminUser" icon="i-lucide-shield" variant="ghost" color="error" to="/admin">
-              Admin
-            </UButton>
-            <UButton icon="i-lucide-log-out" color="primary" variant="subtle" :loading="signOutLoading"
-              @click="handleSignOut">
-              Sign out
-            </UButton>
-          </div>
-        </div>
-      </header>
+    <UDashboardPanel :ui="{ body: 'flex flex-1 flex-col p-0' }">
+      <template #body>
+        <UDashboardNavbar>
+          <template #right>
+            <div class="flex items-center gap-2">
+              <UButton v-if="isAdminUser" icon="i-lucide-shield" variant="ghost" color="error" to="/admin">
+                Admin
+              </UButton>
+              <UButton icon="i-lucide-log-out" color="primary" variant="subtle" :loading="signOutLoading"
+                @click="handleSignOut">
+                Sign out
+              </UButton>
+            </div>
+          </template>
+        </UDashboardNavbar>
 
-      <main class="flex-1 overflow-y-auto">
-        <div class="mx-auto w-full max-w-6xl px-6 py-8">
-          <slot />
-        </div>
-      </main>
-    </div>
-  </div>
+        <main class="flex-1 overflow-y-auto">
+          <div class="mx-auto w-full max-w-6xl px-6 py-8">
+            <slot />
+          </div>
+        </main>
+      </template>
+    </UDashboardPanel>
+  </UDashboardGroup>
 </template>

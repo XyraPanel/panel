@@ -221,15 +221,22 @@ const accountMenuItems = computed(() => [
 </script>
 
 <template>
-  <UDashboardGroup class="min-h-screen bg-muted/15">
-    <UDashboardSidebar collapsible resizable :ui="{ footer: 'border-t border-default' }">
+  <UDashboardGroup class="min-h-screen bg-muted/15" storage="local" storage-key="admin-dashboard">
+    <UDashboardSidebar
+      collapsible
+      :toggle="{ icon: 'i-lucide-menu', label: 'Navigation', color: 'neutral', variant: 'ghost' }"
+      :ui="{ footer: 'border-t border-default' }"
+    >
       <template #header="{ collapsed }">
-        <NuxtLink v-if="!collapsed" to="/" class="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary">
+        <NuxtLink
+          v-if="!collapsed"
+          to="/"
+          class="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary"
+        >
           <UIcon name="i-lucide-arrow-left" class="size-3" />
           Back to panel
         </NuxtLink>
         <UIcon v-else name="i-lucide-arrow-left" class="mx-auto size-4 text-muted-foreground" />
-
       </template>
 
       <template #default="{ collapsed }">
@@ -263,73 +270,74 @@ const accountMenuItems = computed(() => [
         </div>
       </template>
     </UDashboardSidebar>
-
-    <div class="flex flex-1 flex-col">
-      <header class="border-b border-default bg-background/70 backdrop-blur">
-        <div class="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5">
-          <div>
-            <h1 class="text-xl font-semibold text-foreground">{{ adminTitle }}</h1>
-            <p class="text-xs text-muted-foreground">{{ adminSubtitle }}</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="flex items-center gap-3 rounded-md border border-default bg-muted/30 px-3 py-2">
-              <div class="flex flex-col text-xs">
-                <span class="font-medium text-foreground">
-                  <template v-if="sessionUser">{{ sessionUser.name || sessionUser.username || 'Administrator'
-                    }}</template>
-                  <span v-else>Signing in…</span>
-                </span>
-                <span v-if="sessionUser?.email" class="text-muted-foreground">{{ sessionUser.email }}</span>
+    <UDashboardPanel :ui="{ body: 'flex flex-1 flex-col p-0' }">
+      <template #body>
+        <header class="border-b border-default bg-background/70 backdrop-blur">
+          <div class="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-5">
+            <div>
+              <h1 class="text-xl font-semibold text-foreground">{{ adminTitle }}</h1>
+              <p class="text-xs text-muted-foreground">{{ adminSubtitle }}</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="flex items-center gap-3 rounded-md border border-default bg-muted/30 px-3 py-2">
+                <div class="flex flex-col text-xs">
+                  <span class="font-medium text-foreground">
+                    <template v-if="sessionUser">{{ sessionUser.name || sessionUser.username || 'Administrator'
+                      }}</template>
+                    <span v-else>Signing in…</span>
+                  </span>
+                  <span v-if="sessionUser?.email" class="text-muted-foreground">{{ sessionUser.email }}</span>
+                </div>
+                <UBadge v-if="sessionUser?.role" size="xs" variant="subtle"
+                  color="error" class="uppercase tracking-wide text-[10px]">
+                  {{ sessionUser.role }}
+                </UBadge>
+                <UButton v-if="authStatus === 'authenticated'" size="xs" variant="ghost" color="error"
+                  icon="i-lucide-log-out" @click="handleSignOut" />
               </div>
-              <UBadge v-if="sessionUser?.role" size="xs" variant="subtle"
-                color="error" class="uppercase tracking-wide text-[10px]">
-                {{ sessionUser.role }}
-              </UBadge>
-              <UButton v-if="authStatus === 'authenticated'" size="xs" variant="ghost" color="error"
-                icon="i-lucide-log-out" @click="handleSignOut" />
             </div>
           </div>
-        </div>
-        <USeparator />
-        <div v-if="isAuthenticating" class="bg-warning/10 px-6 py-2 text-xs text-warning">
-          Authenticating session…
-        </div>
-      </header>
-
-      <div v-if="announcement" class="border-b border-primary/20 bg-primary/5">
-        <div class="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-3 text-sm text-primary">
-          <UIcon name="i-lucide-info" class="size-4 shrink-0" />
-          <span class="whitespace-pre-wrap">{{ announcement }}</span>
-        </div>
-      </div>
-
-      <main class="flex-1 overflow-y-auto">
-        <div v-if="isMaintenanceGateActive" class="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-6 py-16 text-center">
-          <UIcon name="i-lucide-construction" class="size-10 text-warning" />
-          <div class="space-y-2">
-            <h2 class="text-xl font-semibold">We&rsquo;re performing maintenance</h2>
-            <p class="text-sm text-muted-foreground">{{ maintenanceMessage }}</p>
+          <USeparator />
+          <div v-if="isAuthenticating" class="bg-warning/10 px-6 py-2 text-xs text-warning">
+            Authenticating session…
           </div>
-          <UButton variant="ghost" color="neutral" @click="handleSignOut">
-            Sign out
-          </UButton>
-        </div>
-        <div v-else class="mx-auto w-full max-w-7xl px-6 py-10 space-y-6">
-          <UAlert v-if="showTwoFactorPrompt" color="warning" variant="soft" icon="i-lucide-shield-check">
-            <template #title>Enable two-factor authentication</template>
-            <template #description>
-              Strengthen account security by enabling TOTP. You&rsquo;ll be redirected to the security page to finish setup.
-            </template>
-            <template #actions>
-              <UButton size="xs" color="warning" @click="navigateToSecuritySettings">
-                Configure 2FA
-              </UButton>
-            </template>
-          </UAlert>
+        </header>
 
-          <slot />
+        <div v-if="announcement" class="border-b border-primary/20 bg-primary/5">
+          <div class="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-3 text-sm text-primary">
+            <UIcon name="i-lucide-info" class="size-4 shrink-0" />
+            <span class="whitespace-pre-wrap">{{ announcement }}</span>
+          </div>
         </div>
-      </main>
-    </div>
+
+        <main class="flex-1 overflow-y-auto">
+          <div v-if="isMaintenanceGateActive" class="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-6 py-16 text-center">
+            <UIcon name="i-lucide-construction" class="size-10 text-warning" />
+            <div class="space-y-2">
+              <h2 class="text-xl font-semibold">We&rsquo;re performing maintenance</h2>
+              <p class="text-sm text-muted-foreground">{{ maintenanceMessage }}</p>
+            </div>
+            <UButton variant="ghost" color="neutral" @click="handleSignOut">
+              Sign out
+            </UButton>
+          </div>
+          <div v-else class="mx-auto w-full max-w-7xl px-6 py-10 space-y-6">
+            <UAlert v-if="showTwoFactorPrompt" color="warning" variant="soft" icon="i-lucide-shield-check">
+              <template #title>Enable two-factor authentication</template>
+              <template #description>
+                Strengthen account security by enabling TOTP. You&rsquo;ll be redirected to the security page to finish setup.
+              </template>
+              <template #actions>
+                <UButton size="xs" color="warning" @click="navigateToSecuritySettings">
+                  Configure 2FA
+                </UButton>
+              </template>
+            </UAlert>
+
+            <slot />
+          </div>
+        </main>
+      </template>
+    </UDashboardPanel>
   </UDashboardGroup>
 </template>

@@ -54,7 +54,7 @@ const toast = useToast()
 const serverQuery = reactive({ page: 1, perPage: 25, search: '' })
 const allocationQuery = reactive({ page: 1, perPage: 25, search: '' })
 
-const { data: nodeResponse, pending, error } = await useAsyncData(
+const { data: nodeResponse, pending, error, refresh: refreshNode } = await useAsyncData(
   () => `admin-node-${nodeId.value}`,
   () => $fetch<{ data: AdminWingsNodeDetail }>(`/api/admin/wings/nodes/${nodeId.value}`),
   { watch: [nodeId] },
@@ -257,7 +257,7 @@ async function handleMaintenanceAction(action: string) {
             description: 'Successfully connected to Wings daemon and updated node status.',
             color: 'success',
           })
-          await nodeResponse.refresh()
+          await refreshNode()
         } else {
           toast.add({
             title: 'Sync failed',
@@ -281,7 +281,7 @@ async function handleMaintenanceAction(action: string) {
           description: 'New deployment token has been generated. Update your Wings configuration.',
           color: 'success',
         })
-        await nodeResponse.refresh()
+        await refreshNode()
         break
       }
       case 'transfer': {
@@ -301,7 +301,9 @@ async function handleMaintenanceAction(action: string) {
   }
 }
 
-function setTransferServerChecked(serverId: string, checked: boolean) {
+function setTransferServerChecked(serverId: string, value: boolean | 'indeterminate') {
+  const checked = value === true
+
   if (checked) {
     if (!transferForm.serverIds.includes(serverId))
       transferForm.serverIds.push(serverId)
@@ -364,7 +366,7 @@ async function togglePrimaryAllocation(row: AdminWingsNodeAllocationSummary) {
     })
 
     await allocationTable.refresh()
-    await nodeResponse.refresh()
+    await refreshNode()
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to update allocation'
     toast.add({
@@ -418,7 +420,7 @@ async function handleDeleteAllocation(row: AdminWingsNodeAllocationSummary) {
     })
 
     await allocationTable.refresh()
-    await nodeResponse.refresh()
+    await refreshNode()
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to delete allocation'
     toast.add({
@@ -458,7 +460,7 @@ async function handleTransferServers() {
     transferForm.serverIds = []
 
     await serverTable.refresh()
-    await nodeResponse.refresh()
+    await refreshNode()
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to initiate transfer'
     toast.add({
@@ -805,7 +807,7 @@ async function handleTransferServers() {
               <div v-for="server in serverRows" :key="server.id" class="flex items-center gap-2">
                 <UCheckbox
                   :model-value="transferForm.serverIds.includes(server.id)"
-                  @update:model-value="(checked: boolean) => setTransferServerChecked(server.id, checked)"
+                  @update:model-value="(value: boolean | 'indeterminate') => setTransferServerChecked(server.id, value)"
                 />
                 <label class="text-sm">{{ server.name }}</label>
               </div>
