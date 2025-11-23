@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { createUserSchema } from '#shared/schema/admin/users'
+import { createUserSchema } from '../../shared/schema/admin/users.js'
 
 interface BetterAuthSession {
   session?: {
