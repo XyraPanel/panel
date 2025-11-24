@@ -78,8 +78,8 @@ importers:
         specifier: ^0.4.8
         version: 0.4.8(@types/emscripten@1.41.5)(magicast@0.5.1)(vue@3.5.24(typescript@5.9.3))
       nuxt-security:
-        specifier: 2.4.0
-        version: 2.4.0(magicast@0.5.1)(rollup@4.53.3)
+        specifier: 2.5.0
+        version: 2.5.0(magicast@0.5.1)(rollup@4.53.3)
       otplib:
         specifier: ^12.0.1
         version: 12.0.1
@@ -5959,8 +5959,8 @@ packages:
   nuxt-qrcode@0.4.8:
     resolution: {integrity: sha512-m489cF5NtXbZ2P3s2euuKEQ2iClmNwFtXQU8B9H5RqdSpMrM+MRci9eHp+OE8IlTCXQBb4TEUZXApzz8xk91Tw==}
 
-  nuxt-security@2.4.0:
-    resolution: {integrity: sha512-FTP5zi68+Bw+K0vAafznF1FM9NdcYtQuC8s1b23cMQZXyz9CoyXrx+Oe/eOWIYcMbLMHd3d4adZ0Wl1walF/1w==}
+  nuxt-security@2.5.0:
+    resolution: {integrity: sha512-mfoSXcY1V6DHJwXGVLY99G7W2XnkdGnJ5FgmGe8I2ZkWOb1DVr3rbwl8OgIb1C64CDWTBhwer8eXxgCLCGGLUg==}
     engines: {node: '>=20.0.0'}
 
   nuxt-site-config-kit@3.2.11:
@@ -14796,13 +14796,13 @@ snapshots:
       - magicast
       - vue
 
-  nuxt-security@2.4.0(magicast@0.5.1)(rollup@4.53.3):
+  nuxt-security@2.5.0(magicast@0.5.1)(rollup@4.53.3):
     dependencies:
-      '@nuxt/kit': 3.20.1(magicast@0.5.1)
+      '@nuxt/kit': 4.2.1(magicast@0.5.1)
       basic-auth: 2.0.1
       defu: 6.1.4
       nuxt-csurf: 1.6.5(magicast@0.5.1)
-      pathe: 1.1.2
+      pathe: 2.0.3
       unplugin-remove: 1.0.3(rollup@4.53.3)
       xss: 1.0.15
     transitivePeerDependencies:
