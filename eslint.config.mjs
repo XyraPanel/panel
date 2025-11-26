@@ -5,6 +5,5 @@ export default withNuxt({
   rules: {
     'vue/first-attribute-linebreak': 'off',
     'vue/html-indent': 'off',
-    // 'prettier/prettier': ['error', { vueIndentScriptAndStyle: false }]
-  }
+  },
 })
