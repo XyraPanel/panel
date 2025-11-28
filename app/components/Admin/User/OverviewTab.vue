@@ -191,26 +191,6 @@ function maskIp(ip: string) {
             </div>
           </div>
         </div>
-
-        <div v-if="security.securityEvents.length > 0" class="mt-4 space-y-2">
-          <p class="text-xs uppercase tracking-wide text-muted-foreground mb-2">Recent Security Events</p>
-          <div class="space-y-2">
-            <div
-              v-for="event in security.securityEvents"
-              :key="event.id"
-              class="flex items-center justify-between gap-3 rounded-lg border border-default p-2 text-xs"
-            >
-              <div class="flex-1 min-w-0">
-                <p class="font-medium truncate">{{ event.action }}</p>
-                <p class="text-muted-foreground">{{ formatDate(event.occurredAt) }}</p>
-              </div>
-              <UIcon
-                :name="event.action.toLowerCase().includes('login') ? 'i-lucide-log-in' : event.action.toLowerCase().includes('password') ? 'i-lucide-lock' : 'i-lucide-shield'"
-                class="size-4 text-muted-foreground shrink-0"
-              />
-            </div>
-          </div>
-        </div>
       </div>
     </UCard>
   </div>
