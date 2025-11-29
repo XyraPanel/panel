@@ -69,7 +69,7 @@
     "@nuxtjs/turnstile": "^1.1.1",
     "@types/bcryptjs": "^2.4.6",
     "@types/better-sqlite3": "^7.6.8",
-    "@types/node": "^22.19.0",
+    "@types/node": "^24.10.1",
     "@vitest/ui": "4.0.9",
     "@vue/test-utils": "^2.4.6",
     "drizzle-kit": "^0.31.6",
