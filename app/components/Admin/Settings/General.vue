@@ -4,6 +4,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import type { GeneralSettings } from '#shared/types/admin'
 import * as uiLocales from '@nuxt/ui/locale'
 
+const { t } = useI18n()
 const toast = useToast()
 const isSubmitting = ref(false)
 
@@ -36,11 +37,11 @@ const timezoneOptions = [
 ] satisfies { label: string; value: TimezoneValue }[]
 
 const baseSchema = z.object({
-  name: z.string().trim().min(2, 'Panel name must be at least 2 characters'),
-  url: z.string().trim().pipe(z.url('Enter a valid URL')),
+  name: z.string().trim().min(2, t('admin.settings.generalSettings.panelNameMinLength')),
+  url: z.string().trim().pipe(z.url(t('admin.settings.generalSettings.panelUrlInvalid'))),
   locale: z.string(),
-  timezone: z.enum(timezoneEnumValues, { message: 'Select a timezone' }),
-  brandText: z.string().trim().max(80, 'Brand text must be 80 characters or less'),
+  timezone: z.enum(timezoneEnumValues, { message: t('admin.settings.generalSettings.timezoneInvalid') }),
+  brandText: z.string().trim().max(80, t('admin.settings.generalSettings.brandTextMaxLength')),
   showBrandText: z.boolean(),
   showBrandLogo: z.boolean(),
   brandLogoUrl: z.preprocess(
@@ -49,7 +50,7 @@ const baseSchema = z.object({
         return null
       return value
     },
-    z.string().trim().pipe(z.url('Provide a valid logo URL')).nullable(),
+    z.string().trim().pipe(z.url(t('validation.invalidUrl'))).nullable(),
   ),
 })
 
@@ -57,7 +58,7 @@ const schema = computed(() => {
   return baseSchema.extend({
     locale: z.string().refine(
       (val) => availableLocales.value.some(locale => locale.code === val),
-      { message: 'Select a valid language' }
+      { message: t('admin.settings.generalSettings.languageInvalid') }
     ),
   })
 })
@@ -126,8 +127,8 @@ watch(logoFile, async (file) => {
     form.showBrandLogo = true
 
     toast.add({
-      title: 'Logo uploaded',
-      description: 'Brand logo has been updated',
+      title: t('admin.settings.generalSettings.logoUploaded'),
+      description: t('admin.settings.generalSettings.logoUploadedDescription'),
       color: 'success',
     })
 
@@ -136,8 +137,8 @@ watch(logoFile, async (file) => {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Upload failed',
-      description: err.data?.message || 'Unable to upload logo. Please try again.',
+      title: t('admin.settings.generalSettings.uploadFailed'),
+      description: err.data?.message || t('admin.settings.generalSettings.uploadFailedDescription'),
       color: 'error',
     })
   }
@@ -149,21 +150,23 @@ watch(logoFile, async (file) => {
 
 async function removeLogo() {
   try {
-    const body: Partial<GeneralSettings> = {
-      brandLogoUrl: null,
-      showBrandLogo: false,
-    }
-    await $fetch<GeneralSettings>('/api/admin/settings/general', {
-      method: 'patch',
-      body,
+    await fetch('/api/admin/settings/general', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        brandLogoUrl: null,
+        showBrandLogo: false,
+      }),
     })
 
     form.brandLogoUrl = null
     form.showBrandLogo = false
 
     toast.add({
-      title: 'Logo removed',
-      description: 'Brand logo has been cleared',
+      title: t('admin.settings.generalSettings.logoRemoved'),
+      description: t('admin.settings.generalSettings.logoRemovedDescription'),
       color: 'success',
     })
 
@@ -172,8 +175,8 @@ async function removeLogo() {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to remove logo',
+      title: t('admin.settings.generalSettings.logoRemoveFailed'),
+      description: err.data?.message || t('admin.settings.generalSettings.logoRemoveFailed'),
       color: 'error',
     })
   }
@@ -192,15 +195,15 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
     }
 
     await $fetch('/api/admin/settings/general', {
-      method: 'patch',
-      body: payload,
+      method: 'PATCH',
+      body: payload as Record<string, unknown>,
     })
 
     Object.assign(form, payload)
 
     toast.add({
-      title: 'Settings updated',
-      description: 'General settings have been saved successfully',
+      title: t('admin.settings.generalSettings.settingsUpdated'),
+      description: t('admin.settings.generalSettings.settingsUpdatedDescription'),
       color: 'success',
     })
 
@@ -209,8 +212,8 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to update settings',
+      title: t('admin.settings.generalSettings.updateFailed'),
+      description: err.data?.message || t('admin.settings.generalSettings.updateFailed'),
       color: 'error',
     })
   }
@@ -223,8 +226,8 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 <template>
   <UCard>
     <template #header>
-      <h2 class="text-lg font-semibold">General Settings</h2>
-      <p class="text-sm text-muted-foreground">Configure basic panel information</p>
+      <h2 class="text-lg font-semibold">{{ t('admin.settings.generalSettings.title') }}</h2>
+      <p class="text-sm text-muted-foreground">{{ t('admin.settings.generalSettings.description') }}</p>
     </template>
 
     <UForm
@@ -236,15 +239,15 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       :validate-on="['input']"
       @submit="handleSubmit"
     >
-      <UFormField label="Panel Name" name="name" required>
-        <UInput v-model="form.name" placeholder="XyraPanel" :disabled="isSubmitting" class="w-full" />
+      <UFormField :label="t('admin.settings.generalSettings.panelName')" name="name" required>
+        <UInput v-model="form.name" :placeholder="t('admin.settings.generalSettings.panelNamePlaceholder')" :disabled="isSubmitting" class="w-full" />
       </UFormField>
 
-      <UFormField label="Panel URL" name="url" required>
-        <UInput v-model="form.url" type="url" placeholder="https://panel.example.com" :disabled="isSubmitting" class="w-full" />
+      <UFormField :label="t('admin.settings.generalSettings.panelUrl')" name="url" required>
+        <UInput v-model="form.url" type="url" :placeholder="t('admin.settings.generalSettings.panelUrlPlaceholder')" :disabled="isSubmitting" class="w-full" />
       </UFormField>
 
-      <UFormField label="Language" name="locale" required>
+      <UFormField :label="t('admin.settings.generalSettings.language')" name="locale" required>
         <ULocaleSelect
           v-model="form.locale"
           :locales="availableLocales"
@@ -253,7 +256,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
         />
       </UFormField>
 
-      <UFormField label="Timezone" name="timezone" required>
+      <UFormField :label="t('admin.settings.generalSettings.timezone')" name="timezone" required>
         <USelect v-model="form.timezone" :items="timezoneOptions" value-key="value" :disabled="isSubmitting" />
       </UFormField>
 
@@ -261,58 +264,58 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 
       <div class="space-y-4">
         <div>
-          <h3 class="text-sm font-medium">Branding</h3>
-          <p class="text-xs text-muted-foreground">Control how the panel brand appears in the dashboard.</p>
+          <h3 class="text-sm font-medium">{{ t('admin.settings.generalSettings.branding') }}</h3>
+          <p class="text-xs text-muted-foreground">{{ t('admin.settings.generalSettings.brandingDescription') }}</p>
         </div>
 
-        <UFormField label="Brand text" name="brandText">
-          <UInput v-model="form.brandText" placeholder="XyraPanel" :disabled="isSubmitting" class="w-full" />
+        <UFormField :label="t('admin.settings.generalSettings.brandText')" name="brandText">
+          <UInput v-model="form.brandText" :placeholder="t('admin.settings.generalSettings.brandTextPlaceholder')" :disabled="isSubmitting" class="w-full" />
         </UFormField>
 
         <div class="grid gap-4 md:grid-cols-2">
-          <UFormField label="Show brand text" name="showBrandText">
+          <UFormField :label="t('admin.settings.generalSettings.showBrandText')" name="showBrandText">
             <div class="flex items-center justify-between rounded-lg border border-default p-3">
-              <p class="text-sm text-muted-foreground">Display the brand text in the sidebar.</p>
+              <p class="text-sm text-muted-foreground">{{ t('admin.settings.generalSettings.showBrandTextDescription') }}</p>
               <USwitch v-model="form.showBrandText" />
             </div>
           </UFormField>
 
-          <UFormField label="Show brand logo" name="showBrandLogo">
+          <UFormField :label="t('admin.settings.generalSettings.showBrandLogo')" name="showBrandLogo">
             <div class="flex items-center justify-between rounded-lg border border-default p-3">
-              <p class="text-sm text-muted-foreground">Display the uploaded logo in the sidebar.</p>
+              <p class="text-sm text-muted-foreground">{{ t('admin.settings.generalSettings.showBrandLogoDescription') }}</p>
               <USwitch v-model="form.showBrandLogo" />
             </div>
           </UFormField>
         </div>
 
         <div class="space-y-3">
-          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Logo</p>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">{{ t('admin.settings.generalSettings.logo') }}</p>
           <div class="flex flex-wrap items-center gap-4">
             <div class="flex items-center gap-3">
               <UAvatar :src="form.brandLogoUrl || undefined" icon="i-lucide-image" size="lg" />
               <div class="text-xs text-muted-foreground">
-                <p v-if="form.brandLogoUrl">Current logo</p>
-                <p v-else>No logo uploaded</p>
+                <p v-if="form.brandLogoUrl">{{ t('admin.settings.generalSettings.currentLogo') }}</p>
+                <p v-else>{{ t('admin.settings.generalSettings.noLogoUploaded') }}</p>
               </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-2">
               <UFileUpload v-model="logoFile" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
-                class="w-56" label="Upload logo" description="PNG, JPG, SVG, WEBP up to 2MB"
+                class="w-56" :label="t('admin.settings.generalSettings.uploadLogo')" :description="t('admin.settings.generalSettings.logoDescription')"
                 :disabled="logoUploading" />
               <UButton v-if="form.brandLogoUrl" variant="ghost" color="error" size="sm" icon="i-lucide-trash"
                 @click="removeLogo">
-                Remove logo
+                {{ t('admin.settings.generalSettings.removeLogo') }}
               </UButton>
             </div>
           </div>
-          <p class="text-[11px] text-muted-foreground">Logos are stored at 256px width (max 2MB).</p>
+          <p class="text-[11px] text-muted-foreground">{{ t('admin.settings.generalSettings.logoStoredAt') }}</p>
         </div>
       </div>
 
       <div class="flex justify-end">
         <UButton type="submit" color="primary" :loading="isSubmitting" :disabled="isSubmitting">
-          Save Changes
+          {{ t('admin.settings.generalSettings.saveChanges') }}
         </UButton>
       </div>
     </UForm>

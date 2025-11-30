@@ -8,6 +8,7 @@ definePageMeta({
   layout: 'server',
 })
 
+const { t } = useI18n()
 const serverId = computed(() => route.params.id as string)
 
 const { data: schedulesData, pending, error } = await useAsyncData(
@@ -21,7 +22,7 @@ const { data: schedulesData, pending, error } = await useAsyncData(
 const schedules = computed(() => schedulesData.value?.data || [])
 
 function formatDate(dateString: string | null): string {
-  if (!dateString) return 'Not scheduled'
+  if (!dateString) return t('server.schedules.notScheduled')
 
   const date = new Date(dateString)
   return new Intl.DateTimeFormat('en-US', {
@@ -39,7 +40,7 @@ function getStatusColor(enabled: boolean) {
 }
 
 function getStatusLabel(enabled: boolean) {
-  return enabled ? 'Enabled' : 'Paused'
+  return enabled ? t('server.schedules.enabled') : t('server.schedules.paused')
 }
 </script>
 
@@ -50,18 +51,18 @@ function getStatusLabel(enabled: boolean) {
         <section class="space-y-6">
         <header class="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p class="text-xs text-muted-foreground">Server {{ serverId }} · Schedules</p>
-            <h1 class="text-xl font-semibold">Automated tasks</h1>
+            <p class="text-xs text-muted-foreground">{{ t('server.schedules.serverSchedules', { id: serverId }) }}</p>
+            <h1 class="text-xl font-semibold">{{ t('server.schedules.automatedTasks') }}</h1>
           </div>
           <div class="flex gap-2">
-            <UButton icon="i-lucide-plus" color="primary" variant="soft">New schedule</UButton>
+            <UButton icon="i-lucide-plus" color="primary" variant="soft">{{ t('server.schedules.newSchedule') }}</UButton>
           </div>
         </header>
 
         <UCard>
           <template #header>
             <div class="flex items-center justify-between">
-              <h2 class="text-lg font-semibold">Configured schedules</h2>
+              <h2 class="text-lg font-semibold">{{ t('server.schedules.configuredSchedules') }}</h2>
             </div>
           </template>
 
@@ -69,7 +70,7 @@ function getStatusLabel(enabled: boolean) {
             <div class="flex items-start gap-2">
               <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
               <div>
-                <p class="font-medium">Failed to load schedules</p>
+                <p class="font-medium">{{ t('server.schedules.failedToLoad') }}</p>
                 <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
               </div>
             </div>
@@ -81,8 +82,8 @@ function getStatusLabel(enabled: boolean) {
 
           <div v-else-if="schedules.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
             <UIcon name="i-lucide-calendar-clock" class="mx-auto size-12 text-muted-foreground/50" />
-            <p class="mt-3 text-sm font-medium">No schedules</p>
-            <p class="mt-1 text-xs text-muted-foreground">Create a schedule to automate server tasks.</p>
+            <p class="mt-3 text-sm font-medium">{{ t('server.schedules.noSchedules') }}</p>
+            <p class="mt-1 text-xs text-muted-foreground">{{ t('server.schedules.noSchedulesDescription') }}</p>
           </div>
 
           <div v-else class="divide-y divide-default">
@@ -99,13 +100,13 @@ function getStatusLabel(enabled: boolean) {
                   </UBadge>
                 </div>
                 <p class="text-xs text-muted-foreground">
-                  Next run: {{ formatDate(item.nextRunAt) }}
+                  {{ t('server.schedules.nextRun') }}: {{ formatDate(item.nextRunAt) }}
                 </p>
               </div>
               <div class="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                 <span class="inline-flex items-center gap-1">
                   <UIcon name="i-lucide-clock" class="size-4 text-primary" />
-                  Cron: <code class="rounded bg-muted px-2 py-0.5 text-xs">{{ item.cron }}</code>
+                  {{ t('server.schedules.cron') }}: <code class="rounded bg-muted px-2 py-0.5 text-xs">{{ item.cron }}</code>
                 </span>
                 <span class="inline-flex items-center gap-1">
                   <UIcon name="i-lucide-bolt" class="size-4 text-primary" />
@@ -113,7 +114,7 @@ function getStatusLabel(enabled: boolean) {
                 </span>
                 <span v-if="item.lastRunAt" class="inline-flex items-center gap-1">
                   <UIcon name="i-lucide-history" class="size-4 text-primary" />
-                  Last: {{ formatDate(item.lastRunAt) }}
+                  {{ t('server.schedules.last') }}: {{ formatDate(item.lastRunAt) }}
                 </span>
               </div>
             </div>

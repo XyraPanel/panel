@@ -9,6 +9,7 @@ definePageMeta({
   auth: true,
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const authStore = useAuthStore()
 const { status } = storeToRefs(authStore)
@@ -70,7 +71,7 @@ const loadError = computed(() => {
   if (err instanceof Error)
     return err.message
 
-  return 'Unable to load profile details.'
+  return t('account.profile.unableToLoadProfile')
 })
 
 const showSkeleton = computed(() => profilePending.value && !profile.value)
@@ -78,15 +79,15 @@ const disableSubmit = computed(() => !hasChanges.value || isSaving.value)
 
 watch(() => status.value, (value, previous) => {
   if (value === 'authenticated') {
-    transientError.value = null
-    refreshProfile().catch((error: unknown) => {
-      const message = error instanceof Error ? error.message : 'Unable to load profile details.'
+      transientError.value = null
+      refreshProfile().catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : t('account.profile.unableToLoadProfile')
       transientError.value = message
     })
   }
   else if (value === 'unauthenticated' && previous === 'authenticated') {
     profileResponse.value = undefined
-    transientError.value = 'You need to sign in to view profile details.'
+    transientError.value = t('auth.signInToContinue')
     Object.assign(form, createFormState(null))
   }
 }, { immediate: true })
@@ -97,8 +98,8 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
 
   if (!hasChanges.value) {
     toast.add({
-      title: 'No changes detected',
-      description: 'Update your profile details before saving.',
+      title: t('account.profile.noChangesDetected'),
+      description: t('account.profile.updateBeforeSaving'),
       color: 'neutral',
     })
     return
@@ -125,17 +126,17 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
     }
 
     toast.add({
-      title: 'Profile updated',
-      description: 'Your account information is up to date.',
+      title: t('account.profile.profileUpdated'),
+      description: t('account.profile.accountInfoUpdated'),
       color: 'success',
     })
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to update profile information.'
+    const message = error instanceof Error ? error.message : t('account.profile.unableToUpdateProfile')
     transientError.value = message
 
     toast.add({
-      title: 'Failed to update profile',
+      title: t('account.profile.failedToUpdateProfile'),
       description: message,
       color: 'error',
     })
@@ -151,8 +152,8 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
   <UPage>
     <UContainer>
       <UPageHeader
-        title="Profile"
-        description="Manage your account information."
+        :title="t('account.profile.title')"
+        :description="t('account.profile.description')"
       />
     </UContainer>
 
@@ -161,8 +162,8 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
         <UCard :ui="{ body: 'space-y-4' }">
           <template #header>
             <div>
-              <h2 class="text-lg font-semibold">Profile details</h2>
-              <p class="text-sm text-muted-foreground">Keep your account information up to date.</p>
+              <h2 class="text-lg font-semibold">{{ t('account.profile.profileDetails') }}</h2>
+              <p class="text-sm text-muted-foreground">{{ t('account.profile.keepAccountUpdated') }}</p>
             </div>
           </template>
 
@@ -173,7 +174,7 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
           </div>
           <template v-else>
             <UAlert v-if="loadError" color="error" icon="i-lucide-alert-triangle">
-              <template #title>Profile unavailable</template>
+              <template #title>{{ t('account.profile.profileUnavailable') }}</template>
               <template #description>{{ loadError }}</template>
             </UAlert>
 
@@ -184,17 +185,17 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
               :disabled="isSaving"
               @submit="handleSubmit"
             >
-              <UFormField label="Username" name="username" required>
-                <UInput v-model="form.username" placeholder="Username" class="w-full" />
+              <UFormField :label="t('account.profile.username')" name="username" required>
+                <UInput v-model="form.username" :placeholder="t('account.profile.enterUsername')" class="w-full" />
               </UFormField>
 
-              <UFormField label="Email" name="email" required>
-                <UInput v-model="form.email" type="email" placeholder="name@example.com" class="w-full" />
+              <UFormField :label="t('account.profile.email')" name="email" required>
+                <UInput v-model="form.email" type="email" :placeholder="t('account.profile.enterEmail')" class="w-full" />
               </UFormField>
 
               <div class="md:col-span-2">
                 <UButton type="submit" variant="subtle" color="primary" :loading="isSaving" :disabled="disableSubmit">
-                  Save changes
+                  {{ t('account.profile.saveChanges') }}
                 </UButton>
               </div>
             </UForm>

@@ -2,13 +2,12 @@
 import type { TableColumn, CommandPaletteItem  } from '@nuxt/ui'
 import type { AdminUserResponse, UsersResponse } from '#shared/types/api'
 
+const { t } = useI18n()
+
 definePageMeta({
   auth: true,
   layout: 'admin',
-  adminTitle: 'Users',
-  adminSubtitle: 'Audit panel accounts and Wings permissions',
 })
-
 const toast = useToast()
 const router = useRouter()
 const route = useRoute()
@@ -67,7 +66,7 @@ const allUsers = computed(() => allUsersData.value?.data ?? [])
 
 const commandPaletteGroups = computed(() => [{
   id: 'users',
-  label: 'Users',
+  label: t('admin.users.title'),
   items: allUsers.value.map((user): CommandPaletteItem => {
     const displayName = user.username || user.email
     const fullName = user.name || undefined
@@ -76,8 +75,8 @@ const commandPaletteGroups = computed(() => [{
       label: displayName,
       suffix: user.email !== displayName ? user.email : undefined,
       prefix: fullName,
-      chip: user.role === 'admin' ? { color: 'primary' as const, text: 'Admin' } : undefined,
-      description: fullName ? `Name: ${fullName}` : undefined,
+      chip: user.role === 'admin' ? { color: 'primary' as const, text: t('admin.users.admin') } : undefined,
+      description: fullName ? `${t('admin.users.name')}: ${fullName}` : undefined,
       to: `/admin/users/${user.id}`,
       onSelect: (e) => {
         e.preventDefault()
@@ -94,13 +93,13 @@ async function openSearchModal() {
 }
 
 const columns = computed<TableColumn<AdminUserResponse>[]>(() => [
-  { accessorKey: 'username', header: 'User' },
-  { accessorKey: 'email', header: 'Email' },
-  { accessorKey: 'twoFactorEnabled', header: '2FA' },
-  { accessorKey: 'serversOwned', header: 'Servers' },
-  { accessorKey: 'role', header: 'Role' },
-  { accessorKey: 'createdAt', header: 'Created' },
-  { id: 'actions', header: 'Actions' },
+  { accessorKey: 'username', header: t('admin.users.user') },
+  { accessorKey: 'email', header: t('admin.users.email') },
+  { accessorKey: 'twoFactorEnabled', header: t('admin.users.twoFactor') },
+  { accessorKey: 'serversOwned', header: t('admin.users.servers') },
+  { accessorKey: 'role', header: t('admin.users.role') },
+  { accessorKey: 'createdAt', header: t('admin.users.created') },
+  { id: 'actions', header: t('admin.users.actions') },
 ])
 
 function getUserAvatar(user: AdminUserResponse) {
@@ -127,7 +126,7 @@ const errorMessage = computed(() => {
   }
 
   const message = (err as { data?: { message?: string } }).data?.message
-  return message ?? 'Failed to load users'
+  return message ?? t('admin.users.failedToLoadUsers')
 })
 
 const showUserModal = ref(false)
@@ -172,12 +171,12 @@ function openEditModal(user: AdminUserResponse) {
 
 async function handleSubmit() {
   if (!userForm.value.username || !userForm.value.email) {
-    toast.add({ title: 'Username and email are required', color: 'error' })
+    toast.add({ title: t('validation.required'), description: t('validation.required'), color: 'error' })
     return
   }
 
   if (!editingUser.value && !userForm.value.password) {
-    toast.add({ title: 'Password is required for new users', color: 'error' })
+    toast.add({ title: t('validation.required'), description: t('validation.required'), color: 'error' })
     return
   }
 
@@ -189,14 +188,14 @@ async function handleSubmit() {
         method: 'patch',
         body: userForm.value,
       })
-      toast.add({ title: 'User updated', color: 'success' })
+      toast.add({ title: t('common.success'), description: t('common.success'), color: 'success' })
     }
     else {
       await $fetch('/api/admin/users', {
         method: 'POST',
         body: userForm.value,
       })
-      toast.add({ title: 'User created', color: 'success' })
+      toast.add({ title: t('common.success'), description: t('common.success'), color: 'success' })
     }
 
     showUserModal.value = false
@@ -204,8 +203,8 @@ async function handleSubmit() {
     await refreshUsers()
   } catch (err) {
     toast.add({
-      title: editingUser.value ? 'Update failed' : 'Create failed',
-      description: err instanceof Error ? err.message : 'An error occurred',
+      title: t('common.error'),
+      description: err instanceof Error ? err.message : t('common.error'),
       color: 'error',
     })
   } finally {
@@ -214,7 +213,7 @@ async function handleSubmit() {
 }
 
 async function handleDelete(user: AdminUserResponse) {
-  if (!confirm(`Delete user "${user.username}"? This cannot be undone.`)) {
+  if (!confirm(t('common.delete'))) {
     return
   }
 
@@ -222,12 +221,12 @@ async function handleDelete(user: AdminUserResponse) {
     await $fetch(`/api/admin/users/${user.id}`, {
       method: 'DELETE',
     })
-    toast.add({ title: 'User deleted', color: 'success' })
+    toast.add({ title: t('common.success'), description: t('common.success'), color: 'success' })
     await refreshUsers()
   } catch (err) {
     toast.add({
-      title: 'Delete failed',
-      description: err instanceof Error ? err.message : 'An error occurred',
+      title: t('common.error'),
+      description: err instanceof Error ? err.message : t('common.error'),
       color: 'error',
     })
   }
@@ -246,7 +245,7 @@ function formatDate(value: string) {
           <UCard :ui="{ body: 'space-y-3' }">
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Accounts</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.users.title') }}</h2>
                 <div class="flex items-center gap-2">
                   <UButton
                     icon="i-lucide-search"
@@ -254,10 +253,10 @@ function formatDate(value: string) {
                     variant="subtle"
                     @click="openSearchModal"
                   >
-                    Search
+                    {{ t('common.search') }}
                   </UButton>
                   <UButton icon="i-lucide-user-plus" color="primary" variant="subtle" @click="openCreateModal">
-                    Create User
+                    {{ t('admin.users.title') }}
                   </UButton>
                 </div>
               </div>
@@ -270,7 +269,7 @@ function formatDate(value: string) {
                 variant="soft"
                 icon="i-lucide-alert-triangle"
                 :description="errorMessage"
-                title="Failed to load users"
+                :title="t('admin.users.failedToLoadUsers')"
               />
 
               <UTable
@@ -288,7 +287,7 @@ function formatDate(value: string) {
 
                 <template #empty>
                   <div class="px-4 py-6 text-center text-sm text-muted-foreground">
-                    No users found.
+                    {{ t('admin.users.noUsers') }}
                   </div>
                 </template>
 
@@ -345,7 +344,7 @@ function formatDate(value: string) {
                 </template>
 
                 <template #actions-header>
-                  <span class="sr-only">Actions</span>
+                  <span class="sr-only">{{ t('admin.users.actions') }}</span>
                 </template>
 
                 <template #actions-cell="{ row }">
@@ -365,9 +364,7 @@ function formatDate(value: string) {
 
               <div v-if="pagination" class="flex items-center justify-between border-t border-default pt-4">
                 <div class="text-sm text-muted-foreground">
-                  Showing {{ ((pagination.page - 1) * pagination.perPage) + 1 }} to
-                  {{ Math.min(pagination.page * pagination.perPage, pagination.total) }} of
-                  {{ pagination.total }} users
+                  {{ t('admin.users.title') }}
                 </div>
                 <UPagination
                   v-model:page="page"
@@ -383,37 +380,37 @@ function formatDate(value: string) {
       </UContainer>
     </UPageBody>
 
-    <UModal v-model:open="showUserModal" :title="editingUser ? 'Edit User' : 'Create User'"
-      :description="editingUser ? 'Update user account' : 'Create a new user account'">
+    <UModal v-model:open="showUserModal" :title="editingUser ? t('common.edit') : t('common.create')"
+      :description="editingUser ? t('common.update') : t('common.create')">
       <template #body>
         <form class="space-y-4" @submit.prevent="handleSubmit">
-          <UFormField label="Username" name="username" required>
-            <UInput v-model="userForm.username" placeholder="john_doe" required :disabled="isSubmitting"
+          <UFormField :label="t('auth.username')" name="username" required>
+            <UInput v-model="userForm.username" :placeholder="t('auth.username')" required :disabled="isSubmitting"
               class="w-full" />
           </UFormField>
 
-          <UFormField label="Email" name="email" required>
-            <UInput v-model="userForm.email" type="email" placeholder="john@example.com" required
+          <UFormField :label="t('auth.email')" name="email" required>
+            <UInput v-model="userForm.email" type="email" :placeholder="t('auth.email')" required
               :disabled="isSubmitting" class="w-full" />
           </UFormField>
 
-          <UFormField label="Name" name="name">
-            <UInput v-model="userForm.name" placeholder="John Doe" :disabled="isSubmitting" class="w-full" />
+          <UFormField :label="t('common.name')" name="name">
+            <UInput v-model="userForm.name" :placeholder="t('common.name')" :disabled="isSubmitting" class="w-full" />
           </UFormField>
 
-          <UFormField label="Password" name="password" :required="!editingUser">
+          <UFormField :label="t('auth.password')" name="password" :required="!editingUser">
             <UInput v-model="userForm.password" type="password"
-              :placeholder="editingUser ? 'Leave blank to keep current' : 'Enter password'" :required="!editingUser"
+              :placeholder="editingUser ? t('auth.password') : t('auth.password')" :required="!editingUser"
               :disabled="isSubmitting" class="w-full" />
             <template v-if="editingUser" #help>
-              Leave blank to keep current password
+              {{ t('auth.password') }}
             </template>
           </UFormField>
 
-          <UFormField label="Role" name="role" required>
+          <UFormField :label="t('admin.users.role')" name="role" required>
             <USelect v-model="userForm.role" :options="[
-              { label: 'User', value: 'user' },
-              { label: 'Admin', value: 'admin' },
+              { label: t('admin.users.userRole'), value: 'user' },
+              { label: t('admin.users.admin'), value: 'admin' },
             ]" :disabled="isSubmitting" class="w-full" />
           </UFormField>
         </form>
@@ -422,20 +419,20 @@ function formatDate(value: string) {
       <template #footer>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" color="error" :disabled="isSubmitting" @click="showUserModal = false">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton color="primary" variant="subtle" :loading="isSubmitting" @click="handleSubmit">
-            {{ editingUser ? 'Update' : 'Create' }}
+            {{ editingUser ? t('common.update') : t('common.create') }}
           </UButton>
         </div>
       </template>
     </UModal>
 
-    <UModal v-model:open="showSearchModal" :title="'Search Users'" :description="'Find users by name, email, or username'">
+    <UModal v-model:open="showSearchModal" :title="t('admin.users.searchUsers')" :description="t('admin.users.searchUsers')">
       <template #content>
         <UCommandPalette
           :groups="commandPaletteGroups"
-          placeholder="Search users by name, email, or username..."
+          :placeholder="t('admin.users.searchUsers')"
           class="h-96"
           close
           :fuse="{

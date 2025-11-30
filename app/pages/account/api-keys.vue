@@ -9,6 +9,7 @@ definePageMeta({
   layout: 'default',
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const showCreateModal = ref(false)
 const showDeleteModal = ref(false)
@@ -19,8 +20,8 @@ const isCreating = ref(false)
 const copySuccess = ref(false)
 const createError = ref<string | null>(null)
 
-const keySchema = z.object({
-  memo: z.string().trim().max(255, 'Memo must be under 255 characters').optional().default(''),
+const keySchema = computed(() => z.object({
+  memo: z.string().trim().max(255, t('validation.memoMaxLength')).optional().default(''),
   allowedIps: z.string().trim().optional().default('')
     .refine(value => {
       if (!value)
@@ -34,12 +35,12 @@ const keySchema = z.object({
         const ipv4Regex = /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/
         return ipv4Regex.test(trimmed)
       })
-    }, 'Enter valid IPv4 addresses separated by commas.'),
-})
+    }, t('validation.invalidIPs')),
+}))
 
-type KeyFormSchema = z.output<typeof keySchema>
+type KeyFormSchema = z.output<ReturnType<typeof keySchema.value>>
 
-const createForm = reactive<KeyFormSchema>(keySchema.parse({}))
+const createForm = reactive<KeyFormSchema>(keySchema.value.parse({}))
 
 const {
   data: keysData,
@@ -60,7 +61,7 @@ const loadError = computed(() => {
   if (err instanceof Error)
     return err.message
 
-  return 'Unable to load API keys. Try refreshing the page.'
+  return t('account.apiKeys.unableToLoadKeys')
 })
 
 const expandedKeys = ref<Set<string>>(new Set())
@@ -103,13 +104,13 @@ async function copyJson(key: typeof apiKeys.value[0]) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: 'Copied to clipboard',
-      description: 'API key data JSON has been copied.',
+      title: t('account.apiKeys.copiedToClipboard'),
+      description: t('account.apiKeys.copiedToClipboardDescription'),
     })
   } catch (error) {
     toast.add({
-      title: 'Failed to copy',
-      description: error instanceof Error ? error.message : 'Unable to copy to clipboard.',
+      title: t('account.apiKeys.failedToCopy'),
+      description: error instanceof Error ? error.message : t('account.apiKeys.failedToCopyDescription'),
       color: 'error',
     })
   }
@@ -119,7 +120,7 @@ function resetCreateState() {
   createError.value = null
   copySuccess.value = false
   newKeyToken.value = null
-  Object.assign(createForm, keySchema.parse({}))
+  Object.assign(createForm, keySchema.value.parse({}))
 }
 
 watch(showCreateModal, (open) => {
@@ -167,7 +168,7 @@ async function createApiKey(event: FormSubmitEvent<KeyFormSchema>) {
   catch (error) {
     console.error('Failed to create API key:', error)
     
-    let message = 'Failed to create API key'
+    let message = t('account.apiKeys.failedToCreateKey')
     if (error && typeof error === 'object') {
       const err = error as { data?: { message?: string }, message?: string, statusMessage?: string }
       message = err.data?.message || err.message || err.statusMessage || message
@@ -176,7 +177,7 @@ async function createApiKey(event: FormSubmitEvent<KeyFormSchema>) {
     createError.value = message
 
     toast.add({
-      title: 'Error',
+      title: t('account.apiKeys.unableToCreateKeyTitle'),
       description: message,
       color: 'error',
     })
@@ -209,16 +210,16 @@ async function confirmDelete() {
     keyToDelete.value = null
 
     toast.add({
-      title: 'API Key Deleted',
-      description: 'The API key has been removed',
+      title: t('account.apiKeys.keyDeleted'),
+      description: t('account.apiKeys.keyDeletedDescription'),
       color: 'success',
     })
   }
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to delete API key',
+      title: t('common.error'),
+      description: err.data?.message || t('account.apiKeys.failedToDeleteKey'),
       color: 'error',
     })
   }
@@ -255,15 +256,15 @@ async function copyToken() {
     
     copySuccess.value = true
     toast.add({
-      title: 'Copied',
-      description: 'API key copied to clipboard',
+      title: t('common.copied'),
+      description: t('account.apiKeys.copiedToClipboardDescription'),
       color: 'success',
     })
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to copy token'
+    const message = error instanceof Error ? error.message : t('common.failedToCopy')
     toast.add({
-      title: 'Copy failed',
+      title: t('common.failedToCopy'),
       description: message,
       color: 'error',
     })
@@ -274,10 +275,10 @@ async function copyToken() {
 <template>
   <UPage>
     <UContainer>
-      <UPageHeader title="API Keys" description="Manage your API keys for programmatic access">
+      <UPageHeader :title="t('account.apiKeys.title')" :description="t('account.apiKeys.description')">
         <template #links>
           <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
-            Create API Key
+            {{ t('account.apiKeys.createKey') }}
           </UButton>
         </template>
       </UPageHeader>
@@ -285,22 +286,22 @@ async function copyToken() {
 
     <UModal
       v-model:open="showCreateModal"
-      :title="newKeyToken ? 'API Key Created' : 'Create API Key'"
-      :description="newKeyToken ? 'Copy your API key now – it will not be shown again.' : 'Generate a personal API key for programmatic access'"
+      :title="newKeyToken ? t('account.apiKeys.apiKeyCreated') : t('account.apiKeys.createKey')"
+      :description="newKeyToken ? t('account.apiKeys.copyYourAPIKeyNow') : t('account.apiKeys.generatePersonalAPIKey')"
       :dismissible="!newKeyToken"
       :ui="{ body: 'space-y-4', footer: 'flex justify-end gap-2' }"
     >
       <template #body>
         <div v-if="newKeyToken" class="space-y-4">
           <UAlert color="warning" variant="soft" icon="i-lucide-alert-triangle">
-            <template #title>Save this token now!</template>
+            <template #title>{{ t('account.apiKeys.saveThisTokenNow') }}</template>
             <template #description>
-              You won't be able to see it again after closing this dialog.
+              {{ t('account.apiKeys.wontSeeAgainAfterClose') }}
             </template>
           </UAlert>
 
           <div class="space-y-2">
-            <label class="text-sm font-medium">Your API Key</label>
+            <label class="text-sm font-medium">{{ t('account.apiKeys.yourAPIKey') }}</label>
             <div class="flex gap-2">
               <UInput
                 :model-value="newKeyToken"
@@ -313,7 +314,7 @@ async function copyToken() {
                 variant="soft"
                 @click="copyToken"
               >
-                Copy
+                {{ t('common.copy') }}
               </UButton>
             </div>
           </div>
@@ -321,31 +322,31 @@ async function copyToken() {
 
         <div v-else class="space-y-4">
           <UAlert v-if="createError" color="error" icon="i-lucide-alert-triangle">
-            <template #title>Unable to create key</template>
+            <template #title>{{ t('account.apiKeys.unableToCreateKeyTitle') }}</template>
             <template #description>{{ createError }}</template>
           </UAlert>
 
           <UForm
-            :schema="keySchema"
+            :schema="keySchema.value"
             :state="createForm"
             class="space-y-4"
             :disabled="isCreating"
             @submit="createApiKey"
           >
-            <UFormField label="Description (optional)" name="memo">
+            <UFormField :label="t('account.apiKeys.descriptionOptional')" name="memo">
               <UInput
                 v-model="createForm.memo"
                 icon="i-lucide-file-text"
-                placeholder="My API Key"
+                :placeholder="t('account.apiKeys.myAPIKey')"
                 class="w-full"
               />
               <template #help>
-                A friendly name to help identify this key
+                {{ t('account.apiKeys.friendlyNameHelp') }}
               </template>
             </UFormField>
 
             <UFormField
-              label="Allowed IPs (optional)"
+              :label="t('account.apiKeys.allowedIPsOptional')"
               name="allowedIps"
             >
               <UTextarea
@@ -356,7 +357,7 @@ async function copyToken() {
                 :rows="3"
               />
               <template #help>
-                Comma-separated list of IPv4 addresses. Leave empty to allow all IPs.
+                {{ t('account.apiKeys.commaSeparatedIPsHelp') }}
               </template>
             </UFormField>
           </UForm>
@@ -374,7 +375,7 @@ async function copyToken() {
               close()
             }"
           >
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton
             type="submit"
@@ -386,7 +387,7 @@ async function copyToken() {
             :disabled="isCreating"
             @click="() => createApiKey({ data: createForm } as unknown as FormSubmitEvent<KeyFormSchema>)"
           >
-            Create Key
+            {{ t('common.create') }}
           </UButton>
         </template>
         <template v-else>
@@ -399,7 +400,7 @@ async function copyToken() {
               close()
             }"
           >
-            Done
+            {{ t('account.apiKeys.done') }}
           </UButton>
         </template>
       </template>
@@ -407,20 +408,20 @@ async function copyToken() {
 
     <UModal
       v-model:open="showDeleteModal"
-      title="Delete API Key"
-      description="This action cannot be undone. The API key will be permanently removed."
+      :title="t('account.apiKeys.deleteAPIKey')"
+      :description="t('account.apiKeys.cannotBeUndone')"
       :ui="{ footer: 'flex justify-end gap-2' }"
     >
       <template #body>
         <div class="space-y-4">
           <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle">
-            <template #title>Warning</template>
+            <template #title>{{ t('account.apiKeys.warning') }}</template>
             <template #description>
-              Are you sure you want to delete this API key? Any applications using this key will lose access immediately.
+              {{ t('account.apiKeys.confirmDeleteDescription') }}
             </template>
           </UAlert>
           <div v-if="keyToDelete" class="rounded-md bg-muted p-3">
-            <p class="text-sm font-medium">Key Identifier:</p>
+            <p class="text-sm font-medium">{{ t('account.apiKeys.keyIdentifier') }}</p>
             <code class="text-sm font-mono mt-1">{{ keyToDelete }}</code>
           </div>
         </div>
@@ -437,7 +438,7 @@ async function copyToken() {
             close()
           }"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </UButton>
         <UButton
           color="error"
@@ -446,7 +447,7 @@ async function copyToken() {
           :disabled="isDeleting"
           @click="confirmDelete"
         >
-          Delete Key
+          {{ t('account.apiKeys.deleteKey') }}
         </UButton>
       </template>
     </UModal>
@@ -456,12 +457,12 @@ async function copyToken() {
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
             <div class="space-y-1">
-              <h2 class="text-lg font-semibold">Active API Keys</h2>
-              <p class="text-sm text-muted-foreground">Manage existing keys or create new ones for API access.</p>
+              <h2 class="text-lg font-semibold">{{ t('account.apiKeys.activeAPIKeys') }}</h2>
+              <p class="text-sm text-muted-foreground">{{ t('account.apiKeys.manageExistingKeys') }}</p>
             </div>
           </template>
           <UAlert v-if="loadError" color="error" icon="i-lucide-alert-triangle" class="mb-4">
-            <template #title>Unable to load keys</template>
+            <template #title>{{ t('account.apiKeys.unableToLoadKeysTitle') }}</template>
             <template #description>{{ loadError }}</template>
           </UAlert>
 
@@ -473,8 +474,8 @@ async function copyToken() {
           <UEmpty
             v-else-if="apiKeys.length === 0"
             icon="i-lucide-key"
-            title="No API keys yet"
-            description="Create an API key to access the panel programmatically"
+            :title="t('account.apiKeys.noKeys')"
+            :description="t('account.apiKeys.noKeysDescription')"
           />
 
           <div v-else class="space-y-3">
@@ -502,7 +503,7 @@ async function copyToken() {
                       />
                     </div>
                     <UBadge v-if="(key as any).allowed_ips?.length" color="primary" variant="soft" size="xs">
-                      IP Restricted
+                      {{ t('account.apiKeys.ipRestricted') }}
                     </UBadge>
                     <p v-if="key.description" class="text-sm text-muted-foreground">
                       {{ key.description }}
@@ -511,12 +512,12 @@ async function copyToken() {
 
                   <div class="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                     <span class="truncate">
-                      Created:
+                      {{ t('account.apiKeys.created') }}:
                       <NuxtTime :datetime="key.created_at" class="font-medium" />
                     </span>
                     <span v-if="key.last_used_at" class="hidden sm:inline">•</span>
                     <span v-if="key.last_used_at" class="truncate">
-                      Last used:
+                      {{ t('account.apiKeys.lastUsed') }}:
                       <NuxtTime :datetime="key.last_used_at" class="font-medium" />
                     </span>
                   </div>
@@ -531,7 +532,7 @@ async function copyToken() {
                       :disabled="isDeleting"
                       @click.stop="openDeleteModal(key.identifier)"
                     >
-                      Delete
+                      {{ t('common.delete') }}
                     </UButton>
                   </div>
                 </div>
@@ -543,14 +544,14 @@ async function copyToken() {
               >
                 <div class="space-y-2">
                   <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">API Key Data</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('account.apiKeys.apiKeyData') }}</p>
                     <UButton
                       variant="ghost"
                       size="xs"
                       icon="i-lucide-copy"
                       @click.stop="copyJson(key)"
                     >
-                      Copy JSON
+                      {{ t('account.apiKeys.copyJSON') }}
                     </UButton>
                   </div>
                   <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatJson(getFullKeyData(key)) }}</code></pre>

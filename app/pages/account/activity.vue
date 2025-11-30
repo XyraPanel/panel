@@ -6,6 +6,7 @@ definePageMeta({
   auth: true,
 })
 
+const { t } = useI18n()
 const {
   data: activityResponse,
   pending: loading,
@@ -34,7 +35,7 @@ const generatedAt = computed(() => activityResponse.value?.generatedAt ?? null)
 const generatedAtDate = computed(() => (generatedAt.value ? new Date(generatedAt.value) : null))
 const error = computed(() => {
   if (!fetchError.value) return null
-  return fetchError.value instanceof Error ? fetchError.value.message : 'Failed to load account activity.'
+  return fetchError.value instanceof Error ? fetchError.value.message : t('account.activity.failedToLoad')
 })
 
 const expandedEntries = ref<Set<string>>(new Set())
@@ -80,13 +81,13 @@ async function copyJson(entry: typeof entries.value[0]) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: 'Copied to clipboard',
-      description: 'Audit log entry JSON has been copied.',
+      title: t('account.activity.copiedToClipboard'),
+      description: t('account.activity.copiedToClipboardDescription'),
     })
   } catch (error) {
     toast.add({
-      title: 'Failed to copy',
-      description: error instanceof Error ? error.message : 'Unable to copy to clipboard.',
+      title: t('account.activity.failedToCopy'),
+      description: error instanceof Error ? error.message : t('account.activity.failedToCopyDescription'),
       color: 'error',
     })
   }
@@ -97,17 +98,17 @@ async function copyJson(entry: typeof entries.value[0]) {
 <template>
   <UPage>
     <UContainer>
-      <UPageHeader title="Account activity">
+      <UPageHeader :title="t('account.activity.title')">
         <template #description>
           <span>
-            Personal actions you've taken across XyraPanel. Use this log to verify recent changes and sign-ins. Updated
+            {{ t('account.activity.descriptionWithTime') }}
             <NuxtTime
               v-if="generatedAtDate"
               :datetime="generatedAtDate"
               relative
               class="font-medium"
             />
-            <span v-else>recently</span>
+            <span v-else>{{ t('account.activity.recently') }}</span>
           </span>
         </template>
       </UPageHeader>
@@ -117,7 +118,7 @@ async function copyJson(entry: typeof entries.value[0]) {
       <UContainer>
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
-            <h2 class="text-lg font-semibold">Recent activity</h2>
+            <h2 class="text-lg font-semibold">{{ t('account.activity.recentActivity') }}</h2>
           </template>
 
           <template v-if="loading">
@@ -133,8 +134,8 @@ async function copyJson(entry: typeof entries.value[0]) {
           <UEmpty
             v-else-if="entries.length === 0"
             icon="i-lucide-activity"
-            title="No activity yet"
-            description="Your account activity will appear here"
+            :title="t('account.activity.noActivity')"
+            :description="t('account.activity.noActivityDescription')"
             variant="subtle"
           />
           <template v-else>
@@ -171,14 +172,14 @@ async function copyJson(entry: typeof entries.value[0]) {
                 >
                   <div class="space-y-2">
                     <div class="flex items-center justify-between mb-2">
-                      <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Audit Log Entry</p>
+                      <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('account.activity.auditLogEntry') }}</p>
                       <UButton
                         variant="ghost"
                         size="xs"
                         icon="i-lucide-copy"
                         @click.stop="copyJson(entry)"
                       >
-                        Copy JSON
+                        {{ t('account.activity.copyJSON') }}
                       </UButton>
                     </div>
                     <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatJson(getFullAuditData(entry)) }}</code></pre>

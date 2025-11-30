@@ -6,6 +6,7 @@ definePageMeta({
   layout: 'default',
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const isCreating = ref(false)
 const showCreateModal = ref(false)
@@ -63,13 +64,13 @@ async function copyJson(key: typeof sshKeys.value[0]) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: 'Copied to clipboard',
-      description: 'SSH key data JSON has been copied.',
+      title: t('account.sshKeys.copiedToClipboard'),
+      description: t('account.sshKeys.copiedToClipboardDescription'),
     })
   } catch (error) {
     toast.add({
-      title: 'Failed to copy',
-      description: error instanceof Error ? error.message : 'Unable to copy to clipboard.',
+      title: t('account.sshKeys.failedToCopy'),
+      description: error instanceof Error ? error.message : t('account.sshKeys.failedToCopyDescription'),
       color: 'error',
     })
   }
@@ -93,16 +94,16 @@ async function createSshKey() {
     await refresh()
 
     toast.add({
-      title: 'SSH Key Added',
-      description: 'Your SSH key has been added successfully',
+      title: t('account.sshKeys.keyAdded'),
+      description: t('account.sshKeys.keyAddedDescription'),
       color: 'success',
     })
   }
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to add SSH key',
+      title: t('account.sshKeys.error'),
+      description: err.data?.message || t('account.sshKeys.failedToAddKey'),
       color: 'error',
     })
   }
@@ -130,16 +131,16 @@ async function confirmDelete() {
     keyToDelete.value = null
 
     toast.add({
-      title: 'SSH Key Deleted',
-      description: 'The SSH key has been removed',
+      title: t('account.sshKeys.keyDeleted'),
+      description: t('account.sshKeys.keyDeletedDescription'),
       color: 'success',
     })
   }
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to delete SSH key',
+      title: t('account.sshKeys.error'),
+      description: err.data?.message || t('account.sshKeys.failedToDeleteKey'),
       color: 'error',
     })
   }
@@ -153,10 +154,10 @@ async function confirmDelete() {
 <template>
   <UPage>
     <UContainer>
-      <UPageHeader title="SSH Keys" description="Manage SSH keys for SFTP access to your servers">
+      <UPageHeader :title="t('account.sshKeys.title')" :description="t('account.sshKeys.description')">
         <template #links>
           <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
-            Add SSH Key
+            {{ t('account.sshKeys.addSSHKey') }}
           </UButton>
         </template>
       </UPageHeader>
@@ -164,29 +165,29 @@ async function confirmDelete() {
 
     <UModal
       v-model:open="showCreateModal"
-      title="Add SSH Key"
-      description="Add a new SSH key for secure SFTP access to your servers"
+      :title="t('account.sshKeys.addSSHKey')"
+      :description="t('account.sshKeys.addNewSSHKey')"
     >
       <template #body>
         <form class="space-y-4" @submit.prevent="createSshKey">
-          <UFormField label="Name" name="name" required>
+          <UFormField :label="t('account.sshKeys.name')" name="name" required>
             <UInput
               v-model="createForm.name"
-              placeholder="My Laptop"
+              :placeholder="t('account.sshKeys.namePlaceholder')"
               class="w-full"
               required
             />
           </UFormField>
 
           <UFormField
-            label="Public Key"
+            :label="t('account.sshKeys.publicKey')"
             name="publicKey"
             required
-            help="Paste your SSH public key (starts with ssh-rsa, ssh-ed25519, etc.)"
+            :help="t('account.sshKeys.publicKeyHelp')"
           >
             <UTextarea
               v-model="createForm.publicKey"
-              placeholder="ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAA..."
+              :placeholder="t('account.sshKeys.publicKeyPlaceholder')"
               :rows="6"
               class="w-full"
               required
@@ -203,7 +204,7 @@ async function confirmDelete() {
             :disabled="isCreating"
             @click="close"
           >
-            Cancel
+            {{ t('account.sshKeys.cancel') }}
           </UButton>
           <UButton
             icon="i-lucide-plus"
@@ -213,7 +214,7 @@ async function confirmDelete() {
             :disabled="isCreating"
             @click="createSshKey"
           >
-            Add SSH Key
+            {{ t('account.sshKeys.addSSHKey') }}
           </UButton>
         </div>
       </template>
@@ -221,16 +222,16 @@ async function confirmDelete() {
 
     <UModal
       v-model:open="showDeleteModal"
-      title="Delete SSH Key"
-      description="Are you sure you want to delete this SSH key? This action cannot be undone."
+      :title="t('account.sshKeys.deleteSSHKey')"
+      :description="t('account.sshKeys.confirmDeleteSSHKey')"
     >
       <template #body>
         <UAlert
           color="error"
           variant="soft"
           icon="i-lucide-alert-triangle"
-          title="Warning"
-          description="Deleting this SSH key will immediately revoke SFTP access for this key. Make sure you have another way to access your servers."
+          :title="t('account.sshKeys.warning')"
+          :description="t('account.sshKeys.deleteWarning')"
         />
       </template>
 
@@ -242,7 +243,7 @@ async function confirmDelete() {
             :disabled="isDeleting"
             @click="close"
           >
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton
             variant="solid"
@@ -252,7 +253,7 @@ async function confirmDelete() {
             :disabled="isDeleting"
             @click="confirmDelete"
           >
-            Delete SSH Key
+            {{ t('account.sshKeys.deleteSSHKey') }}
           </UButton>
         </div>
       </template>
@@ -263,15 +264,15 @@ async function confirmDelete() {
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
             <div class="space-y-1">
-              <h2 class="text-lg font-semibold">Configured SSH Keys</h2>
-              <p class="text-sm text-muted-foreground">Add SSH keys to access your servers over SFTP.</p>
+              <h2 class="text-lg font-semibold">{{ t('account.sshKeys.configuredSSHKeys') }}</h2>
+              <p class="text-sm text-muted-foreground">{{ t('account.sshKeys.configuredSSHKeysDescription') }}</p>
             </div>
           </template>
           <UEmpty
             v-if="sshKeys.length === 0"
             icon="i-lucide-key-round"
-            title="No SSH keys yet"
-            description="Add an SSH key to securely access your servers via SFTP"
+            :title="t('account.sshKeys.noSSHKeys')"
+            :description="t('account.sshKeys.noSSHKeysDescription')"
           />
 
           <div v-else class="space-y-3">
@@ -299,14 +300,14 @@ async function confirmDelete() {
                       />
                     </div>
                     <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                      <span class="font-medium">Fingerprint:</span>
+                      <span class="font-medium">{{ t('account.sshKeys.fingerprint') }}:</span>
                       <code class="text-xs font-mono">{{ key.fingerprint }}</code>
                     </div>
                   </div>
 
                   <div class="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                     <span class="truncate">
-                      Added:
+                      {{ t('account.sshKeys.added') }}:
                       <NuxtTime :datetime="key.created_at" class="font-medium" />
                     </span>
                   </div>
@@ -321,7 +322,7 @@ async function confirmDelete() {
                       :disabled="isDeleting"
                       @click.stop="openDeleteModal(key.id)"
                     >
-                      Delete
+                      {{ t('account.sshKeys.delete') }}
                     </UButton>
                   </div>
                 </div>
@@ -333,14 +334,14 @@ async function confirmDelete() {
               >
                 <div class="space-y-2">
                   <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">SSH Key Data</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('account.sshKeys.sshKeyData') }}</p>
                     <UButton
                       variant="ghost"
                       size="xs"
                       icon="i-lucide-copy"
                       @click.stop="copyJson(key)"
                     >
-                      Copy JSON
+                      {{ t('account.sshKeys.copyJSON') }}
                     </UButton>
                   </div>
                   <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatJson(getFullKeyData(key)) }}</code></pre>

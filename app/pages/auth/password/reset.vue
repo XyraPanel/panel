@@ -8,6 +8,7 @@ definePageMeta({
   auth: false,
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const router = useRouter()
 const route = useRoute()
@@ -16,8 +17,8 @@ const fields: AuthFormField[] = [
   {
     name: 'token',
     type: 'text',
-    label: 'Reset Token',
-    placeholder: 'Paste the token from your email',
+    label: t('auth.resetToken'),
+    placeholder: t('auth.pasteTokenFromEmail'),
     icon: 'i-lucide-key',
     required: true,
     autocomplete: 'off',
@@ -25,8 +26,8 @@ const fields: AuthFormField[] = [
   {
     name: 'password',
     type: 'password',
-    label: 'New Password',
-    placeholder: 'Enter your new password',
+    label: t('auth.newPassword'),
+    placeholder: t('auth.enterNewPassword'),
     icon: 'i-lucide-lock',
     required: true,
     autocomplete: 'new-password',
@@ -34,8 +35,8 @@ const fields: AuthFormField[] = [
   {
     name: 'confirmPassword',
     type: 'password',
-    label: 'Confirm Password',
-    placeholder: 'Re-enter your password',
+    label: t('auth.confirmPassword'),
+    placeholder: t('auth.reEnterPassword'),
     icon: 'i-lucide-shield-check',
     required: true,
     autocomplete: 'new-password',
@@ -47,7 +48,7 @@ const schema = passwordResetSchema
 const loading = ref(false)
 
 const submitProps = computed(() => ({
-  label: 'Update password',
+  label: t('auth.updatePassword'),
   icon: 'i-lucide-save',
   block: true,
   variant: 'subtle' as const,
@@ -66,7 +67,7 @@ async function onSubmit(payload: FormSubmitEvent<PasswordResetInput>) {
     const token = String(formData.token || initialToken.value).trim()
     
     if (!token) {
-      throw new Error('Reset token is required')
+      throw new Error(t('auth.resetTokenRequired'))
     }
 
     const newPassword = String(formData.password).trim()
@@ -82,17 +83,17 @@ async function onSubmit(payload: FormSubmitEvent<PasswordResetInput>) {
     })
 
     toast.add({
-      title: 'Password updated',
-      description: 'You can now sign in with your new password.',
+      title: t('auth.passwordUpdated'),
+      description: t('auth.canNowSignIn'),
       color: 'success',
     })
 
     router.push('/auth/login')
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to reset password.'
+    const message = error instanceof Error ? error.message : t('auth.unableToResetPassword')
     toast.add({
-      title: 'Reset failed',
+      title: t('auth.resetFailed'),
       description: message,
       color: 'error',
     })
@@ -107,14 +108,14 @@ async function onSubmit(payload: FormSubmitEvent<PasswordResetInput>) {
   <UAuthForm
     :schema="schema"
     :fields="fields"
-    title="Set a new password"
-    description="Enter your reset token and choose a new password."
+    :title="t('auth.setNewPassword')"
+    :description="t('auth.enterResetTokenAndPassword')"
     :submit="submitProps"
     @submit="onSubmit as any"
   >
     <template #footer>
       <NuxtLink to="/auth/login" class="text-primary font-medium">
-        Back to sign in
+        {{ t('auth.backToSignIn') }}
       </NuxtLink>
     </template>
   </UAuthForm>

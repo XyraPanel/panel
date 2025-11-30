@@ -8,6 +8,7 @@ definePageMeta({
   layout: 'server',
 })
 
+const { t } = useI18n()
 const serverId = computed(() => route.params.id as string)
 
 const { data: settingsData, pending, error } = await useAsyncData(
@@ -36,8 +37,8 @@ function openRenameModal() {
 async function renameServer() {
   if (!newName.value.trim()) {
     toast.add({
-      title: 'Validation Error',
-      description: 'Server name cannot be empty',
+      title: t('validation.required'),
+      description: t('server.settings.serverNameHelp'),
       color: 'error',
     })
     return
@@ -51,8 +52,8 @@ async function renameServer() {
     })
 
     toast.add({
-      title: 'Server Renamed',
-      description: 'Server name has been updated successfully',
+      title: t('common.success'),
+      description: t('common.success'),
       color: 'success',
     })
 
@@ -62,8 +63,8 @@ async function renameServer() {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to rename server',
+      title: t('common.error'),
+      description: err.data?.message || t('common.error'),
       color: 'error',
     })
   }
@@ -80,8 +81,8 @@ async function reinstallServer() {
     })
 
     toast.add({
-      title: 'Reinstall Queued',
-      description: 'Server reinstallation has been started',
+      title: t('server.settings.serverReinstalled'),
+      description: t('server.settings.serverReinstalledDescription'),
       color: 'success',
     })
 
@@ -91,8 +92,8 @@ async function reinstallServer() {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to reinstall server',
+      title: t('common.error'),
+      description: err.data?.message || t('common.error'),
       color: 'error',
     })
   }
@@ -102,8 +103,8 @@ async function reinstallServer() {
 }
 
 function formatBytes(bytes: number | null | undefined): string {
-  if (bytes === null || bytes === undefined || bytes === 0 || bytes === -1) return 'Unlimited'
-  if (bytes < 0) return 'Unlimited'
+  if (bytes === null || bytes === undefined || bytes === 0 || bytes === -1) return t('common.none')
+  if (bytes < 0) return t('common.none')
   const k = 1024
   const sizes = ['MB', 'GB', 'TB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
@@ -111,13 +112,13 @@ function formatBytes(bytes: number | null | undefined): string {
 }
 
 function formatCpu(cpu: number | null): string {
-  if (cpu === null || cpu === 0) return 'Unlimited'
+  if (cpu === null || cpu === 0) return t('common.none')
   return `${cpu}%`
 }
 
 function formatIo(io: number | null): string {
-  if (io === null || io === 0) return 'Default'
-  return `${io} weight`
+  if (io === null || io === 0) return t('common.none')
+  return `${io} ${t('server.settings.ioWeight')}`
 }
 </script>
 
@@ -128,8 +129,8 @@ function formatIo(io: number | null): string {
         <section class="space-y-6">
         <header class="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p class="text-xs text-muted-foreground">Server {{ serverId }} · Settings</p>
-            <h1 class="text-xl font-semibold">Server Settings</h1>
+            <p class="text-xs text-muted-foreground">{{ t('server.settings.title') }}</p>
+            <h1 class="text-xl font-semibold">{{ t('server.settings.title') }}</h1>
           </div>
         </header>
 
@@ -137,7 +138,7 @@ function formatIo(io: number | null): string {
           <div class="flex items-start gap-2">
             <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
             <div>
-              <p class="font-medium">Failed to load settings</p>
+              <p class="font-medium">{{ t('server.settings.title') }}</p>
               <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
             </div>
           </div>
@@ -151,42 +152,42 @@ function formatIo(io: number | null): string {
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Server Information</h2>
+                <h2 class="text-lg font-semibold">{{ t('server.settings.title') }}</h2>
                 <UButton
                   icon="i-lucide-pencil"
                   size="sm"
                   variant="ghost"
                   @click="openRenameModal"
                 >
-                  Rename
+                  {{ t('server.files.rename') }}
                 </UButton>
               </div>
             </template>
 
             <div class="grid gap-4 md:grid-cols-2">
               <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-muted-foreground">Name</p>
+                <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('common.name') }}</p>
                 <p class="mt-2 text-lg font-semibold text-foreground">{{ server?.name }}</p>
               </div>
               <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-muted-foreground">Identifier</p>
+                <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('server.details.identifier') }}</p>
                 <div class="mt-2 flex items-center justify-between gap-2">
                   <p class="font-mono text-sm text-foreground">{{ server?.identifier }}</p>
-                  <ServerCopyButton v-if="server?.identifier" :text="server.identifier" label="Identifier" />
+                  <ServerCopyButton v-if="server?.identifier" :text="server.identifier" :label="t('server.details.identifier')" />
                 </div>
               </div>
               <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-muted-foreground">UUID</p>
+                <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('server.details.uuid') }}</p>
                 <div class="mt-2 flex items-center justify-between gap-2">
                   <p class="font-mono text-xs text-foreground truncate">{{ server?.uuid }}</p>
-                  <ServerCopyButton v-if="server?.uuid" :text="server.uuid" label="UUID" />
+                  <ServerCopyButton v-if="server?.uuid" :text="server.uuid" :label="t('server.details.uuid')" />
                 </div>
               </div>
               <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-muted-foreground">Status</p>
+                <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('common.status') }}</p>
                 <div class="mt-2 flex items-center gap-2">
-                  <UBadge v-if="server?.suspended" color="error" size="sm">Suspended</UBadge>
-                  <UBadge v-else color="primary" size="sm">Active</UBadge>
+                  <UBadge v-if="server?.suspended" color="error" size="sm">{{ t('common.suspended') }}</UBadge>
+                  <UBadge v-else color="primary" size="sm">{{ t('common.active') }}</UBadge>
                 </div>
               </div>
             </div>
@@ -195,36 +196,36 @@ function formatIo(io: number | null): string {
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Resource Limits</h2>
+                <h2 class="text-lg font-semibold">{{ t('server.details.limits') }}</h2>
               </div>
             </template>
 
             <ServerEmptyState
               v-if="!limits"
               icon="i-lucide-gauge"
-              title="No limits configured"
-              description="Resource limits will appear here once configured."
+              :title="t('common.none')"
+              :description="t('common.none')"
             />
 
             <div v-else class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-muted-foreground">CPU limit</p>
+                <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('server.details.cpu') }}</p>
                 <p class="mt-2 text-lg font-semibold text-foreground">{{ formatCpu(limits.cpu) }}</p>
               </div>
               <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-muted-foreground">Memory</p>
+                <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('server.details.memory') }}</p>
                 <p class="mt-2 text-lg font-semibold text-foreground">{{ formatBytes(limits.memory) }}</p>
               </div>
               <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-muted-foreground">Disk</p>
+                <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('server.details.disk') }}</p>
                 <p class="mt-2 text-lg font-semibold text-foreground">{{ formatBytes(limits.disk) }}</p>
               </div>
               <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-muted-foreground">Swap</p>
+                <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('server.details.swap') }}</p>
                 <p class="mt-2 text-lg font-semibold text-foreground">{{ formatBytes(limits.swap) }}</p>
               </div>
               <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                <p class="text-xs uppercase tracking-wide text-muted-foreground">Block IO</p>
+                <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('server.details.io') }}</p>
                 <p class="mt-2 text-lg font-semibold text-foreground">{{ formatIo(limits.io) }}</p>
               </div>
             </div>
@@ -233,16 +234,15 @@ function formatIo(io: number | null): string {
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Reinstall Server</h2>
+                <h2 class="text-lg font-semibold">{{ t('server.settings.title') }}</h2>
               </div>
             </template>
 
             <div class="space-y-4">
               <UAlert color="warning" icon="i-lucide-alert-triangle">
-                <template #title>Danger Zone</template>
+                <template #title>{{ t('server.settings.reinstallWarning') }}</template>
                 <template #description>
-                  Reinstalling your server will stop it, and then re-run the installation script that initially set it up.
-                  This will delete all files and reset the server to its initial state.
+                  {{ t('server.settings.reinstallWarningDescription') }}
                 </template>
               </UAlert>
 
@@ -254,7 +254,7 @@ function formatIo(io: number | null): string {
                   :disabled="server?.suspended"
                   @click="showReinstallModal = true"
                 >
-                  Reinstall Server
+                  {{ t('server.settings.reinstallServer') }}
                 </UButton>
               </div>
             </div>
@@ -263,14 +263,14 @@ function formatIo(io: number | null): string {
           <UCard v-if="server?.suspended">
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Suspension Status</h2>
-                <UButton icon="i-lucide-unlock" size="sm" color="warning" variant="soft">Unsuspend</UButton>
+                <h2 class="text-lg font-semibold">{{ t('common.suspended') }}</h2>
+                <UButton icon="i-lucide-unlock" size="sm" color="warning" variant="soft">{{ t('common.suspended') }}</UButton>
               </div>
             </template>
 
-            <UAlert color="warning" icon="i-lucide-alert-triangle" title="Server Suspended">
+            <UAlert color="warning" icon="i-lucide-alert-triangle" :title="t('common.suspended')">
               <template #description>
-                This server is currently suspended and cannot be started. Contact an administrator to resolve this issue.
+                {{ t('common.suspended') }}
               </template>
             </UAlert>
           </UCard>
@@ -281,21 +281,20 @@ function formatIo(io: number | null): string {
 
     <UModal
       v-model:open="showReinstallModal"
-      title="Confirm Server Reinstallation"
+      :title="t('server.settings.reinstallServer')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
         <div class="space-y-4">
           <UAlert color="error" icon="i-lucide-alert-triangle">
-            <template #title>This is a destructive action!</template>
+            <template #title>{{ t('server.settings.reinstallWarning') }}</template>
             <template #description>
-              Reinstalling will delete all files, databases, and configurations on this server.
-              This action cannot be undone.
+              {{ t('server.settings.reinstallWarningDescription') }}
             </template>
           </UAlert>
 
           <p class="text-sm text-muted-foreground">
-            Are you sure you want to reinstall <strong>{{ server?.name }}</strong>?
+            {{ t('server.settings.confirmReinstall', { name: server?.name }) }}
           </p>
         </div>
       </template>
@@ -306,7 +305,7 @@ function formatIo(io: number | null): string {
           :disabled="reinstalling"
           @click="showReinstallModal = false"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </UButton>
         <UButton
           icon="i-lucide-refresh-cw"
@@ -315,29 +314,29 @@ function formatIo(io: number | null): string {
           :disabled="reinstalling"
           @click="reinstallServer"
         >
-          Yes, Reinstall Server
+          {{ t('server.settings.reinstallServer') }}
         </UButton>
       </template>
     </UModal>
 
     <UModal
       v-model:open="showRenameModal"
-      title="Rename Server"
+      :title="t('server.files.rename')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
-        <UFormField label="Server Name" name="name" required>
+        <UFormField :label="t('common.name')" name="name" required>
           <UInput
             v-model="newName"
             icon="i-lucide-server"
-            placeholder="My Awesome Server"
+            :placeholder="t('common.name')"
             required
             class="w-full"
             :disabled="renaming"
             @keydown.enter="renameServer"
           />
           <template #help>
-            Choose a descriptive name for your server
+            {{ t('server.settings.serverNameHelp') }}
           </template>
         </UFormField>
       </template>
@@ -348,7 +347,7 @@ function formatIo(io: number | null): string {
           :disabled="renaming"
           @click="showRenameModal = false"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </UButton>
         <UButton
           icon="i-lucide-check"
@@ -357,7 +356,7 @@ function formatIo(io: number | null): string {
           :disabled="renaming || !newName.trim()"
           @click="renameServer"
         >
-          Save Name
+          {{ t('common.save') }}
         </UButton>
       </template>
     </UModal>

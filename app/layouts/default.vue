@@ -6,6 +6,7 @@ import { authClient } from '~/utils/auth-client'
 
 const { data: session } = await authClient.useSession(useFetch)
 
+const { t } = useI18n()
 const route = useRoute()
 const localePath = useLocalePath()
 if (!session.value?.user) {
@@ -34,7 +35,7 @@ const layoutUser = computed(() => {
 
 const userLabel = computed(() => {
   const user = layoutUser.value
-  return user.username || user.email || user.name || 'User'
+  return user.username || user.email || user.name || t('common.user')
 })
 
 const userAvatar = computed(() => {
@@ -64,22 +65,22 @@ async function handleSignOut() {
 const navigationItems = computed<NavigationMenuItem[]>(() => {
   const items: NavigationMenuItem[] = [
     {
-      label: 'Dashboard',
+      label: t('dashboard.title'),
       to: localePath('index'),
     },
     {
-      label: 'Servers',
+      label: t('server.list.title'),
       to: localePath('/server'),
     },
     {
-      label: 'Account',
+      label: t('dashboard.account'),
       children: [
-        { label: 'Profile', to: localePath('/account/profile') },
-        { label: 'Security', to: localePath('/account/security') },
-        { label: 'API Keys', to: localePath('/account/api-keys') },
-        { label: 'SSH Keys', to: localePath('/account/ssh-keys') },
-        { label: 'Sessions', to: localePath('/account/sessions') },
-        { label: 'Activity', to: localePath('/account/activity') },
+        { label: t('account.profile.title'), to: localePath('/account/profile') },
+        { label: t('account.security.title'), to: localePath('/account/security') },
+        { label: t('account.apiKeys.title'), to: localePath('/account/api-keys') },
+        { label: t('account.sshKeys.title'), to: localePath('/account/ssh-keys') },
+        { label: t('account.sessions.title'), to: localePath('/account/sessions') },
+        { label: t('account.activity.title'), to: localePath('/account/activity') },
       ],
     },
   ]
@@ -131,7 +132,7 @@ async function handleLocaleChange(newLocale: string | undefined) {
   <UDashboardGroup class="min-h-screen bg-muted/30" storage="local" storage-key="client-dashboard">
     <UDashboardSidebar
       collapsible
-      :toggle="{ icon: 'i-lucide-menu', label: 'Navigation', color: 'neutral', variant: 'ghost' }"
+      :toggle="{ icon: 'i-lucide-menu', label: t('common.navigation'), color: 'neutral', variant: 'ghost' }"
       :ui="{ footer: 'border-t border-default' }"
     >
       <template #header="{ collapsed }">
@@ -175,14 +176,14 @@ async function handleLocaleChange(newLocale: string | undefined) {
       <template #footer="{ collapsed }">
         <UDropdownMenu
           :items="[[
-            { label: 'Profile', to: localePath('/account/profile') },
-            { label: 'Security', to: localePath('/account/security') },
-            { label: 'API Keys', to: localePath('/account/api-keys') },
-            { label: 'SSH Keys', to: localePath('/account/ssh-keys') },
-            { label: 'Sessions', to: localePath('/account/sessions') },
-            { label: 'Activity', to: localePath('/account/activity') }
+            { label: t('account.profile.title'), to: localePath('/account/profile') },
+            { label: t('account.security.title'), to: localePath('/account/security') },
+            { label: t('account.apiKeys.title'), to: localePath('/account/api-keys') },
+            { label: t('account.sshKeys.title'), to: localePath('/account/ssh-keys') },
+            { label: t('account.sessions.title'), to: localePath('/account/sessions') },
+            { label: t('account.activity.title'), to: localePath('/account/activity') }
           ], [
-            { label: 'Sign out', click: handleSignOut, color: 'error' }
+            { label: t('auth.signOut'), click: handleSignOut, color: 'error' }
           ]]"
         >
           <UButton
@@ -217,7 +218,7 @@ async function handleLocaleChange(newLocale: string | undefined) {
                   @update:model-value="handleLocaleChange($event)"
                 />
                 <UButton v-if="isAdminUser" icon="i-lucide-shield" variant="ghost" color="error" to="/admin">
-                  Admin
+                  {{ t('admin.title') }}
                 </UButton>
                 <template #fallback>
                   <span />
@@ -225,7 +226,7 @@ async function handleLocaleChange(newLocale: string | undefined) {
               </ClientOnly>
               <UButton icon="i-lucide-log-out" color="primary" variant="subtle" :loading="signOutLoading"
                 @click="handleSignOut">
-                Sign out
+                {{ t('auth.signOut') }}
               </UButton>
             </div>
           </template>

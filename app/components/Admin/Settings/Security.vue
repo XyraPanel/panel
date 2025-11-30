@@ -3,15 +3,16 @@ import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { SecuritySettings } from '#shared/types/admin'
 
+const { t } = useI18n()
 const toast = useToast()
 const isSubmitting = ref(false)
 
 const rawSchema = z.object({
   enforceTwoFactor: z.boolean(),
   maintenanceMode: z.boolean(),
-  maintenanceMessage: z.string().trim().max(500, 'Maintenance message must be 500 characters or fewer'),
+  maintenanceMessage: z.string().trim().max(500, t('admin.settings.securitySettings.maintenanceMessageMaxLength')),
   announcementEnabled: z.boolean(),
-  announcementMessage: z.string().trim().max(500, 'Announcement message must be 500 characters or fewer'),
+  announcementMessage: z.string().trim().max(500, t('admin.settings.securitySettings.announcementMessageMaxLength')),
 })
 
 const schema = rawSchema.superRefine((data, ctx) => {
@@ -19,7 +20,7 @@ const schema = rawSchema.superRefine((data, ctx) => {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['maintenanceMessage'],
-      message: 'Provide a maintenance message to show users.',
+      message: t('admin.settings.securitySettings.maintenanceMessageRequired'),
     })
   }
 
@@ -27,7 +28,7 @@ const schema = rawSchema.superRefine((data, ctx) => {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       path: ['announcementMessage'],
-      message: 'Write the announcement content before enabling the banner.',
+      message: t('admin.settings.securitySettings.announcementMessageRequired'),
     })
   }
 })
@@ -78,8 +79,8 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
     Object.assign(form, payload)
 
     toast.add({
-      title: 'Security settings saved',
-      description: 'Safety and maintenance preferences were updated successfully.',
+      title: t('admin.settings.securitySettings.settingsSaved'),
+      description: t('admin.settings.securitySettings.settingsSavedDescription'),
       color: 'success',
     })
 
@@ -88,8 +89,8 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Update failed',
-      description: err.data?.message || 'Unable to save security settings. Try again.',
+      title: t('admin.settings.securitySettings.updateFailed'),
+      description: err.data?.message || t('admin.settings.securitySettings.updateFailedDescription'),
       color: 'error',
     })
   }
@@ -102,7 +103,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 <template>
   <UCard>
     <template #header>
-      <h2 class="text-lg font-semibold">Security</h2>
+      <h2 class="text-lg font-semibold">{{ t('admin.settings.securitySettings.title') }}</h2>
     </template>
 
     <UForm
@@ -115,18 +116,18 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
     >
       <div class="space-y-3">
         <UFormField name="enforceTwoFactor">
-          <USwitch v-model="form.enforceTwoFactor" label="Enforce admin two-factor login" :disabled="isSubmitting" />
+          <USwitch v-model="form.enforceTwoFactor" :label="t('admin.settings.securitySettings.enforceTwoFactor')" :disabled="isSubmitting" />
         </UFormField>
       </div>
 
       <div class="space-y-3">
         <UFormField name="maintenanceMode">
-          <USwitch v-model="form.maintenanceMode" label="Enable maintenance mode" :disabled="isSubmitting" />
+          <USwitch v-model="form.maintenanceMode" :label="t('admin.settings.securitySettings.maintenanceMode')" :disabled="isSubmitting" />
         </UFormField>
 
         <transition name="fade">
-          <UFormField v-if="form.maintenanceMode" label="Maintenance message" name="maintenanceMessage">
-            <UTextarea v-model="form.maintenanceMessage" placeholder="Maintenance message" :rows="3"
+          <UFormField v-if="form.maintenanceMode" :label="t('admin.settings.securitySettings.maintenanceMessage')" name="maintenanceMessage">
+            <UTextarea v-model="form.maintenanceMessage" :placeholder="t('admin.settings.securitySettings.maintenanceMessagePlaceholder')" :rows="3"
               :disabled="isSubmitting" class="w-full" />
           </UFormField>
         </transition>
@@ -134,12 +135,12 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 
       <div class="space-y-3">
         <UFormField name="announcementEnabled">
-          <USwitch v-model="form.announcementEnabled" label="Enable announcement banner" :disabled="isSubmitting" />
+          <USwitch v-model="form.announcementEnabled" :label="t('admin.settings.securitySettings.announcementEnabled')" :disabled="isSubmitting" />
         </UFormField>
 
         <transition name="fade">
-          <UFormField v-if="form.announcementEnabled" label="Announcement message" name="announcementMessage">
-            <UTextarea v-model="form.announcementMessage" placeholder="Announcement message" :rows="3"
+          <UFormField v-if="form.announcementEnabled" :label="t('admin.settings.securitySettings.announcementMessage')" name="announcementMessage">
+            <UTextarea v-model="form.announcementMessage" :placeholder="t('admin.settings.securitySettings.announcementMessagePlaceholder')" :rows="3"
               :disabled="isSubmitting" class="w-full" />
           </UFormField>
         </transition>
@@ -147,7 +148,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 
       <div class="flex justify-end">
         <UButton type="submit" color="primary" :loading="isSubmitting" :disabled="isSubmitting">
-          Save changes
+          {{ t('admin.settings.securitySettings.saveChanges') }}
         </UButton>
       </div>
     </UForm>

@@ -9,6 +9,7 @@ definePageMeta({
   layout: 'server',
 })
 
+const { t } = useI18n()
 const serverId = computed(() => route.params.id as string)
 
 const { data: serverResponse } = await useFetch(
@@ -246,7 +247,7 @@ function handleSearch() {
             <div class="flex items-center gap-3">
               <UBadge v-if="!connected" color="error" size="sm">
                 <UIcon name="i-lucide-wifi-off" />
-                <span class="ml-1">Disconnected</span>
+                <span class="ml-1">{{ t('server.console.disconnected') }}</span>
               </UBadge>
             </div>
 
@@ -258,7 +259,7 @@ function handleSearch() {
                 :disabled="!connected || serverState === 'running' || serverState === 'starting'"
                 @click="() => handlePowerAction('start')"
               >
-                Start
+                {{ t('server.console.start') }}
               </UButton>
               <UButton
                 icon="i-lucide-rotate-cw"
@@ -267,7 +268,7 @@ function handleSearch() {
                 :disabled="!connected || serverState !== 'running'"
                 @click="() => handlePowerAction('restart')"
               >
-                Restart
+                {{ t('server.console.restart') }}
               </UButton>
               <UButton
                 icon="i-lucide-square"
@@ -276,7 +277,7 @@ function handleSearch() {
                 :disabled="!connected || serverState === 'offline' || serverState === 'stopping'"
                 @click="() => handlePowerAction('stop')"
               >
-                Stop
+                {{ t('server.console.stop') }}
               </UButton>
               <UButton
                 icon="i-lucide-zap-off"
@@ -286,34 +287,34 @@ function handleSearch() {
                 :disabled="!connected || serverState === 'offline'"
                 @click="() => handlePowerAction('kill')"
               >
-                Kill
+                {{ t('server.console.kill') }}
               </UButton>
             </div>
           </div>
 
           <UAlert v-if="wsError && wsError !== 'Connecting...'" color="error" icon="i-lucide-alert-circle">
-            <template #title>Connection Error</template>
+            <template #title>{{ t('server.console.connectionLost') }}</template>
             <template #description>
               {{ wsError }}
             </template>
             <template #actions>
               <UButton color="error" variant="ghost" size="xs" @click="reconnect">
-                Reconnect
+                {{ t('server.console.reconnect') }}
               </UButton>
             </template>
           </UAlert>
 
           <UAlert v-else-if="!connected && (!wsError || wsError === 'Connecting...')" color="warning" icon="i-lucide-wifi-off">
-            <template #title>Connecting...</template>
+            <template #title>{{ t('server.console.connecting') }}</template>
             <template #description>
-              {{ wsError === 'Connecting...' ? 'Establishing connection to server console' : 'Establishing connection to server console' }}
+              {{ t('server.console.connecting') }}
             </template>
           </UAlert>
 
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Console</h2>
+                <h2 class="text-lg font-semibold">{{ t('server.console.title') }}</h2>
                 <div class="flex items-center gap-2">
                   <UButton
                     icon="i-lucide-bar-chart-3"
@@ -322,7 +323,7 @@ function handleSearch() {
                     :color="showStats ? 'primary' : 'neutral'"
                     @click="showStats = !showStats"
                   >
-                    Stats
+                    {{ t('server.console.stats') }}
                   </UButton>
                 </div>
               </div>
@@ -335,7 +336,7 @@ function handleSearch() {
                   size="xs"
                   variant="ghost"
                   color="neutral"
-                  title="Search (Ctrl+F)"
+                  :title="t('server.console.searchInConsole')"
                   @click="handleSearch"
                 />
                 <UButton
@@ -343,7 +344,7 @@ function handleSearch() {
                   size="xs"
                   variant="ghost"
                   color="neutral"
-                  title="Clear Console"
+                  :title="t('server.console.clearConsole')"
                   @click="() => terminalRef?.clear?.()"
                 />
                 <UButton
@@ -351,7 +352,7 @@ function handleSearch() {
                   size="xs"
                   variant="ghost"
                   color="neutral"
-                  title="Download Logs"
+                  :title="t('server.console.downloadLogs')"
                   @click="() => terminalRef?.downloadLogs?.()"
                 />
                 <UButton
@@ -359,7 +360,7 @@ function handleSearch() {
                   size="xs"
                   variant="ghost"
                   color="neutral"
-                  title="Scroll to Bottom"
+                  :title="t('server.console.scrollToBottom')"
                   @click="() => terminalRef?.scrollToBottom?.()"
                 />
               </div>
@@ -375,7 +376,7 @@ function handleSearch() {
                   <div class="flex h-full items-center justify-center text-muted-foreground">
                     <div class="text-center">
                       <UIcon name="i-lucide-terminal" class="mx-auto size-12 opacity-50" />
-                      <p class="mt-2">Loading terminal...</p>
+                      <p class="mt-2">{{ t('common.loading') }}</p>
                     </div>
                   </div>
                 </template>
@@ -386,7 +387,7 @@ function handleSearch() {
               <input
                 v-model="commandInput"
                 type="text"
-                placeholder="Type a command..."
+                :placeholder="t('server.console.enterCommand')"
                 :disabled="!connected"
                 autocomplete="off"
                 autocorrect="off"
@@ -409,18 +410,18 @@ function handleSearch() {
       <UPageAside>
         <UCard>
           <template #header>
-            <h3 class="text-sm font-semibold">Connection</h3>
+            <h3 class="text-sm font-semibold">{{ t('server.console.connected') }}</h3>
           </template>
 
           <div class="space-y-3 text-xs">
             <div class="flex items-center justify-between">
-              <span class="text-muted-foreground">Status</span>
+              <span class="text-muted-foreground">{{ t('common.status') }}</span>
               <UBadge :color="connected ? 'success' : 'error'" size="xs">
-                {{ connected ? 'Connected' : 'Disconnected' }}
+                {{ connected ? t('server.console.connected') : t('server.console.disconnected') }}
               </UBadge>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-muted-foreground">State</span>
+              <span class="text-muted-foreground">{{ t('common.status') }}</span>
               <UBadge :color="getStateColor(serverState)" size="xs">
                 <UIcon :name="getStateIcon(serverState)" :class="{ 'animate-spin': serverState === 'starting' || serverState === 'stopping' }" />
                 <span class="ml-1 capitalize">{{ serverState }}</span>
@@ -429,27 +430,23 @@ function handleSearch() {
             <div class="flex items-center justify-between">
               <span class="text-muted-foreground">IP:Port</span>
               <span v-if="primaryAllocation" class="font-mono">{{ primaryAllocation.ip }}:{{ primaryAllocation.port }}</span>
-              <span v-else class="text-muted-foreground">Not assigned</span>
+              <span v-else class="text-muted-foreground">{{ t('common.notAssigned') }}</span>
             </div>
             <div v-if="stats && stats.uptime" class="flex items-center justify-between">
-              <span class="text-muted-foreground">Uptime</span>
+              <span class="text-muted-foreground">{{ t('server.console.uptime') }}</span>
               <span class="font-mono">{{ formattedUptime }}</span>
             </div>
             <div v-if="stats && stats.memoryLimitBytes" class="flex items-center justify-between">
-              <span class="text-muted-foreground">RAM</span>
+              <span class="text-muted-foreground">{{ t('server.console.memory') }}</span>
               <span>{{ formatBytes(stats.memoryBytes) }} / {{ formatBytes(stats.memoryLimitBytes) }}</span>
             </div>
             <div v-if="stats && serverLimits?.disk" class="flex items-center justify-between">
-              <span class="text-muted-foreground">Storage</span>
+              <span class="text-muted-foreground">{{ t('server.console.disk') }}</span>
               <span>{{ formatBytes(stats.diskBytes) }} / {{ formatBytes((serverLimits.disk || 0) * 1024 * 1024) }}</span>
             </div>
             <div v-if="stats" class="flex items-center justify-between">
-              <span class="text-muted-foreground">Network RX</span>
-              <span>{{ formatBytes(stats.networkRxBytes) }}</span>
-            </div>
-            <div v-if="stats" class="flex items-center justify-between">
-              <span class="text-muted-foreground">Network TX</span>
-              <span>{{ formatBytes(stats.networkTxBytes) }}</span>
+              <span class="text-muted-foreground">{{ t('server.console.network') }}</span>
+              <span>{{ formatBytes(stats.networkRxBytes) }} / {{ formatBytes(stats.networkTxBytes) }}</span>
             </div>
           </div>
         </UCard>

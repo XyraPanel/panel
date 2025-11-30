@@ -8,6 +8,7 @@ definePageMeta({
   auth: true,
 })
 
+const { t } = useI18n()
 const sessions = ref<UserSessionSummary[]>([])
 const sessionsError = ref<string | null>(null)
 const currentSessionToken = ref<string | null>(null)
@@ -43,7 +44,7 @@ watch(sessionsFetchError, (err) => {
     return
   }
 
-  const message = err instanceof Error ? err.message : 'Unable to load sessions.'
+  const message = err instanceof Error ? err.message : t('account.sessions.unableToLoadSessions')
   sessionsError.value = message
 })
 
@@ -57,7 +58,7 @@ watch(status, async (newStatus) => {
   if (newStatus === 'unauthenticated') {
     sessions.value = []
     currentSessionToken.value = null
-    sessionsError.value = 'You need to sign in to view sessions.'
+    sessionsError.value = t('account.sessions.signInToView')
   }
 }, { immediate: true })
 
@@ -129,13 +130,13 @@ async function copyJson(session: UserSessionSummary) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: 'Copied to clipboard',
-      description: 'Session data JSON has been copied.',
+      title: t('account.sessions.copiedToClipboard'),
+      description: t('account.sessions.copiedToClipboardDescription'),
     })
   } catch (error) {
     toast.add({
-      title: 'Failed to copy',
-      description: error instanceof Error ? error.message : 'Unable to copy to clipboard.',
+      title: t('account.sessions.failedToCopy'),
+      description: error instanceof Error ? error.message : t('account.sessions.failedToCopyDescription'),
       color: 'error',
     })
   }
@@ -166,8 +167,8 @@ async function handleSignOut(token: string) {
 
         await loadSessions()
         toast.add({
-          title: 'Session revoked',
-          description: 'The selected session has been signed out.',
+          title: t('account.sessions.sessionRevokedTitle'),
+          description: t('account.sessions.sessionRevokedDescription'),
         })
         return
       }
@@ -188,14 +189,14 @@ async function handleSignOut(token: string) {
 
     await loadSessions()
     toast.add({
-      title: 'Session revoked',
-      description: 'The selected session has been signed out.',
+      title: t('account.sessions.sessionRevokedTitle'),
+      description: t('account.sessions.sessionRevokedDescription'),
     })
   }
   catch (error) {
     toast.add({
-      title: 'Failed to revoke session',
-      description: error instanceof Error ? error.message : 'Unable to revoke selected session.',
+      title: t('account.sessions.failedToRevokeSession'),
+      description: error instanceof Error ? error.message : t('account.sessions.unableToRevokeSelectedSession'),
       color: 'error',
     })
   }
@@ -220,8 +221,8 @@ async function handleSignOutAll(includeCurrent = false) {
         await authClient.revokeOtherSessions()
         await loadSessions()
         toast.add({
-          title: 'Sessions revoked',
-          description: 'All other sessions have been revoked.',
+          title: t('account.sessions.sessionsRevokedTitle'),
+          description: t('account.sessions.sessionsRevokedDescription'),
         })
         return
       }
@@ -237,16 +238,18 @@ async function handleSignOutAll(includeCurrent = false) {
 
     await loadSessions()
     toast.add({
-      title: 'Sessions revoked',
+      title: t('account.sessions.sessionsRevokedTitle'),
       description: result.revoked > 0
-        ? `Revoked ${result.revoked} session${result.revoked === 1 ? '' : 's'}.`
-        : 'No sessions were revoked.',
+        ? (result.revoked === 1 
+          ? t('account.sessions.revokedSessionsSingular', { count: result.revoked })
+          : t('account.sessions.revokedSessionsPlural', { count: result.revoked }))
+        : t('account.sessions.noSessionsRevoked'),
     })
   }
   catch (error) {
     toast.add({
-      title: 'Failed to revoke sessions',
-      description: error instanceof Error ? error.message : 'Unable to revoke sessions.',
+      title: t('account.sessions.failedToRevokeSessions'),
+      description: error instanceof Error ? error.message : t('account.sessions.unableToRevokeSessions'),
       color: 'error',
     })
   }
@@ -260,8 +263,8 @@ async function handleSignOutAll(includeCurrent = false) {
   <UPage>
     <UContainer>
       <UPageHeader
-        title="Sessions"
-        description="Manage devices currently authenticated with your XyraPanel account."
+        :title="t('account.sessions.title')"
+        :description="t('account.sessions.manageDevicesDescription')"
       >
         <template #links>
           <UButton
@@ -271,7 +274,7 @@ async function handleSignOutAll(includeCurrent = false) {
             :disabled="!hasSessions || updatingSessions"
             @click="handleSignOutAll(false)"
           >
-            Sign out others
+            {{ t('account.sessions.signOutOthers') }}
           </UButton>
           <UButton
             variant="soft"
@@ -280,7 +283,7 @@ async function handleSignOutAll(includeCurrent = false) {
             :disabled="!hasSessions || updatingSessions"
             @click="handleSignOutAll(true)"
           >
-            Sign out all
+            {{ t('account.sessions.signOutAll') }}
           </UButton>
         </template>
       </UPageHeader>
@@ -291,8 +294,8 @@ async function handleSignOutAll(includeCurrent = false) {
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
             <div>
-              <h2 class="text-lg font-semibold">Active sessions</h2>
-              <p class="text-sm text-muted-foreground">Browser tokens issued for your account.</p>
+              <h2 class="text-lg font-semibold">{{ t('account.sessions.activeSessionsTitle') }}</h2>
+              <p class="text-sm text-muted-foreground">{{ t('account.sessions.browserTokensDescription') }}</p>
             </div>
           </template>
 
@@ -303,8 +306,8 @@ async function handleSignOutAll(includeCurrent = false) {
           <UEmpty
             v-else-if="!hasSessions"
             icon="i-lucide-monitor"
-            title="No active sessions"
-            description="No browser sessions found for your account"
+            :title="t('account.sessions.noActiveSessionsTitle')"
+            :description="t('account.sessions.noBrowserSessionsDescription')"
             variant="subtle"
           />
           <div v-else class="space-y-3">
@@ -325,21 +328,21 @@ async function handleSignOutAll(includeCurrent = false) {
                 <div class="flex-1 min-w-0 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                     <div class="flex items-center gap-2 min-w-0">
-                      <span class="text-sm font-medium">{{ session.device ?? 'Unknown' }}</span>
+                      <span class="text-sm font-medium">{{ session.device ?? t('common.unknown') }}</span>
                       <UIcon
                         :name="expandedSessions.has(session.token) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
                         class="size-4 text-muted-foreground shrink-0"
                       />
                     </div>
-                    <span class="text-xs text-muted-foreground">{{ session.os ?? 'Unknown' }} • {{ session.browser ?? 'Unknown' }}</span>
+                    <span class="text-xs text-muted-foreground">{{ session.os ?? t('common.unknown') }} • {{ session.browser ?? t('common.unknown') }}</span>
                     <UBadge v-if="session.token === currentSessionToken" color="primary" variant="soft" size="xs" class="shrink-0">
-                      Current
+                      {{ t('account.sessions.current') }}
                     </UBadge>
                   </div>
 
                   <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs text-muted-foreground shrink-0">
                     <div class="flex items-center gap-1 shrink-0">
-                      <span class="truncate">IP:</span>
+                      <span class="truncate">{{ t('account.sessions.ipAddress') }}:</span>
                       <UTooltip
                         v-if="session.ipAddress && session.ipAddress !== 'Unknown'"
                         :delay-duration="0"
@@ -347,24 +350,24 @@ async function handleSignOutAll(includeCurrent = false) {
                       >
                         <span class="cursor-help font-mono">{{ maskIp(session.ipAddress) }}</span>
                       </UTooltip>
-                      <span v-else class="font-mono">{{ maskIp(session.ipAddress ?? 'Unknown') }}</span>
+                      <span v-else class="font-mono">{{ maskIp(session.ipAddress ?? t('common.unknown')) }}</span>
                     </div>
                     <span class="hidden sm:inline">•</span>
                     <div class="flex items-center gap-2 shrink-0">
                       <span class="truncate">
-                        Active:
+                        {{ t('account.sessions.active') }}:
                         <template v-if="session.lastSeenAt">
                           <NuxtTime :datetime="session.lastSeenAt" class="font-medium" />
                         </template>
-                        <span v-else>Unknown</span>
+                        <span v-else>{{ t('common.unknown') }}</span>
                       </span>
                       <span class="hidden sm:inline">•</span>
                       <span class="truncate">
-                        Expires:
+                        {{ t('account.sessions.expires') }}:
                         <template v-if="session.expiresAtTimestamp">
                           <NuxtTime :datetime="session.expiresAtTimestamp * 1000" class="font-medium" />
                         </template>
-                        <span v-else>Unknown</span>
+                        <span v-else>{{ t('common.unknown') }}</span>
                       </span>
                     </div>
                   </div>
@@ -378,7 +381,7 @@ async function handleSignOutAll(includeCurrent = false) {
                       :disabled="session.token === currentSessionToken && updatingSessions"
                       @click.stop="handleSignOut(session.token)"
                     >
-                      Revoke
+                      {{ t('account.sessions.revoke') }}
                     </UButton>
                   </div>
                 </div>
@@ -390,14 +393,14 @@ async function handleSignOutAll(includeCurrent = false) {
               >
                 <div class="space-y-2">
                   <div class="flex items-center justify-between mb-2">
-                    <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Session Data</p>
+                    <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('account.sessions.sessionData') }}</p>
                     <UButton
                       variant="ghost"
                       size="xs"
                       icon="i-lucide-copy"
                       @click.stop="copyJson(session)"
                     >
-                      Copy JSON
+                      {{ t('account.sessions.copyJSON') }}
                     </UButton>
                   </div>
                   <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatJson(getFullSessionData(session)) }}</code></pre>

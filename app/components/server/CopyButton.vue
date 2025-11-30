@@ -4,6 +4,7 @@ const props = defineProps<{
   label?: string
 }>()
 
+const { t } = useI18n()
 const copied = ref(false)
 const toast = useToast()
 
@@ -13,8 +14,8 @@ async function copyToClipboard() {
     copied.value = true
 
     toast.add({
-      title: 'Copied',
-      description: props.label ? `${props.label} copied to clipboard` : 'Copied to clipboard',
+      title: t('common.copied'),
+      description: props.label ? t('common.copiedToClipboard') : t('common.copiedToClipboard'),
       color: 'success',
     })
 
@@ -24,8 +25,8 @@ async function copyToClipboard() {
   }
   catch {
     toast.add({
-      title: 'Error',
-      description: 'Failed to copy to clipboard',
+      title: t('common.error'),
+      description: t('common.failedToCopy'),
       color: 'error',
     })
   }
@@ -40,6 +41,6 @@ async function copyToClipboard() {
     color="neutral"
     @click="copyToClipboard"
   >
-    {{ copied ? 'Copied!' : 'Copy' }}
+    {{ copied ? t('common.copied') : t('common.copy') }}
   </UButton>
 </template>

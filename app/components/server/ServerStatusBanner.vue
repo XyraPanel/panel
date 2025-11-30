@@ -1,4 +1,7 @@
-<script setup lang="ts">
+      { code: 'es', name: 'Español', language: 'es', dir: 'ltr', file: 'es.json' },
+      <script setup lang="ts">
+const { t } = useI18n()
+
 defineProps<{
   isInstalling?: boolean
   isTransferring?: boolean
@@ -13,29 +16,29 @@ defineProps<{
       v-if="isNodeUnderMaintenance"
       color="warning"
       icon="i-lucide-alert-triangle"
-      title="Node Under Maintenance"
-      description="The node of this server is currently under maintenance and all actions are unavailable."
+      :title="t('server.status.nodeUnderMaintenance')"
+      :description="t('server.status.nodeUnderMaintenanceDescription')"
     />
     <UAlert
       v-else-if="isInstalling"
       color="warning"
       icon="i-lucide-loader-2"
-      title="Installation in Progress"
-      description="This server is currently running its installation process and most actions are unavailable."
+      :title="t('server.status.installationInProgress')"
+      :description="t('server.status.installationInProgressDescription')"
     />
     <UAlert
       v-else-if="isTransferring"
       color="warning"
       icon="i-lucide-arrow-right-left"
-      title="Transfer in Progress"
-      description="This server is currently being transferred to another node and all actions are unavailable."
+      :title="t('server.status.transferInProgress')"
+      :description="t('server.status.transferInProgressDescription')"
     />
     <UAlert
       v-else-if="isSuspended"
       color="error"
       icon="i-lucide-ban"
-      title="Server Suspended"
-      description="This server has been suspended and is not accessible."
+      :title="t('server.status.serverSuspended')"
+      :description="t('server.status.serverSuspendedDescription')"
     />
   </div>
 </template>
