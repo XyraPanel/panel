@@ -50,7 +50,6 @@ watch([passwordCompromised, () => route.path], () => {
 
 <template>
   <UApp :locale="currentLocale">
-    <NuxtPwaManifest/>
     <NuxtLoadingIndicator color="#16a34a" error-color="#ef4444" :height="3" />    
     <UModal
       v-model:open="showPasswordWarning"

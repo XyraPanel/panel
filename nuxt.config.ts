@@ -57,7 +57,6 @@ export default defineNuxtConfig({
     ...(isDev ? ['@nuxt/test-utils/module'] : []), // Only include test utils in development
     '@nuxt/hints',
     'nuxt-charts',
-    '@vite-pwa/nuxt',
     '@nuxtjs/robots',
     '@pinia/nuxt',
     '@pinia/colada-nuxt',
