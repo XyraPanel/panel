@@ -123,6 +123,9 @@ importers:
       '@nuxtjs/security':
         specifier: ^0.0.0
         version: 0.0.0
+      '@nuxtjs/turnstile':
+        specifier: ^1.1.1
+        version: 1.1.1(@nuxt/scripts@0.13.0(@unhead/vue@2.0.19(vue@3.5.24(typescript@5.9.3)))(db0@0.3.4(better-sqlite3@12.4.6)(drizzle-orm@0.36.4(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.4.6)(kysely@0.28.8)))(ioredis@5.8.2)(magicast@0.5.1)(typescript@5.9.3)(vue@3.5.24(typescript@5.9.3)))(magicast@0.5.1)
       '@types/bcryptjs':
         specifier: ^2.4.6
         version: 2.4.6
@@ -1888,6 +1891,11 @@ packages:
   '@nuxtjs/security@0.0.0':
     resolution: {integrity: sha512-nIujjPqVP4iijzkJ0ajjjHwPtqnB6U1/B++v84itePec/jb8CRIxpC0o2eBN5VQzWACAHJfuhRZuKFqfKblMuQ==}
 
+  '@nuxtjs/turnstile@1.1.1':
+    resolution: {integrity: sha512-EiS0JgzzSRhTYXhZSmqT7643f6eKOHeB7jouejepsPkcomSdQ/sf7Fkh9AEU8fhDYAfYc+spuK524LQ4u2CLng==}
+    peerDependencies:
+      '@nuxt/scripts': ^0.11.0 || ^0.12.0
+
   '@one-ini/wasm@0.1.1':
     resolution: {integrity: sha512-XuySG1E38YScSJoMlqovLru4KTUNSjgVTIjyh7qMX6aNN5HY5Ct5LhRJdxO79JtTzKfzV/bnWpz+zquYrISsvw==}
 
@@ -3054,6 +3062,9 @@ packages:
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
+
+  '@types/cloudflare-turnstile@0.2.2':
+    resolution: {integrity: sha512-3Yf7b1Glci+V2bFWwWBbZkRgTuegp7RDgNTOG4U0UNPB9RV4AWvwqg2/qqLff8G+SwKFNXoXvTkqaRBZrAFdKA==}
 
   '@types/d3-array@3.2.2':
     resolution: {integrity: sha512-hOLWVbm7uRza0BYXpIIW5pxfrKe0W+D5lrFiAEYR+pb6w3N2SwSMaJbXdUfSEv+dT4MfHBLtn5js0LAWaO6otw==}
@@ -10831,6 +10842,16 @@ snapshots:
 
   '@nuxtjs/security@0.0.0': {}
 
+  '@nuxtjs/turnstile@1.1.1(@nuxt/scripts@0.13.0(@unhead/vue@2.0.19(vue@3.5.24(typescript@5.9.3)))(db0@0.3.4(better-sqlite3@12.4.6)(drizzle-orm@0.36.4(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.4.6)(kysely@0.28.8)))(ioredis@5.8.2)(magicast@0.5.1)(typescript@5.9.3)(vue@3.5.24(typescript@5.9.3)))(magicast@0.5.1)':
+    dependencies:
+      '@nuxt/kit': 3.20.1(magicast@0.5.1)
+      '@nuxt/scripts': 0.13.0(@unhead/vue@2.0.19(vue@3.5.24(typescript@5.9.3)))(db0@0.3.4(better-sqlite3@12.4.6)(drizzle-orm@0.36.4(@opentelemetry/api@1.9.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.4.6)(kysely@0.28.8)))(ioredis@5.8.2)(magicast@0.5.1)(typescript@5.9.3)(vue@3.5.24(typescript@5.9.3))
+      '@types/cloudflare-turnstile': 0.2.2
+      defu: 6.1.4
+      pathe: 2.0.3
+    transitivePeerDependencies:
+      - magicast
+
   '@one-ini/wasm@0.1.1': {}
 
   '@opentelemetry/api@1.9.0': {}
@@ -11831,6 +11852,8 @@ snapshots:
     dependencies:
       '@types/deep-eql': 4.0.2
       assertion-error: 2.0.1
+
+  '@types/cloudflare-turnstile@0.2.2': {}
 
   '@types/d3-array@3.2.2': {}
 

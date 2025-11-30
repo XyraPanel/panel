@@ -3,14 +3,14 @@ import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { authClient } from '~/utils/auth-client'
-import * as locales from '@nuxt/ui/locale'
 
 const { data: session } = await authClient.useSession(useFetch)
 
 const route = useRoute()
+const localePath = useLocalePath()
 if (!session.value?.user) {
   await navigateTo({
-    path: '/auth/login',
+    path: localePath('/auth/login'),
     query: {
       redirect: route.fullPath,
     },
@@ -53,7 +53,7 @@ async function handleSignOut() {
   signOutLoading.value = true
   try {
     await authStore.logout()
-    await navigateTo('/auth/login')
+    await navigateTo(localePath('/auth/login'))
   }
   catch (error) {
     console.error('Failed to sign out', error)
@@ -65,21 +65,21 @@ const navigationItems = computed<NavigationMenuItem[]>(() => {
   const items: NavigationMenuItem[] = [
     {
       label: 'Dashboard',
-      to: '/',
+      to: localePath('index'),
     },
     {
       label: 'Servers',
-      to: '/server',
+      to: localePath('/server'),
     },
     {
       label: 'Account',
       children: [
-        { label: 'Profile', to: '/account/profile' },
-        { label: 'Security', to: '/account/security' },
-        { label: 'API Keys', to: '/account/api-keys' },
-        { label: 'SSH Keys', to: '/account/ssh-keys' },
-        { label: 'Sessions', to: '/account/sessions' },
-        { label: 'Activity', to: '/account/activity' },
+        { label: 'Profile', to: localePath('/account/profile') },
+        { label: 'Security', to: localePath('/account/security') },
+        { label: 'API Keys', to: localePath('/account/api-keys') },
+        { label: 'SSH Keys', to: localePath('/account/ssh-keys') },
+        { label: 'Sessions', to: localePath('/account/sessions') },
+        { label: 'Activity', to: localePath('/account/activity') },
       ],
     },
   ]
@@ -93,25 +93,35 @@ const isAdminUser = computed(() => {
   return false
 })
 
-const { locale, setLocale, locales: i18nLocales } = useI18n()
+const { locale, locales } = useI18n()
+const switchLocalePath = useSwitchLocalePath()
 
 const uiLocales = computed(() => {
-  try {
-    return Object.values(locales) || []
-  }
-  catch {
-    return []
-  }
+  return locales.value.map(loc => {
+    const dir = typeof loc === 'string' ? 'ltr' : (loc.dir || 'ltr')
+    return {
+      code: typeof loc === 'string' ? loc : loc.code,
+      name: typeof loc === 'string' ? loc : (loc.name || loc.code),
+      language: typeof loc === 'string' ? loc : (loc.language || loc.code),
+      dir: (dir === 'auto' ? 'ltr' : dir) as 'ltr' | 'rtl',
+      messages: {},
+    }
+  })
 })
 
-function handleLocaleChange(newLocale: string | undefined) {
-  if (!newLocale) return
-  if (newLocale === 'en' || newLocale === 'es') {
-    const validLocales = i18nLocales.value.map(loc => 
-      typeof loc === 'string' ? loc : loc.code
-    )
-    if (validLocales.includes(newLocale)) {
-      setLocale(newLocale)
+async function handleLocaleChange(newLocale: string | undefined) {
+  if (!newLocale || newLocale === locale.value) return
+  
+  const validLocale = locales.value.find(l => {
+    const code = typeof l === 'string' ? l : l.code
+    return code === newLocale
+  })
+  
+  if (validLocale) {
+    const code = typeof validLocale === 'string' ? validLocale : validLocale.code
+    const path = switchLocalePath(code as 'en' | 'es')
+    if (path) {
+      await navigateTo(path)
     }
   }
 }
@@ -125,7 +135,7 @@ function handleLocaleChange(newLocale: string | undefined) {
       :ui="{ footer: 'border-t border-default' }"
     >
       <template #header="{ collapsed }">
-        <NuxtLink v-if="!collapsed" to="/" class="group inline-flex items-center gap-2">
+        <NuxtLink v-if="!collapsed" :to="localePath('index')" class="group inline-flex items-center gap-2">
           <h1 class="text-lg font-semibold text-muted-foreground group-hover:text-foreground transition">
             XyraPanel
           </h1>
@@ -165,12 +175,12 @@ function handleLocaleChange(newLocale: string | undefined) {
       <template #footer="{ collapsed }">
         <UDropdownMenu
           :items="[[
-            { label: 'Profile', to: '/account/profile' },
-            { label: 'Security', to: '/account/security' },
-            { label: 'API Keys', to: '/account/api-keys' },
-            { label: 'SSH Keys', to: '/account/ssh-keys' },
-            { label: 'Sessions', to: '/account/sessions' },
-            { label: 'Activity', to: '/account/activity' }
+            { label: 'Profile', to: localePath('/account/profile') },
+            { label: 'Security', to: localePath('/account/security') },
+            { label: 'API Keys', to: localePath('/account/api-keys') },
+            { label: 'SSH Keys', to: localePath('/account/ssh-keys') },
+            { label: 'Sessions', to: localePath('/account/sessions') },
+            { label: 'Activity', to: localePath('/account/activity') }
           ], [
             { label: 'Sign out', click: handleSignOut, color: 'error' }
           ]]"
