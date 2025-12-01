@@ -88,7 +88,7 @@ function toggleSession(token: string) {
 }
 
 function maskIp(ip: string) {
-  if (!ip || ip === 'Unknown') return 'Unknown'
+  if (!ip || ip === 'Unknown') return t('common.unknown')
   return '**********'
 }
 
@@ -154,7 +154,7 @@ async function handleSignOut(token: string) {
         })
 
         if (result?.error) {
-          throw new Error(result.error.message || 'Failed to revoke session')
+          throw new Error(result.error.message || t('account.sessions.failedToRevokeSession'))
         }
 
         const currentSession = await authClient.getSession()

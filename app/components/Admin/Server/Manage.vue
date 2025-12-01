@@ -7,6 +7,7 @@ const props = defineProps<{
   server: Server
 }>()
 
+const { t } = useI18n()
 const toast = useToast()
 const router = useRouter()
 const suspendedSubmitting = ref(false)
@@ -16,7 +17,7 @@ const deleteSubmitting = ref(false)
 const transferSubmitting = ref(false)
 
 async function handleSuspend() {
-  if (!confirm(`Are you sure you want to ${props.server.suspended ? 'unsuspend' : 'suspend'} this server?`)) {
+  if (!confirm(props.server.suspended ? t('admin.servers.manage.confirmUnsuspend') : t('admin.servers.manage.confirmSuspend'))) {
     return
   }
 
@@ -31,8 +32,8 @@ async function handleSuspend() {
     })
 
     toast.add({
-      title: props.server.suspended ? 'Server unsuspended' : 'Server suspended',
-      description: `The server has been ${props.server.suspended ? 'unsuspended' : 'suspended'}`,
+      title: props.server.suspended ? t('admin.servers.manage.serverUnsuspended') : t('admin.servers.manage.serverSuspended'),
+      description: props.server.suspended ? t('admin.servers.manage.serverUnsuspendedDescription') : t('admin.servers.manage.serverSuspendedDescription'),
       color: 'success',
     })
 
@@ -41,8 +42,8 @@ async function handleSuspend() {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to update suspension status',
+      title: t('common.error'),
+      description: err.data?.message || t('admin.servers.manage.failedToUpdateSuspension'),
       color: 'error',
     })
   }
@@ -52,7 +53,7 @@ async function handleSuspend() {
 }
 
 async function handleReinstall() {
-  if (!confirm('Are you sure you want to reinstall this server? This will delete all server files!')) {
+  if (!confirm(t('admin.servers.manage.confirmReinstall'))) {
     return
   }
 
@@ -66,8 +67,8 @@ async function handleReinstall() {
     })
 
     toast.add({
-      title: 'Reinstall triggered',
-      description: 'Server reinstallation has been queued',
+      title: t('admin.servers.manage.reinstallTriggered'),
+      description: t('admin.servers.manage.reinstallQueued'),
       color: 'success',
     })
     
@@ -78,8 +79,8 @@ async function handleReinstall() {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to trigger reinstall',
+      title: t('common.error'),
+      description: err.data?.message || t('admin.servers.manage.failedToTriggerReinstall'),
       color: 'error',
     })
   }
@@ -89,7 +90,7 @@ async function handleReinstall() {
 }
 
 async function handleCreateOnWings() {
-  if (!confirm('This will create/install the server on Wings. Continue?')) {
+  if (!confirm(t('admin.servers.manage.confirmCreateOnWings'))) {
     return
   }
 
@@ -107,8 +108,8 @@ async function handleCreateOnWings() {
     })
 
     toast.add({
-      title: 'Installation started',
-      description: 'Server installation has been initiated on Wings',
+      title: t('admin.servers.manage.installationStarted'),
+      description: t('admin.servers.manage.installationInitiated'),
       color: 'success',
     })
     
@@ -119,8 +120,8 @@ async function handleCreateOnWings() {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to create server on Wings',
+      title: t('common.error'),
+      description: err.data?.message || t('admin.servers.manage.failedToCreateOnWings'),
       color: 'error',
     })
   }
@@ -132,7 +133,7 @@ async function handleCreateOnWings() {
 const showTransferModal = ref(false)
 
 const transferSchema = z.object({
-  nodeId: z.string().trim().min(1, 'Target node ID is required'),
+  nodeId: z.string().trim().min(1, t('admin.servers.manage.targetNodeIdRequired')),
   allocationId: z.string().trim().optional().or(z.literal('')),
   additionalAllocationIds: z.string().trim().optional().or(z.literal('')),
   startOnCompletion: z.boolean().default(true),
@@ -164,8 +165,8 @@ async function handleTransfer(event: FormSubmitEvent<TransferFormSchema>) {
     })
 
     toast.add({
-      title: 'Transfer initiated',
-      description: 'Server transfer has been started',
+      title: t('admin.servers.manage.transferInitiated'),
+      description: t('admin.servers.manage.transferStarted'),
       color: 'success',
     })
 
@@ -180,8 +181,8 @@ async function handleTransfer(event: FormSubmitEvent<TransferFormSchema>) {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to initiate transfer',
+      title: t('common.error'),
+      description: err.data?.message || t('admin.servers.manage.failedToInitiateTransfer'),
       color: 'error',
     })
   }
@@ -194,11 +195,11 @@ async function handleDelete() {
   if (deleteSubmitting.value)
     return
 
-  if (!confirm('Are you sure you want to DELETE this server? This action CANNOT be undone!')) {
+  if (!confirm(t('admin.servers.manage.confirmDelete'))) {
     return
   }
 
-  if (!confirm('This will permanently delete all server data. Type the server name to confirm.')) {
+  if (!confirm(t('admin.servers.manage.confirmDeleteFinal'))) {
     return
   }
 
@@ -209,8 +210,8 @@ async function handleDelete() {
     })
 
     toast.add({
-      title: 'Server deleted',
-      description: 'The server has been permanently deleted',
+      title: t('admin.servers.manage.serverDeleted'),
+      description: t('admin.servers.manage.serverDeletedDescription'),
       color: 'success',
     })
 
@@ -219,8 +220,8 @@ async function handleDelete() {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to delete server',
+      title: t('common.error'),
+      description: err.data?.message || t('admin.servers.manage.failedToDeleteServer'),
       color: 'error',
     })
   }
@@ -233,9 +234,9 @@ async function handleDelete() {
 <template>
   <div class="space-y-6">
     <UAlert icon="i-lucide-alert-triangle" color="warning">
-      <template #title>Danger Zone</template>
+      <template #title>{{ t('admin.servers.manage.dangerZone') }}</template>
       <template #description>
-        These actions can have significant impact on the server. Use with caution.
+        {{ t('admin.servers.manage.dangerZoneDescription') }}
       </template>
     </UAlert>
 
@@ -243,9 +244,9 @@ async function handleDelete() {
 
       <div class="flex items-center justify-between rounded-lg border border-default p-4">
         <div class="space-y-1">
-          <p class="font-medium">{{ server.suspended ? 'Unsuspend Server' : 'Suspend Server' }}</p>
+          <p class="font-medium">{{ server.suspended ? t('admin.servers.manage.unsuspendServer') : t('admin.servers.manage.suspendServer') }}</p>
           <p class="text-sm text-muted-foreground">
-            {{ server.suspended ? 'Allow the server to start and be accessed' : 'Prevent the server from starting and block access' }}
+            {{ server.suspended ? t('admin.servers.manage.unsuspendServerDescription') : t('admin.servers.manage.suspendServerDescription') }}
           </p>
         </div>
         <UButton
@@ -255,15 +256,15 @@ async function handleDelete() {
           :disabled="suspendedSubmitting"
           @click="handleSuspend"
         >
-          {{ server.suspended ? 'Unsuspend' : 'Suspend' }}
+          {{ server.suspended ? t('admin.servers.manage.unsuspend') : t('admin.servers.manage.suspend') }}
         </UButton>
       </div>
 
       <div v-if="server.status === 'install_failed'" class="flex items-center justify-between rounded-lg border border-warning p-4">
         <div class="space-y-1">
-          <p class="font-medium">Create/Install Server on Wings</p>
+          <p class="font-medium">{{ t('admin.servers.manage.createInstallServerOnWings') }}</p>
           <p class="text-sm text-muted-foreground">
-            Install or reinstall the server on Wings. Use this if installation failed.
+            {{ t('admin.servers.manage.createInstallServerOnWingsDescription') }}
           </p>
         </div>
         <UButton
@@ -273,15 +274,15 @@ async function handleDelete() {
           :disabled="createOnWingsSubmitting"
           @click="handleCreateOnWings"
         >
-          Install on Wings
+          {{ t('admin.servers.manage.installOnWings') }}
         </UButton>
       </div>
 
       <div class="flex items-center justify-between rounded-lg border border-default p-4">
         <div class="space-y-1">
-          <p class="font-medium">Reinstall Server</p>
+          <p class="font-medium">{{ t('admin.servers.manage.reinstallServer') }}</p>
           <p class="text-sm text-muted-foreground">
-            Delete all server files and run the installation script again (requires server to exist on Wings)
+            {{ t('admin.servers.manage.reinstallServerDescription') }}
           </p>
         </div>
         <UButton
@@ -291,15 +292,15 @@ async function handleDelete() {
           :disabled="reinstallSubmitting || server.status === 'install_failed'"
           @click="handleReinstall"
         >
-          Reinstall
+          {{ t('admin.servers.manage.reinstall') }}
         </UButton>
       </div>
 
       <div class="flex items-center justify-between rounded-lg border border-default p-4">
         <div class="space-y-1">
-          <p class="font-medium">Transfer Server</p>
+          <p class="font-medium">{{ t('admin.servers.manage.transferServer') }}</p>
           <p class="text-sm text-muted-foreground">
-            Move this server to a different node
+            {{ t('admin.servers.manage.transferServerDescription') }}
           </p>
         </div>
         <UButton
@@ -308,15 +309,15 @@ async function handleDelete() {
           variant="soft"
           @click="showTransferModal = true"
         >
-          Transfer
+          {{ t('admin.servers.manage.transfer') }}
         </UButton>
       </div>
 
       <div class="flex items-center justify-between rounded-lg border border-error p-4">
         <div class="space-y-1">
-          <p class="font-medium text-error">Delete Server</p>
+          <p class="font-medium text-error">{{ t('admin.servers.manage.deleteServer') }}</p>
           <p class="text-sm text-muted-foreground">
-            Permanently delete this server and all its data
+            {{ t('admin.servers.manage.deleteServerDescription') }}
           </p>
         </div>
         <UButton
@@ -326,7 +327,7 @@ async function handleDelete() {
           :disabled="deleteSubmitting"
           @click="handleDelete"
         >
-          Delete
+          {{ t('common.delete') }}
         </UButton>
       </div>
     </div>
@@ -334,7 +335,7 @@ async function handleDelete() {
     <UModal v-model:open="showTransferModal">
       <UCard>
         <template #header>
-          <h3 class="text-lg font-semibold">Transfer Server</h3>
+          <h3 class="text-lg font-semibold">{{ t('admin.servers.manage.transferServer') }}</h3>
         </template>
 
         <UForm
@@ -344,50 +345,50 @@ async function handleDelete() {
           @submit="handleTransfer"
         >
           <UAlert icon="i-lucide-info" variant="subtle">
-            <template #title>Server Transfer</template>
+            <template #title>{{ t('admin.servers.manage.serverTransfer') }}</template>
             <template #description>
-              The server will be stopped, transferred to the new node, and started automatically.
+              {{ t('admin.servers.manage.serverTransferDescription') }}
             </template>
           </UAlert>
 
-          <UFormField label="Target Node" name="nodeId" required>
+          <UFormField :label="t('admin.servers.manage.targetNode')" name="nodeId" required>
             <UInput
               v-model="transferForm.nodeId"
-              placeholder="node-id"
+              :placeholder="t('admin.servers.manage.targetNodePlaceholder')"
               class="w-full"
             />
             <template #help>
-              Enter the ID of the node to transfer to
+              {{ t('admin.servers.manage.targetNodeHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="Primary Allocation" name="allocationId">
+          <UFormField :label="t('admin.servers.manage.primaryAllocation')" name="allocationId">
             <UInput
               v-model="transferForm.allocationId"
-              placeholder="allocation-id (optional)"
+              :placeholder="t('admin.servers.manage.primaryAllocationPlaceholder')"
               class="w-full"
             />
             <template #help>
-              Leave blank to automatically choose a free allocation on the target node.
+              {{ t('admin.servers.manage.primaryAllocationHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="Additional Allocations" name="additionalAllocationIds">
+          <UFormField :label="t('admin.servers.manage.additionalAllocations')" name="additionalAllocationIds">
             <UInput
               v-model="transferForm.additionalAllocationIds"
-              placeholder="allocation-id-1, allocation-id-2"
+              :placeholder="t('admin.servers.manage.additionalAllocationsPlaceholder')"
               class="w-full"
             />
             <template #help>
-              Provide comma-separated allocation IDs to assign after transfer.
+              {{ t('admin.servers.manage.additionalAllocationsHelp') }}
             </template>
           </UFormField>
 
           <UFormField name="startOnCompletion">
             <USwitch
               v-model="transferForm.startOnCompletion"
-              label="Start server after transfer"
-              description="Automatically start the server once the transfer finishes"
+              :label="t('admin.servers.manage.startServerAfterTransfer')"
+              :description="t('admin.servers.manage.startServerAfterTransferDescription')"
             />
           </UFormField>
         </UForm>
@@ -398,7 +399,7 @@ async function handleDelete() {
               variant="ghost"
               @click="showTransferModal = false"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton
               type="submit"
@@ -406,7 +407,7 @@ async function handleDelete() {
               :loading="transferSubmitting"
               :disabled="transferSubmitting"
             >
-              Start Transfer
+              {{ t('admin.servers.manage.startTransfer') }}
             </UButton>
           </div>
         </template>

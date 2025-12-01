@@ -9,6 +9,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { t } = useI18n()
 const toast = useToast()
 const apiKeysPage = ref(1)
 const expandedApiKeys = ref<Set<string>>(new Set())
@@ -74,13 +75,13 @@ async function copyApiKeyJson(key: AdminUserApiKeySummary) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: 'Copied to clipboard',
-      description: 'API key data JSON has been copied.',
+      title: t('common.copiedToClipboard'),
+      description: t('admin.users.apiKeys.apiKeyDataJsonCopied'),
     })
   } catch (error) {
     toast.add({
-      title: 'Failed to copy',
-      description: error instanceof Error ? error.message : 'Unable to copy to clipboard.',
+      title: t('common.failedToCopy'),
+      description: error instanceof Error ? error.message : t('admin.users.apiKeys.unableToCopyToClipboard'),
       color: 'error',
     })
   }
@@ -105,15 +106,15 @@ async function confirmApiKeyDelete() {
     apiKeyToDelete.value = null
 
     toast.add({
-      title: 'API Key Deleted',
-      description: 'The API key has been removed',
+      title: t('admin.users.apiKeys.apiKeyDeleted'),
+      description: t('admin.users.apiKeys.apiKeyRemoved'),
       color: 'success',
     })
   } catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to delete API key',
+      title: t('common.error'),
+      description: err.data?.message || t('admin.users.apiKeys.failedToDeleteApiKey'),
       color: 'error',
     })
   } finally {
@@ -127,9 +128,9 @@ async function confirmApiKeyDelete() {
     <UCard :ui="{ body: 'space-y-3' }">
       <template #header>
         <div class="flex items-center justify-between">
-          <h2 class="text-lg font-semibold">API keys</h2>
+          <h2 class="text-lg font-semibold">{{ t('admin.users.tabs.apiKeys') }}</h2>
           <div class="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>{{ apiKeysPagination?.total ?? 0 }} total</span>
+            <span>{{ apiKeysPagination?.total ?? 0 }} {{ t('common.all') }}</span>
           </div>
         </div>
       </template>
@@ -137,8 +138,8 @@ async function confirmApiKeyDelete() {
       <UEmpty
         v-if="apiKeys.length === 0"
         icon="i-lucide-key"
-        title="No API keys yet"
-        description="This user has not created any API keys."
+        :title="t('admin.users.apiKeys.noApiKeysYet')"
+        :description="t('admin.users.apiKeys.noApiKeysYetDescription')"
         variant="subtle"
       />
       <div v-else class="space-y-3">
@@ -175,23 +176,23 @@ async function confirmApiKeyDelete() {
                   variant="soft"
                   size="xs"
                 >
-                  Expired
+                  {{ t('admin.apiKeys.expired') }}
                 </UBadge>
               </div>
 
               <div class="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
                 <span class="truncate">
-                  Created:
+                  {{ t('common.created') }}:
                   <NuxtTime :datetime="key.createdAt" class="font-medium" />
                 </span>
                 <span v-if="key.lastUsedAt" class="hidden sm:inline">•</span>
                 <span v-if="key.lastUsedAt" class="truncate">
-                  Last used:
+                  {{ t('admin.apiKeys.lastUsed') }}:
                   <NuxtTime :datetime="key.lastUsedAt" class="font-medium" />
                 </span>
                 <span v-if="key.expiresAt" class="hidden sm:inline">•</span>
                 <span v-if="key.expiresAt" class="truncate">
-                  Expires:
+                  {{ t('admin.apiKeys.expires') }}:
                   <NuxtTime :datetime="key.expiresAt" class="font-medium" />
                 </span>
               </div>
@@ -204,14 +205,14 @@ async function confirmApiKeyDelete() {
           >
             <div class="space-y-2">
               <div class="flex items-center justify-between mb-2">
-                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">API Key Data</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.users.apiKeys.apiKeyData') }}</p>
                 <UButton
                   variant="ghost"
                   size="xs"
                   icon="i-lucide-copy"
                   @click.stop="copyApiKeyJson(key)"
                 >
-                  Copy JSON
+                  {{ t('admin.users.apiKeys.copyJson') }}
                 </UButton>
               </div>
               <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatApiKeyJson(getFullApiKeyData(key)) }}</code></pre>
@@ -224,19 +225,21 @@ async function confirmApiKeyDelete() {
                 size="sm"
                 :loading="isDeletingApiKey && apiKeyToDelete?.id === key.id"
                 :disabled="isDeletingApiKey"
-                aria-label="Delete API key"
+                :aria-label="t('admin.users.apiKeys.deleteApiKey')"
                 @click.stop="openApiKeyDeleteModal(key)"
               >
-                Delete Key
+                {{ t('admin.users.apiKeys.deleteKey') }}
               </UButton>
             </div>
           </div>
         </div>
         <div v-if="apiKeysPagination && apiKeysPagination.totalPages > 1" class="flex items-center justify-between border-t border-default pt-4">
           <div class="text-sm text-muted-foreground">
-            Showing {{ ((apiKeysPagination.page - 1) * apiKeysPagination.perPage) + 1 }} to
-            {{ Math.min(apiKeysPagination.page * apiKeysPagination.perPage, apiKeysPagination.total) }} of
-            {{ apiKeysPagination.total }} API keys
+            {{ t('admin.users.apiKeys.showingApiKeys', { 
+              start: ((apiKeysPagination.page - 1) * apiKeysPagination.perPage) + 1,
+              end: Math.min(apiKeysPagination.page * apiKeysPagination.perPage, apiKeysPagination.total),
+              total: apiKeysPagination.total
+            }) }}
           </div>
           <UPagination
             v-model:page="apiKeysPage"
@@ -250,23 +253,23 @@ async function confirmApiKeyDelete() {
 
     <UModal
       v-model:open="showApiKeyDeleteModal"
-      title="Delete API Key"
-      description="This action cannot be undone. The API key will be permanently removed."
+      :title="t('admin.users.apiKeys.deleteApiKey')"
+      :description="t('admin.users.apiKeys.deleteApiKeyDescription')"
       :ui="{ footer: 'flex justify-end gap-2' }"
     >
       <template #body>
         <div class="space-y-4">
           <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle">
-            <template #title>Warning</template>
+            <template #title>{{ t('common.warning') }}</template>
             <template #description>
-              Are you sure you want to delete this API key? Any applications using this key will lose access immediately.
+              {{ t('admin.users.apiKeys.confirmDeleteApiKeyDescription') }}
             </template>
           </UAlert>
           <div v-if="apiKeyToDelete" class="rounded-md bg-muted p-3">
-            <p class="text-sm font-medium">Key Identifier:</p>
+            <p class="text-sm font-medium">{{ t('admin.users.apiKeys.keyIdentifier') }}:</p>
             <code class="text-sm font-mono mt-1">{{ apiKeyToDelete.identifier }}</code>
             <p v-if="apiKeyToDelete.memo" class="text-sm text-muted-foreground mt-2">
-              Description: {{ apiKeyToDelete.memo }}
+              {{ t('common.description') }}: {{ apiKeyToDelete.memo }}
             </p>
           </div>
         </div>
@@ -283,7 +286,7 @@ async function confirmApiKeyDelete() {
             close()
           }"
         >
-          Cancel
+          {{ t('common.cancel') }}
         </UButton>
         <UButton
           color="error"
@@ -292,7 +295,7 @@ async function confirmApiKeyDelete() {
           :disabled="isDeletingApiKey"
           @click="confirmApiKeyDelete"
         >
-          Delete Key
+          {{ t('admin.users.apiKeys.deleteKey') }}
         </UButton>
       </template>
     </UModal>

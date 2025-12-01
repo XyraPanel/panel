@@ -4,30 +4,31 @@ import type { NuxtError } from '#app'
 
 const props = defineProps<{ error: NuxtError }>()
 const requestURL = useRequestURL()
+const { t } = useI18n()
 
 const headline = computed(() => {
-  if (props.error.statusCode === 404) return 'Page not found'
-  return 'Unexpected panel error'
+  if (props.error.statusCode === 404) return t('errors.pageNotFound')
+  return t('errors.unexpectedPanelError')
 })
 
 const description = computed(() => {
   if (props.error.statusCode === 404) {
     const url = requestURL.href
     if (url.includes('/api/')) {
-      return 'The requested API endpoint was not found. Check the endpoint URL and ensure the server is properly configured.'
+      return t('errors.apiEndpointNotFound')
     }
     if (url.includes('/server/')) {
-      return 'The requested server page was not found. The server may not exist or you may not have permission to access it.'
+      return t('errors.serverPageNotFound')
     }
-    return 'The requested page was not found.'
+    return t('errors.pageNotFoundDescription')
   }
   if (props.error.statusCode === 401) {
-    return 'Authentication is required. Please sign in to access this resource.'
+    return t('errors.authenticationRequired')
   }
   if (props.error.statusCode === 500) {
-    return 'An internal server error occurred. Check server logs for more details.'
+    return t('errors.internalServerError')
   }
-  return props.error.statusMessage || 'No additional error context was provided.'
+  return props.error.statusMessage || t('errors.noAdditionalContext')
 })
 
 const requestedUrl = computed(() => {
@@ -42,9 +43,9 @@ interface QuickLink {
   action?: () => void
 }
 
-const quickLinks: QuickLink[] = [
+const quickLinks = computed<QuickLink[]>(() => [
   {
-    label: 'Go back',
+    label: t('errors.goBack'),
     icon: 'i-lucide-arrow-left',
     action: () => {
       if (import.meta.client && window.history.length > 1) {
@@ -54,9 +55,9 @@ const quickLinks: QuickLink[] = [
       }
     },
   },
-  { label: 'Admin dashboard', icon: 'i-lucide-layout-dashboard', to: '/admin' },
-  { label: 'Home', icon: 'i-lucide-home', to: '/' },
-]
+  { label: t('errors.adminDashboard'), icon: 'i-lucide-layout-dashboard', to: '/admin' },
+  { label: t('errors.home'), icon: 'i-lucide-home', to: '/' },
+])
 
 const handleReset = () => clearError({ redirect: '/' })
 </script>
@@ -71,7 +72,7 @@ const handleReset = () => clearError({ redirect: '/' })
             <p class="text-sm text-muted-foreground">{{ description }}</p>
           </div>
           <div class="rounded-md border border-default bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
-            Requested resource: <code>{{ requestedUrl }}</code>
+            {{ t('errors.requestedResource') }} <code>{{ requestedUrl }}</code>
           </div>
           <div class="flex flex-wrap justify-center gap-2">
             <UButton v-for="link in quickLinks" :key="link.label" :icon="link.icon" :to="link.to" color="primary"
@@ -79,7 +80,7 @@ const handleReset = () => clearError({ redirect: '/' })
               {{ link.label }}
             </UButton>
             <UButton icon="i-lucide-refresh-ccw" variant="ghost" color="neutral" @click="handleReset">
-              Try again
+              {{ t('errors.tryAgain') }}
             </UButton>
           </div>
         </UCard>

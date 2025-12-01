@@ -91,12 +91,12 @@ function ownershipBadge(ownership: 'mine' | 'shared') {
 
 function formatLimit(limits: Record<string, unknown> | null, key: 'memory' | 'disk' | 'cpu') {
   if (!limits) {
-    return '—'
+    return t('common.na')
   }
 
   const raw = limits[key]
   if (typeof raw !== 'number') {
-    return '—'
+    return t('common.na')
   }
 
   if (key === 'cpu') {

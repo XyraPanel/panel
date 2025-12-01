@@ -6,6 +6,7 @@ definePageMeta({
   layout: 'admin',
 })
 
+const { t } = useI18n()
 const toast = useToast()
 
 const { data: locationsData, pending, error, refresh } = await useAsyncData(
@@ -48,7 +49,7 @@ function openEditModal(location: LocationWithNodeCount) {
 
 async function handleSubmit() {
   if (!form.value.short) {
-    toast.add({ title: 'Short code is required', color: 'error' })
+    toast.add({ title: t('admin.locations.shortCodeRequired'), color: 'error' })
     return
   }
 
@@ -61,14 +62,14 @@ async function handleSubmit() {
         method: 'patch',
         body: form.value,
       })
-      toast.add({ title: 'Location updated', color: 'success' })
+      toast.add({ title: t('admin.locations.locationUpdated'), color: 'success' })
     } else {
 
       await $fetch('/api/admin/locations', {
         method: 'POST',
         body: form.value,
       })
-      toast.add({ title: 'Location created', color: 'success' })
+      toast.add({ title: t('admin.locations.locationCreated'), color: 'success' })
     }
 
     showCreateModal.value = false
@@ -76,8 +77,8 @@ async function handleSubmit() {
     await refresh()
   } catch (err) {
     toast.add({
-      title: editingLocation.value ? 'Update failed' : 'Create failed',
-      description: err instanceof Error ? err.message : 'An error occurred',
+      title: editingLocation.value ? t('admin.locations.updateFailed') : t('admin.locations.createFailed'),
+      description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     })
   } finally {
@@ -86,7 +87,7 @@ async function handleSubmit() {
 }
 
 async function handleDelete(location: LocationWithNodeCount) {
-  if (!confirm(`Delete location "${location.short}"? This cannot be undone.`)) {
+  if (!confirm(t('admin.locations.confirmDelete', { short: location.short }))) {
     return
   }
 
@@ -94,12 +95,12 @@ async function handleDelete(location: LocationWithNodeCount) {
     await $fetch(`/api/admin/locations/${location.id}`, {
       method: 'DELETE',
     })
-    toast.add({ title: 'Location deleted', color: 'success' })
+    toast.add({ title: t('admin.locations.locationDeleted'), color: 'success' })
     await refresh()
   } catch (err) {
     toast.add({
-      title: 'Delete failed',
-      description: err instanceof Error ? err.message : 'An error occurred',
+      title: t('admin.locations.deleteFailed'),
+      description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     })
   }
@@ -114,9 +115,9 @@ async function handleDelete(location: LocationWithNodeCount) {
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">All Locations</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.locations.allLocations') }}</h2>
                 <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="openCreateModal">
-                  Create Location
+                  {{ t('admin.locations.createLocation') }}
                 </UButton>
               </div>
             </template>
@@ -126,13 +127,13 @@ async function handleDelete(location: LocationWithNodeCount) {
             </div>
 
             <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
-              <template #title>Failed to load locations</template>
+              <template #title>{{ t('admin.locations.failedToLoadLocations') }}</template>
               <template #description>{{ error.message }}</template>
             </UAlert>
 
             <div v-else-if="locations.length === 0" class="py-12 text-center">
               <UIcon name="i-lucide-map-pin" class="mx-auto size-12 text-muted-foreground opacity-50" />
-              <p class="mt-4 text-sm text-muted-foreground">No locations yet</p>
+              <p class="mt-4 text-sm text-muted-foreground">{{ t('admin.locations.noLocationsYet') }}</p>
             </div>
 
             <div v-else class="divide-y divide-default">
@@ -142,7 +143,7 @@ async function handleDelete(location: LocationWithNodeCount) {
                     <UIcon name="i-lucide-map-pin" class="size-4 text-primary" />
                     <span class="font-medium">{{ location.short }}</span>
                     <UBadge v-if="location.nodeCount > 0" size="xs" color="neutral">
-                      {{ location.nodeCount }} node{{ location.nodeCount !== 1 ? 's' : '' }}
+                      {{ location.nodeCount }} {{ location.nodeCount !== 1 ? t('admin.locations.nodes') : t('admin.locations.node') }}
                     </UBadge>
                   </div>
                   <p v-if="location.long" class="mt-1 text-sm text-muted-foreground">
@@ -162,22 +163,22 @@ async function handleDelete(location: LocationWithNodeCount) {
       </UContainer>
     </UPageBody>
 
-    <UModal v-model:open="showCreateModal" :title="editingLocation ? 'Edit Location' : 'Create Location'"
-      :description="editingLocation ? 'Update location details' : 'Add a new geographic location'">
+    <UModal v-model:open="showCreateModal" :title="editingLocation ? t('admin.locations.editLocation') : t('admin.locations.createLocation')"
+      :description="editingLocation ? t('admin.locations.editLocationDescription') : t('admin.locations.createLocationDescription')">
       <template #body>
         <form class="space-y-4" @submit.prevent="handleSubmit">
-          <UFormField label="Short Code" name="short" required>
-            <UInput v-model="form.short" placeholder="us-east" required :disabled="isSubmitting" class="w-full" />
+          <UFormField :label="t('admin.locations.shortCode')" name="short" required>
+            <UInput v-model="form.short" :placeholder="t('admin.locations.shortCodePlaceholder')" required :disabled="isSubmitting" class="w-full" />
             <template #help>
-              Short identifier (e.g., "us-east", "eu-west")
+              {{ t('admin.locations.shortCodeHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="Description" name="long">
-            <UInput v-model="form.long" placeholder="United States - East Coast" :disabled="isSubmitting"
+          <UFormField :label="t('admin.locations.longName')" name="long">
+            <UInput v-model="form.long" :placeholder="t('admin.locations.longNamePlaceholder')" :disabled="isSubmitting"
               class="w-full" />
             <template #help>
-              Full location name or description
+              {{ t('admin.locations.longNameHelp') }}
             </template>
           </UFormField>
         </form>
@@ -186,10 +187,10 @@ async function handleDelete(location: LocationWithNodeCount) {
       <template #footer>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" color="error" :disabled="isSubmitting" @click="showCreateModal = false">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton color="primary" variant="subtle" :loading="isSubmitting" @click="handleSubmit">
-            {{ editingLocation ? 'Update' : 'Create' }}
+            {{ editingLocation ? t('common.update') : t('common.create') }}
           </UButton>
         </div>
       </template>

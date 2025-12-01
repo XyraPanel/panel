@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { ServerActivityEvent } from '#shared/types/server'
 
+const { t } = useI18n()
 const route = useRoute()
 
 definePageMeta({
@@ -67,8 +68,8 @@ function formatAction(action: string): string {
         <section class="space-y-6">
           <header class="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p class="text-xs text-muted-foreground">Server {{ serverId }} · Activity</p>
-              <h1 class="text-xl font-semibold">Audit trail</h1>
+              <p class="text-xs text-muted-foreground">{{ t('server.activity.serverActivity', { id: serverId }) }}</p>
+              <h1 class="text-xl font-semibold">{{ t('server.activity.auditTrail') }}</h1>
             </div>
           </header>
 
@@ -76,7 +77,7 @@ function formatAction(action: string): string {
             <div class="flex items-start gap-2">
               <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
               <div>
-                <p class="font-medium">Failed to load activity</p>
+                <p class="font-medium">{{ t('server.activity.failedToLoadActivity') }}</p>
                 <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
               </div>
             </div>
@@ -89,14 +90,14 @@ function formatAction(action: string): string {
           <UCard v-else>
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Recent events</h2>
+                <h2 class="text-lg font-semibold">{{ t('server.activity.recentEvents') }}</h2>
               </div>
             </template>
 
             <div v-if="events.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
               <UIcon name="i-lucide-activity" class="mx-auto size-12 text-muted-foreground/50" />
-              <p class="mt-3 text-sm font-medium">No activity recorded</p>
-              <p class="mt-1 text-xs text-muted-foreground">Server activity will appear here once actions are performed.</p>
+              <p class="mt-3 text-sm font-medium">{{ t('server.activity.noActivityRecorded') }}</p>
+              <p class="mt-1 text-xs text-muted-foreground">{{ t('server.activity.noActivityRecordedDescription') }}</p>
             </div>
 
             <ul v-else class="space-y-4">

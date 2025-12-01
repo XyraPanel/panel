@@ -88,7 +88,7 @@ const visibleEntries = computed<ServerFileListItem[]>(() => {
   const entries = directoryEntries.value.map((entry): ServerFileListItem => ({
     name: entry.name,
     type: entry.isDirectory ? 'directory' : 'file',
-    size: entry.isDirectory ? '—' : formatBytes(entry.size),
+    size: entry.isDirectory ? t('common.na') : formatBytes(entry.size),
     modified: formatDate(entry.modified),
     path: entry.path,
   }))
@@ -894,7 +894,7 @@ const currentEntries = computed<ServerFileListItem[]>(() => directoryEntries.val
   .map((entry): ServerFileListItem => ({
     name: entry.name,
     type: entry.isDirectory ? 'directory' : 'file',
-    size: entry.isDirectory ? '—' : formatBytes(entry.size),
+    size: entry.isDirectory ? t('common.na') : formatBytes(entry.size),
     modified: formatDate(entry.modified),
     path: entry.path,
   }))
@@ -931,11 +931,11 @@ const parentDirectoryLabel = computed(() => parentDirectory.value === '/' ? '/' 
 
 function formatBytes(size: number) {
   if (!Number.isFinite(size) || size < 0)
-    return '—'
+    return t('common.na')
   if (size === 0)
-    return '0 B'
+    return `0 ${t('common.bytes')}`
 
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const units = [t('common.bytes'), t('common.kb'), t('common.mb'), t('common.gb'), t('common.tb')]
   const exponent = Math.min(units.length - 1, Math.floor(Math.log(size) / Math.log(1024)))
   const value = size / (1024 ** exponent)
   return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[exponent]}`
@@ -1362,28 +1362,28 @@ const isEditorDirty = computed(() => {
 
         <div v-if="isAnyOperationActive" class="space-y-2">
           <UAlert v-if="uploadInProgress" color="info" icon="i-lucide-upload">
-            Upload in progress… Keep this tab open until files finish uploading.
+            {{ t('server.files.uploadInProgress') }}
           </UAlert>
           <UAlert v-if="pullInProgress" color="info" icon="i-lucide-link">
-            Pulling remote file… This may take a moment depending on file size.
+            {{ t('server.files.pullingRemoteFile') }}
           </UAlert>
           <UAlert v-if="downloadStatus.active" color="info" icon="i-lucide-download">
-            Preparing download for <strong>{{ downloadStatus.name }}</strong>…
+            {{ t('server.files.preparingDownload', { name: downloadStatus.name }) }}
           </UAlert>
           <UAlert v-if="copyStatus.active" color="info" icon="i-lucide-copy">
-            {{ copyStatus.summary || 'Copying selected files…' }}
+            {{ copyStatus.summary || t('server.files.copyingSelectedFiles') }}
           </UAlert>
           <UAlert v-if="moveStatus.active" color="info" icon="i-lucide-move">
-            {{ moveStatus.summary || 'Moving selected files…' }}
+            {{ moveStatus.summary || t('server.files.movingSelectedFiles') }}
           </UAlert>
           <UAlert v-if="deleteStatus.active" color="warning" icon="i-lucide-trash">
-            {{ deleteStatus.summary || 'Deleting selected files…' }}
+            {{ deleteStatus.summary || t('server.files.deletingSelectedFiles') }}
           </UAlert>
           <UAlert v-if="compressStatus.active" color="info" icon="i-lucide-file-archive">
-            Compressing <strong>{{ compressStatus.target }}</strong>…
+            {{ t('server.files.compressing', { target: compressStatus.target }) }}
           </UAlert>
           <UAlert v-if="decompressStatus.active" color="info" icon="i-lucide-box">
-            Extracting <strong>{{ decompressStatus.target }}</strong>…
+            {{ t('server.files.extracting', { target: decompressStatus.target }) }}
           </UAlert>
         </div>
 
@@ -1431,7 +1431,7 @@ const isEditorDirty = computed(() => {
                     :model-value="allSelected"
                     :indeterminate="indeterminateSelection"
                     :disabled="currentEntries.length === 0"
-                    aria-label="Select all entries"
+                    :aria-label="t('server.files.selectAllEntries')"
                     @update:model-value="toggleSelectAllEntries($event as boolean)"
                   />
                   <span class="flex-1">{{ t('common.name') }}</span>
@@ -1458,7 +1458,7 @@ const isEditorDirty = computed(() => {
                   >
                     <UCheckbox
                       :model-value="isEntrySelected(entry)"
-                      aria-label="Select entry"
+                      :aria-label="t('server.files.selectEntry')"
                       @update:model-value="toggleEntrySelection(entry, $event as boolean)"
                     />
                     <button
@@ -1578,9 +1578,9 @@ const isEditorDirty = computed(() => {
                   v-if="fileError"
                   color="error"
                   icon="i-lucide-alert-circle"
-                  title="Error loading file"
+                  :title="t('server.files.errorLoadingFile')"
                 >
-                  {{ fileError?.message || fileError?.toString() || 'Failed to load file contents' }}
+                  {{ fileError?.message || fileError?.toString() || t('server.files.failedToLoadFileContents') }}
                 </UAlert>
 
                 <div class="relative flex-1 overflow-hidden rounded-md border border-default/80">
@@ -1713,27 +1713,27 @@ const isEditorDirty = computed(() => {
     </template>
   </UModal>
 
-  <UModal v-model:open="bulkMoveModal.open" title="Move selected items" :ui="{ footer: 'justify-end gap-2' }">
+  <UModal v-model:open="bulkMoveModal.open" :title="t('server.files.moveSelectedItems')" :ui="{ footer: 'justify-end gap-2' }">
     <template #body>
       <div class="space-y-4">
         <div class="rounded-md border border-default/60 bg-muted/10 p-3 text-xs text-muted-foreground">
           <p class="font-medium text-foreground">{{ selectionLabel }}</p>
           <ul class="mt-2 space-y-1">
             <li v-for="item in selectionPreview" :key="item.path" class="truncate">• {{ item.name }}</li>
-            <li v-if="hasSelectionOverflow" class="italic text-muted-foreground">and {{ selectionOverflow }} more…</li>
+            <li v-if="hasSelectionOverflow" class="italic text-muted-foreground">{{ t('server.files.andMore', { count: selectionOverflow }) }}</li>
           </ul>
         </div>
 
         <UForm class="space-y-4" @submit.prevent="submitBulkMove">
-          <UFormField label="Destination directory" name="destination" help="Enter the path where the selected items should be moved." required>
-            <UInput v-model="bulkMoveModal.destination" placeholder="/path/to/destination" :disabled="bulkMoveModal.loading" />
+          <UFormField :label="t('server.files.destinationDirectory')" name="destination" :help="t('server.files.destinationDirectoryHelp')" required>
+            <UInput v-model="bulkMoveModal.destination" :placeholder="t('server.files.destinationDirectoryPlaceholder')" :disabled="bulkMoveModal.loading" />
           </UFormField>
           <div class="flex justify-end gap-2">
             <UButton variant="ghost" color="neutral" :disabled="bulkMoveModal.loading" @click="closeBulkMoveModal">
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton type="submit" :loading="bulkMoveModal.loading">
-              Move items
+              {{ t('server.files.moveItems') }}
             </UButton>
           </div>
         </UForm>
@@ -1741,25 +1741,25 @@ const isEditorDirty = computed(() => {
     </template>
   </UModal>
 
-  <UModal v-model:open="bulkDeleteModal.open" title="Delete selected items" :ui="{ footer: 'justify-end gap-2' }">
+  <UModal v-model:open="bulkDeleteModal.open" :title="t('server.files.deleteSelectedItems')" :ui="{ footer: 'justify-end gap-2' }">
     <template #body>
       <div class="space-y-4 text-sm text-muted-foreground">
         <p>
-          You are about to permanently delete the selected files and folders. This action cannot be undone.
+          {{ t('server.files.deleteSelectedItemsDescription') }}
         </p>
         <div class="rounded-md border border-default/60 bg-muted/10 p-3 text-xs">
           <p class="font-medium text-foreground">{{ selectionLabel }}</p>
           <ul class="mt-2 space-y-1">
             <li v-for="item in selectionPreview" :key="item.path" class="truncate">• {{ item.name }}</li>
-            <li v-if="hasSelectionOverflow" class="italic text-muted-foreground">and {{ selectionOverflow }} more…</li>
+            <li v-if="hasSelectionOverflow" class="italic text-muted-foreground">{{ t('server.files.andMore', { count: selectionOverflow }) }}</li>
           </ul>
         </div>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" color="neutral" :disabled="bulkDeleteModal.loading" @click="closeBulkDeleteModal">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton color="error" :loading="bulkDeleteModal.loading" @click="submitBulkDelete">
-            Delete selected
+            {{ t('server.files.deleteSelected') }}
           </UButton>
         </div>
       </div>

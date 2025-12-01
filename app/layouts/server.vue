@@ -28,7 +28,7 @@ const serverName = computed(() => {
   if (import.meta.dev) {
     console.log('[Server Layout] serverName computed:', name)
   }
-  return name && name.trim() ? name : 'Server'
+  return name && name.trim() ? name : t('common.server')
 })
 
 const serverIdentifier = computed(() => {

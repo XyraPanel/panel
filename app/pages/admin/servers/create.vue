@@ -10,6 +10,7 @@ definePageMeta({
   layout: 'admin',
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const router = useRouter()
 
@@ -303,24 +304,24 @@ const stepTitles = [
           </template>
 
           <div v-if="currentStep === 1" class="space-y-4">
-            <UFormField label="Server Name" name="name" required>
-              <UInput v-model="form.name" placeholder="My Minecraft Server" required class="w-full" />
+            <UFormField :label="t('admin.servers.create.serverName')" name="name" required>
+              <UInput v-model="form.name" :placeholder="t('admin.servers.create.serverNamePlaceholder')" required class="w-full" />
               <template #help>
-                A unique name for this server
+                {{ t('admin.servers.create.serverNameHelp') }}
               </template>
             </UFormField>
 
-            <UFormField label="Description" name="description">
-              <UTextarea v-model="form.description" placeholder="A fun survival server for friends" class="w-full" />
+            <UFormField :label="t('admin.servers.create.description')" name="description">
+              <UTextarea v-model="form.description" :placeholder="t('admin.servers.create.descriptionPlaceholder')" class="w-full" />
             </UFormField>
 
-            <UFormField label="Server Owner" name="ownerId" required>
+            <UFormField :label="t('admin.servers.create.serverOwner')" name="ownerId" required>
               <USelectMenu 
                 v-model="form.ownerId" 
                 :items="userSelectItems"
                 value-key="value"
-                placeholder="Search for a user..."
-                :search-input="{ placeholder: 'Search by username or email...' }"
+                :placeholder="t('admin.servers.create.serverOwnerPlaceholder')"
+                :search-input="{ placeholder: t('admin.servers.create.serverOwnerSearchPlaceholder') }"
                 :filter-fields="['label', 'description']"
               >
                 <template #item-label="{ item }">
@@ -331,38 +332,38 @@ const stepTitles = [
                 </template>
               </USelectMenu>
               <template #help>
-                The user who will own this server. Defaults to your account.
+                {{ t('admin.servers.create.serverOwnerHelp') }}
               </template>
             </UFormField>
           </div>
 
           <div v-if="currentStep === 2" class="space-y-4">
-            <UFormField label="Select Nest" name="nestId" required>
+            <UFormField :label="t('admin.servers.create.selectNest')" name="nestId" required>
               <USelect 
                 v-model="form.nestId" 
                 :items="nestSelectItems"
                 value-key="value"
-                placeholder="Select nest" 
+                :placeholder="t('admin.servers.create.selectNestPlaceholder')" 
                 required 
                 class="w-full"
               />
               <template #help>
-                Choose the game type category
+                {{ t('admin.servers.create.selectNestHelp') }}
               </template>
             </UFormField>
 
-            <UFormField v-if="form.nestId" label="Select Egg" name="eggId" required>
+            <UFormField v-if="form.nestId" :label="t('admin.servers.create.selectEgg')" name="eggId" required>
               <USelect 
                 v-model="form.eggId" 
                 :items="eggSelectItems"
                 value-key="value"
-                placeholder="Select egg" 
+                :placeholder="t('admin.servers.create.selectEggPlaceholder')" 
                 required 
                 :disabled="availableEggs.length === 0"
                 class="w-full"
               />
               <template #help>
-                Choose the specific server type
+                {{ t('admin.servers.create.selectEggHelp') }}
               </template>
             </UFormField>
 
@@ -373,24 +374,24 @@ const stepTitles = [
                   {{ selectedEgg.description }}
                 </p>
                 <p class="mt-2 text-xs">
-                  Docker Image: <code class="rounded bg-primary/10 px-1">{{ selectedEgg.dockerImage }}</code>
+                  {{ t('admin.servers.create.dockerImage') }}: <code class="rounded bg-primary/10 px-1">{{ selectedEgg.dockerImage }}</code>
                 </p>
               </template>
             </UAlert>
           </div>
 
           <div v-if="currentStep === 3" class="space-y-4">
-            <UFormField label="Select Node" name="nodeId" required>
+            <UFormField :label="t('admin.servers.create.selectNode')" name="nodeId" required>
               <USelect 
                 v-model="form.nodeId" 
                 :items="nodeSelectItems"
                 value-key="value"
-                placeholder="Select node" 
+                :placeholder="t('admin.servers.create.selectNodePlaceholder')" 
                 required 
                 class="w-full"
               />
               <template #help>
-                Choose which node will host this server
+                {{ t('admin.servers.create.selectNodeHelp') }}
               </template>
             </UFormField>
 
@@ -398,12 +399,12 @@ const stepTitles = [
               <div class="flex items-start gap-3">
                 <UIcon name="i-lucide-alert-triangle" class="size-5 text-warning" />
                 <div>
-                  <p class="font-medium text-warning">No nodes available</p>
+                  <p class="font-medium text-warning">{{ t('admin.servers.create.noNodesAvailable') }}</p>
                   <p class="mt-1 text-sm text-muted-foreground">
-                    You need to create at least one node before creating servers.
+                    {{ t('admin.servers.create.noNodesAvailableDescription') }}
                   </p>
                   <NuxtLink to="/admin/nodes" class="mt-2 inline-block text-sm text-primary hover:underline">
-                    Go to Nodes →
+                    {{ t('admin.servers.create.goToNodes') }}
                   </NuxtLink>
                 </div>
               </div>
@@ -412,64 +413,64 @@ const stepTitles = [
 
           <div v-if="currentStep === 4" class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
-              <UFormField label="Memory (MB)" name="memory" required>
-                <UInput v-model.number="form.memory" type="number" placeholder="1024" required class="w-full" />
+              <UFormField :label="t('admin.servers.create.memory')" name="memory" required>
+                <UInput v-model.number="form.memory" type="number" :placeholder="t('admin.servers.create.memoryPlaceholder')" required class="w-full" />
                 <template #help>
-                  RAM allocated to the server
+                  {{ t('admin.servers.create.memoryHelp') }}
                 </template>
               </UFormField>
 
-              <UFormField label="Swap (MB)" name="swap">
-                <UInput v-model.number="form.swap" type="number" placeholder="0" class="w-full" />
+              <UFormField :label="t('admin.servers.create.swap')" name="swap">
+                <UInput v-model.number="form.swap" type="number" :placeholder="t('admin.servers.create.swapPlaceholder')" class="w-full" />
                 <template #help>
-                  Swap memory (0 to disable)
+                  {{ t('admin.servers.create.swapHelp') }}
                 </template>
               </UFormField>
 
-              <UFormField label="Disk Space (MB)" name="disk" required>
-                <UInput v-model.number="form.disk" type="number" placeholder="5120" required class="w-full" />
+              <UFormField :label="t('admin.servers.create.diskSpace')" name="disk" required>
+                <UInput v-model.number="form.disk" type="number" :placeholder="t('admin.servers.create.diskSpacePlaceholder')" required class="w-full" />
                 <template #help>
-                  Storage space for the server
+                  {{ t('admin.servers.create.diskSpaceHelp') }}
                 </template>
               </UFormField>
 
-              <UFormField label="CPU Limit (%)" name="cpu" required>
-                <UInput v-model.number="form.cpu" type="number" placeholder="100" required class="w-full" />
+              <UFormField :label="t('admin.servers.create.cpuLimit')" name="cpu" required>
+                <UInput v-model.number="form.cpu" type="number" :placeholder="t('admin.servers.create.cpuLimitPlaceholder')" required class="w-full" />
                 <template #help>
-                  CPU usage limit (100 = 1 core)
+                  {{ t('admin.servers.create.cpuLimitHelp') }}
                 </template>
               </UFormField>
 
-              <UFormField label="I/O Weight" name="io">
-                <UInput v-model.number="form.io" type="number" placeholder="500" class="w-full" />
+              <UFormField :label="t('admin.servers.create.ioWeight')" name="io">
+                <UInput v-model.number="form.io" type="number" :placeholder="t('admin.servers.create.ioWeightPlaceholder')" class="w-full" />
                 <template #help>
-                  Block I/O weight (10-1000)
+                  {{ t('admin.servers.create.ioWeightHelp') }}
                 </template>
               </UFormField>
 
-              <UFormField label="CPU Threads" name="threads">
-                <UInput v-model="form.threads" placeholder="0,1,2,3" class="w-full" />
+              <UFormField :label="t('admin.servers.create.cpuThreads')" name="threads">
+                <UInput v-model="form.threads" :placeholder="t('admin.servers.create.cpuThreadsPlaceholder')" class="w-full" />
                 <template #help>
-                  Specific CPU threads (optional)
+                  {{ t('admin.servers.create.cpuThreadsHelp') }}
                 </template>
               </UFormField>
             </div>
 
-            <UFormField label="OOM Killer" name="oomDisabled">
+            <UFormField :label="t('admin.servers.create.oomKiller')" name="oomDisabled">
               <USwitch v-model="form.oomDisabled" />
               <template #help>
-                Disable Out-of-Memory killer (not recommended)
+                {{ t('admin.servers.create.oomKillerHelp') }}
               </template>
             </UFormField>
           </div>
 
           <div v-if="currentStep === 5" class="space-y-4">
-            <UFormField label="Primary Allocation" name="allocationId" required>
+            <UFormField :label="t('admin.servers.create.primaryAllocation')" name="allocationId" required>
               <USelectMenu 
                 v-model="form.allocationId" 
                 :items="allocationSelectItems"
                 value-key="value"
-                placeholder="Select an allocation..."
+                :placeholder="t('admin.servers.create.primaryAllocationPlaceholder')"
                 :disabled="!form.nodeId || isLoadingAllocations || availableAllocations.length === 0"
                 :loading="isLoadingAllocations"
                 class="w-full"
@@ -482,33 +483,33 @@ const stepTitles = [
                 </template>
               </USelectMenu>
               <template #help>
-                <span v-if="!form.nodeId">Select a node first to see available allocations</span>
-                <span v-else-if="isLoadingAllocations">Loading allocations...</span>
-                <span v-else-if="availableAllocations.length === 0">No unassigned allocations available for this node</span>
-                <span v-else>The primary IP:Port for this server</span>
+                <span v-if="!form.nodeId">{{ t('admin.servers.create.primaryAllocationHelpSelectNode') }}</span>
+                <span v-else-if="isLoadingAllocations">{{ t('admin.servers.create.primaryAllocationHelpLoading') }}</span>
+                <span v-else-if="availableAllocations.length === 0">{{ t('admin.servers.create.primaryAllocationHelpNoAllocations') }}</span>
+                <span v-else>{{ t('admin.servers.create.primaryAllocationHelp') }}</span>
               </template>
             </UFormField>
 
             <UAlert v-if="form.nodeId && availableAllocations.length === 0 && !isLoadingAllocations" color="warning" icon="i-lucide-alert-triangle">
-              <template #title>No Available Allocations</template>
+              <template #title>{{ t('admin.servers.create.noAvailableAllocations') }}</template>
               <template #description>
-                This node has no unassigned allocations. Please create allocations for this node first.
+                {{ t('admin.servers.create.noAvailableAllocationsDescription') }}
                 <NuxtLink :to="`/admin/nodes/${form.nodeId}`" class="mt-2 inline-block text-sm text-primary hover:underline">
-                  Go to Node Allocations →
+                  {{ t('admin.servers.create.goToNodeAllocations') }}
                 </NuxtLink>
               </template>
             </UAlert>
 
-            <UFormField label="Startup Command" name="startup">
+            <UFormField :label="t('admin.servers.create.startupCommand')" name="startup">
               <UTextarea v-model="form.startup"
-                :placeholder="selectedEgg?.startup || 'java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar server.jar'" class="w-full" />
+                :placeholder="selectedEgg?.startup || t('admin.servers.create.startupCommandPlaceholder')" class="w-full" />
               <template #help>
-                Command to start the server (uses egg default if empty)
+                {{ t('admin.servers.create.startupCommandHelp') }}
               </template>
             </UFormField>
 
             <div v-if="eggVariables.length > 0" class="space-y-3">
-              <h3 class="text-sm font-semibold">Environment Variables</h3>
+              <h3 class="text-sm font-semibold">{{ t('admin.servers.create.environmentVariables') }}</h3>
               <div v-for="variable in eggVariables" :key="variable.id" class="space-y-1">
                 <UFormField :label="variable.name" :name="variable.envVariable">
                   <UInput v-model="form.environment![variable.envVariable]"
@@ -521,11 +522,11 @@ const stepTitles = [
             </div>
 
             <div class="flex gap-4">
-              <UFormField label="Skip Install Scripts" name="skipScripts">
+              <UFormField :label="t('admin.servers.create.skipInstallScripts')" name="skipScripts">
                 <USwitch v-model="form.skipScripts" />
               </UFormField>
 
-              <UFormField label="Start After Install" name="startOnCompletion">
+              <UFormField :label="t('admin.servers.create.startAfterInstall')" name="startOnCompletion">
                 <USwitch v-model="form.startOnCompletion" />
               </UFormField>
             </div>
@@ -533,48 +534,48 @@ const stepTitles = [
 
           <div v-if="currentStep === 6" class="space-y-4">
             <UAlert color="primary" icon="i-lucide-info">
-              <template #title>Review Your Configuration</template>
+              <template #title>{{ t('admin.servers.create.reviewConfiguration') }}</template>
               <template #description>
-                Please review all settings before creating the server
+                {{ t('admin.servers.create.reviewConfigurationDescription') }}
               </template>
             </UAlert>
 
             <div class="space-y-3 rounded-lg border border-default p-4">
               <div class="grid grid-cols-2 gap-3 text-sm">
                 <div>
-                  <span class="font-medium">Server Name:</span>
+                  <span class="font-medium">{{ t('admin.servers.create.serverNameLabel') }}</span>
                   <span class="ml-2 text-muted-foreground">{{ form.name }}</span>
                 </div>
                 <div>
-                  <span class="font-medium">Owner:</span>
+                  <span class="font-medium">{{ t('admin.servers.create.ownerLabel') }}</span>
                   <span class="ml-2 text-muted-foreground">
                     {{users.find((u: any) => u.id === form.ownerId)?.username}}
                   </span>
                 </div>
                 <div>
-                  <span class="font-medium">Nest:</span>
+                  <span class="font-medium">{{ t('admin.servers.create.nestLabel') }}</span>
                   <span class="ml-2 text-muted-foreground">{{ selectedNest?.name }}</span>
                 </div>
                 <div>
-                  <span class="font-medium">Egg:</span>
+                  <span class="font-medium">{{ t('admin.servers.create.eggLabel') }}</span>
                   <span class="ml-2 text-muted-foreground">{{ selectedEgg?.name }}</span>
                 </div>
                 <div>
-                  <span class="font-medium">Node:</span>
+                  <span class="font-medium">{{ t('admin.servers.create.nodeLabel') }}</span>
                   <span class="ml-2 text-muted-foreground">
                     {{nodes.find((n: any) => n.id === form.nodeId)?.name}}
                   </span>
                 </div>
                 <div>
-                  <span class="font-medium">Memory:</span>
+                  <span class="font-medium">{{ t('admin.servers.create.memoryLabel') }}</span>
                   <span class="ml-2 text-muted-foreground">{{ form.memory }} MB</span>
                 </div>
                 <div>
-                  <span class="font-medium">Disk:</span>
+                  <span class="font-medium">{{ t('admin.servers.create.diskLabel') }}</span>
                   <span class="ml-2 text-muted-foreground">{{ form.disk }} MB</span>
                 </div>
                 <div>
-                  <span class="font-medium">CPU:</span>
+                  <span class="font-medium">{{ t('admin.servers.create.cpuLabel') }}</span>
                   <span class="ml-2 text-muted-foreground">{{ form.cpu }}%</span>
                 </div>
               </div>

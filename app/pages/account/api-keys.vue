@@ -156,7 +156,7 @@ async function createApiKey(event: FormSubmitEvent<KeyFormSchema>) {
     })
 
     if (!response?.meta?.secret_token) {
-      throw new Error('API key was created but token was not returned')
+      throw new Error(t('account.apiKeys.tokenNotReturned'))
     }
 
     newKeyToken.value = response.meta.secret_token
@@ -250,7 +250,7 @@ async function copyToken() {
       document.body.removeChild(textArea)
       
       if (!successful) {
-        throw new Error('execCommand copy failed')
+        throw new Error(t('common.failedToCopy'))
       }
     }
     
@@ -352,7 +352,7 @@ async function copyToken() {
               <UTextarea
                 v-model="createForm.allowedIps"
                 icon="i-lucide-shield"
-                placeholder="192.168.1.1, 10.0.0.1"
+                :placeholder="t('account.apiKeys.allowedIPsPlaceholder')"
                 class="w-full"
                 :rows="3"
               />

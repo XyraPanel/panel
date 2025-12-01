@@ -7,6 +7,7 @@ const props = defineProps<{
   nodeId: string
 }>()
 
+const { t } = useI18n()
 const toast = useToast()
 const page = ref(1)
 const pageSize = ref(50)
@@ -54,7 +55,7 @@ const paginatedAllocations = computed(() => {
 const _totalPages = computed(() => Math.ceil(filteredAllocations.value.length / pageSize.value))
 
 const createSchema = z.object({
-  ip: z.string().trim().min(1, 'IP address or CIDR notation is required').refine((val) => {
+  ip: z.string().trim().min(1, t('admin.nodes.allocations.ipAddressOrCidrRequired')).refine((val) => {
     if (!val) return false
     const parts = val.split('/')
     if (parts.length === 1) {
@@ -67,8 +68,8 @@ const createSchema = z.object({
       return ipRegex.test(parts[0]!) && Number.isFinite(prefix) && prefix >= 25 && prefix <= 32
     }
     return false
-  }, 'Invalid IP address or CIDR notation (must be /25 to /32)'),
-  ports: z.string().trim().min(1, 'Provide at least one port'),
+  }, t('admin.nodes.allocations.invalidIpAddressOrCidr')),
+  ports: z.string().trim().min(1, t('admin.nodes.allocations.provideAtLeastOnePort')),
   ipAlias: z.string().trim().max(255).optional(),
 })
 
@@ -86,12 +87,12 @@ function parsePorts(input: string): number[] {
   if (normalized.includes('-')) {
     const [startRaw, endRaw] = normalized.split('-', 2)
     if (!startRaw || !endRaw) {
-      throw new Error('Invalid port range format')
+      throw new Error(t('admin.nodes.allocations.invalidPortRangeFormat'))
     }
     const start = Number.parseInt(startRaw, 10)
     const end = Number.parseInt(endRaw, 10)
     if (!Number.isFinite(start) || !Number.isFinite(end) || start <= 0 || end <= 0 || start > end)
-      throw new Error('Provide a valid port range (e.g. 25565-25600)')
+      throw new Error(t('admin.nodes.allocations.provideValidPortRange'))
     const ports: number[] = []
     for (let port = start; port <= end; port++) {
       ports.push(port)
@@ -103,7 +104,7 @@ function parsePorts(input: string): number[] {
   const ports = segments.map(segment => {
     const port = Number.parseInt(segment, 10)
     if (!Number.isFinite(port) || port <= 0)
-      throw new Error('Ports must be positive integers')
+      throw new Error(t('admin.nodes.allocations.portsMustBePositiveIntegers'))
     return port
   })
 
@@ -124,7 +125,7 @@ async function createAllocations(event: FormSubmitEvent<CreateFormSchema>) {
       : ports.length
 
     if (estimatedCount > 10000) {
-      if (!confirm(`This will create approximately ${estimatedCount.toLocaleString()} allocations. Continue?`)) {
+      if (!confirm(t('admin.nodes.confirmCreateManyAllocations', { count: estimatedCount.toLocaleString() }))) {
         isCreating.value = false
         return
       }
@@ -140,8 +141,8 @@ async function createAllocations(event: FormSubmitEvent<CreateFormSchema>) {
     })
 
     toast.add({
-      title: 'Allocations created',
-      description: `Created allocations for ${event.data.ip} with ${ports.length} port${ports.length === 1 ? '' : 's'}`,
+      title: t('admin.nodes.allocationsCreated'),
+      description: t('admin.nodes.allocationsCreatedDescription', { ip: event.data.ip, count: ports.length }),
       color: 'success',
     })
 
@@ -153,8 +154,8 @@ async function createAllocations(event: FormSubmitEvent<CreateFormSchema>) {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || (error instanceof Error ? error.message : 'Failed to create allocations'),
+      title: t('common.error'),
+      description: err.data?.message || (error instanceof Error ? error.message : t('admin.nodes.failedToCreateAllocations')),
       color: 'error',
     })
   }
@@ -180,15 +181,15 @@ async function updateAlias(allocation: Allocation, newAlias: string) {
     })
 
     toast.add({
-      title: 'Alias updated',
+      title: t('admin.nodes.allocations.aliasUpdated'),
       color: 'success',
     })
 
     await refresh()
   } catch {
     toast.add({
-      title: 'Error',
-      description: 'Failed to update alias',
+      title: t('common.error'),
+      description: t('admin.nodes.allocations.failedToUpdateAlias'),
       color: 'error',
     })
   } finally {
@@ -197,7 +198,7 @@ async function updateAlias(allocation: Allocation, newAlias: string) {
 }
 
 async function deleteAllocation(allocation: Allocation) {
-  if (!confirm(`Delete allocation ${allocation.ip}:${allocation.port}?`)) {
+  if (!confirm(t('admin.nodes.confirmDeleteAllocation', { ip: allocation.ip, port: allocation.port }))) {
     return
   }
 
@@ -207,7 +208,7 @@ async function deleteAllocation(allocation: Allocation) {
     })
 
     toast.add({
-      title: 'Allocation deleted',
+      title: t('admin.nodes.allocationDeleted'),
       color: 'success',
     })
 
@@ -215,18 +216,18 @@ async function deleteAllocation(allocation: Allocation) {
   } catch (err) {
     const error = err as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: error.data?.message || 'Failed to delete allocation',
+      title: t('common.error'),
+      description: error.data?.message || t('admin.nodes.failedToDeleteAllocation'),
       color: 'error',
     })
   }
 }
 
 const columns: TableColumn[] = [
-  { key: 'ip', label: 'IP Address' },
-  { key: 'ipAlias', label: 'IP Alias' },
-  { key: 'port', label: 'Port' },
-  { key: 'server', label: 'Assigned To' },
+  { key: 'ip', label: t('admin.nodes.ip') },
+  { key: 'ipAlias', label: t('admin.nodes.allocations.ipAlias') },
+  { key: 'port', label: t('admin.nodes.port') },
+  { key: 'server', label: t('admin.nodes.allocations.assignedTo') },
   { key: 'actions', label: '' },
 ]
 
@@ -240,18 +241,18 @@ const unassignedCount = computed(() => allocations.value.filter(a => a.serverId 
     <div class="flex flex-wrap items-center justify-between gap-4">
       <div class="flex gap-2">
         <UButton :color="filter === 'all' ? 'primary' : 'neutral'" variant="soft" @click="filter = 'all'">
-          All ({{ allocations.length }})
+          {{ t('common.all') }} ({{ allocations.length }})
         </UButton>
         <UButton :color="filter === 'assigned' ? 'primary' : 'neutral'" variant="soft" @click="filter = 'assigned'">
-          Assigned ({{ assignedCount }})
+          {{ t('admin.nodes.allocations.assigned') }} ({{ assignedCount }})
         </UButton>
         <UButton :color="filter === 'unassigned' ? 'primary' : 'neutral'" variant="soft" @click="filter = 'unassigned'">
-          Unassigned ({{ unassignedCount }})
+          {{ t('admin.nodes.allocations.unassigned') }} ({{ unassignedCount }})
         </UButton>
       </div>
 
       <UButton icon="i-lucide-plus" color="primary" @click="showCreateModal = true">
-        Create Allocations
+        {{ t('admin.nodes.createAllocations') }}
       </UButton>
     </div>
 
@@ -264,7 +265,7 @@ const unassignedCount = computed(() => allocations.value.filter(a => a.serverId 
         <template #ipAlias-data="{ row }">
           <UInput 
             :model-value="(row as unknown as Allocation).ipAlias || ''" 
-            placeholder="none" 
+            :placeholder="t('common.none')" 
             size="sm"
             :loading="updatingAlias === (row as unknown as Allocation).id"
             @blur="handleAliasBlur(row as unknown as Allocation, $event)" 
@@ -281,7 +282,7 @@ const unassignedCount = computed(() => allocations.value.filter(a => a.serverId 
             :to="`/admin/servers/${(row as unknown as Allocation).serverId}`" 
             class="text-primary hover:underline"
           >
-            Server
+            {{ t('common.server') }}
           </NuxtLink>
           <span v-else class="text-sm text-muted-foreground">-</span>
         </template>
@@ -301,8 +302,11 @@ const unassignedCount = computed(() => allocations.value.filter(a => a.serverId 
       <template #footer>
         <div class="flex items-center justify-between">
           <div class="text-sm text-muted-foreground">
-            Showing {{ (page - 1) * pageSize + 1 }} to {{ Math.min(page * pageSize, filteredAllocations.length) }} of {{
-              filteredAllocations.length }}
+            {{ t('admin.nodes.allocations.showingAllocations', {
+              start: (page - 1) * pageSize + 1,
+              end: Math.min(page * pageSize, filteredAllocations.length),
+              total: filteredAllocations.length
+            }) }}
           </div>
           <UPagination v-model="page" :total="filteredAllocations.length" :page-size="pageSize" />
         </div>
@@ -312,7 +316,7 @@ const unassignedCount = computed(() => allocations.value.filter(a => a.serverId 
     <UModal v-model="showCreateModal">
       <UCard>
         <template #header>
-          <h3 class="text-lg font-semibold">Create Allocations</h3>
+          <h3 class="text-lg font-semibold">{{ t('admin.nodes.createAllocations') }}</h3>
         </template>
 
         <UForm
@@ -325,34 +329,34 @@ const unassignedCount = computed(() => allocations.value.filter(a => a.serverId 
           @submit="createAllocations"
         >
           <UAlert icon="i-lucide-info">
-            <template #title>Bulk Creation</template>
+            <template #title>{{ t('admin.nodes.bulkCreation') }}</template>
             <template #description>
               <ul class="list-disc list-inside space-y-1 text-sm">
-                <li>IP addresses: Use CIDR notation (e.g., <code>192.168.1.0/24</code>) to create multiple IPs, or a single IP (e.g., <code>192.168.1.1</code>)</li>
-                <li>Ports: Use a range (e.g., <code>25565-25665</code>) or comma-separated list (e.g., <code>25565,25566,25567</code>)</li>
-                <li>CIDR ranges must be between /25 and /32</li>
+                <li>{{ t('admin.nodes.bulkCreationIpAddresses') }}</li>
+                <li>{{ t('admin.nodes.bulkCreationPorts') }}</li>
+                <li>{{ t('admin.nodes.bulkCreationCidrRange') }}</li>
               </ul>
             </template>
           </UAlert>
 
-          <UFormField label="IP Address or CIDR" name="ip" required>
-            <UInput v-model="createForm.ip" placeholder="192.168.1.0/24 or 192.168.1.1" />
+          <UFormField :label="t('admin.nodes.allocations.ipAddressOrCidr')" name="ip" required>
+            <UInput v-model="createForm.ip" :placeholder="t('admin.nodes.ipAddressOrCidrPlaceholder')" />
             <template #help>
-              Single IP address (e.g., 192.168.1.1) or CIDR notation (e.g., 192.168.1.0/24) to create multiple IPs
+              {{ t('admin.nodes.ipAddressOrCidrHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="Ports" name="ports" required>
-            <UInput v-model="createForm.ports" placeholder="25565-25665 or 25565,25566,25567" />
+          <UFormField :label="t('admin.nodes.allocations.ports')" name="ports" required>
+            <UInput v-model="createForm.ports" :placeholder="t('admin.nodes.portsPlaceholder')" />
             <template #help>
-              Port range (25565-25665) or comma-separated list (25565,25566,25567)
+              {{ t('admin.nodes.portsHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="IP Alias" name="ipAlias">
-            <UInput v-model="createForm.ipAlias" placeholder="play.example.com" />
+          <UFormField :label="t('admin.nodes.allocations.ipAlias')" name="ipAlias">
+            <UInput v-model="createForm.ipAlias" :placeholder="t('admin.nodes.ipAliasPlaceholder')" />
             <template #help>
-              Optional DNS alias for this IP address
+              {{ t('admin.nodes.ipAliasHelp') }}
             </template>
           </UFormField>
         </UForm>
@@ -360,7 +364,7 @@ const unassignedCount = computed(() => allocations.value.filter(a => a.serverId 
         <template #footer>
           <div class="flex justify-end gap-2">
             <UButton variant="ghost" :disabled="isCreating" @click="showCreateModal = false">
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton 
               type="submit" 
@@ -369,7 +373,7 @@ const unassignedCount = computed(() => allocations.value.filter(a => a.serverId 
               :loading="isCreating" 
               :disabled="isCreating"
             >
-              Create Allocations
+              {{ t('admin.nodes.createAllocations') }}
             </UButton>
           </div>
         </template>

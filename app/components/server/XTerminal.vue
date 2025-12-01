@@ -3,6 +3,8 @@ import { ref, onMounted, onUnmounted, watch } from 'vue'
 import type { ServerTerminalProps } from '#shared/types/server'
 import type { Terminal } from 'xterm'
 
+const { t } = useI18n()
+
 const props = defineProps<ServerTerminalProps>()
 defineEmits<{
   command: [command: string]
@@ -184,7 +186,7 @@ onMounted(async () => {
         searchBarAddon.show()
       } else if (searchAddon) {
         if (import.meta.client && typeof globalThis !== 'undefined' && 'prompt' in globalThis) {
-          const searchTerm = (globalThis as { prompt?: (message: string) => string | null }).prompt?.('Search terminal:')
+          const searchTerm = (globalThis as { prompt?: (message: string) => string | null }).prompt?.(t('server.console.searchTerminal'))
           if (searchTerm) {
             searchAddon.findNext(searchTerm)
           }
@@ -302,7 +304,7 @@ defineExpose({
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `server-console-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`
+    a.download = `${t('server.console.downloadFilename')}-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

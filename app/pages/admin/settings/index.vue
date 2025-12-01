@@ -7,6 +7,7 @@ definePageMeta({
   layout: 'admin',
 })
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()

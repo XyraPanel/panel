@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -59,7 +60,7 @@ const fileName = computed(() => {
 
 async function loadFile() {
   if (!filePath.value) {
-    error.value = 'No file specified'
+    error.value = t('server.files.noFileSpecified')
     return
   }
 
@@ -78,7 +79,7 @@ async function loadFile() {
     originalContent.value = response.data.content
   }
   catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load file'
+    error.value = err instanceof Error ? err.message : t('server.files.failedToLoadFile')
   }
   finally {
     loading.value = false
@@ -101,15 +102,15 @@ async function saveFile() {
     originalContent.value = content.value
 
     useToast().add({
-      title: 'File saved',
-      description: 'Your changes have been saved successfully',
+      title: t('server.files.fileSaved'),
+      description: t('server.files.changesSavedSuccessfully'),
       color: 'success',
     })
   }
   catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to save file'
+    error.value = err instanceof Error ? err.message : t('server.files.failedToSaveFile')
     useToast().add({
-      title: 'Save failed',
+      title: t('server.files.saveFailed'),
       description: error.value,
       color: 'error',
     })
@@ -121,7 +122,7 @@ async function saveFile() {
 
 function cancel() {
   if (hasChanges.value) {
-    if (confirm('You have unsaved changes. Are you sure you want to leave?')) {
+    if (confirm(t('server.files.confirmLeaveUnsavedChanges'))) {
       router.back()
     }
   }
@@ -149,7 +150,7 @@ onUnmounted(() => {
 
 onBeforeRouteLeave((to, from, next) => {
   if (hasChanges.value) {
-    const answer = window.confirm('You have unsaved changes. Do you really want to leave?')
+    const answer = window.confirm(t('server.files.confirmLeaveUnsavedChanges'))
     if (answer) {
       next()
     }
@@ -177,14 +178,14 @@ onBeforeRouteLeave((to, from, next) => {
               color="neutral"
               @click="cancel"
             >
-              Back
+              {{ t('common.back') }}
             </UButton>
             <div>
               <h1 class="text-xl font-semibold">{{ fileName }}</h1>
               <p class="text-xs text-muted-foreground">{{ filePath }}</p>
             </div>
             <UBadge v-if="hasChanges" color="warning" size="xs">
-              Unsaved changes
+              {{ t('server.files.unsavedChanges') }}
             </UBadge>
           </div>
 
@@ -199,7 +200,7 @@ onBeforeRouteLeave((to, from, next) => {
               :disabled="!hasChanges || loading"
               @click="saveFile"
             >
-              Save (Ctrl+S)
+              {{ t('server.files.saveWithShortcut') }}
             </UButton>
           </div>
         </div>
@@ -209,7 +210,7 @@ onBeforeRouteLeave((to, from, next) => {
         <div v-if="loading" class="flex items-center justify-center rounded-lg border border-default bg-background p-12">
           <div class="text-center">
             <UIcon name="i-lucide-loader-2" class="mx-auto size-8 animate-spin text-primary" />
-            <p class="mt-2 text-sm text-muted-foreground">Loading file...</p>
+            <p class="mt-2 text-sm text-muted-foreground">{{ t('server.files.loadingFile') }}</p>
           </div>
         </div>
 
@@ -239,7 +240,7 @@ onBeforeRouteLeave((to, from, next) => {
         </UCard>
 
         <div class="text-xs text-muted-foreground">
-          <p>Press <kbd class="rounded bg-muted px-1.5 py-0.5 font-mono">Ctrl+S</kbd> (or <kbd class="rounded bg-muted px-1.5 py-0.5 font-mono">Cmd+S</kbd> on Mac) to save your changes.</p>
+          <p>{{ t('server.files.saveKeyboardShortcut') }}</p>
         </div>
         </div>
       </UContainer>

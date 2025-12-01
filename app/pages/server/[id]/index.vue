@@ -37,7 +37,7 @@ function formatAllocation(allocation: { ip: string; port: number } | null) {
 
 function formatLimit(value: number | null | undefined, suffix: string) {
   if (value === null || value === undefined)
-    return '—'
+    return t('common.na')
   return `${value.toLocaleString()} ${suffix}`
 }
 

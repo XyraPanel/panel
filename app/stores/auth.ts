@@ -86,7 +86,8 @@ export const useAuthStore = defineStore('auth', () => {
       error.value = null
     }
     catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to refresh session'
+      const { t } = useI18n()
+      error.value = err instanceof Error ? err.message : t('auth.failedToRefreshSession')
     }
     finally {
       isSyncing.value = false
@@ -99,7 +100,8 @@ export const useAuthStore = defineStore('auth', () => {
       await authClient.signOut()
     }
     catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to sign out'
+      const { t } = useI18n()
+      error.value = err instanceof Error ? err.message : t('auth.failedToSignOut')
       throw err
     }
   }
@@ -211,7 +213,8 @@ export const useAuthStore = defineStore('auth', () => {
       }
     }
     catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to sign in'
+      const { t } = useI18n()
+      const message = err instanceof Error ? err.message : t('auth.failedToSignIn')
       error.value = message
       return { error: message }
     }

@@ -22,9 +22,9 @@ const { data: backupsData, pending, error } = await useAsyncData(
 const backups = computed(() => backupsData.value?.data || [])
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '—'
+  if (bytes === 0) return t('common.na')
   const k = 1024
-  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+  const sizes = [t('common.bytes'), t('common.kb'), t('common.mb'), t('common.gb'), t('common.tb')]
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`
 }
@@ -66,7 +66,7 @@ async function createBackup() {
     await $fetch(`/api/client/servers/${serverId.value}/backups`, {
       method: 'POST',
       body: {
-        name: `Backup ${new Date().toLocaleString()}`,
+        name: t('server.backups.defaultBackupName', { date: new Date().toLocaleString() }),
         locked: false,
       },
     })

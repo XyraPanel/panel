@@ -9,6 +9,7 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const toast = useToast()
 
 const nestId = computed(() => route.params.id as string)
@@ -53,7 +54,7 @@ function openCreateEggModal() {
 
 async function handleCreateEgg() {
   if (!eggForm.value.name || !eggForm.value.author || !eggForm.value.dockerImage || !eggForm.value.startup) {
-    toast.add({ title: 'Name, author, docker image, and startup command are required', color: 'error' })
+    toast.add({ title: t('admin.nests.createEgg.requiredFields'), color: 'error' })
     return
   }
 
@@ -64,14 +65,14 @@ async function handleCreateEgg() {
       method: 'POST',
       body: eggForm.value,
     })
-    toast.add({ title: 'Egg created', color: 'success' })
+    toast.add({ title: t('admin.nests.createEgg.eggCreated'), color: 'success' })
     showCreateEggModal.value = false
     resetEggForm()
     await refresh()
   } catch (err) {
     toast.add({
-      title: 'Create failed',
-      description: err instanceof Error ? err.message : 'An error occurred',
+      title: t('admin.nests.createEgg.createFailed'),
+      description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     })
   } finally {
@@ -90,7 +91,7 @@ function openImportEggModal() {
 
 async function handleImportEgg() {
   if (!importFile.value) {
-    toast.add({ title: 'No file selected', color: 'error' })
+    toast.add({ title: t('admin.nests.createEgg.noFileSelected'), color: 'error' })
     return
   }
 
@@ -108,14 +109,14 @@ async function handleImportEgg() {
       },
     })
 
-    toast.add({ title: 'Egg imported successfully', color: 'success' })
+    toast.add({ title: t('admin.nests.createEgg.eggImportedSuccessfully'), color: 'success' })
     showImportEggModal.value = false
     importFile.value = null
     await refresh()
   } catch (err) {
     toast.add({
-      title: 'Import failed',
-      description: err instanceof Error ? err.message : 'Invalid egg file',
+      title: t('admin.nests.createEgg.importFailed'),
+      description: err instanceof Error ? err.message : t('admin.nests.createEgg.invalidEggFile'),
       color: 'error',
     })
   } finally {
@@ -144,7 +145,7 @@ function handleFileChange(event: Event) {
           </div>
 
           <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
-            <template #title>Failed to load nest</template>
+            <template #title>{{ t('admin.nests.failedToLoadNest') }}</template>
             <template #description>{{ error.message }}</template>
           </UAlert>
 
@@ -159,16 +160,16 @@ function handleFileChange(event: Event) {
                   {{ nest.description }}
                 </p>
                 <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                  <span>Author: {{ nest.author }}</span>
-                  <span>UUID: {{ nest.uuid }}</span>
+                  <span>{{ t('admin.nests.author') }}: {{ nest.author }}</span>
+                  <span>{{ t('admin.nests.uuid') }}: {{ nest.uuid }}</span>
                 </div>
               </div>
               <div class="flex gap-2">
                 <UButton icon="i-lucide-upload" variant="outline" @click="openImportEggModal">
-                  Import Egg
+                  {{ t('admin.nests.createEgg.importEgg') }}
                 </UButton>
                 <UButton icon="i-lucide-plus" color="primary" @click="openCreateEggModal">
-                  Create Egg
+                  {{ t('admin.nests.createEgg.createEgg') }}
                 </UButton>
               </div>
             </header>
@@ -176,18 +177,18 @@ function handleFileChange(event: Event) {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <h2 class="text-lg font-semibold">Eggs</h2>
-                  <UBadge color="neutral">{{ eggs.length }} total</UBadge>
+                  <h2 class="text-lg font-semibold">{{ t('admin.nests.createEgg.eggs') }}</h2>
+                  <UBadge color="neutral">{{ eggs.length }} {{ t('common.all') }}</UBadge>
                 </div>
               </template>
 
               <div v-if="eggs.length === 0" class="py-12 text-center">
                 <UIcon name="i-lucide-egg" class="mx-auto size-12 text-muted-foreground opacity-50" />
-                <p class="mt-4 text-sm text-muted-foreground">No eggs in this nest yet</p>
+                <p class="mt-4 text-sm text-muted-foreground">{{ t('admin.nests.createEgg.noEggsInNest') }}</p>
                 <p class="mt-1 text-xs text-muted-foreground">
-                  Eggs define specific server types (e.g., Vanilla, Paper, Forge)
+                  {{ t('admin.nests.createEgg.eggsDescription') }}
                 </p>
-                <UButton class="mt-4" size="sm" @click="openCreateEggModal">Create your first egg</UButton>
+                <UButton class="mt-4" size="sm" @click="openCreateEggModal">{{ t('admin.nests.createEgg.createFirstEgg') }}</UButton>
               </div>
 
               <div v-else class="divide-y divide-default">
@@ -207,7 +208,7 @@ function handleFileChange(event: Event) {
                         <UIcon name="i-lucide-container" class="size-3" />
                         {{ egg.dockerImage }}
                       </span>
-                      <span>Author: {{ egg.author }}</span>
+                      <span>{{ t('admin.nests.author') }}: {{ egg.author }}</span>
                     </div>
                   </div>
 
@@ -222,38 +223,38 @@ function handleFileChange(event: Event) {
       </UContainer>
     </UPageBody>
 
-    <UModal v-model:open="showCreateEggModal" title="Create Egg" description="Create a new server type configuration">
+    <UModal v-model:open="showCreateEggModal" :title="t('admin.nests.createEgg.createEgg')" :description="t('admin.nests.createEgg.createEggDescription')">
       <template #body>
         <form class="space-y-4" @submit.prevent="handleCreateEgg">
-          <UFormField label="Name" name="name" required>
-            <UInput v-model="eggForm.name" placeholder="Vanilla Minecraft" required :disabled="isSubmitting"
+          <UFormField :label="t('common.name')" name="name" required>
+            <UInput v-model="eggForm.name" :placeholder="t('admin.nests.createEgg.namePlaceholder')" required :disabled="isSubmitting"
               class="w-full" />
           </UFormField>
 
-          <UFormField label="Description" name="description">
-            <UTextarea v-model="eggForm.description" placeholder="Official Minecraft server" :disabled="isSubmitting"
+          <UFormField :label="t('common.description')" name="description">
+            <UTextarea v-model="eggForm.description" :placeholder="t('admin.nests.createEgg.descriptionPlaceholder')" :disabled="isSubmitting"
               class="w-full" />
           </UFormField>
 
-          <UFormField label="Docker Image" name="dockerImage" required>
-            <UInput v-model="eggForm.dockerImage" placeholder="ghcr.io/pterodactyl/yolks:java_17" required
+          <UFormField :label="t('admin.nests.createEgg.dockerImage')" name="dockerImage" required>
+            <UInput v-model="eggForm.dockerImage" :placeholder="t('admin.nests.createEgg.dockerImagePlaceholder')" required
               :disabled="isSubmitting" class="w-full" />
             <template #help>
-              Docker image to use for this server type
+              {{ t('admin.nests.createEgg.dockerImageHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="Startup Command" name="startup" required>
+          <UFormField :label="t('admin.nests.createEgg.startupCommand')" name="startup" required>
             <UTextarea v-model="eggForm.startup"
-              placeholder="java -Xms128M -Xmx{{SERVER_MEMORY}}M -jar {{SERVER_JARFILE}}" required
+              :placeholder="t('admin.nests.createEgg.startupCommandPlaceholder')" required
               :disabled="isSubmitting" class="w-full" />
             <template #help>
-              Command to start the server. Use double braces for variables like: SERVER_MEMORY
+              {{ t('admin.nests.createEgg.startupCommandHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="Author" name="author" required>
-            <UInput v-model="eggForm.author" placeholder="support@example.com" required :disabled="isSubmitting"
+          <UFormField :label="t('admin.nests.author')" name="author" required>
+            <UInput v-model="eggForm.author" :placeholder="t('admin.nests.authorPlaceholder')" required :disabled="isSubmitting"
               class="w-full" />
           </UFormField>
         </form>
@@ -262,19 +263,19 @@ function handleFileChange(event: Event) {
       <template #footer>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" :disabled="isSubmitting" @click="showCreateEggModal = false">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton color="primary" :loading="isSubmitting" @click="handleCreateEgg">
-            Create Egg
+            {{ t('admin.nests.createEgg.createEgg') }}
           </UButton>
         </div>
       </template>
     </UModal>
 
-    <UModal v-model:open="showImportEggModal" title="Import Egg" description="Import an egg from a JSON file">
+    <UModal v-model:open="showImportEggModal" :title="t('admin.nests.createEgg.importEgg')" :description="t('admin.nests.createEgg.importEggDescription')">
       <template #body>
         <div class="space-y-4">
-          <UFormField label="Egg JSON File" name="file" required>
+          <UFormField :label="t('admin.nests.createEgg.eggJsonFile')" name="file" required>
             <input
               type="file"
               accept=".json,application/json"
@@ -282,12 +283,12 @@ function handleFileChange(event: Event) {
               @change="handleFileChange"
             >
             <template #help>
-              Upload a Pterodactyl-compatible egg JSON file
+              {{ t('admin.nests.createEgg.eggJsonFileHelp') }}
             </template>
           </UFormField>
 
           <UAlert v-if="importFile" color="primary" variant="soft" icon="i-lucide-file-json">
-            <template #title>File selected</template>
+            <template #title>{{ t('admin.nests.createEgg.fileSelected') }}</template>
             <template #description>{{ importFile.name }} ({{ (importFile.size / 1024).toFixed(2) }} KB)</template>
           </UAlert>
         </div>
@@ -296,10 +297,10 @@ function handleFileChange(event: Event) {
       <template #footer>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" :disabled="isSubmitting" @click="showImportEggModal = false">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton color="primary" :loading="isSubmitting" :disabled="!importFile" @click="handleImportEgg">
-            Import Egg
+            {{ t('admin.nests.createEgg.importEgg') }}
           </UButton>
         </div>
       </template>

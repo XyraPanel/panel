@@ -122,9 +122,9 @@ function handleCommandKeyDown(e: KeyboardEvent) {
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
+  if (bytes === 0) return `0 ${t('common.bytes')}`
   const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const sizes = [t('common.bytes'), t('common.kb'), t('common.mb'), t('common.gb'), t('common.tb')]
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
 }
@@ -219,8 +219,9 @@ function handlePowerAction(action: PowerAction) {
 
 function handleSearch() {
   if (!import.meta.client) return
+  const { t } = useI18n()
   const term = (typeof globalThis !== 'undefined' && 'prompt' in globalThis)
-    ? (globalThis as { prompt?: (message: string) => string | null }).prompt?.('Search:')
+    ? (globalThis as { prompt?: (message: string) => string | null }).prompt?.(t('server.console.search'))
     : null
   if (term) {
     terminalRef.value?.search?.(term)
@@ -428,7 +429,7 @@ function handleSearch() {
               </UBadge>
             </div>
             <div class="flex items-center justify-between">
-              <span class="text-muted-foreground">IP:Port</span>
+              <span class="text-muted-foreground">{{ t('server.console.ipPort') }}</span>
               <span v-if="primaryAllocation" class="font-mono">{{ primaryAllocation.ip }}:{{ primaryAllocation.port }}</span>
               <span v-else class="text-muted-foreground">{{ t('common.notAssigned') }}</span>
             </div>

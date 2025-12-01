@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -24,25 +25,25 @@ const loading = ref(false)
 const saving = ref(false)
 const error = ref<string | null>(null)
 
-const cronPresets = [
-  { label: 'Every minute', value: '* * * * *' },
-  { label: 'Every 5 minutes', value: '*/5 * * * *' },
-  { label: 'Every 15 minutes', value: '*/15 * * * *' },
-  { label: 'Every 30 minutes', value: '*/30 * * * *' },
-  { label: 'Every hour', value: '0 * * * *' },
-  { label: 'Every 6 hours', value: '0 */6 * * *' },
-  { label: 'Every 12 hours', value: '0 */12 * * *' },
-  { label: 'Daily at midnight', value: '0 0 * * *' },
-  { label: 'Daily at noon', value: '0 12 * * *' },
-  { label: 'Weekly (Sunday)', value: '0 0 * * 0' },
-  { label: 'Monthly (1st)', value: '0 0 1 * *' },
-]
+const cronPresets = computed(() => [
+  { label: t('server.schedules.cronPresets.everyMinute'), value: '* * * * *' },
+  { label: t('server.schedules.cronPresets.every5Minutes'), value: '*/5 * * * *' },
+  { label: t('server.schedules.cronPresets.every15Minutes'), value: '*/15 * * * *' },
+  { label: t('server.schedules.cronPresets.every30Minutes'), value: '*/30 * * * *' },
+  { label: t('server.schedules.cronPresets.everyHour'), value: '0 * * * *' },
+  { label: t('server.schedules.cronPresets.every6Hours'), value: '0 */6 * * *' },
+  { label: t('server.schedules.cronPresets.every12Hours'), value: '0 */12 * * *' },
+  { label: t('server.schedules.cronPresets.dailyAtMidnight'), value: '0 0 * * *' },
+  { label: t('server.schedules.cronPresets.dailyAtNoon'), value: '0 12 * * *' },
+  { label: t('server.schedules.cronPresets.weeklySunday'), value: '0 0 * * 0' },
+  { label: t('server.schedules.cronPresets.monthly1st'), value: '0 0 1 * *' },
+])
 
-const actionTypes = [
-  { label: 'Power Action', value: 'power', description: 'Start, stop, or restart the server' },
-  { label: 'Command', value: 'command', description: 'Execute a console command' },
-  { label: 'Backup', value: 'backup', description: 'Create a server backup' },
-]
+const actionTypes = computed(() => [
+  { label: t('server.schedules.actionTypes.powerAction'), value: 'power', description: t('server.schedules.actionTypes.powerActionDescription') },
+  { label: t('server.schedules.actionTypes.command'), value: 'command', description: t('server.schedules.actionTypes.commandDescription') },
+  { label: t('server.schedules.actionTypes.backup'), value: 'backup', description: t('server.schedules.actionTypes.backupDescription') },
+])
 
 async function loadSchedule() {
   if (isNew.value) return
@@ -63,7 +64,7 @@ async function loadSchedule() {
     }
   }
   catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load schedule'
+    error.value = err instanceof Error ? err.message : t('server.schedules.failedToLoadSchedule')
   }
   finally {
     loading.value = false
@@ -72,7 +73,7 @@ async function loadSchedule() {
 
 async function saveSchedule() {
   if (!form.value.name || !form.value.cron || !form.value.action) {
-    error.value = 'Please fill in all required fields'
+    error.value = t('validation.fillInAllRequiredFields')
     return
   }
 
@@ -88,8 +89,8 @@ async function saveSchedule() {
       })
 
       useToast().add({
-        title: 'Schedule created',
-        description: 'Your schedule has been created successfully',
+        title: t('server.schedules.scheduleCreated'),
+        description: t('server.schedules.scheduleCreatedDescription'),
         color: 'success',
       })
     }
@@ -101,8 +102,8 @@ async function saveSchedule() {
       })
 
       useToast().add({
-        title: 'Schedule updated',
-        description: 'Your changes have been saved successfully',
+        title: t('server.schedules.scheduleUpdated'),
+        description: t('server.schedules.changesSavedSuccessfully'),
         color: 'success',
       })
     }
@@ -110,9 +111,9 @@ async function saveSchedule() {
     router.push(`/server/${serverId.value}/schedules`)
   }
   catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to save schedule'
+    error.value = err instanceof Error ? err.message : t('server.schedules.failedToSaveSchedule')
     useToast().add({
-      title: 'Save failed',
+      title: t('server.schedules.saveFailed'),
       description: error.value,
       color: 'error',
     })
@@ -123,7 +124,7 @@ async function saveSchedule() {
 }
 
 async function deleteSchedule() {
-  if (!confirm('Are you sure you want to delete this schedule?')) return
+  if (!confirm(t('server.schedules.confirmDeleteSchedule'))) return
 
   try {
     await $fetch(`/api/servers/${serverId.value}/schedules/${scheduleId.value}/delete`, {
@@ -131,17 +132,17 @@ async function deleteSchedule() {
     })
 
     useToast().add({
-      title: 'Schedule deleted',
-      description: 'The schedule has been deleted successfully',
+      title: t('server.schedules.scheduleDeleted'),
+      description: t('server.schedules.scheduleDeletedDescription'),
       color: 'success',
     })
 
     router.push(`/server/${serverId.value}/schedules`)
   }
   catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to delete schedule'
+    error.value = err instanceof Error ? err.message : t('server.schedules.failedToDeleteSchedule')
     useToast().add({
-      title: 'Delete failed',
+      title: t('server.schedules.deleteFailed'),
       description: error.value,
       color: 'error',
     })
@@ -150,7 +151,7 @@ async function deleteSchedule() {
 
 function parseCron(cron: string): string {
   const parts = cron.split(' ')
-  if (parts.length !== 5) return 'Invalid cron expression'
+  if (parts.length !== 5) return t('server.schedules.invalidCronExpression')
 
   const minute = parts[0]
   const hour = parts[1]
@@ -159,23 +160,23 @@ function parseCron(cron: string): string {
   const dayOfWeek = parts[4]
 
   if (!minute || !hour || !dayOfMonth || !month || !dayOfWeek) {
-    return 'Invalid cron expression'
+    return t('server.schedules.invalidCronExpression')
   }
 
   const descriptions: string[] = []
 
-  if (minute === '*') descriptions.push('every minute')
-  else if (minute.startsWith('*/')) descriptions.push(`every ${minute.slice(2)} minutes`)
-  else descriptions.push(`at minute ${minute}`)
+  if (minute === '*') descriptions.push(t('server.schedules.cronParse.everyMinute'))
+  else if (minute.startsWith('*/')) descriptions.push(t('server.schedules.cronParse.everyNMinutes', { n: minute.slice(2) }))
+  else descriptions.push(t('server.schedules.cronParse.atMinute', { minute }))
 
   if (hour !== '*') {
-    if (hour.startsWith('*/')) descriptions.push(`every ${hour.slice(2)} hours`)
-    else descriptions.push(`at hour ${hour}`)
+    if (hour.startsWith('*/')) descriptions.push(t('server.schedules.cronParse.everyNHours', { n: hour.slice(2) }))
+    else descriptions.push(t('server.schedules.cronParse.atHour', { hour }))
   }
 
-  if (dayOfMonth !== '*') descriptions.push(`on day ${dayOfMonth}`)
-  if (month !== '*') descriptions.push(`in month ${month}`)
-  if (dayOfWeek !== '*') descriptions.push(`on day of week ${dayOfWeek}`)
+  if (dayOfMonth !== '*') descriptions.push(t('server.schedules.cronParse.onDay', { day: dayOfMonth }))
+  if (month !== '*') descriptions.push(t('server.schedules.cronParse.inMonth', { month }))
+  if (dayOfWeek !== '*') descriptions.push(t('server.schedules.cronParse.onDayOfWeek', { day: dayOfWeek }))
 
   return descriptions.join(', ')
 }
@@ -200,11 +201,11 @@ onMounted(() => {
                 color="neutral"
                 :to="`/server/${serverId}/schedules`"
               >
-                Back
+                {{ t('common.back') }}
               </UButton>
               <div>
-                <h1 class="text-xl font-semibold">{{ isNew ? 'Create Schedule' : 'Edit Schedule' }}</h1>
-                <p class="text-xs text-muted-foreground">Configure automated tasks for your server</p>
+                <h1 class="text-xl font-semibold">{{ isNew ? t('server.schedules.createSchedule') : t('server.schedules.editSchedule') }}</h1>
+                <p class="text-xs text-muted-foreground">{{ t('server.schedules.configureAutomatedTasks') }}</p>
               </div>
             </div>
 
@@ -216,7 +217,7 @@ onMounted(() => {
                 variant="ghost"
                 @click="deleteSchedule"
               >
-                Delete
+                {{ t('common.delete') }}
               </UButton>
               <UButton
                 icon="i-lucide-save"
@@ -225,7 +226,7 @@ onMounted(() => {
                 :disabled="loading"
                 @click="saveSchedule"
               >
-                {{ isNew ? 'Create' : 'Save' }}
+                {{ isNew ? t('common.create') : t('common.save') }}
               </UButton>
             </div>
           </div>
@@ -235,28 +236,28 @@ onMounted(() => {
           <div v-if="loading" class="flex items-center justify-center rounded-lg border border-default bg-background p-12">
             <div class="text-center">
               <UIcon name="i-lucide-loader-2" class="mx-auto size-8 animate-spin text-primary" />
-              <p class="mt-2 text-sm text-muted-foreground">Loading schedule...</p>
+              <p class="mt-2 text-sm text-muted-foreground">{{ t('server.schedules.loadingSchedule') }}</p>
             </div>
           </div>
 
           <div v-else class="space-y-6">
             <UCard>
               <template #header>
-                <h2 class="text-lg font-semibold">Basic Information</h2>
+                <h2 class="text-lg font-semibold">{{ t('server.schedules.basicInformation') }}</h2>
               </template>
 
               <div class="space-y-4">
                 <div>
-                  <label class="mb-2 block text-sm font-medium">Schedule Name</label>
+                  <label class="mb-2 block text-sm font-medium">{{ t('server.schedules.scheduleName') }}</label>
                   <UInput
                     v-model="form.name"
-                    placeholder="e.g., Daily Restart"
+                    :placeholder="t('server.schedules.scheduleNamePlaceholder')"
                     size="lg"
                   />
                 </div>
 
                 <div>
-                  <label class="mb-2 block text-sm font-medium">Action Type</label>
+                  <label class="mb-2 block text-sm font-medium">{{ t('server.schedules.actionType') }}</label>
                   <div class="grid gap-3 md:grid-cols-3">
                     <div
                       v-for="action in actionTypes"
@@ -280,19 +281,19 @@ onMounted(() => {
 
                 <div class="flex items-center gap-2">
                   <USwitch v-model="form.enabled" />
-                  <label class="text-sm font-medium">Enable this schedule</label>
+                  <label class="text-sm font-medium">{{ t('server.schedules.enableThisSchedule') }}</label>
                 </div>
               </div>
             </UCard>
 
             <UCard>
               <template #header>
-                <h2 class="text-lg font-semibold">Schedule Timing</h2>
+                <h2 class="text-lg font-semibold">{{ t('server.schedules.scheduleTiming') }}</h2>
               </template>
 
               <div class="space-y-4">
                 <div>
-                  <label class="mb-2 block text-sm font-medium">Cron Expression</label>
+                  <label class="mb-2 block text-sm font-medium">{{ t('server.schedules.cronExpression') }}</label>
                   <UInput
                     v-model="form.cron"
                     placeholder="* * * * *"
@@ -305,7 +306,7 @@ onMounted(() => {
                 </div>
 
                 <div>
-                  <label class="mb-2 block text-sm font-medium">Quick Presets</label>
+                  <label class="mb-2 block text-sm font-medium">{{ t('server.schedules.quickPresets') }}</label>
                   <div class="grid gap-2 md:grid-cols-3">
                     <UButton
                       v-for="preset in cronPresets"
@@ -321,15 +322,15 @@ onMounted(() => {
                 </div>
 
                 <div class="rounded-lg border border-default bg-muted/50 p-4">
-                  <h3 class="mb-2 text-sm font-semibold">Cron Format</h3>
+                  <h3 class="mb-2 text-sm font-semibold">{{ t('server.schedules.cronFormat') }}</h3>
                   <div class="space-y-1 text-xs text-muted-foreground">
                     <p><code class="rounded bg-background px-1 py-0.5">* * * * *</code></p>
                     <p>│ │ │ │ │</p>
-                    <p>│ │ │ │ └─ Day of week (0-7, Sunday = 0 or 7)</p>
-                    <p>│ │ │ └─── Month (1-12)</p>
-                    <p>│ │ └───── Day of month (1-31)</p>
-                    <p>│ └─────── Hour (0-23)</p>
-                    <p>└───────── Minute (0-59)</p>
+                    <p>│ │ │ │ └─ {{ t('server.schedules.cronFormatDayOfWeek') }}</p>
+                    <p>│ │ │ └─── {{ t('server.schedules.cronFormatMonth') }}</p>
+                    <p>│ │ └───── {{ t('server.schedules.cronFormatDayOfMonth') }}</p>
+                    <p>│ └─────── {{ t('server.schedules.cronFormatHour') }}</p>
+                    <p>└───────── {{ t('server.schedules.cronFormatMinute') }}</p>
                   </div>
                 </div>
               </div>

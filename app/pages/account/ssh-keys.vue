@@ -204,7 +204,7 @@ async function confirmDelete() {
             :disabled="isCreating"
             @click="close"
           >
-            {{ t('account.sshKeys.cancel') }}
+            {{ t('common.cancel') }}
           </UButton>
           <UButton
             icon="i-lucide-plus"

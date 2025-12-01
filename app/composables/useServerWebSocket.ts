@@ -71,6 +71,7 @@ function formatRawArgs(args?: unknown[]): string | undefined {
 }
 
 export function useServerWebSocket(serverId: string | ComputedRef<string>) {
+  const { t } = useI18n()
   const actualServerId = typeof serverId === 'string' ? serverId : serverId.value
   const persistentState = getOrCreateInstance(actualServerId)
   const socket = ref<WebSocket | null>(null)
@@ -215,7 +216,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
 
       case 'auth failed':
         connected.value = false
-        error.value = 'WebSocket authentication failed'
+        error.value = t('server.websocket.authenticationFailed')
         break
 
       case 'status':
@@ -297,13 +298,13 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
         break
 
       case 'install started':
-        setLifecycle('installing', 'Installation in progress…')
+        setLifecycle('installing', t('server.websocket.installationInProgress'))
         recordEvent({ event: 'install started', timestamp: Date.now() })
         break
 
       case 'install completed':
         recordEvent({ event: 'install completed', timestamp: Date.now() })
-        setLifecycle('normal', 'Installation completed')
+        setLifecycle('normal', t('server.websocket.installationCompleted'))
         break
 
       case 'transfer status':
@@ -311,7 +312,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
           const raw = message.args?.[0]
           if (typeof raw === 'string') {
             const payload = parseJson<{ progress?: number; status?: string; message?: string }>(raw)
-            setLifecycle('transferring', payload?.message ?? payload?.status ?? 'Transfer in progress…', payload?.progress)
+            setLifecycle('transferring', payload?.message ?? payload?.status ?? t('server.websocket.transferInProgress'), payload?.progress)
             recordEvent({ event: 'transfer status', raw, timestamp: Date.now() })
           }
         }
@@ -332,15 +333,15 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
           if (typeof raw === 'string') {
             const payload = parseJson<{ successful?: boolean; message?: string }>(raw)
             if (payload?.successful === false) {
-              setLifecycle('error', payload.message ?? 'Backup restore failed')
+              setLifecycle('error', payload.message ?? t('server.websocket.backupRestoreFailed'))
             }
             else {
-              setLifecycle('normal', 'Backup restore finished')
+              setLifecycle('normal', t('server.websocket.backupRestoreFinished'))
             }
             recordEvent({ event: 'backup restore completed', raw, timestamp: Date.now() })
           }
           else {
-            setLifecycle('normal', 'Backup restore finished')
+            setLifecycle('normal', t('server.websocket.backupRestoreFinished'))
             recordEvent({ event: 'backup restore completed', timestamp: Date.now() })
           }
         }
@@ -349,7 +350,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
       case 'backup completed':
         {
           const raw = formatRawArgs(message.args)
-          setLifecycle('normal', 'Backup completed')
+          setLifecycle('normal', t('server.websocket.backupCompleted'))
           recordEvent({ event: 'backup completed', raw, timestamp: Date.now() })
         }
         break
@@ -385,8 +386,8 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
 
   const handleError = (event: Event) => {
     console.error('WebSocket error', event)
-    const errorMessage = 'WebSocket connection error'
-    if (!error.value || error.value === 'Connecting...') {
+    const errorMessage = t('server.websocket.connectionError')
+    if (!error.value || error.value === t('server.websocket.connecting')) {
       error.value = errorMessage
     }
   }
@@ -404,31 +405,31 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
       let closeMessage: string | null = null
       
       if (event.code === 1006) {
-        closeMessage = 'Connection closed abnormally. The server may not exist on Wings or Wings is unreachable.'
+        closeMessage = t('server.websocket.connectionClosedAbnormally')
       } else if (event.code === 1002) {
-        closeMessage = 'Protocol error. Check if the WebSocket endpoint is correct.'
+        closeMessage = t('server.websocket.protocolError')
       } else if (event.code === 1003) {
-        closeMessage = 'Invalid data received. Authentication may have failed.'
+        closeMessage = t('server.websocket.invalidDataReceived')
       } else if (event.code === 1008) {
-        closeMessage = 'Policy violation. Check authentication token or server permissions.'
+        closeMessage = t('server.websocket.policyViolation')
       } else if (event.code === 1011) {
-        closeMessage = 'Server error. Wings encountered an internal error.'
+        closeMessage = t('server.websocket.serverError')
       } else if (event.code === 1000 || event.code === 1001) {
         // Normal closure, don't set error
       } else if (event.reason) {
-        closeMessage = `Connection closed: ${event.reason}`
+        closeMessage = t('server.websocket.connectionClosedWithReason', { reason: event.reason })
       } else if (event.code !== 1000 && event.code !== 1001) {
-        closeMessage = `Connection closed with code ${event.code}. The server may not exist on Wings.`
+        closeMessage = t('server.websocket.connectionClosedWithCode', { code: event.code })
       }
       
-      if (closeMessage && (!error.value || error.value === 'Connecting...')) {
+      if (closeMessage && (!error.value || error.value === t('server.websocket.connecting'))) {
         error.value = closeMessage
       }
       console.error('WebSocket closed:', { code: event.code, reason: event.reason, wasClean: event.wasClean })
     } else {
       // No close event, connection was likely aborted
-      if (!error.value || error.value === 'Connecting...') {
-        error.value = 'Connection closed. The server may not exist on Wings.'
+      if (!error.value || error.value === t('server.websocket.connecting')) {
+        error.value = t('server.websocket.connectionClosed')
       }
     }
 
@@ -485,7 +486,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
       }
     }
     catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to refresh WebSocket token'
+      error.value = err instanceof Error ? err.message : t('server.websocket.failedToRefreshToken')
       if (forceReconnect) {
         reconnect()
       }
@@ -503,13 +504,13 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
     connecting.value = true
     clearReconnectTimer()
     connected.value = false
-    error.value = 'Connecting...'
+    error.value = t('server.websocket.connecting')
 
     try {
       console.log(`[WebSocket] Fetching credentials for server ${actualServerId}`)
       
       if (!import.meta.client) {
-        throw new Error('WebSocket credentials can only be fetched on the client side')
+        throw new Error(t('server.websocket.clientSideOnly'))
       }
       
       let credentials: { token: string; socket: string } | null = null
@@ -529,9 +530,9 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
           const text = await response.text()
           console.error(`[WebSocket] Non-JSON response (${contentType}):`, text.substring(0, 200))
           if (text.includes('<!DOCTYPE html>') || text.includes('<html')) {
-            throw new Error('Server returned HTML instead of JSON. The API endpoint may not be accessible or there was an error.')
+            throw new Error(t('server.websocket.serverReturnedHTML'))
           }
-          throw new Error(`Server returned ${contentType} instead of JSON`)
+          throw new Error(t('server.websocket.serverReturnedNonJSON', { contentType }))
         }
         
         if (!response.ok) {
@@ -554,7 +555,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
             socket: responseData.socket,
           }
         } else {
-          throw new Error('Invalid response format from websocket endpoint')
+          throw new Error(t('server.websocket.invalidResponseFormat'))
         }
       } catch (fetchError: unknown) {
         console.error(`[WebSocket] Fetch error:`, fetchError)
@@ -564,28 +565,28 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
         const errorData = error.data
         
         if (errorData && typeof errorData === 'string' && (errorData.includes('<!DOCTYPE html>') || errorData.includes('<html'))) {
-          throw new Error('Server returned HTML instead of JSON. The API endpoint may not be accessible or there was an error.')
+          throw new Error(t('server.websocket.serverReturnedHTML'))
         }
         
         if (errorMessage.includes('<!DOCTYPE html>') || errorMessage.includes('<html')) {
-          throw new Error('Server returned HTML instead of JSON. The API endpoint may not be accessible or there was an error.')
+          throw new Error(t('server.websocket.serverReturnedHTML'))
         }
         
         // $fetch throws H3Error objects for non-2xx responses
         if (errorData && typeof errorData === 'object' && errorData !== null && 'message' in errorData) {
           const dataMessage = typeof (errorData as { message?: unknown }).message === 'string' ? (errorData as { message: string }).message : undefined
-          throw new Error(dataMessage || error.message || 'Failed to fetch WebSocket credentials')
+          throw new Error(dataMessage || error.message || t('server.websocket.failedToFetchCredentials'))
         }
         
         if (fetchError instanceof Error && fetchError.message.includes('HTML instead of JSON')) {
           throw fetchError
         }
         
-        throw new Error(error.message || 'Failed to fetch WebSocket credentials')
+        throw new Error(error.message || t('server.websocket.failedToFetchCredentials'))
       }
       
       if (!credentials) {
-        throw new Error('Invalid WebSocket credentials received from server')
+        throw new Error(t('server.websocket.invalidCredentials'))
       }
       
       if (typeof credentials.socket !== 'string' || typeof credentials.token !== 'string') {
@@ -596,7 +597,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
           tokenType: typeof credentials?.token,
           credentials
         })
-        throw new Error('Invalid WebSocket credentials received from server')
+        throw new Error(t('server.websocket.invalidCredentials'))
       }
       
       console.log(`[WebSocket] Got credentials, socket URL: ${credentials.socket.substring(0, 50)}...`)
@@ -614,7 +615,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
       console.log(`[WebSocket] Connecting to: ${wsUrl.length > 80 ? wsUrl.substring(0, 80) + '...' : wsUrl}`)
       
       if (typeof WebSocket === 'undefined') {
-        throw new Error('WebSocket is not available in this environment')
+        throw new Error(t('server.websocket.notAvailable'))
       }
       
       const ws = new WebSocket(wsUrl)
@@ -627,7 +628,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
         if (!hasOpened && ws.readyState !== WebSocket.OPEN) {
           console.error('[WebSocket] Connection timeout after 10s, state:', ws.readyState)
           connecting.value = false
-          error.value = 'Connection timeout. The server may not exist on Wings or Wings is unreachable.'
+          error.value = t('server.websocket.connectionTimeout')
           if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
             ws.close()
           }
@@ -656,8 +657,8 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
             clearTimeout(connectionTimeout)
             connectionTimeout = null
           }
-          if (!error.value || error.value === 'Connecting...') {
-            error.value = 'Failed to connect to Wings. The server may not exist on Wings, Wings is unreachable, or there is a network issue. Check that Wings is running and the server has been provisioned.'
+          if (!error.value || error.value === t('server.websocket.connecting')) {
+            error.value = t('server.websocket.failedToConnect')
           }
           reconnectAfterClose = false
         }
@@ -666,7 +667,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
     catch (err) {
       console.error('[WebSocket] Failed to get credentials:', err)
       connecting.value = false
-      const errorMessage = err instanceof Error ? err.message : 'Failed to establish WebSocket'
+      const errorMessage = err instanceof Error ? err.message : t('server.websocket.failedToEstablish')
       error.value = errorMessage
       if (!errorMessage.includes('404') && !errorMessage.includes('401') && !errorMessage.includes('403')) {
         scheduleReconnect()

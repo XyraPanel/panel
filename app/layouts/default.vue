@@ -25,9 +25,10 @@ const signOutLoading = ref(false)
 const layoutUser = computed(() => {
   const sessionData = session.value
   if (!sessionData?.user) {
+    const { t } = useI18n()
     throw createError({
       statusCode: 401,
-      message: 'Unauthorized',
+      message: t('errors.unauthorized'),
     })
   }
   return sessionData.user
@@ -94,8 +95,9 @@ const isAdminUser = computed(() => {
   return false
 })
 
-const { locale, locales } = useI18n()
+const { locale, locales, setLocale } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
+const router = useRouter()
 
 const uiLocales = computed(() => {
   return locales.value.map(loc => {
@@ -122,7 +124,10 @@ async function handleLocaleChange(newLocale: string | undefined) {
     const code = typeof validLocale === 'string' ? validLocale : validLocale.code
     const path = switchLocalePath(code as 'en' | 'es')
     if (path) {
-      await navigateTo(path)
+      // Normalize path - ensure trailing slash for root locale paths
+      // switchLocalePath returns '/es' for root route, but we need '/es/'
+      const normalizedPath = (path === '/es' && route.path === '/') ? '/es/' : path
+      await navigateTo(normalizedPath)
     }
   }
 }

@@ -49,9 +49,10 @@ async function loadMore() {
   await refresh()
 }
 
+const { t } = useI18n()
 const error = computed(() => {
   if (!fetchError.value) return null
-  return fetchError.value instanceof Error ? fetchError.value.message : 'Failed to load audit events.'
+  return fetchError.value instanceof Error ? fetchError.value.message : t('admin.activity.failedToLoadAuditEvents')
 })
 
 const expandedEntries = ref<Set<string>>(new Set())
@@ -97,13 +98,13 @@ async function copyJson(entry: typeof activities.value[0]) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: 'Copied to clipboard',
-      description: 'Audit log entry JSON has been copied.',
+      title: t('admin.activity.copiedToClipboard'),
+      description: t('admin.activity.auditLogJsonCopied'),
     })
   } catch (error) {
     toast.add({
-      title: 'Failed to copy',
-      description: error instanceof Error ? error.message : 'Unable to copy to clipboard.',
+      title: t('admin.activity.failedToCopy'),
+      description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
     })
   }
@@ -185,7 +186,7 @@ function exportCsv() {
                   <h2 class="text-lg font-semibold">Recent activity</h2>
                   <p v-if="pagination" class="text-xs text-muted-foreground">
                     Showing {{ activities.length }} of {{ pagination.total }} events
-                    <span v-if="hasMore">(load more to see additional entries)</span>
+                    <span v-if="hasMore">{{ t('admin.activity.loadMoreToSeeAdditional') }}</span>
                   </p>
                 </div>
                 <div class="flex items-center gap-2">
@@ -217,8 +218,8 @@ function exportCsv() {
             <UEmpty
               v-else-if="activities.length === 0"
               icon="i-lucide-activity"
-              title="No activity yet"
-              description="Panel-wide audit events will appear here"
+              :title="t('admin.activity.noActivityYet')"
+              :description="t('admin.activity.noActivityYetDescription')"
               variant="subtle"
             />
             <template v-else>
@@ -242,7 +243,7 @@ function exportCsv() {
                       </div>
                       <div class="mt-1 flex flex-wrap items-center gap-2">
                         <span class="text-xs text-muted-foreground">
-                          Actor: 
+                          {{ t('admin.activity.actor') }}: 
                           <NuxtLink
                             v-if="entry.actorUserId"
                             :to="`/admin/users/${entry.actorUserId}`"
@@ -254,7 +255,7 @@ function exportCsv() {
                           <span v-else class="font-medium">{{ entry.actorDisplay || entry.actor }}</span>
                         </span>
                         <span v-if="entry.target && !entry.target.startsWith('user#')" class="text-xs text-muted-foreground">
-                          Target: <span class="font-medium">{{ entry.target }}</span>
+                          {{ t('admin.activity.target') }}: <span class="font-medium">{{ entry.target }}</span>
                         </span>
                       </div>
                     </div>
@@ -269,14 +270,14 @@ function exportCsv() {
                   >
                     <div class="space-y-2">
                       <div class="flex items-center justify-between mb-2">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Audit Log Entry</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.activity.auditLogEntry') }}</p>
                         <UButton
                           variant="ghost"
                           size="xs"
                           icon="i-lucide-copy"
                           @click.stop="copyJson(entry)"
                         >
-                          Copy JSON
+                          {{ t('admin.activity.copyJson') }}
                         </UButton>
                       </div>
                       <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatJson(getFullAuditData(entry)) }}</code></pre>
@@ -293,7 +294,7 @@ function exportCsv() {
                   :disabled="pending"
                   @click="loadMore"
                 >
-                  Load More
+                  {{ t('admin.activity.loadMore') }}
                 </UButton>
               </div>
             </template>

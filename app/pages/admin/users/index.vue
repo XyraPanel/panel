@@ -335,7 +335,7 @@ function formatDate(value: string) {
 
                 <template #role-cell="{ row }">
                   <UBadge :color="row.original.role === 'admin' ? 'error' : 'neutral'" size="sm" variant="subtle">
-                    {{ row.original.role.toUpperCase() }}
+                    {{ row.original.role === 'admin' ? t('admin.users.admin') : t('admin.users.userRole') }}
                   </UBadge>
                 </template>
 
@@ -403,7 +403,7 @@ function formatDate(value: string) {
               :placeholder="editingUser ? t('auth.password') : t('auth.password')" :required="!editingUser"
               :disabled="isSubmitting" class="w-full" />
             <template v-if="editingUser" #help>
-              {{ t('auth.password') }}
+              {{ t('admin.users.passwordLeaveBlank') }}
             </template>
           </UFormField>
 
