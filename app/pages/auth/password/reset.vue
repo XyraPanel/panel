@@ -2,6 +2,7 @@
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
 import { passwordResetSchema, type PasswordResetInput } from '#shared/schema/account'
 import type { PasswordResetBody } from '#shared/types/account'
+import { authClient } from '~/utils/auth-client'
 
 definePageMeta({
   layout: 'auth',
@@ -82,12 +83,20 @@ async function onSubmit(payload: FormSubmitEvent<PasswordResetInput>) {
       body: requestBody,
     })
 
+    try {
+      await authClient.signOut()
+    }
+    catch {
+      // Ignore user might not be logged in anyway
+    }
+
     toast.add({
       title: t('auth.passwordUpdated'),
       description: t('auth.canNowSignIn'),
       color: 'success',
     })
 
+    await new Promise(resolve => setTimeout(resolve, 100))
     router.push('/auth/login')
   }
   catch (error) {

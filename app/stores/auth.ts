@@ -80,8 +80,6 @@ export const useAuthStore = defineStore('auth', () => {
     isSyncing.value = true
     try {
       await refetchSession({ bypassCache })
-      await new Promise(resolve => setTimeout(resolve, 50))
-      
       lastSyncedAt.value = Date.now()
       error.value = null
     }
@@ -148,6 +146,7 @@ export const useAuthStore = defineStore('auth', () => {
             }
           }
 
+          await syncSession({ force: true, bypassCache: true })
           return usernameResult
         }
 
@@ -163,6 +162,7 @@ export const useAuthStore = defineStore('auth', () => {
           }
         }
 
+        await syncSession({ force: true, bypassCache: true })
         return emailResult
       } else {
         const usernameResult = await authClient.signIn.username({
@@ -194,6 +194,7 @@ export const useAuthStore = defineStore('auth', () => {
             }
           }
 
+          await syncSession({ force: true, bypassCache: true })
           return emailResult
         }
 
@@ -209,6 +210,7 @@ export const useAuthStore = defineStore('auth', () => {
           }
         }
 
+        await syncSession({ force: true, bypassCache: true })
         return usernameResult
       }
     }

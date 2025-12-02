@@ -1,4 +1,4 @@
-import { createError, assertMethod, setCookie, parseCookies } from 'h3'
+import { createError, assertMethod, parseCookies } from 'h3'
 import { APIError } from 'better-auth/api'
 import { getAuth, normalizeHeadersForAuth } from '~~/server/utils/auth'
 import { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
@@ -20,6 +20,17 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBody(event, payload => accountPasswordUpdateSchema.parse(payload))
 
+  const { useDrizzle, tables, eq } = await import('~~/server/utils/drizzle')
+  const db = useDrizzle()
+  
+  const userBeforeChange = db
+    .select({ passwordCompromised: tables.users.passwordCompromised })
+    .from(tables.users)
+    .where(eq(tables.users.id, session.user.id))
+    .get()
+  
+  const hadCompromisedPassword = Boolean(userBeforeChange?.passwordCompromised)
+
   try {
     await auth.api.changePassword({
       body: {
@@ -30,8 +41,6 @@ export default defineEventHandler(async (event) => {
       headers: normalizeHeadersForAuth(event.node.req.headers),
     })
 
-    const { useDrizzle, tables, eq } = await import('~~/server/utils/drizzle')
-    const db = useDrizzle()
     await db.update(tables.users)
       .set({
         passwordCompromised: false,
@@ -40,59 +49,46 @@ export default defineEventHandler(async (event) => {
       .where(eq(tables.users.id, session.user.id))
       .run()
 
-    const now = new Date()
-    await db.update(tables.sessions)
-      .set({
-        updatedAt: now,
-      })
-      .where(eq(tables.sessions.sessionToken, session.session.token))
-      .run()
+    if (hadCompromisedPassword) {
+      const cookies = parseCookies(event)
+      const currentToken = cookies['better-auth.session_token'] || session.session?.token
+      
+      if (currentToken) {
+        try {
+          await auth.api.revokeSession({
+            body: { token: currentToken },
+            headers: normalizeHeadersForAuth(event.node.req.headers),
+          })
+        }
+        catch (revokeError) {
+          console.warn(`Failed to revoke session for user ${session.user.id}:`, revokeError)
+        }
+      }
 
-    const cookies = parseCookies(event)
-    const cookiePrefix = 'better-auth' 
-    const sessionDataCookieName = `${cookiePrefix}.session_data`
-    
-    if (cookies[sessionDataCookieName]) {
-      setCookie(event, sessionDataCookieName, '', {
-        path: '/',
-        maxAge: 0,
-        httpOnly: true,
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-      })
+      const auditUser = resolveSessionUser(session)
+      if (auditUser) {
+        await recordAuditEventFromRequest(event, {
+          actor: auditUser.email || auditUser.id,
+          actorType: 'user',
+          action: 'account.password.update',
+          targetType: 'user',
+          targetId: auditUser.id,
+          metadata: {
+            compromisedPasswordCleared: true,
+            signedOut: true,
+          },
+        }).catch(err => console.warn('Audit logging failed:', err))
+      }
+
+      return {
+        success: true,
+        revokedSessions: 0, 
+        signedOut: true,
+        message: 'Password changed successfully. Please sign in again with your new password.',
+      }
     }
 
-    const freshSession = await auth.api.getSession({
-      headers: normalizeHeadersForAuth(event.node.req.headers),
-      query: {
-        disableCookieCache: true,
-      },
-    })
-
-    const { useDrizzle: useDrizzleSessions, tables: tablesSessions, eq: eqSessions, and: andSessions } = await import('~~/server/utils/drizzle')
-    const { ne } = await import('drizzle-orm')
-    const dbSessions = useDrizzleSessions()
-    const currentToken = session.session?.token || null
-    
-    let deletedSessions
-    if (currentToken) {
-      deletedSessions = await dbSessions.delete(tablesSessions.sessions)
-        .where(
-          andSessions(
-            eqSessions(tablesSessions.sessions.userId, session.user.id),
-            ne(tablesSessions.sessions.sessionToken, currentToken)
-          )
-        )
-        .run()
-    } else {
-      deletedSessions = await dbSessions.delete(tablesSessions.sessions)
-        .where(eqSessions(tablesSessions.sessions.userId, session.user.id))
-        .run()
-    }
-    
-    const revokedCount = typeof deletedSessions?.changes === 'number' ? deletedSessions.changes : 0
-
-    const resolvedUser = resolveSessionUser(freshSession)
+    const resolvedUser = resolveSessionUser(session)
     if (resolvedUser) {
       await recordAuditEventFromRequest(event, {
         actor: resolvedUser.email || resolvedUser.id,
@@ -100,32 +96,17 @@ export default defineEventHandler(async (event) => {
         action: 'account.password.update',
         targetType: 'user',
         targetId: resolvedUser.id,
-        metadata: {
-          revokedSessions: revokedCount,
-        },
-      })
+      }).catch(err => console.warn('Audit logging failed:', err))
     }
 
     return {
       success: true,
-      revokedSessions: revokedCount,
+      revokedSessions: 0, 
+      signedOut: false,
     }
   }
   catch (error) {
     if (error instanceof APIError) {
-      const errorMessage = error.message?.toLowerCase() || ''
-      if (errorMessage.includes('compromised') || errorMessage.includes('pwned')) {
-        const { useDrizzle, tables, eq } = await import('~~/server/utils/drizzle')
-        const db = useDrizzle()
-        await db.update(tables.users)
-          .set({
-            passwordCompromised: true,
-            updatedAt: new Date(),
-          })
-          .where(eq(tables.users.id, session.user.id))
-          .run()
-      }
-      
       throw createError({
         statusCode: error.statusCode,
         statusMessage: error.message || 'Failed to change password',

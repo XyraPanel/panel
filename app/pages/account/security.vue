@@ -5,6 +5,7 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import { accountPasswordFormSchema, type AccountPasswordFormInput } from '#shared/schema/account'
 import type { TotpSetupResponse, TotpDisableRequest } from '#shared/types/account'
 import { useAuthStore } from '~/stores/auth'
+import { authClient } from '~/utils/auth-client'
 
 definePageMeta({
   auth: true,
@@ -66,7 +67,19 @@ async function handlePasswordSubmit(event: FormSubmitEvent<PasswordFormSchema>) 
     const response = await $fetch('/api/account/password', {
       method: 'PUT',
       body: payload,
-    }) as { success: boolean; revokedSessions: number }
+    }) as { success: boolean; revokedSessions: number; signedOut?: boolean; message?: string }
+
+    if (response.signedOut === true) {
+      toast.add({
+        title: t('account.security.password.passwordUpdated'),
+        description: response.message || t('account.security.password.passwordChanged'),
+        color: 'success',
+      })
+
+      await authClient.signOut()
+      await navigateTo('/auth/login')
+      return
+    }
 
     toast.add({
       title: t('account.security.password.passwordUpdated'),

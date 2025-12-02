@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
       .limit(1)
       .get()
 
-    checkPasswordCompromised(id, password).catch((err) => {
+    await checkPasswordCompromised(id, password).catch((err) => {
       console.error('Failed to check password compromise during registration:', err)
     })
 
