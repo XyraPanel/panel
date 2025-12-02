@@ -39,6 +39,7 @@ interface AdminServerRow {
   updated_at: Date | string
 }
 
+const { t } = useI18n()
 const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
@@ -82,16 +83,16 @@ async function deleteServer(close?: () => void) {
     })
 
     toast.add({
-      title: 'Server deleted',
-      description: `Server "${server.name}" has been deleted successfully.`,
+      title: t('admin.servers.delete.serverDeleted'),
+      description: t('admin.servers.delete.serverDeletedDescription', { name: server.name }),
       color: 'success',
     })
 
     await refreshServers()
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to delete server'
+    const message = error instanceof Error ? error.message : t('admin.servers.delete.failedToDeleteServer')
     toast.add({
-      title: 'Delete failed',
+      title: t('admin.servers.delete.deleteFailed'),
       description: message,
       color: 'error',
     })
@@ -117,7 +118,7 @@ function getStatusColor(status: string | null): 'success' | 'warning' | 'error' 
 
 function formatDate(date: Date | string | null | undefined): string {
   if (!date) {
-    return 'N/A'
+    return t('common.na')
   }
   const d = typeof date === 'string' ? new Date(date) : date
   return d.toLocaleDateString('en-US', {
@@ -127,10 +128,10 @@ function formatDate(date: Date | string | null | undefined): string {
   })
 }
 
-const columns: TableColumn<AdminServerRow>[] = [
+const columns = computed<TableColumn<AdminServerRow>[]>(() => [
   {
     accessorKey: 'name',
-    header: 'Server',
+    header: t('common.server'),
     cell: ({ row }) => {
       const server = row.original
       return h('div', { class: 'space-y-1' }, [
@@ -138,26 +139,26 @@ const columns: TableColumn<AdminServerRow>[] = [
           to: `/admin/servers/${server.id}`,
           class: 'text-sm font-semibold text-primary hover:underline',
         }, () => server.name),
-        h('p', { class: 'text-xs text-muted-foreground font-mono' }, `UUID: ${server.uuid}`),
+        h('p', { class: 'text-xs text-muted-foreground font-mono' }, `${t('admin.servers.uuid')}: ${server.uuid}`),
       ])
     },
   },
   {
     accessorKey: 'identifier',
-    header: 'Identifier',
+    header: t('admin.nodes.identifier'),
     cell: ({ row }) => h('span', { class: 'text-xs font-mono text-muted-foreground' }, row.getValue('identifier')),
   },
   {
     accessorKey: 'node',
-    header: 'Node',
+    header: t('admin.nodes.node'),
     cell: ({ row }) => {
       const node = row.original.node
-      return h('span', { class: 'text-sm' }, node?.name || 'Unassigned')
+      return h('span', { class: 'text-sm' }, node?.name || t('common.notAssigned'))
     },
   },
   {
     accessorKey: 'status',
-    header: 'Status',
+    header: t('common.status'),
     cell: ({ row }) => {
       const status = row.getValue('status') as string | null
       const color = getStatusColor(status)
@@ -165,20 +166,20 @@ const columns: TableColumn<AdminServerRow>[] = [
         size: 'xs',
         color,
         variant: 'subtle',
-      }, () => status || 'Unknown')
+      }, () => status || t('common.unknown'))
     },
   },
   {
     accessorKey: 'owner',
-    header: 'Owner',
+    header: t('admin.servers.owner'),
     cell: ({ row }) => {
       const owner = row.original.owner
-      return h('span', { class: 'text-sm' }, owner?.username || 'Unknown')
+      return h('span', { class: 'text-sm' }, owner?.username || t('common.unknown'))
     },
   },
   {
     accessorKey: 'created_at',
-    header: 'Created',
+    header: t('common.created'),
     cell: ({ row }) => {
       const date = row.getValue('created_at') as Date | string
       return h('span', { class: 'text-sm text-muted-foreground' }, formatDate(date))
@@ -192,10 +193,10 @@ const columns: TableColumn<AdminServerRow>[] = [
       const items = [
         {
           type: 'label' as const,
-          label: 'Actions',
+          label: t('common.actions'),
         },
         {
-          label: 'View Details',
+          label: t('admin.servers.viewDetails'),
           icon: 'i-lucide-eye',
           onSelect: () => {
             router.push(`/admin/servers/${server.id}`)
@@ -205,7 +206,7 @@ const columns: TableColumn<AdminServerRow>[] = [
           type: 'separator' as const,
         },
         {
-          label: 'Delete Server',
+          label: t('admin.servers.delete.deleteServer'),
           icon: 'i-lucide-trash',
           color: 'error' as const,
           disabled: isDeleting.value[server.id],
@@ -220,18 +221,18 @@ const columns: TableColumn<AdminServerRow>[] = [
           align: 'end',
         },
         items,
-        'aria-label': 'Server actions',
+        'aria-label': t('admin.servers.serverActions'),
       }, () => h(UButton, {
         'icon': 'i-lucide-ellipsis-vertical',
         'color': 'neutral',
         'variant': 'ghost',
         'class': 'ml-auto',
-        'aria-label': 'Actions dropdown',
+        'aria-label': t('admin.servers.actionsDropdown'),
         'disabled': isDeleting.value[server.id],
       })))
     },
   },
-]
+])
 
 const table = useTemplateRef('table')
 </script>
@@ -245,9 +246,9 @@ const table = useTemplateRef('table')
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
                 <div class="flex items-center justify-between">
-                  <h2 class="text-lg font-semibold">Server inventory</h2>
+                  <h2 class="text-lg font-semibold">{{ t('admin.servers.serverInventory') }}</h2>
                   <UButton icon="i-lucide-plus" color="primary" variant="subtle" to="/admin/servers/create">
-                    Create Server
+                    {{ t('admin.servers.createServer') }}
                   </UButton>
                 </div>
               </template>
@@ -261,7 +262,7 @@ const table = useTemplateRef('table')
               >
                 <template #empty>
                   <div class="p-4 text-sm text-muted-foreground">
-                    No servers were found.
+                    {{ t('admin.servers.noServersFound') }}
                   </div>
                 </template>
               </UTable>
@@ -273,13 +274,13 @@ const table = useTemplateRef('table')
 
     <UModal
       v-model:open="deleteConfirmOpen"
-      title="Delete Server"
-      description="This action cannot be undone and will permanently delete the server from both the panel and Wings."
+      :title="t('admin.servers.delete.title')"
+      :description="t('admin.servers.delete.description')"
       :ui="{ footer: 'justify-end' }"
     >
       <template #body>
         <p class="text-sm text-muted-foreground">
-          Are you sure you want to delete server <strong>{{ serverToDelete?.name }}</strong>?
+          {{ t('admin.servers.delete.confirmDeleteServer', { name: serverToDelete?.name }) }}
         </p>
       </template>
 
@@ -287,12 +288,12 @@ const table = useTemplateRef('table')
         <UButton
           color="neutral"
           variant="outline"
-          label="Cancel"
+          :label="t('common.cancel')"
           @click="close"
         />
         <UButton
           color="error"
-          label="Delete Server"
+          :label="t('admin.servers.delete.deleteServer')"
           :loading="serverToDelete ? isDeleting[serverToDelete.id] : false"
           @click="deleteServer(close)"
         />

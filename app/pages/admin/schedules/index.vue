@@ -9,10 +9,11 @@ definePageMeta({
   adminSubtitle: 'Review panel automation (Wings tasks & Nitro tasks)',
 })
 
+const { t: tFetch } = useI18n()
 async function fetchSchedules(): Promise<{ data: AdminScheduleResponse[] }> {
   const response = await fetch('/api/admin/schedules')
   if (!response.ok) {
-    throw new Error(`Failed to fetch schedules: ${response.statusText}`)
+    throw new Error(tFetch('admin.schedules.failedToFetchSchedules', { statusText: response.statusText }))
   }
   return await response.json()
 }
@@ -50,6 +51,7 @@ function statusColor(enabled: boolean) {
   return enabled ? 'success' : 'error'
 }
 
+const { t } = useI18n()
 const expandedEntries = ref<Set<string>>(new Set())
 const toast = useToast()
 
@@ -96,13 +98,13 @@ async function copyJson(schedule: AdminScheduleResponse) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: 'Copied to clipboard',
-      description: 'Schedule JSON has been copied.',
+      title: t('admin.schedules.copiedToClipboard'),
+      description: t('admin.schedules.scheduleJsonCopied'),
     })
   } catch (error) {
     toast.add({
-      title: 'Failed to copy',
-      description: error instanceof Error ? error.message : 'Unable to copy to clipboard.',
+      title: t('admin.schedules.failedToCopy'),
+      description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
     })
   }
@@ -119,12 +121,12 @@ async function copyJson(schedule: AdminScheduleResponse) {
             <template #header>
               <div class="flex items-center justify-between">
                 <div class="space-y-1">
-                  <h2 class="text-lg font-semibold">Schedules</h2>
+                  <h2 class="text-lg font-semibold">{{ t('admin.schedules.title') }}</h2>
                   <p class="text-xs text-muted-foreground">
-                    Showing {{ schedules.length }} schedule{{ schedules.length !== 1 ? 's' : '' }}
+                    {{ t('admin.schedules.showingSchedules', { count: schedules.length }) }}
                   </p>
                 </div>
-                <UBadge v-if="schedulesPending" color="primary" variant="soft">Loading</UBadge>
+                <UBadge v-if="schedulesPending" color="primary" variant="soft">{{ t('common.loading') }}</UBadge>
               </div>
             </template>
 
@@ -135,15 +137,15 @@ async function copyJson(schedule: AdminScheduleResponse) {
             </template>
             <template v-else-if="schedulesError">
               <UAlert color="error" icon="i-lucide-alert-triangle">
-                <template #title>Unable to load schedules</template>
+                <template #title>{{ t('admin.schedules.unableToLoadSchedules') }}</template>
                 <template #description>{{ schedulesError }}</template>
               </UAlert>
             </template>
             <UEmpty
               v-else-if="schedules.length === 0"
               icon="i-lucide-calendar-clock"
-              title="No schedules found"
-              description="Panel automation schedules will appear here"
+              :title="t('admin.schedules.noSchedulesFound')"
+              :description="t('admin.schedules.noSchedulesFoundDescription')"
               variant="subtle"
             />
             <template v-else>
@@ -163,15 +165,15 @@ async function copyJson(schedule: AdminScheduleResponse) {
                         class="size-4 text-muted-foreground shrink-0"
                       />
                       <span class="text-sm text-muted-foreground">
-                        Server: <span class="font-medium text-foreground">{{ schedule.serverName }}</span>
+                        {{ t('admin.schedules.serverName') }}: <span class="font-medium text-foreground">{{ schedule.serverName }}</span>
                       </span>
                       <UBadge :color="statusColor(schedule.enabled)" size="xs">
-                        {{ schedule.enabled ? 'Active' : 'Paused' }}
+                        {{ schedule.enabled ? t('common.active') : t('admin.schedules.paused') }}
                       </UBadge>
                     </div>
                     <div class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground shrink-0">
                       <span>
-                        Cron: <span class="font-medium text-foreground font-mono">{{ schedule.cron }}</span>
+                        {{ t('admin.schedules.cron') }}: <span class="font-medium text-foreground font-mono">{{ schedule.cron }}</span>
                       </span>
                     </div>
                   </button>
@@ -182,14 +184,14 @@ async function copyJson(schedule: AdminScheduleResponse) {
                   >
                     <div class="space-y-2">
                       <div class="flex items-center justify-between mb-2">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Schedule Details</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.schedules.scheduleDetails') }}</p>
                         <UButton
                           variant="ghost"
                           size="xs"
                           icon="i-lucide-copy"
                           @click.stop="copyJson(schedule)"
                         >
-                          Copy JSON
+                          {{ t('admin.schedules.copyJson') }}
                         </UButton>
                       </div>
                       <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatJson(getFullScheduleData(schedule)) }}</code></pre>

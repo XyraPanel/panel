@@ -6,96 +6,97 @@ import type { SecuritySettings, AdminNavItem } from '#shared/types/admin'
 import { useAuthStore } from '~/stores/auth'
 import { authClient } from '~/utils/auth-client'
 
+const { t } = useI18n()
 await authClient.useSession(useFetch)
 
 const authStore = useAuthStore()
 await authStore.syncSession({ force: true })
 
-const ADMIN_NAV_ITEMS: AdminNavItem[] = [
+const ADMIN_NAV_ITEMS = computed<AdminNavItem[]>(() => [
   {
     id: 'admin-dashboard',
-    label: 'Dashboard',
+    label: t('admin.dashboard.title'),
     to: '/admin',
     order: 0,
   },
   {
     id: 'admin-users',
-    label: 'Users',
+    label: t('admin.users.title'),
     to: '/admin/users',
     order: 10,
     permission: 'admin.users.read',
   },
   {
     id: 'admin-servers',
-    label: 'Servers',
+    label: t('admin.servers.title'),
     to: '/admin/servers',
     order: 20,
     permission: 'admin.servers.read',
   },
   {
     id: 'admin-api-keys',
-    label: 'API Keys',
+    label: t('admin.apiKeys'),
     to: '/admin/api',
     order: 25,
     permission: 'admin.api.read',
   },
   {
     id: 'admin-nodes',
-    label: 'Nodes',
+    label: t('admin.nodes.title'),
     to: '/admin/nodes',
     order: 30,
     permission: 'admin.nodes.read',
   },
   {
     id: 'admin-locations',
-    label: 'Locations',
+    label: t('admin.locations.title'),
     to: '/admin/locations',
     order: 40,
     permission: 'admin.locations.read',
   },
   {
     id: 'admin-service-packs',
-    label: 'Service Packs',
+    label: t('admin.navigation.servicePacks'),
     to: '/admin/nests',
     order: 50,
     permission: ['admin.nests.read', 'admin.eggs.read'],
   },
   {
     id: 'admin-mounts',
-    label: 'Mounts',
+    label: t('admin.mounts.title'),
     to: '/admin/mounts',
     order: 60,
     permission: 'admin.mounts.read',
   },
   {
     id: 'admin-database-hosts',
-    label: 'Database Hosts',
+    label: t('admin.databaseHosts.title'),
     to: '/admin/database-hosts',
     order: 70,
     permission: 'admin.database-hosts.read',
   },
   {
     id: 'admin-activity',
-    label: 'Audit Log',
+    label: t('admin.navigation.auditLog'),
     to: '/admin/activity',
     order: 80,
     permission: 'admin.activity.read',
   },
   {
     id: 'admin-schedules',
-    label: 'Schedules',
+    label: t('admin.schedules.title'),
     to: '/admin/schedules',
     order: 85,
     permission: 'admin.schedules.read',
   },
   {
     id: 'admin-settings',
-    label: 'Settings',
+    label: t('admin.settings.title'),
     to: '/admin/settings',
     order: 90,
     permission: 'admin.settings.read',
   },
-]
+])
 
 const route = useRoute()
 const router = useRouter()
@@ -139,7 +140,7 @@ const sessionUser = computed<SessionUser | null>(() => {
 })
 
 const announcement = computed(() => (securitySettings.value?.announcementEnabled ? securitySettings.value?.announcementMessage?.trim() : ''))
-const maintenanceMessage = computed(() => securitySettings.value?.maintenanceMessage?.trim() || 'The panel is currently undergoing maintenance. Please check back soon.')
+const maintenanceMessage = computed(() => securitySettings.value?.maintenanceMessage?.trim() || t('layout.defaultMaintenanceMessage'))
 
 const isMaintenanceGateActive = computed(() => {
   if (!securitySettings.value?.maintenanceMode) {
@@ -164,12 +165,57 @@ watch(authStatus, async (value) => {
 
 const adminTitle = computed(() => {
   const title = route.meta.adminTitle
-  return typeof title === 'string' && title.length > 0 ? title : 'Admin'
+  if (typeof title === 'string' && title.length > 0) {
+    const titleMap: Record<string, string> = {
+      'Dashboard': t('admin.dashboard.title'),
+      'Users': t('admin.users.title'),
+      'Servers': t('admin.servers.title'),
+      'Settings': t('admin.settings.title'),
+      'Nodes': t('admin.nodes.title'),
+      'Locations': t('admin.locations.title'),
+      'Nests': t('admin.nests.title'),
+      'Mounts': t('admin.mounts.title'),
+      'Schedules': t('admin.schedules.title'),
+      'API Keys': t('admin.apiKeys'),
+      'Database Hosts': t('admin.databaseHosts.title'),
+      'Activity': t('admin.activity.title'),
+      'Audit log': t('admin.navigation.auditLog'),
+      'Server details': t('admin.servers.title'),
+      'Node details': t('admin.nodes.title'),
+      'User profile': t('admin.users.title'),
+    }
+    return titleMap[title] || title
+  }
+  return t('admin.title')
 })
 
 const adminSubtitle = computed(() => {
   const subtitle = route.meta.adminSubtitle
-  return typeof subtitle === 'string' && subtitle.length > 0 ? subtitle : 'Infrastructure overview and controls'
+  if (typeof subtitle === 'string' && subtitle.length > 0) {
+    const subtitleMap: Record<string, string> = {
+      'Infrastructure overview sourced from Wings metrics': t('admin.dashboard.subtitle'),
+      'Audit panel accounts and Wings permissions': t('admin.users.subtitle'),
+      'Configure panel settings and preferences': t('admin.settings.subtitle'),
+      'Manage all servers in the panel.': t('admin.servers.description'),
+      'Manage server nodes.': t('admin.nodes.description'),
+      'Manage server locations.': t('admin.locations.description'),
+      'Manage server nests and eggs.': t('admin.nests.description'),
+      'Manage server mounts.': t('admin.mounts.description'),
+      'Manage system schedules.': t('admin.schedules.description'),
+      'Manage database hosts.': t('admin.databaseHosts.description'),
+      'View system-wide activity logs.': t('admin.activity.description'),
+      'Track panel-wide events mirrored from Wings': t('admin.activity.description'),
+      'Review panel automation (Wings tasks & Nitro tasks)': t('admin.schedules.description'),
+      'Manage existing keys or create new ones for API access.': t('account.apiKeys.description'),
+      'Global view of panel servers synchronized with Wings': t('admin.servers.description'),
+      'Manage Wings daemons and monitor node health': t('admin.nodes.description'),
+      'Inspect Wings node metrics and allocations': t('admin.nodes.description'),
+      'Manage server configuration and resources': t('admin.servers.description'),
+      'Inspect panel access, owned servers, and activity': t('admin.users.subtitle'),
+    }
+    return subtitleMap[subtitle] || subtitle
+  }
+  return t('admin.navigation.infrastructureOverview')
 })
 
 const navItems = computed(() => {
@@ -187,7 +233,7 @@ const navItems = computed(() => {
     return values.includes(permission)
   }
 
-  return ADMIN_NAV_ITEMS
+  return ADMIN_NAV_ITEMS.value
     .filter(item => storeIsSuperUser.value || canAccess(item.permission))
     .sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY))
 })
@@ -241,15 +287,15 @@ const userAvatar = computed(() => {
 
 const accountMenuItems = computed(() => [
   [
-    { label: 'Profile', to: '/account/profile' },
-    { label: 'Security', to: '/account/security' },
-    { label: 'API Keys', to: '/account/api-keys' },
-    { label: 'SSH Keys', to: '/account/ssh-keys' },
-    { label: 'Sessions', to: '/account/sessions' },
-    { label: 'Activity', to: '/account/activity' },
+    { label: t('account.profile.title'), to: '/account/profile' },
+    { label: t('account.security.title'), to: '/account/security' },
+    { label: t('account.apiKeys.title'), to: '/account/api-keys' },
+    { label: t('account.sshKeys.title'), to: '/account/ssh-keys' },
+    { label: t('account.sessions.title'), to: '/account/sessions' },
+    { label: t('account.activity.title'), to: '/account/activity' },
   ],
   [
-    { label: 'Sign out', click: handleSignOut, color: 'error' },
+    { label: t('auth.signOut'), click: handleSignOut, color: 'error' },
   ],
 ])
 </script>
@@ -258,7 +304,7 @@ const accountMenuItems = computed(() => [
   <UDashboardGroup class="min-h-screen bg-muted/15" storage="local" storage-key="admin-dashboard">
     <UDashboardSidebar
       collapsible
-      :toggle="{ icon: 'i-lucide-menu', label: 'Navigation', color: 'neutral', variant: 'ghost' }"
+      :toggle="{ icon: 'i-lucide-menu', label: t('common.navigation'), color: 'neutral', variant: 'ghost' }"
       :ui="{ footer: 'border-t border-default' }"
     >
       <template #header="{ collapsed }">
@@ -268,7 +314,7 @@ const accountMenuItems = computed(() => [
           class="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary"
         >
           <UIcon name="i-lucide-arrow-left" class="size-3" />
-          Back to panel
+          {{ t('layout.backToPanel') }}
         </NuxtLink>
         <UIcon v-else name="i-lucide-arrow-left" class="mx-auto size-4 text-muted-foreground" />
       </template>
@@ -283,7 +329,7 @@ const accountMenuItems = computed(() => [
           <template #fallback>
             <UNavigationMenu
               :collapsed="collapsed"
-              :items="[[ADMIN_NAV_ITEMS[0]]]"
+              :items="[[ADMIN_NAV_ITEMS.value[0]]]"
               orientation="vertical"
             />
           </template>
@@ -319,7 +365,7 @@ const accountMenuItems = computed(() => [
                 <template #leading>
                   <UIcon name="i-lucide-log-in" class="size-4" />
                 </template>
-                <span v-if="!collapsed">Sign in</span>
+                <span v-if="!collapsed">{{ t('auth.signIn') }}</span>
               </UButton>
             </template>
             <template #fallback>
@@ -333,13 +379,13 @@ const accountMenuItems = computed(() => [
                 <template #leading>
                   <UIcon name="i-lucide-log-in" class="size-4" />
                 </template>
-                <span v-if="!collapsed">Sign in</span>
+                <span v-if="!collapsed">{{ t('auth.signIn') }}</span>
               </UButton>
             </template>
           </ClientOnly>
 
           <div v-if="!collapsed" class="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-            <p>© {{ new Date().getFullYear() }} <ULink href="https://xyrapanel.com" target="_blank">XyraPanel</ULink></p>
+            <p>{{ t('layout.copyright', { year: new Date().getFullYear() }) }} <ULink href="https://xyrapanel.com" target="_blank">XyraPanel</ULink></p>
           </div>
           <UIcon v-else name="i-lucide-copyright" class="mx-auto size-3 text-muted-foreground/50" />
         </div>
@@ -372,13 +418,13 @@ const accountMenuItems = computed(() => [
                 <template v-else>
                   <UButton size="xs" variant="ghost" color="error" to="/auth/login"
                     icon="i-lucide-log-in">
-                    Sign in
+                    {{ t('auth.signIn') }}
                   </UButton>
                 </template>
                 <template #fallback>
                   <UButton size="xs" variant="ghost" color="error" to="/auth/login"
                     icon="i-lucide-log-in">
-                    Sign in
+                    {{ t('auth.signIn') }}
                   </UButton>
                 </template>
               </ClientOnly>
@@ -398,22 +444,22 @@ const accountMenuItems = computed(() => [
           <div v-if="isMaintenanceGateActive" class="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-6 py-16 text-center">
             <UIcon name="i-lucide-construction" class="size-10 text-warning" />
             <div class="space-y-2">
-              <h2 class="text-xl font-semibold">We&rsquo;re performing maintenance</h2>
+              <h2 class="text-xl font-semibold">{{ t('layout.weArePerformingMaintenance') }}</h2>
               <p class="text-sm text-muted-foreground">{{ maintenanceMessage }}</p>
             </div>
             <UButton variant="ghost" color="neutral" @click="handleSignOut">
-              Sign out
+              {{ t('auth.signOut') }}
             </UButton>
           </div>
           <div v-else class="mx-auto w-full max-w-7xl px-6 py-10 space-y-6">
             <UAlert v-if="showTwoFactorPrompt" color="warning" variant="soft" icon="i-lucide-shield-check">
-              <template #title>Enable two-factor authentication</template>
+              <template #title>{{ t('layout.enableTwoFactorAuthentication') }}</template>
               <template #description>
-                Strengthen account security by enabling TOTP. You&rsquo;ll be redirected to the security page to finish setup.
+                {{ t('layout.strengthenAccountSecurity') }}
               </template>
               <template #actions>
                 <UButton size="xs" color="warning" @click="navigateToSecuritySettings">
-                  Configure 2FA
+                  {{ t('layout.configure2FA') }}
                 </UButton>
               </template>
             </UAlert>

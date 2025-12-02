@@ -6,6 +6,7 @@ definePageMeta({
   layout: 'admin',
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const router = useRouter()
 
@@ -40,7 +41,7 @@ function openCreateModal() {
 
 async function handleSubmit() {
   if (!form.value.name || !form.value.author) {
-    toast.add({ title: 'Name and author are required', color: 'error' })
+    toast.add({ title: t('admin.nests.nameAndAuthorRequired'), color: 'error' })
     return
   }
 
@@ -51,14 +52,14 @@ async function handleSubmit() {
       method: 'POST',
       body: form.value,
     })
-    toast.add({ title: 'Nest created', color: 'success' })
+    toast.add({ title: t('admin.nests.nestCreated'), color: 'success' })
     showCreateModal.value = false
     resetForm()
     await refresh()
   } catch (err) {
     toast.add({
-      title: 'Create failed',
-      description: err instanceof Error ? err.message : 'An error occurred',
+      title: t('admin.nests.createFailed'),
+      description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     })
   } finally {
@@ -67,7 +68,7 @@ async function handleSubmit() {
 }
 
 async function handleDelete(nest: NestWithEggCount) {
-  if (!confirm(`Delete nest "${nest.name}"? This cannot be undone.`)) {
+  if (!confirm(t('admin.nests.confirmDelete', { name: nest.name }))) {
     return
   }
 
@@ -75,12 +76,12 @@ async function handleDelete(nest: NestWithEggCount) {
     await $fetch(`/api/admin/nests/${nest.id}`, {
       method: 'DELETE',
     })
-    toast.add({ title: 'Nest deleted', color: 'success' })
+    toast.add({ title: t('admin.nests.nestDeleted'), color: 'success' })
     await refresh()
   } catch (err) {
     toast.add({
-      title: 'Delete failed',
-      description: err instanceof Error ? err.message : 'An error occurred',
+      title: t('admin.nests.deleteFailed'),
+      description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     })
   }
@@ -99,9 +100,9 @@ function viewNest(nest: NestWithEggCount) {
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">All Nests</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.nests.allNests') }}</h2>
                 <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="openCreateModal">
-                  Create Nest
+                  {{ t('admin.nests.createNest') }}
                 </UButton>
               </div>
             </template>
@@ -111,15 +112,15 @@ function viewNest(nest: NestWithEggCount) {
             </div>
 
             <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
-              <template #title>Failed to load nests</template>
+              <template #title>{{ t('admin.nests.failedToLoadNests') }}</template>
               <template #description>{{ error.message }}</template>
             </UAlert>
 
             <div v-else-if="nests.length === 0" class="py-12 text-center">
               <UIcon name="i-lucide-box" class="mx-auto size-12 text-muted-foreground opacity-50" />
-              <p class="mt-4 text-sm text-muted-foreground">No nests yet</p>
+              <p class="mt-4 text-sm text-muted-foreground">{{ t('admin.nests.noNestsYet') }}</p>
               <p class="mt-1 text-xs text-muted-foreground">
-                Nests are categories of game servers (e.g., Minecraft, Source Engine)
+                {{ t('admin.nests.nestsDescription') }}
               </p>
             </div>
 
@@ -132,15 +133,15 @@ function viewNest(nest: NestWithEggCount) {
                     <UIcon name="i-lucide-box" class="size-5 text-primary" />
                     <span class="font-semibold">{{ nest.name }}</span>
                     <UBadge size="xs" color="neutral">
-                      {{ nest.eggCount }} egg{{ nest.eggCount !== 1 ? 's' : '' }}
+                      {{ nest.eggCount }} {{ nest.eggCount !== 1 ? t('admin.nests.eggs') : t('admin.nests.egg') }}
                     </UBadge>
                   </div>
                   <p v-if="nest.description" class="mt-1 text-sm text-muted-foreground">
                     {{ nest.description }}
                   </p>
                   <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                    <span>Author: {{ nest.author }}</span>
-                    <span>UUID: {{ nest.uuid.slice(0, 8) }}</span>
+                    <span>{{ t('admin.nests.author') }}: {{ nest.author }}</span>
+                    <span>{{ t('admin.nests.uuid') }}: {{ nest.uuid.slice(0, 8) }}</span>
                   </div>
                 </div>
 
@@ -156,26 +157,26 @@ function viewNest(nest: NestWithEggCount) {
       </UContainer>
     </UPageBody>
 
-    <UModal v-model:open="showCreateModal" title="Create Nest" description="Create a new game server category">
+    <UModal v-model:open="showCreateModal" :title="t('admin.nests.createNest')" :description="t('admin.nests.createNestDescription')">
       <template #body>
         <form class="space-y-4" @submit.prevent="handleSubmit">
-          <UFormField label="Name" name="name" required>
-            <UInput v-model="form.name" placeholder="Minecraft" required :disabled="isSubmitting" class="w-full" />
+          <UFormField :label="t('common.name')" name="name" required>
+            <UInput v-model="form.name" :placeholder="t('admin.nests.namePlaceholder')" required :disabled="isSubmitting" class="w-full" />
             <template #help>
-              Category name (e.g., "Minecraft", "Source Engine", "Voice Servers")
+              {{ t('admin.nests.nameHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="Description" name="description">
-            <UTextarea v-model="form.description" placeholder="Minecraft server types and configurations"
+          <UFormField :label="t('common.description')" name="description">
+            <UTextarea v-model="form.description" :placeholder="t('admin.nests.descriptionPlaceholder')"
               :disabled="isSubmitting" class="w-full" />
           </UFormField>
 
-          <UFormField label="Author" name="author" required>
-            <UInput v-model="form.author" placeholder="support@example.com" required :disabled="isSubmitting"
+          <UFormField :label="t('admin.nests.author')" name="author" required>
+            <UInput v-model="form.author" :placeholder="t('admin.nests.authorPlaceholder')" required :disabled="isSubmitting"
               class="w-full" />
             <template #help>
-              Email of the nest author/maintainer
+              {{ t('admin.nests.authorHelp') }}
             </template>
           </UFormField>
         </form>
@@ -184,10 +185,10 @@ function viewNest(nest: NestWithEggCount) {
       <template #footer>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" color="error" :disabled="isSubmitting" @click="showCreateModal = false">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton color="primary" variant="subtle" :loading="isSubmitting" @click="handleSubmit">
-            Create Nest
+            {{ t('admin.nests.createNest') }}
           </UButton>
         </div>
       </template>

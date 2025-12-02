@@ -1,3 +1,5 @@
+import type { ApiKeyPermissions } from '#shared/types/admin'
+
 export const ADMIN_ACL_PERMISSIONS = {
   NONE: 0,
   READ: 1,
@@ -18,18 +20,6 @@ export const ADMIN_ACL_RESOURCES = {
 
 export type AdminAclResource = typeof ADMIN_ACL_RESOURCES[keyof typeof ADMIN_ACL_RESOURCES]
 export type AdminAclPermission = typeof ADMIN_ACL_PERMISSIONS[keyof typeof ADMIN_ACL_PERMISSIONS]
-
-export interface ApiKeyPermissions {
-  rServers?: number
-  rNodes?: number
-  rAllocations?: number
-  rUsers?: number
-  rLocations?: number
-  rNests?: number
-  rEggs?: number
-  rDatabaseHosts?: number
-  rServerDatabases?: number
-}
 
 export function canPerformAction(
   permission: number,

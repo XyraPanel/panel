@@ -5,50 +5,49 @@ import { storeToRefs } from 'pinia'
 definePageMeta({
   auth: true,
   layout: 'admin',
-  adminTitle: 'Settings',
-  adminSubtitle: 'Configure panel settings and preferences',
 })
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 const { user: sessionUser, permissions } = storeToRefs(authStore)
 
-const baseTabs: AdminSettingsTabDefinition[] = [
+const baseTabs = computed<AdminSettingsTabDefinition[]>(() => [
   {
-    label: 'General',
+    label: t('admin.settings.general'),
     value: 'general',
     icon: 'i-lucide-settings',
     component: 'AdminSettingsGeneral',
     order: 0,
   },
   {
-    label: 'Security',
+    label: t('admin.settings.security'),
     value: 'security',
     icon: 'i-lucide-shield-check',
     component: 'AdminSettingsSecurity',
     order: 10,
   },
   {
-    label: 'Mail',
+    label: t('admin.settings.mail'),
     value: 'mail',
     icon: 'i-lucide-mail',
     component: 'AdminSettingsMail',
     order: 20,
   },
   {
-    label: 'Advanced',
+    label: t('admin.settings.advanced'),
     value: 'advanced',
     icon: 'i-lucide-sparkles',
     component: 'AdminSettingsAdvanced',
     order: 30,
   },
-]
+])
 
 const availableTabs = computed(() => {
   const userPermissions = permissions.value ?? sessionUser.value?.permissions ?? []
 
-  return baseTabs
+  return baseTabs.value
     .filter(tab => !tab.permission || userPermissions.includes(tab.permission))
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 })
@@ -102,10 +101,9 @@ const currentTabComponent = computed(() => {
             <component :is="currentTabComponent" />
           </div>
           <UAlert v-else color="warning" variant="soft" icon="i-lucide-alert-triangle">
-            <template #title>No settings available</template>
+            <template #title>{{ t('admin.settings.noSettingsAvailable') }}</template>
             <template #description>
-              There are no settings sections available for your account. Contact an administrator if you believe this is
-              an error.
+              {{ t('admin.settings.noSettingsAvailableDescription') }}
             </template>
           </UAlert>
         </div>

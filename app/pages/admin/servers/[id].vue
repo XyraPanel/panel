@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { AdminServerDetails } from '#shared/types/server'
 
+const { t } = useI18n()
 const route = useRoute()
 
 definePageMeta({
@@ -68,7 +69,7 @@ watch([serverData, error, server], ([data, err, srv]) => {
 }, { immediate: true })
 
 function formatDate(date: string | Date | null) {
-  if (!date) return 'Never'
+  if (!date) return t('common.never')
   return new Date(date).toLocaleString()
 }
 </script>
@@ -84,13 +85,13 @@ function formatDate(date: string | Date | null) {
           </div>
 
           <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
-            <template #title>Unable to load server</template>
+            <template #title>{{ t('admin.servers.unableToLoadServer') }}</template>
             <template #description>{{ (error as Error).message }}</template>
           </UAlert>
 
           <UCard v-if="!pending && !error && !server" color="warning">
             <template #header>
-              <h2 class="text-lg font-semibold">Debug: Server data not available</h2>
+              <h2 class="text-lg font-semibold">{{ t('admin.servers.serverDataNotAvailable') }}</h2>
             </template>
             <div class="space-y-2 text-sm">
               <p><strong>Pending:</strong> {{ pending }}</p>
@@ -105,46 +106,46 @@ function formatDate(date: string | Date | null) {
           <template v-else-if="server">
             <header class="flex flex-wrap items-center justify-between gap-4">
               <div class="space-y-1">
-                <p class="text-xs text-muted-foreground">Server {{ serverId }}</p>
+                <p class="text-xs text-muted-foreground">{{ t('common.server') }} {{ serverId }}</p>
                 <h1 class="text-xl font-semibold">{{ server.name }}</h1>
                 <p class="text-xs text-muted-foreground">{{ server.identifier }}</p>
               </div>
               <div class="flex flex-wrap gap-2">
-                <UButton icon="i-lucide-play" color="primary" variant="soft">Start</UButton>
-                <UButton icon="i-lucide-refresh-ccw" color="primary" variant="soft">Restart</UButton>
-                <UButton icon="i-lucide-square" color="error" variant="soft">Stop</UButton>
+                <UButton icon="i-lucide-play" color="primary" variant="soft">{{ t('server.power.start') }}</UButton>
+                <UButton icon="i-lucide-refresh-ccw" color="primary" variant="soft">{{ t('server.power.restart') }}</UButton>
+                <UButton icon="i-lucide-square" color="error" variant="soft">{{ t('server.power.stop') }}</UButton>
               </div>
             </header>
 
             <UTabs v-model="tab" variant="link" :items="[
-              { label: 'Overview', value: 'overview', icon: 'i-lucide-layout-dashboard' },
-              { label: 'Build', value: 'build', icon: 'i-lucide-wrench' },
-              { label: 'Startup', value: 'startup', icon: 'i-lucide-rocket' },
-              { label: 'Database', value: 'database', icon: 'i-lucide-database' },
-              { label: 'Mounts', value: 'mounts', icon: 'i-lucide-folder-tree' },
-              { label: 'Manage', value: 'manage', icon: 'i-lucide-settings' },
+              { label: t('admin.servers.tabs.overview'), value: 'overview', icon: 'i-lucide-layout-dashboard' },
+              { label: t('admin.servers.tabs.build'), value: 'build', icon: 'i-lucide-wrench' },
+              { label: t('admin.servers.tabs.startup'), value: 'startup', icon: 'i-lucide-rocket' },
+              { label: t('admin.servers.tabs.database'), value: 'database', icon: 'i-lucide-database' },
+              { label: t('admin.servers.tabs.mounts'), value: 'mounts', icon: 'i-lucide-folder-tree' },
+              { label: t('admin.servers.tabs.manage'), value: 'manage', icon: 'i-lucide-settings' },
             ]" class="w-full" />
 
             <UCard v-if="tab === 'overview'">
               <template #header>
-                <h2 class="text-lg font-semibold">Server Overview</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.servers.serverOverview') }}</h2>
               </template>
               <div class="space-y-4">
                 <div class="grid gap-4 md:grid-cols-2">
                   <div>
-                    <p class="text-sm text-muted-foreground">Name</p>
+                    <p class="text-sm text-muted-foreground">{{ t('common.name') }}</p>
                     <p class="font-medium">{{ server.name }}</p>
                   </div>
                   <div>
-                    <p class="text-sm text-muted-foreground">Identifier</p>
+                    <p class="text-sm text-muted-foreground">{{ t('admin.nodes.identifier') }}</p>
                     <code class="text-sm">{{ server.identifier }}</code>
                   </div>
                   <div>
-                    <p class="text-sm text-muted-foreground">Created</p>
+                    <p class="text-sm text-muted-foreground">{{ t('common.created') }}</p>
                     <p class="text-sm">{{ formatDate(server.createdAt) }}</p>
                   </div>
                   <div>
-                    <p class="text-sm text-muted-foreground">Updated</p>
+                    <p class="text-sm text-muted-foreground">{{ t('common.updated') }}</p>
                     <p class="text-sm">{{ formatDate(server.updatedAt) }}</p>
                   </div>
                 </div>
@@ -153,35 +154,35 @@ function formatDate(date: string | Date | null) {
 
             <UCard v-else-if="tab === 'build'">
               <template #header>
-                <h2 class="text-lg font-semibold">Build Configuration</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.servers.buildConfiguration') }}</h2>
               </template>
               <AdminServerBuild v-if="server" :server="server" />
             </UCard>
 
             <UCard v-else-if="tab === 'startup'">
               <template #header>
-                <h2 class="text-lg font-semibold">Startup Configuration</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.servers.startupConfiguration') }}</h2>
               </template>
               <AdminServerStartup v-if="server" :server="server" />
             </UCard>
 
             <UCard v-else-if="tab === 'database'">
               <template #header>
-                <h2 class="text-lg font-semibold">Databases</h2>
+                <h2 class="text-lg font-semibold">{{ t('server.databases.title') }}</h2>
               </template>
               <AdminServerDatabase v-if="server" :server-id="server.id" />
             </UCard>
 
             <UCard v-else-if="tab === 'mounts'">
               <template #header>
-                <h2 class="text-lg font-semibold">Mounts</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.mounts.title') }}</h2>
               </template>
               <AdminServerMounts v-if="server" :server-id="server.id" />
             </UCard>
 
             <UCard v-else-if="tab === 'manage'">
               <template #header>
-                <h2 class="text-lg font-semibold">Manage Server</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.servers.manage.title') }}</h2>
               </template>
               <AdminServerManage v-if="server" :server="server" />
             </UCard>

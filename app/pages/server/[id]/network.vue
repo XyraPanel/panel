@@ -2,6 +2,7 @@
 import type { ServerAllocation, NetworkData } from '#shared/types/server'
 
 const route = useRoute()
+const { t } = useI18n()
 
 definePageMeta({
   auth: true,
@@ -33,9 +34,9 @@ function formatIp(allocation: ServerAllocation): string {
         <section class="space-y-6">
           <header class="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p class="text-xs text-muted-foreground">Server {{ serverId }} · Network</p>
-              <h1 class="text-xl font-semibold">Network Allocations</h1>
-              <p class="text-sm text-muted-foreground mt-1">Manage IP addresses and ports for this server</p>
+              <p class="text-xs text-muted-foreground">{{ t('server.network.serverNetwork', { id: serverId }) }}</p>
+              <h1 class="text-xl font-semibold">{{ t('server.network.networkAllocations') }}</h1>
+              <p class="text-sm text-muted-foreground mt-1">{{ t('server.network.manageIPAddressesAndPorts') }}</p>
             </div>
           </header>
 
@@ -43,7 +44,7 @@ function formatIp(allocation: ServerAllocation): string {
             <div class="flex items-start gap-2">
               <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
               <div>
-                <p class="font-medium">Failed to load network data</p>
+                <p class="font-medium">{{ t('server.network.failedToLoadNetworkData') }}</p>
                 <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
               </div>
             </div>
@@ -58,8 +59,8 @@ function formatIp(allocation: ServerAllocation): string {
               <template #header>
                 <div class="flex flex-wrap items-start justify-between gap-4">
                   <div>
-                    <h2 class="text-lg font-semibold">Primary allocation</h2>
-                    <p class="text-xs text-muted-foreground">Main server connection endpoint</p>
+                    <h2 class="text-lg font-semibold">{{ t('server.network.primaryAllocation') }}</h2>
+                    <p class="text-xs text-muted-foreground">{{ t('server.network.mainServerConnectionEndpoint') }}</p>
                   </div>
                 </div>
               </template>
@@ -67,35 +68,35 @@ function formatIp(allocation: ServerAllocation): string {
               <ServerEmptyState
                 v-if="!primaryAllocation"
                 icon="i-lucide-network"
-                title="No primary allocation"
-                description="Configure a primary allocation for this server."
+                :title="t('server.network.noPrimaryAllocation')"
+                :description="t('server.network.noPrimaryAllocationDescription')"
               />
 
               <div v-else class="flex flex-col gap-4 lg:flex-row">
                 <div class="flex-1 space-y-3">
                   <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                    <p class="text-xs uppercase tracking-wide text-muted-foreground">IP address</p>
+                    <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('server.network.ipAddress') }}</p>
                     <div class="mt-1 flex items-center justify-between gap-2">
                       <p class="text-lg font-semibold text-foreground">{{ formatIp(primaryAllocation) }}</p>
-                      <ServerCopyButton :text="formatIp(primaryAllocation)" label="IP address" />
+                      <ServerCopyButton :text="formatIp(primaryAllocation)" :label="t('server.network.ipAddress')" />
                     </div>
                   </div>
                   <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
-                    <p class="text-xs uppercase tracking-wide text-muted-foreground">Port</p>
+                    <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('server.network.port') }}</p>
                     <div class="mt-1 flex items-center justify-between gap-2">
                       <p class="text-lg font-semibold text-foreground">{{ primaryAllocation.port }}</p>
-                      <ServerCopyButton :text="String(primaryAllocation.port)" label="Port" />
+                      <ServerCopyButton :text="String(primaryAllocation.port)" :label="t('server.network.port')" />
                     </div>
                   </div>
                 </div>
                 <div class="flex-1 space-y-3">
-                  <UAlert title="Connection String" icon="i-lucide-info">
+                  <UAlert :title="t('server.network.connectionString')" icon="i-lucide-info">
                     <template #description>
                       <div class="flex items-center justify-between gap-2">
                         <code class="text-xs">{{ formatIp(primaryAllocation) }}:{{ primaryAllocation.port }}</code>
                         <ServerCopyButton
                           :text="`${formatIp(primaryAllocation)}:${primaryAllocation.port}`"
-                          label="Connection string"
+                          :label="t('server.network.connectionStringLabel')"
                         />
                       </div>
                     </template>
@@ -110,21 +111,21 @@ function formatIp(allocation: ServerAllocation): string {
             <UCard>
               <template #header>
                 <div class="flex items-center justify-between">
-                  <h2 class="text-lg font-semibold">Additional allocations</h2>
+                  <h2 class="text-lg font-semibold">{{ t('server.network.additionalAllocations') }}</h2>
                 </div>
               </template>
 
               <div v-if="additionalAllocations.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
                 <UIcon name="i-lucide-network" class="mx-auto size-12 text-muted-foreground/50" />
-                <p class="mt-3 text-sm font-medium">No additional allocations</p>
-                <p class="mt-1 text-xs text-muted-foreground">Request additional ports for plugins or services.</p>
+                <p class="mt-3 text-sm font-medium">{{ t('server.network.noAdditionalAllocations') }}</p>
+                <p class="mt-1 text-xs text-muted-foreground">{{ t('server.network.requestAdditionalPorts') }}</p>
               </div>
 
               <div v-else class="overflow-hidden rounded-lg border border-default">
                 <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  <span class="col-span-4">IP</span>
-                  <span class="col-span-2">Port</span>
-                  <span class="col-span-6">Notes</span>
+                  <span class="col-span-4">{{ t('server.network.ip') }}</span>
+                  <span class="col-span-2">{{ t('server.network.port') }}</span>
+                  <span class="col-span-6">{{ t('common.notes') }}</span>
                 </div>
                 <div class="divide-y divide-default">
                   <div
@@ -134,7 +135,7 @@ function formatIp(allocation: ServerAllocation): string {
                   >
                     <span class="col-span-4 font-medium">{{ formatIp(allocation) }}</span>
                     <span class="col-span-2 text-muted-foreground">{{ allocation.port }}</span>
-                    <span class="col-span-6 text-xs text-muted-foreground">{{ allocation.notes || '—' }}</span>
+                    <span class="col-span-6 text-xs text-muted-foreground">{{ allocation.notes || t('common.na') }}</span>
                   </div>
                 </div>
               </div>

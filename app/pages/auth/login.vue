@@ -5,6 +5,7 @@ import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui'
 import { until } from '@vueuse/core'
 import { storeToRefs } from 'pinia'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const { status, user } = storeToRefs(authStore)
 const runtimeConfig = useRuntimeConfig()
@@ -28,8 +29,8 @@ const baseFields: AuthFormField[] = [
   {
     name: 'identity',
     type: 'text',
-    label: 'Username or Email',
-    placeholder: 'Enter your username or email',
+    label: t('auth.usernameOrEmail'),
+    placeholder: t('auth.enterUsernameOrEmail'),
     icon: 'i-lucide-user',
     required: true,
     autocomplete: 'username',
@@ -37,8 +38,8 @@ const baseFields: AuthFormField[] = [
   {
     name: 'password',
     type: 'password',
-    label: 'Password',
-    placeholder: 'Enter your password',
+    label: t('auth.password'),
+    placeholder: t('auth.enterPassword'),
     icon: 'i-lucide-lock',
     required: true,
     autocomplete: 'current-password',
@@ -48,10 +49,10 @@ const baseFields: AuthFormField[] = [
 const tokenField: AuthFormField = {
   name: 'token',
   type: 'text',
-  label: 'Authenticator Code',
-  placeholder: 'Enter 6-digit code or recovery token',
+  label: t('auth.authenticatorCode'),
+  placeholder: t('auth.enterAuthenticatorCode'),
   icon: 'i-lucide-smartphone',
-  help: 'Enter the code from your authenticator app or use a recovery token',
+  help: t('auth.enterCodeFromAuthenticator'),
   autocomplete: 'one-time-code',
 }
 
@@ -59,11 +60,11 @@ const fields = computed<AuthFormField[]>(() =>
   requiresToken.value ? [...baseFields, tokenField] : baseFields,
 )
 
-const tokenSchema = z.string().trim().max(64, 'Authenticator codes are short.')
+const tokenSchema = z.string().trim().max(64, t('auth.authenticatorCodesShort'))
 
 const schema = z.object({
-  identity: z.string().trim().min(1, 'Enter your username or email'),
-  password: z.string().trim().min(1, 'Enter your password'),
+  identity: z.string().trim().min(1, t('auth.enterUsernameOrEmail')),
+  password: z.string().trim().min(1, t('auth.enterPassword')),
   token: tokenSchema.optional().transform(value => (value && value.length > 0 ? value : undefined)),
 })
 
@@ -71,7 +72,7 @@ type Schema = z.output<typeof schema>
 
 const loading = ref(false)
 const submitProps = computed(() => ({
-  label: 'Sign In',
+  label: t('auth.signIn'),
   icon: 'i-lucide-log-in',
   block: true,
   variant: 'subtle' as const,
@@ -93,14 +94,14 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     const submittedToken = token ?? ''
 
     if (requiresToken.value && !token) {
-      throw new Error('Two-factor authentication token required.')
+      throw new Error(t('auth.twoFactorTokenRequired'))
     }
 
     if (hasTurnstile.value && !turnstileToken.value) {
       toast.add({
         color: 'error',
-        title: 'Verification required',
-        description: 'Please complete the security verification.',
+        title: t('auth.verificationRequired'),
+        description: t('auth.completeSecurityVerification'),
       })
       return
     }
@@ -123,8 +124,8 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       if (missingToken) {
         toast.add({
           color: 'info',
-          title: 'Two-factor required',
-          description: 'Enter your authenticator code to finish signing in.',
+          title: t('auth.twoFactorRequired'),
+          description: t('auth.enterAuthenticatorCodeToFinish'),
         })
         return
       }
@@ -134,13 +135,13 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
 
     await authStore.syncSession({ force: true })
     if (!user.value) {
-      throw new Error('Invalid credentials. Please check your details and try again.')
+      throw new Error(t('auth.invalidCredentials'))
     }
 
     toast.add({
       color: 'success',
-      title: 'Welcome back',
-      description: 'You are signed in.',
+      title: t('auth.welcomeBack'),
+      description: t('auth.signedIn'),
     })
 
     await until(status).toMatch((v) => v === 'authenticated')
@@ -148,7 +149,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     await navigateTo(redirectPath.value)
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to sign in with those credentials.'
+    const message = error instanceof Error ? error.message : t('auth.unableToSignIn')
     const submittedToken = payload.data.token ?? ''
     if (typeof message === 'string') {
       const lowered = message.toLowerCase()
@@ -161,15 +162,15 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       if (missingToken) {
         toast.add({
           color: 'info',
-          title: 'Two-factor required',
-          description: 'Enter your authenticator code to finish signing in.',
+          title: t('auth.twoFactorRequired'),
+          description: t('auth.enterAuthenticatorCodeToFinish'),
         })
         return
       }
     }
     toast.add({
       color: 'error',
-      title: 'Sign in failed',
+      title: t('auth.signInFailed'),
       description: message,
     })
     turnstileRef.value?.reset()
@@ -191,7 +192,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
       </template>
       <template #password-hint>
         <NuxtLink to="/auth/password/request" class="text-primary font-medium" tabindex="-1">
-          Forgot password?
+          {{ t('auth.forgotPassword') }}?
         </NuxtLink>
       </template>
     </UAuthForm>

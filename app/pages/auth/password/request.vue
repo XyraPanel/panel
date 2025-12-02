@@ -8,6 +8,7 @@ definePageMeta({
   auth: false,
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const router = useRouter()
 const runtimeConfig = useRuntimeConfig()
@@ -21,8 +22,8 @@ const fields: AuthFormField[] = [
   {
     name: 'identity',
     type: 'text',
-    label: 'Username or Email',
-    placeholder: 'Enter your username or email',
+    label: t('auth.usernameOrEmail'),
+    placeholder: t('auth.enterEmailOrUsername'),
     icon: 'i-lucide-mail',
     required: true,
     autocomplete: 'username',
@@ -34,7 +35,7 @@ const schema = passwordRequestSchema
 const loading = ref(false)
 
 const submitProps = computed(() => ({
-  label: 'Send reset link',
+  label: t('auth.sendResetLink'),
   icon: 'i-lucide-send',
   block: true,
   variant: 'subtle' as const,
@@ -48,8 +49,8 @@ async function onSubmit(payload: FormSubmitEvent<PasswordRequestBody>) {
     if (hasTurnstile.value && !turnstileToken.value) {
       toast.add({
         color: 'error',
-        title: 'Verification required',
-        description: 'Please complete the security verification.',
+        title: t('auth.verificationRequired'),
+        description: t('auth.completeSecurityVerification'),
       })
       return
     }
@@ -72,24 +73,24 @@ async function onSubmit(payload: FormSubmitEvent<PasswordRequestBody>) {
     })
     
     if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: 'Request failed' }))
-      throw new Error(error.message || 'Request failed')
+      const error = await response.json().catch(() => ({ message: t('auth.requestFailed') }))
+      throw new Error(error.message || t('auth.requestFailed'))
     }
     
     await response.json() as { success: boolean }
 
     toast.add({
-      title: 'Check your inbox',
-      description: 'If the account exists, a reset email has been sent.',
+      title: t('auth.checkYourInbox'),
+      description: t('auth.ifAccountExists'),
       color: 'success',
     })
 
     router.push('/auth/login')
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to process request.'
+    const message = error instanceof Error ? error.message : t('auth.unableToProcessRequest')
     toast.add({
-      title: 'Request failed',
+      title: t('auth.requestFailed'),
       description: message,
       color: 'error',
     })
@@ -106,8 +107,8 @@ async function onSubmit(payload: FormSubmitEvent<PasswordRequestBody>) {
   <UAuthForm
     :schema="schema"
     :fields="fields"
-    title="Reset your password"
-    description="Enter the email address or username associated with your account."
+    :title="t('auth.resetYourPassword')"
+    :description="t('auth.enterEmailOrUsername')"
     icon="i-lucide-key-round"
     :submit="submitProps"
     @submit="onSubmit as any"
@@ -126,7 +127,7 @@ async function onSubmit(payload: FormSubmitEvent<PasswordRequestBody>) {
           />
         </div>
         <NuxtLink to="/auth/login" class="text-primary font-medium block text-center">
-          Back to sign in
+          {{ t('auth.backToSignIn') }}
         </NuxtLink>
       </div>
     </template>

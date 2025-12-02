@@ -6,6 +6,7 @@ import type { FetchError } from 'ofetch'
 import { accountForcedPasswordSchema } from '#shared/schema/account'
 import type { PasswordForceBody } from '#shared/types/account'
 
+const { t } = useI18n()
 const authStore = useAuthStore()
 const { status, requiresPasswordReset } = storeToRefs(authStore)
 const route = useRoute()
@@ -22,8 +23,8 @@ const fields: AuthFormField[] = [
   {
     name: 'newPassword',
     type: 'password',
-    label: 'New password',
-    placeholder: 'Enter your new password',
+    label: t('auth.newPassword'),
+    placeholder: t('auth.enterNewPassword'),
     icon: 'i-lucide-key',
     required: true,
     autocomplete: 'new-password',
@@ -31,8 +32,8 @@ const fields: AuthFormField[] = [
   {
     name: 'confirmPassword',
     type: 'password',
-    label: 'Confirm password',
-    placeholder: 'Re-enter the new password',
+    label: t('auth.confirmPassword'),
+    placeholder: t('auth.reEnterNewPassword'),
     icon: 'i-lucide-shield-check',
     required: true,
     autocomplete: 'new-password',
@@ -43,7 +44,7 @@ const loading = ref(false)
 const errorMessage = ref<string | null>(null)
 
 const submitProps = computed(() => ({
-  label: 'Update password',
+  label: t('auth.updatePassword'),
   icon: 'i-lucide-save',
   block: true,
   variant: 'subtle' as const,
@@ -81,8 +82,8 @@ async function onSubmit(event: FormSubmitEvent<PasswordForceBody>) {
     await authStore.syncSession({ force: true })
 
     toast.add({
-      title: 'Password updated',
-      description: 'Your password has been changed successfully.',
+      title: t('auth.passwordUpdated'),
+      description: t('auth.passwordChangedSuccessfully'),
       color: 'success',
     })
 
@@ -91,10 +92,10 @@ async function onSubmit(event: FormSubmitEvent<PasswordForceBody>) {
   catch (error) {
     const fetchError = error as FetchError<{ message?: string }>
     const message = fetchError?.data?.message
-      ?? (error instanceof Error ? error.message : 'Unable to update password.')
+      ?? (error instanceof Error ? error.message : t('auth.unableToUpdatePassword'))
     errorMessage.value = message
     toast.add({
-      title: 'Password update failed',
+      title: t('auth.passwordUpdateFailed'),
       description: message,
       color: 'error',
     })
@@ -109,8 +110,8 @@ async function onSubmit(event: FormSubmitEvent<PasswordForceBody>) {
   <UAuthForm
     :schema="schema"
     :fields="fields"
-    title="Password reset required"
-    description="Choose a new password to continue to your account."
+    :title="t('auth.passwordResetRequired')"
+    :description="t('auth.chooseNewPasswordToContinue')"
     icon="i-lucide-key-round"
     :submit="submitProps"
     @submit="onSubmit as any"

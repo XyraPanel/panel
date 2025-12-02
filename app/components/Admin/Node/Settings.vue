@@ -7,6 +7,7 @@ const props = defineProps<{
   node: StoredWingsNode
 }>()
 
+const { t } = useI18n()
 const toast = useToast()
 const isSubmitting = ref(false)
 
@@ -114,25 +115,25 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       <h3 class="text-sm font-semibold">Basic Information</h3>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="Node Name" name="name" required>
-          <UInput v-model="form.name" placeholder="Production Node 1" />
+        <UFormField :label="t('admin.nodes.settings.nodeName')" name="name" required>
+          <UInput v-model="form.name" :placeholder="t('admin.nodes.settings.nodeNamePlaceholder')" />
         </UFormField>
 
-        <UFormField label="FQDN" name="fqdn" required>
+        <UFormField :label="t('admin.nodes.settings.fqdn')" name="fqdn" required>
           <UInput v-model="form.fqdn" placeholder="node1.example.com" />
         </UFormField>
       </div>
 
-      <UFormField label="Description" name="description">
-        <UTextarea v-model="form.description" placeholder="Optional description" :rows="3" />
+      <UFormField :label="t('admin.nodes.settings.description')" name="description">
+        <UTextarea v-model="form.description" :placeholder="t('admin.nodes.settings.descriptionPlaceholder')" :rows="3" />
       </UFormField>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="Scheme" name="scheme" required>
+        <UFormField :label="t('admin.nodes.settings.scheme')" name="scheme" required>
           <USelect v-model="form.scheme" :items="schemeOptions" value-key="value" />
         </UFormField>
 
-        <UFormField label="Upload Size Limit (MB)" name="uploadSize">
+        <UFormField :label="t('admin.nodes.settings.uploadSizeLimit')" name="uploadSize">
           <UInput v-model.number="form.uploadSize" type="number" placeholder="100" min="1" max="1024" />
           <template #help>
             Maximum file upload size in megabytes (1-1024 MB)
@@ -148,24 +149,24 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
         <UFormField name="public">
           <USwitch
             v-model="form.public"
-            label="Public node"
-            description="Allow automatic server deployment to this node"
+            :label="t('admin.nodes.settings.publicNode')"
+            :description="t('admin.nodes.settings.publicNodeDescription')"
           />
         </UFormField>
 
         <UFormField name="maintenanceMode">
           <USwitch
             v-model="form.maintenanceMode"
-            label="Maintenance mode"
-            description="Prevent new servers from being created on this node"
+            :label="t('admin.nodes.settings.maintenanceMode')"
+            :description="t('admin.nodes.settings.maintenanceModeDescription')"
           />
         </UFormField>
 
         <UFormField name="behindProxy">
           <USwitch
             v-model="form.behindProxy"
-            label="Behind proxy"
-            description="Node is behind a proxy (Cloudflare, nginx, etc.)"
+            :label="t('admin.nodes.settings.behindProxy')"
+            :description="t('admin.nodes.settings.behindProxyDescription')"
           />
         </UFormField>
       </div>
@@ -175,26 +176,20 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       <h3 class="text-sm font-semibold">Resource Limits</h3>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="Total Memory (MB)" name="memory" required>
+        <UFormField :label="t('admin.nodes.settings.totalMemory')" name="memory" required>
           <UInput v-model.number="form.memory" type="number" placeholder="8192" min="1" />
         </UFormField>
 
-        <UFormField label="Memory Overallocate (%)" name="memoryOverallocate">
+        <UFormField :label="t('admin.nodes.settings.memoryOverallocate')" name="memoryOverallocate">
           <UInput v-model.number="form.memoryOverallocate" type="number" placeholder="0" min="-1" />
-          <template #help>
-            Percentage to overallocate memory (-1 to allow unlimited, 0 = no overallocation)
-          </template>
         </UFormField>
 
-        <UFormField label="Total Disk (MB)" name="disk" required>
+        <UFormField :label="t('admin.nodes.settings.totalDisk')" name="disk" required>
           <UInput v-model.number="form.disk" type="number" placeholder="102400" min="1" />
         </UFormField>
 
-        <UFormField label="Disk Overallocate (%)" name="diskOverallocate">
+        <UFormField :label="t('admin.nodes.settings.diskOverallocate')" name="diskOverallocate">
           <UInput v-model.number="form.diskOverallocate" type="number" placeholder="0" min="-1" />
-          <template #help>
-            Percentage to overallocate disk (-1 to allow unlimited, 0 = no overallocation)
-          </template>
         </UFormField>
       </div>
     </div>
@@ -203,25 +198,16 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       <h3 class="text-sm font-semibold">Daemon Configuration</h3>
 
       <div class="grid gap-4 md:grid-cols-3">
-        <UFormField label="Daemon Port" name="daemonListen" required>
+        <UFormField :label="t('admin.nodes.settings.daemonPort')" name="daemonListen" required>
           <UInput v-model.number="form.daemonListen" type="number" placeholder="8080" min="1" max="65535" />
-          <template #help>
-            Port for Wings daemon API (1-65535)
-          </template>
         </UFormField>
 
-        <UFormField label="SFTP Port" name="daemonSftp" required>
+        <UFormField :label="t('admin.nodes.settings.sftpPort')" name="daemonSftp" required>
           <UInput v-model.number="form.daemonSftp" type="number" placeholder="2022" min="1" max="65535" />
-          <template #help>
-            Port for SFTP service (1-65535)
-          </template>
         </UFormField>
 
-        <UFormField label="Daemon Base Directory" name="daemonBase" required>
+        <UFormField :label="t('admin.nodes.settings.daemonBaseDirectory')" name="daemonBase" required>
           <UInput v-model="form.daemonBase" placeholder="/var/lib/pterodactyl" />
-          <template #help>
-            Absolute path where server data is stored
-          </template>
         </UFormField>
       </div>
     </div>

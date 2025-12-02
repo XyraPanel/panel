@@ -8,6 +8,7 @@ definePageMeta({
   layout: 'server',
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const serverId = computed(() => route.params.id as string)
 
@@ -87,7 +88,7 @@ const visibleEntries = computed<ServerFileListItem[]>(() => {
   const entries = directoryEntries.value.map((entry): ServerFileListItem => ({
     name: entry.name,
     type: entry.isDirectory ? 'directory' : 'file',
-    size: entry.isDirectory ? '—' : formatBytes(entry.size),
+    size: entry.isDirectory ? t('common.na') : formatBytes(entry.size),
     modified: formatDate(entry.modified),
     path: entry.path,
   }))
@@ -272,12 +273,12 @@ async function handleBulkCopy() {
   if (!items.length || copyStatus.active)
     return
 
-  copyStatus.active = true
-  copyStatus.summary = `Copying ${items.length} item${items.length === 1 ? '' : 's'}…`
+    copyStatus.active = true
+    copyStatus.summary = t('common.transferring')
 
-  try {
-    for (const item of items) {
-      copyStatus.summary = `Copying ${item.name}…`
+    try {
+      for (const item of items) {
+        copyStatus.summary = t('server.files.transferring')
       await $fetch(`/api/servers/${serverId.value}/files/copy`, {
         method: 'POST',
         body: {
@@ -287,8 +288,8 @@ async function handleBulkCopy() {
     }
 
     toast.add({
-      title: 'Files copied',
-      description: `${items.length} item${items.length === 1 ? '' : 's'} duplicated successfully.`,
+      title: t('common.success'),
+      description: t('server.files.title'),
     })
 
     await fetchDirectory()
@@ -296,8 +297,8 @@ async function handleBulkCopy() {
   catch (error) {
     toast.add({
       color: 'error',
-      title: 'Copy failed',
-      description: error instanceof Error ? error.message : 'Unable to copy selected files.',
+      title: t('common.error'),
+      description: error instanceof Error ? error.message : t('server.files.failedToLoad'),
     })
   }
   finally {
@@ -319,7 +320,7 @@ async function submitBulkMove() {
   }
 
   moveStatus.active = true
-  moveStatus.summary = `Moving ${items.length} item${items.length === 1 ? '' : 's'}…`
+  moveStatus.summary = t('common.transferring')
   bulkMoveModal.loading = true
 
   try {
@@ -337,8 +338,8 @@ async function submitBulkMove() {
     })
 
     toast.add({
-      title: 'Files moved',
-      description: `${items.length} item${items.length === 1 ? '' : 's'} moved to ${destination}.`,
+      title: t('common.success'),
+      description: t('server.files.title'),
     })
 
     await fetchDirectory()
@@ -348,8 +349,8 @@ async function submitBulkMove() {
   catch (error) {
     toast.add({
       color: 'error',
-      title: 'Move failed',
-      description: error instanceof Error ? error.message : 'Unable to move selected files.',
+      title: t('common.error'),
+      description: error instanceof Error ? error.message : t('server.files.failedToLoad'),
     })
   }
   finally {
@@ -365,7 +366,7 @@ async function submitBulkDelete() {
     return
 
   deleteStatus.active = true
-  deleteStatus.summary = `Deleting ${items.length} item${items.length === 1 ? '' : 's'}…`
+  deleteStatus.summary = t('common.delete')
   bulkDeleteModal.loading = true
 
   const pathsToRemove = new Set(items.map(item => item.path))
@@ -382,8 +383,8 @@ async function submitBulkDelete() {
     directoryEntries.value = directoryEntries.value.filter(entry => !pathsToRemove.has(entry.path))
 
     toast.add({
-      title: 'Files deleted',
-      description: `${items.length} item${items.length === 1 ? '' : 's'} removed successfully.`,
+      title: t('common.success'),
+      description: t('server.files.title'),
     })
 
     clearSelection()
@@ -392,8 +393,8 @@ async function submitBulkDelete() {
   catch (error) {
     toast.add({
       color: 'error',
-      title: 'Delete failed',
-      description: error instanceof Error ? error.message : 'Unable to delete selected files.',
+      title: t('common.error'),
+      description: error instanceof Error ? error.message : t('server.files.failedToLoad'),
     })
   }
   finally {
@@ -423,8 +424,8 @@ async function handleBulkArchive() {
 
     const archiveName = response?.data?.file ?? 'archive.tar'
     toast.add({
-      title: 'Archive created',
-      description: `${archiveName} has been created in the current directory.`,
+      title: t('common.success'),
+      description: t('server.files.title'),
     })
 
     await fetchDirectory()
@@ -433,8 +434,8 @@ async function handleBulkArchive() {
   catch (error) {
     toast.add({
       color: 'error',
-      title: 'Archive failed',
-      description: error instanceof Error ? error.message : 'Unable to archive selected items.',
+      title: t('common.error'),
+      description: error instanceof Error ? error.message : t('server.files.failedToLoad'),
     })
   }
   finally {
@@ -463,8 +464,8 @@ async function handleBulkUnarchive() {
     }
 
     toast.add({
-      title: 'Archive extracted',
-      description: `${archives.length} archive${archives.length === 1 ? '' : 's'} extracted successfully.`,
+      title: t('common.success'),
+      description: t('server.files.title'),
     })
 
     await fetchDirectory()
@@ -473,8 +474,8 @@ async function handleBulkUnarchive() {
   catch (error) {
     toast.add({
       color: 'error',
-      title: 'Extraction failed',
-      description: error instanceof Error ? error.message : 'Unable to extract selected archives.',
+      title: t('common.error'),
+      description: error instanceof Error ? error.message : t('server.files.failedToLoad'),
     })
   }
   finally {
@@ -501,7 +502,7 @@ function closeNewFileModal() {
 async function _submitNewFile() {
   const name = newFileModal.name.trim()
   if (!name) {
-    toast.add({ color: 'error', title: 'Invalid name', description: 'Please provide a new file name.' })
+    toast.add({ color: 'error', title: t('validation.required'), description: t('validation.required') })
     return
   }
 
@@ -520,16 +521,16 @@ async function _submitNewFile() {
     })
     await fetchDirectory()
     toast.add({
-      title: 'File created',
-      description: `${name} created successfully.`,
+      title: t('common.success'),
+      description: t('server.files.title'),
     })
     closeNewFileModal()
   }
   catch (error) {
     toast.add({
       color: 'error',
-      title: 'Failed to create file',
-      description: error instanceof Error ? error.message : 'Unable to create file.',
+      title: t('common.error'),
+      description: error instanceof Error ? error.message : t('server.files.failedToLoad'),
     })
   }
   finally {
@@ -551,7 +552,7 @@ function closeNewFolderModal() {
 async function _submitNewFolder() {
   const name = newFolderModal.name.trim()
   if (!name) {
-    toast.add({ color: 'error', title: 'Invalid name', description: 'Please provide a folder name.' })
+    toast.add({ color: 'error', title: t('validation.required'), description: t('validation.required') })
     return
   }
 
@@ -566,16 +567,16 @@ async function _submitNewFolder() {
     })
     await fetchDirectory()
     toast.add({
-      title: 'Folder created',
-      description: `${name} created successfully.`,
+      title: t('common.success'),
+      description: t('server.files.title'),
     })
     closeNewFolderModal()
   }
   catch (error) {
     toast.add({
       color: 'error',
-      title: 'Failed to create folder',
-      description: error instanceof Error ? error.message : 'Unable to create folder.',
+      title: t('common.error'),
+      description: error instanceof Error ? error.message : t('server.files.failedToLoad'),
     })
   }
   finally {
@@ -609,8 +610,8 @@ async function handleFileUpload(event: Event) {
     })
 
     toast.add({
-      title: 'Upload complete',
-      description: `${files.length} file${files.length > 1 ? 's' : ''} uploaded successfully.`,
+      title: t('common.success'),
+      description: t('server.files.title'),
     })
 
     await fetchDirectory()
@@ -618,8 +619,8 @@ async function handleFileUpload(event: Event) {
   catch (error) {
     toast.add({
       color: 'error',
-      title: 'Upload failed',
-      description: error instanceof Error ? error.message : 'Unable to upload files.',
+      title: t('common.error'),
+      description: error instanceof Error ? error.message : t('server.files.failedToLoad'),
     })
   }
   finally {
@@ -638,11 +639,11 @@ async function handleDownload(file: ServerFileListItem) {
 
     if (data?.url) {
       window.open(data.url, '_blank')
-      toast.add({ title: 'Download', description: `Opened download for ${file.name}.` })
+      toast.add({ title: t('server.files.download'), description: t('server.files.title') })
     }
   }
   catch (error) {
-    toast.add({ color: 'error', title: 'Download failed', description: error instanceof Error ? error.message : 'Unable to download file.' })
+    toast.add({ color: 'error', title: t('common.error'), description: error instanceof Error ? error.message : t('server.files.failedToLoad') })
   }
   finally {
     downloadStatus.active = false
@@ -684,14 +685,14 @@ async function submitRename() {
         files: [{ from: renameModal.file.path, to: destination }],
       },
     })
-    toast.add({ title: 'Renamed', description: `${renameModal.file.name} renamed to ${newName}.` })
+    toast.add({ title: t('common.success'), description: t('server.files.title') })
     if (selectedFile.value?.path === renameModal.file.path)
       selectedFile.value = null
     await fetchDirectory()
     closeRenameModal()
   }
   catch (error) {
-    toast.add({ color: 'error', title: 'Rename failed', description: error instanceof Error ? error.message : 'Unable to rename file.' })
+    toast.add({ color: 'error', title: t('common.error'), description: error instanceof Error ? error.message : t('server.files.failedToLoad') })
   }
   finally {
     renameModal.loading = false
@@ -722,14 +723,14 @@ async function submitDelete() {
         files: [deleteModal.file.path],
       },
     })
-    toast.add({ title: 'Deleted', description: `${deleteModal.file.name} deleted.` })
+    toast.add({ title: t('common.success'), description: t('server.files.title') })
     if (selectedFile.value?.path === deleteModal.file.path)
       selectedFile.value = null
     await fetchDirectory()
     closeDeleteModal()
   }
   catch (error) {
-    toast.add({ color: 'error', title: 'Delete failed', description: error instanceof Error ? error.message : 'Unable to delete file.' })
+    toast.add({ color: 'error', title: t('common.error'), description: error instanceof Error ? error.message : t('server.files.failedToLoad') })
   }
   finally {
     deleteModal.loading = false
@@ -755,7 +756,7 @@ async function submitChmod() {
 
   const mode = chmodModal.value.trim()
   if (!mode) {
-    toast.add({ color: 'error', title: 'Invalid mode', description: 'Please provide a file mode such as 644 or 755.' })
+    toast.add({ color: 'error', title: t('validation.required'), description: t('validation.required') })
     return
   }
 
@@ -768,12 +769,12 @@ async function submitChmod() {
         files: [{ file: chmodModal.file.path, mode }],
       },
     })
-    toast.add({ title: 'Permissions updated', description: `${chmodModal.file.name} set to ${mode}.` })
+    toast.add({ title: t('common.success'), description: t('server.files.title') })
     await fetchDirectory()
     closeChmodModal()
   }
   catch (error) {
-    toast.add({ color: 'error', title: 'Chmod failed', description: error instanceof Error ? error.message : 'Unable to change permissions.' })
+    toast.add({ color: 'error', title: t('common.error'), description: error instanceof Error ? error.message : t('server.files.failedToLoad') })
   }
   finally {
     chmodModal.loading = false
@@ -794,7 +795,7 @@ function closePullModal() {
 async function submitPull() {
   const url = pullModal.url.trim()
   if (!url) {
-    toast.add({ color: 'error', title: 'Invalid URL', description: 'Please provide a valid URL to download.' })
+    toast.add({ color: 'error', title: t('validation.required'), description: t('validation.required') })
     return
   }
 
@@ -808,12 +809,12 @@ async function submitPull() {
         directory: currentDirectory.value,
       },
     })
-    toast.add({ title: 'Pull started', description: `Downloading ${url}` })
+    toast.add({ title: t('common.success'), description: t('server.files.title') })
     await fetchDirectory()
     closePullModal()
   }
   catch (error) {
-    toast.add({ color: 'error', title: 'Pull failed', description: error instanceof Error ? error.message : 'Unable to pull remote file.' })
+    toast.add({ color: 'error', title: t('common.error'), description: error instanceof Error ? error.message : t('server.files.failedToLoad') })
   }
   finally {
     pullModal.loading = false
@@ -823,25 +824,25 @@ async function submitPull() {
 
 const fileActions = computed(() => [
   {
-    label: 'New File',
+    label: t('server.files.newFile'),
     icon: 'i-lucide-file-plus',
     handler: openNewFileModal,
     disabled: directoryPending.value,
   },
   {
-    label: 'New Folder',
+    label: t('server.files.newFolder'),
     icon: 'i-lucide-folder-plus',
     handler: openNewFolderModal,
     disabled: directoryPending.value,
   },
   {
-    label: 'Upload',
+    label: t('server.files.upload'),
     icon: 'i-lucide-upload',
     handler: triggerUploadDialog,
     disabled: directoryPending.value,
   },
   {
-    label: 'Pull from URL',
+    label: t('server.files.title'),
     icon: 'i-lucide-link',
     handler: openPullModal,
     disabled: directoryPending.value,
@@ -855,12 +856,12 @@ function availableFileActions(file: ServerFileListItem | null) {
   const actions = [] as Array<{ label: string; icon: string; onClick: () => void }>
 
   if (file.type === 'file') {
-    actions.push({ label: 'Rename', icon: 'i-lucide-pencil', onClick: () => openRenameModal(file) })
-    actions.push({ label: 'Download', icon: 'i-lucide-download', onClick: () => handleDownload(file) })
-    actions.push({ label: 'Change permissions', icon: 'i-lucide-shield', onClick: () => openChmodModal(file) })
+    actions.push({ label: t('server.files.rename'), icon: 'i-lucide-pencil', onClick: () => openRenameModal(file) })
+    actions.push({ label: t('server.files.download'), icon: 'i-lucide-download', onClick: () => handleDownload(file) })
+    actions.push({ label: t('server.files.title'), icon: 'i-lucide-shield', onClick: () => openChmodModal(file) })
   }
 
-  actions.push({ label: 'Delete', icon: 'i-lucide-trash', onClick: () => openDeleteModal(file) })
+  actions.push({ label: t('server.files.delete'), icon: 'i-lucide-trash', onClick: () => openDeleteModal(file) })
 
   return actions
 }
@@ -893,7 +894,7 @@ const currentEntries = computed<ServerFileListItem[]>(() => directoryEntries.val
   .map((entry): ServerFileListItem => ({
     name: entry.name,
     type: entry.isDirectory ? 'directory' : 'file',
-    size: entry.isDirectory ? '—' : formatBytes(entry.size),
+    size: entry.isDirectory ? t('common.na') : formatBytes(entry.size),
     modified: formatDate(entry.modified),
     path: entry.path,
   }))
@@ -930,11 +931,11 @@ const parentDirectoryLabel = computed(() => parentDirectory.value === '/' ? '/' 
 
 function formatBytes(size: number) {
   if (!Number.isFinite(size) || size < 0)
-    return '—'
+    return t('common.na')
   if (size === 0)
-    return '0 B'
+    return `0 ${t('common.bytes')}`
 
-  const units = ['B', 'KB', 'MB', 'GB', 'TB']
+  const units = [t('common.bytes'), t('common.kb'), t('common.mb'), t('common.gb'), t('common.tb')]
   const exponent = Math.min(units.length - 1, Math.floor(Math.log(size) / Math.log(1024)))
   const value = size / (1024 ** exponent)
   return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[exponent]}`
@@ -1261,8 +1262,8 @@ async function saveEditor(event?: Event) {
     dirtyFiles.delete(file.path)
     
     toast.add({
-      title: 'Saved',
-      description: `${file.name} saved successfully.`,
+      title: t('common.success'),
+      description: t('server.files.title'),
     })
     
     // Don't reload the file - the content is already what we saved
@@ -1296,7 +1297,7 @@ async function saveEditor(event?: Event) {
     
     toast.add({
       color: 'error',
-      title: 'Failed to save file',
+      title: t('common.error'),
       description: errorMessage,
     })
   }
@@ -1361,28 +1362,28 @@ const isEditorDirty = computed(() => {
 
         <div v-if="isAnyOperationActive" class="space-y-2">
           <UAlert v-if="uploadInProgress" color="info" icon="i-lucide-upload">
-            Upload in progress… Keep this tab open until files finish uploading.
+            {{ t('server.files.uploadInProgress') }}
           </UAlert>
           <UAlert v-if="pullInProgress" color="info" icon="i-lucide-link">
-            Pulling remote file… This may take a moment depending on file size.
+            {{ t('server.files.pullingRemoteFile') }}
           </UAlert>
           <UAlert v-if="downloadStatus.active" color="info" icon="i-lucide-download">
-            Preparing download for <strong>{{ downloadStatus.name }}</strong>…
+            {{ t('server.files.preparingDownload', { name: downloadStatus.name }) }}
           </UAlert>
           <UAlert v-if="copyStatus.active" color="info" icon="i-lucide-copy">
-            {{ copyStatus.summary || 'Copying selected files…' }}
+            {{ copyStatus.summary || t('server.files.copyingSelectedFiles') }}
           </UAlert>
           <UAlert v-if="moveStatus.active" color="info" icon="i-lucide-move">
-            {{ moveStatus.summary || 'Moving selected files…' }}
+            {{ moveStatus.summary || t('server.files.movingSelectedFiles') }}
           </UAlert>
           <UAlert v-if="deleteStatus.active" color="warning" icon="i-lucide-trash">
-            {{ deleteStatus.summary || 'Deleting selected files…' }}
+            {{ deleteStatus.summary || t('server.files.deletingSelectedFiles') }}
           </UAlert>
           <UAlert v-if="compressStatus.active" color="info" icon="i-lucide-file-archive">
-            Compressing <strong>{{ compressStatus.target }}</strong>…
+            {{ t('server.files.compressing', { target: compressStatus.target }) }}
           </UAlert>
           <UAlert v-if="decompressStatus.active" color="info" icon="i-lucide-box">
-            Extracting <strong>{{ decompressStatus.target }}</strong>…
+            {{ t('server.files.extracting', { target: decompressStatus.target }) }}
           </UAlert>
         </div>
 
@@ -1390,10 +1391,10 @@ const isEditorDirty = computed(() => {
           <template #header>
             <div class="flex items-center justify-between">
               <div>
-                <h2 class="text-lg font-semibold">File manager</h2>
-                <p class="text-xs text-muted-foreground">Browse and edit your server files in real time.</p>
+                <h2 class="text-lg font-semibold">{{ t('server.files.title') }}</h2>
+                <p class="text-xs text-muted-foreground">{{ t('server.files.description') }}</p>
               </div>
-              <UBadge v-if="directoryPending" color="neutral" variant="soft">Loading…</UBadge>
+              <UBadge v-if="directoryPending" color="neutral" variant="soft">{{ t('server.files.loading') }}</UBadge>
             </div>
           </template>
 
@@ -1430,20 +1431,20 @@ const isEditorDirty = computed(() => {
                     :model-value="allSelected"
                     :indeterminate="indeterminateSelection"
                     :disabled="currentEntries.length === 0"
-                    aria-label="Select all entries"
+                    :aria-label="t('server.files.selectAllEntries')"
                     @update:model-value="toggleSelectAllEntries($event as boolean)"
                   />
-                  <span class="flex-1">Name</span>
-                  <span class="w-24">Type</span>
-                  <span class="w-32 text-right">Last modified</span>
-                  <span class="w-8 text-right">Actions</span>
+                  <span class="flex-1">{{ t('common.name') }}</span>
+                  <span class="w-24">{{ t('server.files.file') }}</span>
+                  <span class="w-32 text-right">{{ t('server.files.modified') }}</span>
+                  <span class="w-8 text-right">{{ t('common.actions') }}</span>
                 </div>
                 <div class="max-h-112 overflow-y-auto">
                   <div v-if="directoryPending" class="space-y-2 p-3 text-xs text-muted-foreground">
                     <div v-for="index in 5" :key="index" class="h-5 animate-pulse rounded bg-muted/60"/>
                   </div>
                   <div v-else-if="currentEntries.length === 0" class="px-3 py-4 text-xs text-muted-foreground">
-                    This directory is empty.
+                    {{ t('server.files.noFilesDescription') }}
                   </div>
                   <div
                     v-for="entry in currentEntries"
@@ -1457,7 +1458,7 @@ const isEditorDirty = computed(() => {
                   >
                     <UCheckbox
                       :model-value="isEntrySelected(entry)"
-                      aria-label="Select entry"
+                      :aria-label="t('server.files.selectEntry')"
                       @update:model-value="toggleEntrySelection(entry, $event as boolean)"
                     />
                     <button
@@ -1577,9 +1578,9 @@ const isEditorDirty = computed(() => {
                   v-if="fileError"
                   color="error"
                   icon="i-lucide-alert-circle"
-                  title="Error loading file"
+                  :title="t('server.files.errorLoadingFile')"
                 >
-                  {{ fileError?.message || fileError?.toString() || 'Failed to load file contents' }}
+                  {{ fileError?.message || fileError?.toString() || t('server.files.failedToLoadFileContents') }}
                 </UAlert>
 
                 <div class="relative flex-1 overflow-hidden rounded-md border border-default/80">
@@ -1641,98 +1642,98 @@ const isEditorDirty = computed(() => {
     </template>
   </UPage>
 
-  <UModal v-model:open="renameModal.open" title="Rename file" :ui="{ footer: 'justify-end gap-2' }">
+  <UModal v-model:open="renameModal.open" :title="t('server.files.rename')" :ui="{ footer: 'justify-end gap-2' }">
     <template #body>
       <UForm class="space-y-4" @submit.prevent="submitRename">
-        <UFormField label="New name" name="newName" required>
-          <UInput v-model="renameModal.value" placeholder="Enter new file name" autofocus />
+        <UFormField :label="t('common.name')" name="newName" required>
+          <UInput v-model="renameModal.value" :placeholder="t('server.files.rename')" autofocus />
         </UFormField>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" color="neutral" :disabled="renameModal.loading" @click="closeRenameModal">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton type="submit" :loading="renameModal.loading">
-            Rename
+            {{ t('server.files.rename') }}
           </UButton>
         </div>
       </UForm>
     </template>
   </UModal>
 
-  <UModal v-model:open="deleteModal.open" title="Delete file" :ui="{ footer: 'justify-end gap-2' }">
+  <UModal v-model:open="deleteModal.open" :title="t('server.files.delete')" :ui="{ footer: 'justify-end gap-2' }">
     <template #body>
       <p class="text-sm text-muted-foreground">
-        Are you sure you want to delete
-        <strong>{{ deleteModal.file?.name }}</strong>? This action cannot be undone.
+        {{ t('common.delete') }}
+        <strong>{{ deleteModal.file?.name }}</strong>? {{ t('common.delete') }}
       </p>
       <div class="mt-6 flex justify-end gap-2">
         <UButton variant="ghost" color="neutral" :disabled="deleteModal.loading" @click="closeDeleteModal">
-          Cancel
+          {{ t('common.cancel') }}
         </UButton>
         <UButton color="error" :loading="deleteModal.loading" @click="submitDelete">
-          Delete
+          {{ t('server.files.delete') }}
         </UButton>
       </div>
     </template>
   </UModal>
 
-  <UModal v-model:open="chmodModal.open" title="Change permissions" :ui="{ footer: 'justify-end gap-2' }">
+  <UModal v-model:open="chmodModal.open" :title="t('server.files.title')" :ui="{ footer: 'justify-end gap-2' }">
     <template #body>
       <UForm class="space-y-4" @submit.prevent="submitChmod">
-        <UFormField label="File mode" name="fileMode" help="Provide a numeric mode, e.g. 644 or 755" required>
+        <UFormField :label="t('server.files.title')" name="fileMode" :help="t('server.files.title')" required>
           <UInput v-model="chmodModal.value" placeholder="755" autofocus />
         </UFormField>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" color="neutral" :disabled="chmodModal.loading" @click="closeChmodModal">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton type="submit" :loading="chmodModal.loading">
-            Update
+            {{ t('common.update') }}
           </UButton>
         </div>
       </UForm>
     </template>
   </UModal>
 
-  <UModal v-model:open="pullModal.open" title="Pull from URL" :ui="{ footer: 'justify-end gap-2' }">
+  <UModal v-model:open="pullModal.open" :title="t('server.files.title')" :ui="{ footer: 'justify-end gap-2' }">
     <template #body>
       <UForm class="space-y-4" @submit.prevent="submitPull">
-        <UFormField label="File URL" name="fileUrl" help="The remote file will be downloaded into the current directory" required>
+        <UFormField :label="t('server.files.title')" name="fileUrl" :help="t('server.files.title')" required>
           <UInput v-model="pullModal.url" type="url" placeholder="https://example.com/file.zip" autofocus />
         </UFormField>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" color="neutral" :disabled="pullModal.loading" @click="closePullModal">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton type="submit" :loading="pullModal.loading">
-            Pull file
+            {{ t('server.files.title') }}
           </UButton>
         </div>
       </UForm>
     </template>
   </UModal>
 
-  <UModal v-model:open="bulkMoveModal.open" title="Move selected items" :ui="{ footer: 'justify-end gap-2' }">
+  <UModal v-model:open="bulkMoveModal.open" :title="t('server.files.moveSelectedItems')" :ui="{ footer: 'justify-end gap-2' }">
     <template #body>
       <div class="space-y-4">
         <div class="rounded-md border border-default/60 bg-muted/10 p-3 text-xs text-muted-foreground">
           <p class="font-medium text-foreground">{{ selectionLabel }}</p>
           <ul class="mt-2 space-y-1">
             <li v-for="item in selectionPreview" :key="item.path" class="truncate">• {{ item.name }}</li>
-            <li v-if="hasSelectionOverflow" class="italic text-muted-foreground">and {{ selectionOverflow }} more…</li>
+            <li v-if="hasSelectionOverflow" class="italic text-muted-foreground">{{ t('server.files.andMore', { count: selectionOverflow }) }}</li>
           </ul>
         </div>
 
         <UForm class="space-y-4" @submit.prevent="submitBulkMove">
-          <UFormField label="Destination directory" name="destination" help="Enter the path where the selected items should be moved." required>
-            <UInput v-model="bulkMoveModal.destination" placeholder="/path/to/destination" :disabled="bulkMoveModal.loading" />
+          <UFormField :label="t('server.files.destinationDirectory')" name="destination" :help="t('server.files.destinationDirectoryHelp')" required>
+            <UInput v-model="bulkMoveModal.destination" :placeholder="t('server.files.destinationDirectoryPlaceholder')" :disabled="bulkMoveModal.loading" />
           </UFormField>
           <div class="flex justify-end gap-2">
             <UButton variant="ghost" color="neutral" :disabled="bulkMoveModal.loading" @click="closeBulkMoveModal">
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton type="submit" :loading="bulkMoveModal.loading">
-              Move items
+              {{ t('server.files.moveItems') }}
             </UButton>
           </div>
         </UForm>
@@ -1740,25 +1741,25 @@ const isEditorDirty = computed(() => {
     </template>
   </UModal>
 
-  <UModal v-model:open="bulkDeleteModal.open" title="Delete selected items" :ui="{ footer: 'justify-end gap-2' }">
+  <UModal v-model:open="bulkDeleteModal.open" :title="t('server.files.deleteSelectedItems')" :ui="{ footer: 'justify-end gap-2' }">
     <template #body>
       <div class="space-y-4 text-sm text-muted-foreground">
         <p>
-          You are about to permanently delete the selected files and folders. This action cannot be undone.
+          {{ t('server.files.deleteSelectedItemsDescription') }}
         </p>
         <div class="rounded-md border border-default/60 bg-muted/10 p-3 text-xs">
           <p class="font-medium text-foreground">{{ selectionLabel }}</p>
           <ul class="mt-2 space-y-1">
             <li v-for="item in selectionPreview" :key="item.path" class="truncate">• {{ item.name }}</li>
-            <li v-if="hasSelectionOverflow" class="italic text-muted-foreground">and {{ selectionOverflow }} more…</li>
+            <li v-if="hasSelectionOverflow" class="italic text-muted-foreground">{{ t('server.files.andMore', { count: selectionOverflow }) }}</li>
           </ul>
         </div>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" color="neutral" :disabled="bulkDeleteModal.loading" @click="closeBulkDeleteModal">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton color="error" :loading="bulkDeleteModal.loading" @click="submitBulkDelete">
-            Delete selected
+            {{ t('server.files.deleteSelected') }}
           </UButton>
         </div>
       </div>

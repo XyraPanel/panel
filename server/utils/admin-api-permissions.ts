@@ -1,7 +1,8 @@
 import type { H3Event } from 'h3'
 import { createError } from 'h3'
 import { checkApiKeyPermission, ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from './admin-acl'
-import type { AdminAclResource, AdminAclPermission, ApiKeyPermissions } from './admin-acl'
+import type { AdminAclResource, AdminAclPermission } from './admin-acl'
+import type { ApiKeyPermissions } from '#shared/types/admin'
 
 export async function requireAdminApiKeyPermission(
   event: H3Event,

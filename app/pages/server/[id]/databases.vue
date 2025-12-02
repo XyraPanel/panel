@@ -8,6 +8,7 @@ definePageMeta({
   layout: 'server',
 })
 
+const { t } = useI18n()
 const serverId = computed(() => route.params.id as string)
 
 const { data: databasesData, pending, error } = await useAsyncData(
@@ -34,7 +35,16 @@ function getStatusColor(status: string) {
 }
 
 function getStatusLabel(status: string) {
-  return status.charAt(0).toUpperCase() + status.slice(1)
+  switch (status) {
+    case 'ready':
+      return t('server.databases.statusReady')
+    case 'revoking':
+      return t('server.databases.statusRevoking')
+    case 'error':
+      return t('server.databases.statusError')
+    default:
+      return status.charAt(0).toUpperCase() + status.slice(1)
+  }
 }
 
 const showCreateModal = ref(false)
@@ -49,8 +59,8 @@ const newDatabaseForm = ref({
 async function createDatabase() {
   if (!newDatabaseForm.value.name) {
     useToast().add({
-      title: 'Validation error',
-      description: 'Database name is required',
+      title: t('validation.required'),
+      description: t('validation.required'),
       color: 'error',
     })
     return
@@ -80,8 +90,8 @@ async function createDatabase() {
     showPasswordModal.value = true
 
     useToast().add({
-      title: 'Database created',
-      description: `Database ${response.data.name} has been created`,
+      title: t('server.databases.databaseCreated'),
+      description: t('server.databases.databaseCreatedDescription', { name: response.data.name }),
       color: 'success',
     })
 
@@ -92,8 +102,8 @@ async function createDatabase() {
   }
   catch (err) {
     useToast().add({
-      title: 'Create failed',
-      description: err instanceof Error ? err.message : 'Failed to create database',
+      title: t('server.databases.createFailed'),
+      description: err instanceof Error ? err.message : t('server.databases.createFailed'),
       color: 'error',
     })
   }
@@ -116,15 +126,15 @@ async function rotatePassword(databaseId: string) {
     }
 
     useToast().add({
-      title: 'Password rotated',
-      description: 'Database password has been updated',
+      title: t('server.databases.passwordRotated'),
+      description: t('server.databases.passwordRotatedDescription'),
       color: 'success',
     })
   }
   catch (err) {
     useToast().add({
-      title: 'Rotation failed',
-      description: err instanceof Error ? err.message : 'Failed to rotate password',
+      title: t('server.databases.rotationFailed'),
+      description: err instanceof Error ? err.message : t('server.databases.rotationFailed'),
       color: 'error',
     })
   }
@@ -151,8 +161,8 @@ async function deleteDatabase() {
     })
 
     useToast().add({
-      title: 'Database deleted',
-      description: 'The database has been deleted successfully',
+      title: t('server.databases.databaseDeleted'),
+      description: t('server.databases.databaseDeletedDescription'),
       color: 'success',
     })
 
@@ -163,8 +173,8 @@ async function deleteDatabase() {
   }
   catch (err) {
     useToast().add({
-      title: 'Delete failed',
-      description: err instanceof Error ? err.message : 'Failed to delete database',
+      title: t('server.databases.deleteFailed'),
+      description: err instanceof Error ? err.message : t('server.databases.deleteFailed'),
       color: 'error',
     })
   }
@@ -181,8 +191,8 @@ async function deleteDatabase() {
         <section class="space-y-6">
           <header class="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p class="text-xs text-muted-foreground">Server {{ serverId }} · Databases</p>
-              <h1 class="text-xl font-semibold">Linked databases</h1>
+              <p class="text-xs text-muted-foreground">{{ t('server.databases.serverDatabases', { id: serverId }) }}</p>
+              <h1 class="text-xl font-semibold">{{ t('server.databases.linkedDatabases') }}</h1>
             </div>
             <div class="flex gap-2">
               <UButton
@@ -190,7 +200,7 @@ async function deleteDatabase() {
                 color="primary"
                 @click="showCreateModal = true"
               >
-                Create Database
+                {{ t('server.databases.createDatabase') }}
               </UButton>
             </div>
           </header>
@@ -198,7 +208,7 @@ async function deleteDatabase() {
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">Linked databases</h2>
+                <h2 class="text-lg font-semibold">{{ t('server.databases.linkedDatabases') }}</h2>
               </div>
             </template>
 
@@ -206,7 +216,7 @@ async function deleteDatabase() {
               <div class="flex items-start gap-2">
                 <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
                 <div>
-                  <p class="font-medium">Failed to load databases</p>
+                  <p class="font-medium">{{ t('server.databases.failedToLoad') }}</p>
                   <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
                 </div>
               </div>
@@ -219,21 +229,21 @@ async function deleteDatabase() {
             <ServerEmptyState
               v-else-if="databases.length === 0"
               icon="i-lucide-database"
-              title="No databases"
-              description="Create a database to get started."
+              :title="t('server.databases.noDatabases')"
+              :description="t('server.databases.noDatabasesDescription')"
             >
               <UButton icon="i-lucide-plus" @click="showCreateModal = true">
-                Create Database
+                {{ t('server.databases.createDatabase') }}
               </UButton>
             </ServerEmptyState>
 
             <div v-else class="overflow-hidden rounded-lg border border-default">
               <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                <span class="col-span-3">Name</span>
-                <span class="col-span-3">Host</span>
-                <span class="col-span-3">Username</span>
-                <span class="col-span-2">Remote</span>
-                <span class="col-span-1">Status</span>
+                <span class="col-span-3">{{ t('server.databases.name') }}</span>
+                <span class="col-span-3">{{ t('server.databases.host') }}</span>
+                <span class="col-span-3">{{ t('server.databases.username') }}</span>
+                <span class="col-span-2">{{ t('server.databases.remote') }}</span>
+                <span class="col-span-1">{{ t('server.databases.status') }}</span>
               </div>
               <div class="divide-y divide-default">
                 <div
@@ -267,7 +277,7 @@ async function deleteDatabase() {
                       :loading="operatingDatabaseId === db.id"
                       @click="rotatePassword(db.id)"
                     >
-                      Rotate Password
+                      {{ t('server.databases.rotatePassword') }}
                     </UButton>
                     <UButton
                       icon="i-lucide-trash-2"
@@ -277,7 +287,7 @@ async function deleteDatabase() {
                       :loading="operatingDatabaseId === db.id"
                       @click="confirmDelete(db.id)"
                     >
-                      Delete
+                      {{ t('server.databases.delete') }}
                     </UButton>
                   </div>
                 </div>
@@ -294,33 +304,33 @@ async function deleteDatabase() {
 
     <UModal
       v-model:open="showCreateModal"
-      title="Create Database"
-      description="Create a new database for this server"
+      :title="t('server.databases.createDatabase')"
+      :description="t('server.databases.createDatabase')"
     >
       <template #body>
         <div class="space-y-4">
-          <UFormField label="Database Name" name="name" required>
+          <UFormField :label="t('server.databases.databaseName')" name="name" required>
             <UInput
               v-model="newDatabaseForm.name"
               icon="i-lucide-database"
-              placeholder="my_database"
+              :placeholder="t('server.databases.databaseNamePlaceholder')"
               class="w-full"
               @keyup.enter="createDatabase"
             />
             <template #help>
-              Will be prefixed with server ID
+              {{ t('server.databases.databaseNameHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="Remote Access" name="remote">
+          <UFormField :label="t('server.databases.remoteAccess')" name="remote">
             <UInput
               v-model="newDatabaseForm.remote"
               icon="i-lucide-globe"
-              placeholder="%"
+              :placeholder="t('server.databases.remoteAccessPlaceholder')"
               class="w-full"
             />
             <template #help>
-              Use % for all IPs or specify an IP address
+              {{ t('server.databases.remoteAccessHelp') }}
             </template>
           </UFormField>
         </div>
@@ -329,7 +339,7 @@ async function deleteDatabase() {
       <template #footer>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" @click="showCreateModal = false">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton
             icon="i-lucide-plus"
@@ -337,7 +347,7 @@ async function deleteDatabase() {
             :disabled="!newDatabaseForm.name"
             @click="createDatabase"
           >
-            Create Database
+            {{ t('server.databases.createDatabase') }}
           </UButton>
         </div>
       </template>
@@ -345,16 +355,16 @@ async function deleteDatabase() {
 
     <UModal
       v-model:open="showPasswordModal"
-      title="New Password"
-      description="Save this password now. You won't be able to see it again!"
+      :title="t('server.databases.newPassword')"
+      :description="t('server.databases.savePasswordNow')"
     >
       <template #body>
         <div v-if="selectedDatabase" class="space-y-4">
           <UAlert color="warning" icon="i-lucide-alert-triangle">
-            Save this password now. You won't be able to see it again!
+            {{ t('server.databases.savePasswordNow') }}
           </UAlert>
 
-          <UFormField label="Password" name="password">
+          <UFormField :label="t('server.databases.password')" name="password">
             <div class="flex items-center gap-2">
               <UInput
                 :model-value="selectedDatabase.password"
@@ -365,11 +375,11 @@ async function deleteDatabase() {
               <ServerCopyButton
                 v-if="selectedDatabase.password"
                 :text="selectedDatabase.password"
-                label="Password"
+                :label="t('server.databases.password')"
               />
             </div>
             <template #help>
-              This password will only be shown once
+              {{ t('server.databases.passwordHelp') }}
             </template>
           </UFormField>
         </div>
@@ -382,7 +392,7 @@ async function deleteDatabase() {
             color="primary"
             @click="showPasswordModal = false"
           >
-            I've Saved It
+            {{ t('server.databases.iveSavedIt') }}
           </UButton>
         </div>
       </template>
@@ -391,19 +401,19 @@ async function deleteDatabase() {
     <UModal v-model="showDeleteModal">
       <UCard>
         <template #header>
-          <h3 class="text-lg font-semibold">Delete Database</h3>
+          <h3 class="text-lg font-semibold">{{ t('server.databases.deleteDatabase') }}</h3>
         </template>
 
         <div class="space-y-4">
           <UAlert color="error" icon="i-lucide-alert-triangle">
-            <template #title>This action cannot be undone!</template>
+            <template #title>{{ t('server.databases.confirmDeleteDatabase') }}</template>
             <template #description>
-              Deleting this database will permanently remove all data. Any applications using this database will stop working.
+              {{ t('server.databases.confirmDeleteDatabaseDescription') }}
             </template>
           </UAlert>
 
           <p class="text-sm text-muted-foreground">
-            Are you sure you want to delete this database?
+            {{ t('server.databases.confirmDeleteDatabaseQuestion') }}
           </p>
 
           <div class="flex justify-end gap-2">
@@ -412,7 +422,7 @@ async function deleteDatabase() {
               :disabled="operatingDatabaseId !== null"
               @click="showDeleteModal = false"
             >
-              Cancel
+              {{ t('common.cancel') }}
             </UButton>
             <UButton
               color="error"
@@ -420,7 +430,7 @@ async function deleteDatabase() {
               :disabled="operatingDatabaseId !== null"
               @click="deleteDatabase"
             >
-              Yes, Delete Database
+              {{ t('server.databases.yesDeleteDatabase') }}
             </UButton>
           </div>
         </div>

@@ -6,12 +6,13 @@ definePageMeta({
   layout: 'server',
 })
 
+const { t } = useI18n()
 const serverId = computed(() => route.params.id as string)
 const toast = useToast()
 
 const { data: startupData, pending, error, refresh } = await useAsyncData(
   `server-${serverId.value}-startup`,
-  () => $fetch<{ data: { startup: string } }>(`/api/servers/${serverId.value}/startup`),
+  () => $fetch<{ data: { startup: string; dockerImage?: string; dockerImages?: Record<string, string>; environment?: Record<string, string> } }>(`/api/servers/${serverId.value}/startup`),
   {
     watch: [serverId],
   },
@@ -23,9 +24,9 @@ const startup = computed(() => {
     ? response.data.startup
     : ''
 })
-const dockerImage = computed(() => startupResponse?.data?.dockerImage || '')
-const dockerImages = computed(() => startupResponse?.data?.dockerImages || {})
-const environment = computed(() => startupResponse?.data?.environment || {})
+const dockerImage = computed(() => startupData.value?.data?.dockerImage || '')
+const dockerImages = computed(() => startupData.value?.data?.dockerImages || {})
+const environment = computed(() => startupData.value?.data?.environment || {})
 
 const hasMultipleDockerImages = computed(() => Object.keys(dockerImages.value).length > 1)
 
@@ -59,8 +60,8 @@ async function updateDockerImage() {
   if (selectedDockerImage.value === dockerImage.value) {
     console.warn('[Client Startup] No change - selected image is same as current')
     toast.add({
-      title: 'No Changes',
-      description: 'Docker image is already set to this value',
+      title: t('server.startup.noChanges'),
+      description: t('server.startup.noChangesDescription'),
       color: 'primary',
     })
     return
@@ -76,8 +77,8 @@ async function updateDockerImage() {
   if (images.length > 0 && !images.includes(selectedDockerImage.value)) {
     console.error('[Client Startup] Invalid image - not in egg list')
     toast.add({
-      title: 'Invalid Image',
-      description: 'This server\'s Docker image can only be changed to one from the egg\'s list.',
+      title: t('server.startup.invalidImage'),
+      description: t('server.startup.invalidImageDescription'),
       color: 'error',
     })
     return
@@ -95,8 +96,8 @@ async function updateDockerImage() {
     console.log('[Client Startup] PUT request successful:', response)
 
     toast.add({
-      title: 'Docker Image Updated',
-      description: 'The Docker image has been updated. Restart your server for changes to take effect.',
+      title: t('server.startup.dockerImageUpdated'),
+      description: t('server.startup.dockerImageUpdatedDescription'),
       color: 'success',
     })
 
@@ -106,8 +107,8 @@ async function updateDockerImage() {
     console.error('[Client Startup] PUT request failed:', error)
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to update Docker image',
+      title: t('common.error'),
+      description: err.data?.message || t('server.startup.failedToUpdateDockerImage'),
       color: 'error',
     })
     
@@ -127,8 +128,8 @@ async function updateDockerImage() {
         <section class="space-y-6">
           <header class="flex flex-wrap items-center justify-between gap-4">
             <div>
-              <p class="text-xs text-muted-foreground">Server {{ serverId }} · Startup</p>
-              <h1 class="text-xl font-semibold">Startup Configuration</h1>
+              <p class="text-xs text-muted-foreground">{{ t('server.startup.serverStartup', { id: serverId }) }}</p>
+              <h1 class="text-xl font-semibold">{{ t('server.startup.startupConfiguration') }}</h1>
             </div>
           </header>
 
@@ -136,7 +137,7 @@ async function updateDockerImage() {
             <div class="flex items-start gap-2">
               <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
               <div>
-                <p class="font-medium">Failed to load startup configuration</p>
+                <p class="font-medium">{{ t('server.startup.failedToLoad') }}</p>
                 <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
               </div>
             </div>
@@ -151,19 +152,19 @@ async function updateDockerImage() {
               <template #header>
                 <div class="flex items-center gap-2">
                   <UIcon name="i-lucide-rocket" class="size-5" />
-                  <h2 class="text-lg font-semibold">Startup Command</h2>
+                  <h2 class="text-lg font-semibold">{{ t('server.startup.startupCommand') }}</h2>
                 </div>
               </template>
 
               <div class="space-y-4">
                 <div class="rounded-md border border-default bg-muted/30 p-4">
-                  <p class="text-xs uppercase tracking-wide text-muted-foreground mb-2">Current Startup Command</p>
+                  <p class="text-xs uppercase tracking-wide text-muted-foreground mb-2">{{ t('server.startup.currentStartupCommand') }}</p>
                   <code class="text-sm font-mono text-foreground">{{ startup }}</code>
                 </div>
 
                 <UAlert color="primary" icon="i-lucide-info">
                   <template #description>
-                    The startup command is configured by your server administrator and cannot be changed.
+                    {{ t('server.startup.startupCommandInfo') }}
                   </template>
                 </UAlert>
               </div>
@@ -173,16 +174,16 @@ async function updateDockerImage() {
               <template #header>
                 <div class="flex items-center gap-2">
                   <UIcon name="i-lucide-container" class="size-5" />
-                  <h2 class="text-lg font-semibold">Docker Image</h2>
+                  <h2 class="text-lg font-semibold">{{ t('server.startup.dockerImage') }}</h2>
                 </div>
               </template>
 
               <div class="space-y-4">
                 <div v-if="hasMultipleDockerImages && !isCustomDockerImage">
                   <UFormField
-                    label="Docker Image"
+                    :label="t('server.startup.dockerImage')"
                     name="dockerImage"
-                    description="The Docker image used to run this server instance"
+                    :description="t('server.startup.dockerImageDescription')"
                   >
                     <USelectMenu
                       v-model="selectedDockerImage"
@@ -200,24 +201,24 @@ async function updateDockerImage() {
                       :disabled="isChangingDockerImage || selectedDockerImage === dockerImage"
                       @click="updateDockerImage"
                     >
-                      Update Docker Image
+                      {{ t('server.startup.updateDockerImage') }}
                     </UButton>
                   </div>
                 </div>
 
                 <div v-else class="rounded-md border border-default bg-muted/30 p-4">
-                  <p class="text-xs uppercase tracking-wide text-muted-foreground mb-2">Current Docker Image</p>
+                  <p class="text-xs uppercase tracking-wide text-muted-foreground mb-2">{{ t('server.startup.currentDockerImage') }}</p>
                   <code class="text-sm font-mono text-foreground">{{ dockerImage }}</code>
                   
                   <UAlert v-if="isCustomDockerImage" color="warning" icon="i-lucide-alert-triangle" class="mt-4">
                     <template #description>
-                      This server's Docker image has been manually set by an administrator and cannot be changed.
+                      {{ t('server.startup.dockerImageCustomWarning') }}
                     </template>
                   </UAlert>
 
                   <UAlert v-else color="primary" icon="i-lucide-info" class="mt-4">
                     <template #description>
-                      This egg only provides one Docker image option. Contact an administrator to change it.
+                      {{ t('server.startup.dockerImageSingleInfo') }}
                     </template>
                   </UAlert>
                 </div>
@@ -228,15 +229,15 @@ async function updateDockerImage() {
               <template #header>
                 <div class="flex items-center gap-2">
                   <UIcon name="i-lucide-variable" class="size-5" />
-                  <h2 class="text-lg font-semibold">Environment Variables</h2>
+                  <h2 class="text-lg font-semibold">{{ t('server.startup.environmentVariables') }}</h2>
                 </div>
               </template>
 
               <ServerEmptyState
                 v-if="Object.keys(environment).length === 0"
                 icon="i-lucide-variable"
-                title="No environment variables"
-                description="Environment variables will appear here when configured by an administrator."
+                :title="t('server.startup.noEnvironmentVariables')"
+                :description="t('server.startup.noEnvironmentVariablesDescription')"
               />
 
               <div v-else class="grid gap-3">
@@ -253,7 +254,7 @@ async function updateDockerImage() {
               <template #footer>
                 <UAlert color="primary" icon="i-lucide-info">
                   <template #description>
-                    Environment variables are configured by your server administrator and cannot be changed.
+                    {{ t('server.startup.environmentVariablesInfo') }}
                   </template>
                 </UAlert>
               </template>

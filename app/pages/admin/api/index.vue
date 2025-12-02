@@ -8,6 +8,7 @@ definePageMeta({
   adminSubtitle: 'Manage existing keys or create new ones for API access.',
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const showCreateModal = ref(false)
 const showKeyModal = ref(false)
@@ -41,23 +42,23 @@ const form = reactive({
   } as Record<string, number>,
 })
 
-const RESOURCE_NAMES: Record<string, string> = {
-  rServers: 'Servers',
-  rNodes: 'Nodes',
-  rAllocations: 'Allocations',
-  rUsers: 'Users',
-  rLocations: 'Locations',
-  rNests: 'Nests',
-  rEggs: 'Eggs',
-  rDatabaseHosts: 'Database Hosts',
-  rServerDatabases: 'Server Databases',
-}
+const RESOURCE_NAMES = computed<Record<string, string>>(() => ({
+  rServers: t('admin.api.servers'),
+  rNodes: t('admin.api.nodes'),
+  rAllocations: t('admin.api.allocations'),
+  rUsers: t('admin.api.users'),
+  rLocations: t('admin.api.locations'),
+  rNests: t('admin.api.nests'),
+  rEggs: t('admin.api.eggs'),
+  rDatabaseHosts: t('admin.api.databaseHosts'),
+  rServerDatabases: t('admin.api.serverDatabases'),
+}))
 
-const PERMISSION_OPTIONS = [
-  { label: 'None', value: 0 },
-  { label: 'Read', value: 1 },
-  { label: 'Read & Write', value: 3 },
-]
+const PERMISSION_OPTIONS = computed(() => [
+  { label: t('admin.api.none'), value: 0 },
+  { label: t('admin.api.read'), value: 1 },
+  { label: t('admin.api.readWrite'), value: 3 },
+])
 
 function resetForm() {
   form.memo = ''
@@ -101,8 +102,8 @@ async function handleCreate() {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to create API key',
+      title: t('common.error'),
+      description: err.data?.message || t('admin.api.createFailed'),
       color: 'error',
     })
   }
@@ -112,7 +113,7 @@ async function handleCreate() {
 }
 
 async function handleDelete(key: ApiKey) {
-  if (!confirm(`Are you sure you want to revoke the API key "${key.memo || key.identifier}"?`)) {
+  if (!confirm(t('admin.api.confirmDelete', { memo: key.memo || key.identifier }))) {
     return
   }
 
@@ -122,8 +123,8 @@ async function handleDelete(key: ApiKey) {
     })
 
     toast.add({
-      title: 'API key revoked',
-      description: 'The API key has been deleted successfully',
+      title: t('admin.api.apiKeyDeleted'),
+      description: t('admin.api.apiKeyDeletedDescription'),
       color: 'success',
     })
 
@@ -132,8 +133,8 @@ async function handleDelete(key: ApiKey) {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to delete API key',
+      title: t('common.error'),
+      description: err.data?.message || t('admin.api.deleteFailed'),
       color: 'error',
     })
   }
@@ -142,8 +143,8 @@ async function handleDelete(key: ApiKey) {
 function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text)
   toast.add({
-    title: 'Copied',
-    description: 'API key copied to clipboard',
+    title: t('common.copied'),
+    description: t('admin.api.apiKeyCopiedToClipboard'),
     color: 'success',
   })
 }
@@ -159,17 +160,17 @@ function copyToClipboard(text: string) {
             <template #header>
               <div class="flex items-center justify-between">
                 <div>
-                  <h2 class="text-lg font-semibold">Active keys</h2>
-                  <p class="text-xs text-muted-foreground">Existing API keys issued for programmatic access.</p>
+                  <h2 class="text-lg font-semibold">{{ t('admin.api.activeKeys') }}</h2>
+                  <p class="text-xs text-muted-foreground">{{ t('admin.api.activeKeysDescription') }}</p>
                 </div>
                 <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="showCreateModal = true">
-                  Create API key
+                  {{ t('admin.api.createApiKey') }}
                 </UButton>
               </div>
             </template>
 
-            <UEmpty v-if="apiKeys.length === 0" icon="i-lucide-key" title="No API keys"
-              description="Create an API key for external integrations" variant="subtle" />
+            <UEmpty v-if="apiKeys.length === 0" :icon="'i-lucide-key'" :title="t('admin.api.noApiKeysYet')"
+              :description="t('admin.api.apiKeysDescription')" variant="subtle" />
 
             <div v-else class="divide-y divide-default">
               <div v-for="key in apiKeys" :key="key.id" class="flex items-center justify-between gap-4 py-4">
@@ -178,30 +179,30 @@ function copyToClipboard(text: string) {
                     <code class="text-sm font-mono">{{ key.identifier }}</code>
                     <UBadge v-if="key.expiresAt" :color="new Date(key.expiresAt) < new Date() ? 'error' : 'neutral'"
                       size="xs" variant="soft">
-                      {{ new Date(key.expiresAt) < new Date() ? 'Expired' : 'Active' }}
+                      {{ new Date(key.expiresAt) < new Date() ? t('admin.api.expired') : t('common.active') }}
                     </UBadge>
                   </div>
                   <p v-if="key.memo" class="text-sm text-muted-foreground">{{ key.memo }}</p>
                   <div class="flex items-center gap-4 text-xs text-muted-foreground">
                     <span>
-                      Created:
+                      {{ t('common.created') }}:
                       <NuxtTime v-if="key.createdAt" :datetime="key.createdAt" relative class="font-medium" />
-                      <span v-else>Unknown</span>
+                      <span v-else>{{ t('common.unknown') }}</span>
                     </span>
                     <span>
-                      Last used:
+                      {{ t('admin.api.lastUsed') }}:
                       <NuxtTime v-if="key.lastUsedAt" :datetime="key.lastUsedAt" relative class="font-medium" />
-                      <span v-else>Never used</span>
+                      <span v-else>{{ t('admin.api.neverUsed') }}</span>
                     </span>
                     <span v-if="key.expiresAt">
-                      Expires:
+                      {{ t('admin.api.expires') }}:
                       <NuxtTime :datetime="key.expiresAt" relative class="font-medium" />
                     </span>
                   </div>
                 </div>
 
                 <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="sm" @click="handleDelete(key)">
-                  Revoke
+                  {{ t('admin.api.revoke') }}
                 </UButton>
               </div>
             </div>
@@ -210,39 +211,39 @@ function copyToClipboard(text: string) {
       </UContainer>
     </UPageBody>
 
-    <UModal v-model:open="showCreateModal" title="Create API Key">
+    <UModal v-model:open="showCreateModal" :title="t('admin.api.createApiKey')">
       <template #body>
         <div class="max-w-4xl mx-auto">
           <form class="space-y-6" @submit.prevent="handleCreate">
           <div class="grid gap-4 md:grid-cols-2">
-            <UFormField label="Description" name="memo">
-              <UInput v-model="form.memo" placeholder="My API Key" :disabled="isSubmitting" class="w-full" />
+            <UFormField :label="t('admin.api.memo')" name="memo">
+              <UInput v-model="form.memo" :placeholder="t('admin.api.memoPlaceholder')" :disabled="isSubmitting" class="w-full" />
               <template #help>
-                Optional description to help you identify this key
+                {{ t('admin.api.memoHelp') }}
               </template>
             </UFormField>
 
-            <UFormField label="Expires At" name="expiresAt">
+            <UFormField :label="t('admin.api.expiresAt')" name="expiresAt">
               <UInput v-model="form.expiresAt" type="datetime-local" :disabled="isSubmitting" class="w-full" />
               <template #help>
-                Optional expiration date. Leave empty for no expiration.
+                {{ t('admin.api.expiresAtHelp') }}
               </template>
             </UFormField>
           </div>
 
-          <UFormField label="Allowed IPs" name="allowedIps">
-            <UInput v-model="form.allowedIps" placeholder="192.168.1.1, 10.0.0.1" :disabled="isSubmitting"
+          <UFormField :label="t('admin.api.allowedIps')" name="allowedIps">
+            <UInput v-model="form.allowedIps" :placeholder="t('admin.api.allowedIpsPlaceholder')" :disabled="isSubmitting"
               class="w-full" />
             <template #help>
-              Comma-separated list of IP addresses. Leave empty to allow all IPs.
+              {{ t('admin.api.allowedIpsHelp') }}
             </template>
           </UFormField>
 
           <div class="space-y-3">
             <div>
-              <label class="text-sm font-medium">Permissions</label>
+              <label class="text-sm font-medium">{{ t('admin.api.permissions') }}</label>
               <p class="text-xs text-muted-foreground mt-1">
-                Select permissions for each resource. You cannot edit permissions after creation.
+                {{ t('admin.api.permissionsHelp') }}
               </p>
             </div>
             <div class="border border-default rounded-lg overflow-hidden">
@@ -275,31 +276,31 @@ function copyToClipboard(text: string) {
       <template #footer>
         <div class="flex justify-end gap-2">
           <UButton color="error" variant="ghost" :disabled="isSubmitting" @click="showCreateModal = false">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton color="primary" variant="subtle" :loading="isSubmitting" @click="handleCreate">
-            Create Key
+            {{ t('admin.api.createKey') }}
           </UButton>
         </div>
       </template>
     </UModal>
 
-    <UModal v-model:open="showKeyModal" :dismissible="false" title="API Key Created">
+    <UModal v-model:open="showKeyModal" :dismissible="false" :title="t('admin.api.apiKeyCreated')">
       <template #body>
         <div class="space-y-4">
           <UAlert color="warning" icon="i-lucide-alert-triangle">
-            <template #title>Save this key now!</template>
+            <template #title>{{ t('admin.api.saveThisKeyNow') }}</template>
             <template #description>
-              This is the only time you will see the full API key. Make sure to copy it now.
+              {{ t('admin.api.apiKeyDescription') }}
             </template>
           </UAlert>
 
           <div class="space-y-2">
-            <label class="text-sm font-medium">API Key</label>
+            <label class="text-sm font-medium">{{ t('admin.api.yourApiKey') }}</label>
             <div class="flex gap-2">
               <UInput :model-value="createdKey?.apiKey" readonly class="flex-1 font-mono" />
               <UButton icon="i-lucide-copy" variant="soft" @click="copyToClipboard(createdKey?.apiKey || '')">
-                Copy
+                {{ t('common.copy') }}
               </UButton>
             </div>
           </div>
@@ -309,7 +310,7 @@ function copyToClipboard(text: string) {
       <template #footer>
         <div class="flex justify-end">
           <UButton color="primary" @click="showKeyModal = false">
-            I've saved the key
+            {{ t('admin.api.iveSavedTheKey') }}
           </UButton>
         </div>
       </template>

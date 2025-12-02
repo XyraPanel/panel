@@ -9,6 +9,7 @@ definePageMeta({
   adminSubtitle: 'Inspect panel access, owned servers, and activity',
 })
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const toast = useToast()
@@ -45,7 +46,7 @@ async function runAction<T>(
 
     if (options.successMessage) {
       toast.add({
-        title: 'Success',
+        title: t('common.success'),
         description: options.successMessage,
         color: 'success',
       })
@@ -54,9 +55,9 @@ async function runAction<T>(
     return result
   }
   catch (error) {
-    const description = error instanceof Error ? error.message : 'An unexpected error occurred.'
+    const description = error instanceof Error ? error.message : t('common.unexpectedError')
     toast.add({
-      title: 'Action failed',
+      title: t('admin.users.actionFailed'),
       description,
       color: 'error',
     })
@@ -70,7 +71,7 @@ async function runAction<T>(
 watch(error, (value) => {
   if (value) {
     toast.add({
-      title: 'Failed to load user profile',
+      title: t('admin.users.failedToLoadUserProfile'),
       description: value.statusMessage || value.message,
       color: 'error',
     })
@@ -131,15 +132,15 @@ const tab = ref<'overview' | 'servers' | 'api-keys' | 'activity'>('overview')
 const controlsOpen = ref(false)
 
 const tabItems = computed(() => [
-  { label: 'Overview', value: 'overview', icon: 'i-lucide-layout-dashboard' },
-  { label: `Servers (${serversPagination.value?.total ?? 0})`, value: 'servers', icon: 'i-lucide-server' },
-  { label: `API keys (${apiKeysPagination.value?.total ?? 0})`, value: 'api-keys', icon: 'i-lucide-key' },
-  { label: `Activity (${activityPagination.value?.total ?? 0})`, value: 'activity', icon: 'i-lucide-activity' },
+  { label: t('admin.users.tabs.overview'), value: 'overview', icon: 'i-lucide-layout-dashboard' },
+  { label: `${t('admin.users.tabs.servers')} (${serversPagination.value?.total ?? 0})`, value: 'servers', icon: 'i-lucide-server' },
+  { label: `${t('admin.users.tabs.apiKeys')} (${apiKeysPagination.value?.total ?? 0})`, value: 'api-keys', icon: 'i-lucide-key' },
+  { label: `${t('admin.users.tabs.activity')} (${activityPagination.value?.total ?? 0})`, value: 'activity', icon: 'i-lucide-activity' },
 ])
 
 function formatDate(value: string | null | undefined) {
   if (!value)
-    return 'Unknown'
+    return t('common.unknown')
 
   return new Date(value).toLocaleString()
 }
@@ -163,8 +164,8 @@ async function sendResetLink(notify = true) {
     )
   }, {
     successMessage: notify
-      ? 'Password reset link generated and emailed to the user.'
-      : 'Password reset link generated.',
+      ? t('admin.users.passwordResetLinkGeneratedAndEmailed')
+      : t('admin.users.passwordResetLinkGenerated'),
   })
 }
 
@@ -200,14 +201,14 @@ async function setTemporaryPassword() {
   }
 
   if (!copied && import.meta.client && typeof window !== 'undefined')
-    window.prompt('Temporary password (copy before closing)', response.temporaryPassword)
+    window.prompt(t('admin.users.temporaryPasswordCopyPrompt'), response.temporaryPassword)
 
-  const baseMessage = 'User must update their password on next login.'
+  const baseMessage = t('admin.users.userMustUpdatePasswordOnNextLogin')
   toast.add({
-    title: 'Temporary password generated',
+    title: t('admin.users.temporaryPasswordGenerated'),
     description: copied
-      ? `Temporary password copied to clipboard. ${baseMessage}`
-      : `Temporary password: ${response.temporaryPassword}\n${baseMessage}`,
+      ? `${t('admin.users.temporaryPasswordCopiedToClipboard')} ${baseMessage}`
+      : `${t('admin.users.temporaryPassword')}: ${response.temporaryPassword}\n${baseMessage}`,
     color: 'success',
   })
 }
@@ -224,7 +225,7 @@ async function disableTwoFactor() {
       },
     )
   }, {
-    successMessage: 'Two-factor authentication disabled for this user.',
+    successMessage: t('admin.users.twoFactorDisabledForUser'),
   })
 }
 
@@ -241,7 +242,7 @@ async function markEmailVerified() {
       },
     )
   }, {
-    successMessage: 'Email marked as verified.',
+    successMessage: t('admin.users.emailMarkedAsVerified'),
   })
 }
 
@@ -258,7 +259,7 @@ async function markEmailUnverified() {
       },
     )
   }, {
-    successMessage: 'Email marked as unverified.',
+    successMessage: t('admin.users.emailMarkedAsUnverified'),
   })
 }
 
@@ -268,8 +269,8 @@ async function resendVerificationEmail() {
 
   if (!hasEmail.value) {
     toast.add({
-      title: 'No email address available',
-      description: 'Add an email address before resending the verification link.',
+      title: t('admin.users.noEmailAddressAvailable'),
+      description: t('admin.users.addEmailBeforeResendingVerification'),
       color: 'error',
     })
     return
@@ -285,7 +286,7 @@ async function resendVerificationEmail() {
     )
   }, {
     refreshAfter: false,
-    successMessage: 'Verification email re-sent.',
+    successMessage: t('admin.users.verificationEmailResent'),
   })
 }
 
@@ -294,7 +295,7 @@ async function toggleSuspension() {
     return
 
   if (isSuspended.value) {
-    if (import.meta.client && typeof window !== 'undefined' && !window.confirm('Unsuspend this user?'))
+    if (import.meta.client && typeof window !== 'undefined' && !window.confirm(t('admin.users.confirmUnsuspendUser')))
       return
 
     await runAction('unsuspend', async () => {
@@ -306,18 +307,18 @@ async function toggleSuspension() {
         },
       )
     }, {
-      successMessage: 'User unsuspended.',
+      successMessage: t('admin.users.userUnsuspended'),
     })
 
     return
   }
 
-  if (import.meta.client && typeof window !== 'undefined' && !window.confirm('Suspend this user? This will revoke active sessions.'))
+  if (import.meta.client && typeof window !== 'undefined' && !window.confirm(t('admin.users.confirmSuspendUser')))
     return
 
   let reason: string | undefined
   if (import.meta.client && typeof window !== 'undefined') {
-    const input = window.prompt('Provide a suspension reason (optional)')?.trim()
+    const input = window.prompt(t('admin.users.provideSuspensionReason'))?.trim()
     reason = input && input.length > 0 ? input : undefined
   }
 
@@ -333,7 +334,7 @@ async function toggleSuspension() {
       },
     )
   }, {
-    successMessage: 'User suspended.',
+    successMessage: t('admin.users.userSuspended'),
   })
 }
 
@@ -373,15 +374,15 @@ async function impersonateUser() {
 
   const expiresLabel = formatDate(response.expiresAt)
   toast.add({
-    title: 'Impersonation link ready',
+    title: t('admin.users.impersonationLinkReady'),
     description: copied
-      ? `Link copied to clipboard. Expires at ${expiresLabel}.`
-      : `Opened a new tab. Expires at ${expiresLabel}.`,
+      ? t('admin.users.linkCopiedExpiresAt', { expiresAt: expiresLabel })
+      : t('admin.users.openedNewTabExpiresAt', { expiresAt: expiresLabel }),
     color: 'success',
   })
 
   if (!copied && import.meta.client && typeof window !== 'undefined')
-    window.prompt('Impersonation link (copy if needed)', impersonateUrl)
+    window.prompt(t('admin.users.impersonationLinkCopyIfNeeded'), impersonateUrl)
 }
 </script>
 
@@ -407,7 +408,7 @@ async function impersonateUser() {
               />
             </div>
             <div v-else>
-              <h1 class="text-xl font-semibold">Loading user…</h1>
+              <h1 class="text-xl font-semibold">{{ t('admin.users.loadingUser') }}</h1>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               <UButton
@@ -416,22 +417,22 @@ async function impersonateUser() {
                 variant="subtle"
                 @click="controlsOpen = true"
               >
-                User controls
+                {{ t('admin.users.userControls') }}
               </UButton>
             </div>
           </header>
 
           <USlideover
             v-model:open="controlsOpen"
-            title="User controls"
-            description="Reset passwords, toggle verification, suspension, and impersonation actions."
+            :title="t('admin.users.userControls')"
+            :description="t('admin.users.userControlsDescription')"
             :ui="{ body: 'space-y-6', footer: 'justify-end gap-2' }"
           >
           <template #body>
             <div class="flex flex-col gap-4">
               <UCard variant="outline" :ui="{ body: 'space-y-3' }">
                 <div class="space-y-2">
-                  <p class="text-xs uppercase tracking-wide text-muted-foreground">Password</p>
+                  <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('auth.password') }}</p>
                   <div class="flex flex-wrap items-center gap-2">
                     <UButton
                       icon="i-lucide-mail"
@@ -441,7 +442,7 @@ async function impersonateUser() {
                       :loading="isActionRunning('reset-link')"
                       @click="sendResetLink()"
                     >
-                      Send reset link
+                      {{ t('admin.users.sendResetLink') }}
                     </UButton>
                     <UButton
                       icon="i-lucide-key"
@@ -451,18 +452,18 @@ async function impersonateUser() {
                       :loading="isActionRunning('reset-temp')"
                       @click="setTemporaryPassword"
                     >
-                      Temporary password
+                      {{ t('admin.users.temporaryPassword') }}
                     </UButton>
                   </div>
                   <p class="text-xs text-muted-foreground">
-                    Generates a reset link or temporary password and revokes active sessions.
+                    {{ t('admin.users.passwordResetDescription') }}
                   </p>
                 </div>
               </UCard>
 
               <UCard variant="outline" :ui="{ body: 'space-y-3' }">
                 <div class="space-y-2">
-                  <p class="text-xs uppercase tracking-wide text-muted-foreground">Two-factor</p>
+                  <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('account.security.twoFactor') }}</p>
                   <div class="flex flex-wrap items-center gap-2">
                     <UButton
                       icon="i-lucide-shield-off"
@@ -473,16 +474,16 @@ async function impersonateUser() {
                       :loading="isActionRunning('disable-2fa')"
                       @click="disableTwoFactor"
                     >
-                      Disable 2FA
+                      {{ t('admin.users.disable2FA') }}
                     </UButton>
                   </div>
-                  <p class="text-xs text-muted-foreground">Removes TOTP configuration and recovery tokens for this user.</p>
+                  <p class="text-xs text-muted-foreground">{{ t('admin.users.disable2FADescription') }}</p>
                 </div>
               </UCard>
 
               <UCard variant="outline" :ui="{ body: 'space-y-3' }">
                 <div class="space-y-2">
-                  <p class="text-xs uppercase tracking-wide text-muted-foreground">Email verification</p>
+                  <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('admin.users.emailVerification') }}</p>
                   <div class="flex flex-wrap items-center gap-2">
                     <UButton
                       icon="i-lucide-badge-check"
@@ -493,7 +494,7 @@ async function impersonateUser() {
                       :loading="isActionRunning('email-verify')"
                       @click="markEmailVerified"
                     >
-                      Mark verified
+                      {{ t('admin.users.markVerified') }}
                     </UButton>
                     <UButton
                       icon="i-lucide-badge-x"
@@ -504,7 +505,7 @@ async function impersonateUser() {
                       :loading="isActionRunning('email-unverify')"
                       @click="markEmailUnverified"
                     >
-                      Mark unverified
+                      {{ t('admin.users.markUnverified') }}
                     </UButton>
                     <UButton
                       icon="i-lucide-mail-plus"
@@ -514,16 +515,16 @@ async function impersonateUser() {
                       :loading="isActionRunning('email-resend')"
                       @click="resendVerificationEmail"
                     >
-                      Resend email
+                      {{ t('admin.users.resendEmail') }}
                     </UButton>
                   </div>
-                  <p class="text-xs text-muted-foreground">Update email verification state or resend the verification link.</p>
+                  <p class="text-xs text-muted-foreground">{{ t('admin.users.emailVerificationDescription') }}</p>
                 </div>
               </UCard>
 
               <UCard variant="outline" :ui="{ body: 'space-y-3' }">
                 <div class="space-y-2">
-                  <p class="text-xs uppercase tracking-wide text-muted-foreground">Account state</p>
+                  <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('admin.users.accountState') }}</p>
                   <div class="flex flex-wrap items-center gap-2">
                     <UButton
                       :icon="isSuspended ? 'i-lucide-user-check' : 'i-lucide-user-x'"
@@ -533,7 +534,7 @@ async function impersonateUser() {
                       :loading="isActionRunning(isSuspended ? 'unsuspend' : 'suspend')"
                       @click="toggleSuspension"
                     >
-                      {{ isSuspended ? 'Unsuspend user' : 'Suspend user' }}
+                      {{ isSuspended ? t('admin.users.unsuspendUser') : t('admin.users.suspendUser') }}
                     </UButton>
                     <UButton
                       icon="i-lucide-user-cog"
@@ -544,10 +545,10 @@ async function impersonateUser() {
                       :loading="isActionRunning('impersonate')"
                       @click="impersonateUser"
                     >
-                      Start impersonation
+                      {{ t('admin.users.startImpersonation') }}
                     </UButton>
                   </div>
-                  <p class="text-xs text-muted-foreground">Suspension revokes active sessions; impersonation generates a temporary sign-in link.</p>
+                  <p class="text-xs text-muted-foreground">{{ t('admin.users.accountStateDescription') }}</p>
                 </div>
               </UCard>
             </div>
@@ -570,17 +571,17 @@ async function impersonateUser() {
         <div v-else-if="profile" class="space-y-6">
           <div v-if="isSuspended || requiresPasswordReset" class="space-y-3">
             <UAlert v-if="isSuspended" color="error" variant="soft" icon="i-lucide-ban">
-              <template #title>Account suspended</template>
+              <template #title>{{ t('admin.users.accountSuspended') }}</template>
               <template #description>
-                <p>Active sessions have been revoked and the user cannot sign in.</p>
-                <p v-if="user?.suspensionReason" class="mt-2 text-xs text-muted-foreground">Reason: {{ user.suspensionReason }}</p>
-                <p v-if="user?.suspendedAt" class="mt-1 text-xs text-muted-foreground">Suspended at {{ formatDate(user.suspendedAt) }}</p>
+                <p>{{ t('admin.users.accountSuspendedDescription') }}</p>
+                <p v-if="user?.suspensionReason" class="mt-2 text-xs text-muted-foreground">{{ t('common.reason') }}: {{ user.suspensionReason }}</p>
+                <p v-if="user?.suspendedAt" class="mt-1 text-xs text-muted-foreground">{{ t('admin.users.suspendedAt') }} {{ formatDate(user.suspendedAt) }}</p>
               </template>
             </UAlert>
             <UAlert v-if="requiresPasswordReset" color="warning" variant="soft" icon="i-lucide-alert-triangle">
-              <template #title>Password reset required</template>
+              <template #title>{{ t('admin.users.passwordResetRequired') }}</template>
               <template #description>
-                <p>The user must set a new password on their next login.</p>
+                <p>{{ t('admin.users.passwordResetRequiredDescription') }}</p>
               </template>
             </UAlert>
           </div>

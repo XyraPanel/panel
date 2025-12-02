@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { FormSubmitEvent, SelectItem } from '@nuxt/ui'
 import type { MailSettings } from '#shared/types/admin'
 
+const { t } = useI18n()
 const toast = useToast()
 const isSubmitting = ref(false)
 const isTesting = ref(false)
@@ -48,8 +49,8 @@ const schema = z.object({
   username: z.string().trim().max(255),
   password: z.string().max(255),
   encryption: z.enum(encryptionEnumValues),
-  fromAddress: z.string().trim().email('Enter a valid email address'),
-  fromName: z.string().trim().min(1, 'Sender name is required').max(120, 'Sender name must be under 120 characters'),
+  fromAddress: z.string().trim().email(t('validation.invalidEmail')),
+  fromName: z.string().trim().min(1, t('admin.settings.mailSettings.fromNameRequired')).max(120, t('admin.settings.mailSettings.fromNameMaxLength')),
 }).superRefine((data, ctx) => {
   const usingService = data.service !== CUSTOM_SERVICE_VALUE
 
@@ -58,7 +59,7 @@ const schema = z.object({
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['host'],
-        message: 'SMTP host is required',
+        message: t('admin.settings.mailSettings.smtpHostRequired'),
       })
     }
 
@@ -66,7 +67,7 @@ const schema = z.object({
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['port'],
-        message: 'SMTP port is required',
+        message: t('admin.settings.mailSettings.smtpPortRequired'),
       })
     }
   }
@@ -76,7 +77,7 @@ const schema = z.object({
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['port'],
-        message: 'Port must be numeric',
+        message: t('admin.settings.mailSettings.smtpPortNumeric'),
       })
     }
     else {
@@ -85,7 +86,7 @@ const schema = z.object({
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           path: ['port'],
-          message: 'Port must be between 1 and 65535',
+          message: t('admin.settings.mailSettings.smtpPortRange'),
         })
       }
     }
@@ -118,7 +119,7 @@ const { data: settings, refresh } = await useFetch<MailSettings>('/api/admin/set
 
 const form = reactive<FormSchema>(createFormState(settings.value))
 const serviceOptions: SelectItem[] = [
-  { label: 'Custom (enter SMTP host)', value: CUSTOM_SERVICE_VALUE },
+  { label: t('admin.settings.mailSettings.customService'), value: CUSTOM_SERVICE_VALUE },
   { label: 'Gmail / Google Workspace', value: 'gmail' },
   { label: 'Microsoft 365 / Outlook', value: 'outlook365' },
   { label: 'Yahoo Mail', value: 'yahoo' },
@@ -178,8 +179,8 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
     })
 
     toast.add({
-      title: 'Settings updated',
-      description: 'Mail settings have been saved successfully',
+      title: t('admin.settings.mailSettings.settingsUpdated'),
+      description: t('admin.settings.mailSettings.settingsUpdatedDescription'),
       color: 'success',
     })
 
@@ -188,8 +189,8 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to update settings',
+      title: t('admin.settings.mailSettings.updateFailed'),
+      description: err.data?.message || t('admin.settings.mailSettings.updateFailed'),
       color: 'error',
     })
   }
@@ -210,16 +211,16 @@ async function handleTestEmail() {
     })
 
     toast.add({
-      title: 'Test email sent',
-      description: 'Check your inbox for the test email',
+      title: t('admin.settings.mailSettings.testEmailSent'),
+      description: t('admin.settings.mailSettings.testEmailSentDescription'),
       color: 'success',
     })
   }
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to send test email',
+      title: t('admin.settings.mailSettings.testEmailFailed'),
+      description: err.data?.message || t('admin.settings.mailSettings.testEmailFailed'),
       color: 'error',
     })
   }
@@ -234,12 +235,12 @@ async function handleTestEmail() {
     <template #header>
       <div class="flex items-center justify-between">
         <div>
-          <h2 class="text-lg font-semibold">Mail Settings</h2>
-          <p class="text-sm text-muted-foreground">Configure SMTP settings for email notifications</p>
+          <h2 class="text-lg font-semibold">{{ t('admin.settings.mailSettings.title') }}</h2>
+          <p class="text-sm text-muted-foreground">{{ t('admin.settings.mailSettings.description') }}</p>
         </div>
         <UButton icon="i-lucide-mail" color="primary" variant="soft" :loading="isTesting"
           :disabled="isTesting || isSubmitting" @click="handleTestEmail">
-          Send Test Email
+          {{ t('admin.settings.mailSettings.sendTestEmail') }}
         </UButton>
       </div>
     </template>
@@ -253,11 +254,11 @@ async function handleTestEmail() {
       @submit="handleSubmit"
     >
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="Mail Driver" name="driver" required>
+        <UFormField :label="t('admin.settings.mailSettings.mailDriver')" name="driver" required>
           <USelect v-model="form.driver" :items="driverOptions" value-key="value" :disabled="isSubmitting" class="w-full" />
         </UFormField>
 
-        <UFormField label="Encryption" name="encryption" required>
+        <UFormField :label="t('admin.settings.mailSettings.encryption')" name="encryption" required>
           <USelect
             v-model="form.encryption"
             :items="encryptionOptions"
@@ -269,7 +270,7 @@ async function handleTestEmail() {
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="Service" name="service" class="md:col-span-2">
+        <UFormField :label="t('admin.settings.mailSettings.service')" name="service" class="md:col-span-2">
           <USelect
             v-model="form.service"
             :items="serviceOptions"
@@ -282,20 +283,20 @@ async function handleTestEmail() {
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="SMTP Host" name="host" required>
+        <UFormField :label="t('admin.settings.mailSettings.smtpHost')" name="host" required>
           <UInput
             v-model="form.host"
-            placeholder="smtp.gmail.com"
+            :placeholder="t('admin.settings.mailSettings.smtpHostPlaceholder')"
             :disabled="isSubmitting || disableSmtpFields"
             class="w-full"
           />
         </UFormField>
 
-        <UFormField label="SMTP Port" name="port" required>
+        <UFormField :label="t('admin.settings.mailSettings.smtpPort')" name="port" required>
           <UInput
             v-model="form.port"
             type="number"
-            placeholder="587"
+            :placeholder="t('admin.settings.mailSettings.smtpPortPlaceholder')"
             :disabled="isSubmitting || disableSmtpFields"
             class="w-full"
           />
@@ -303,28 +304,28 @@ async function handleTestEmail() {
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="Username" name="username">
-          <UInput v-model="form.username" placeholder="user@example.com" :disabled="isSubmitting" class="w-full" />
+        <UFormField :label="t('admin.settings.mailSettings.username')" name="username">
+          <UInput v-model="form.username" :placeholder="t('admin.settings.mailSettings.usernamePlaceholder')" :disabled="isSubmitting" class="w-full" />
         </UFormField>
 
-        <UFormField label="Password" name="password">
-          <UInput v-model="form.password" type="password" placeholder="••••••••" :disabled="isSubmitting" class="w-full" />
+        <UFormField :label="t('admin.settings.mailSettings.password')" name="password">
+          <UInput v-model="form.password" type="password" :placeholder="t('auth.password')" :disabled="isSubmitting" class="w-full" />
         </UFormField>
       </div>
 
       <div class="grid gap-4 md:grid-cols-2">
-        <UFormField label="From Address" name="fromAddress" required>
-          <UInput v-model="form.fromAddress" type="email" placeholder="noreply@example.com" :disabled="isSubmitting" class="w-full" />
+        <UFormField :label="t('admin.settings.mailSettings.fromAddress')" name="fromAddress" required>
+          <UInput v-model="form.fromAddress" type="email" :placeholder="t('admin.settings.mailSettings.fromAddressPlaceholder')" :disabled="isSubmitting" class="w-full" />
         </UFormField>
 
-        <UFormField label="From Name" name="fromName" required>
-          <UInput v-model="form.fromName" placeholder="XyraPanel" :disabled="isSubmitting" class="w-full" />
+        <UFormField :label="t('admin.settings.mailSettings.fromName')" name="fromName" required>
+          <UInput v-model="form.fromName" :placeholder="t('admin.settings.mailSettings.fromNamePlaceholder')" :disabled="isSubmitting" class="w-full" />
         </UFormField>
       </div>
 
       <div class="flex justify-end">
         <UButton type="submit" color="primary" :loading="isSubmitting" :disabled="isSubmitting || isTesting">
-          Save Changes
+          {{ t('admin.settings.mailSettings.saveChanges') }}
         </UButton>
       </div>
     </UForm>

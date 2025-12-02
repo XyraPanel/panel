@@ -3,6 +3,7 @@ import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { AdvancedSettings } from '#shared/types/admin'
 
+const { t } = useI18n()
 const toast = useToast()
 const isSubmitting = ref(false)
 
@@ -12,36 +13,36 @@ const schema = z.object({
   recaptchaEnabled: z.boolean(),
   recaptchaSiteKey: z.string().trim().max(255),
   recaptchaSecretKey: z.string().trim().max(255),
-  sessionTimeoutMinutes: z.number('Session timeout is required')
-    .int('Session timeout must be a whole number')
-    .min(5, 'Minimum 5 minutes')
-    .max(1440, 'Maximum 1440 minutes (24 hours)'),
-  queueConcurrency: z.number('Queue concurrency is required')
-    .int('Concurrency must be a whole number')
-    .min(1, 'Minimum 1 worker')
-    .max(32, 'Maximum 32 workers'),
-  queueRetryLimit: z.number('Queue retry limit is required')
-    .int('Retry limit must be a whole number')
-    .min(1, 'Minimum 1 retry')
-    .max(50, 'Maximum 50 retries'),
-  paginationLimit: z.number('Pagination limit is required')
-    .int('Pagination limit must be a whole number')
-    .min(10, 'Minimum 10 items per page')
-    .max(100, 'Maximum 100 items per page'),
+  sessionTimeoutMinutes: z.number(t('admin.settings.advancedSettings.sessionTimeoutRequired'))
+    .int(t('admin.settings.advancedSettings.sessionTimeoutInt'))
+    .min(5, t('admin.settings.advancedSettings.sessionTimeoutMin'))
+    .max(1440, t('admin.settings.advancedSettings.sessionTimeoutMax')),
+  queueConcurrency: z.number(t('admin.settings.advancedSettings.queueConcurrencyRequired'))
+    .int(t('admin.settings.advancedSettings.queueConcurrencyInt'))
+    .min(1, t('admin.settings.advancedSettings.queueConcurrencyMin'))
+    .max(32, t('admin.settings.advancedSettings.queueConcurrencyMax')),
+  queueRetryLimit: z.number(t('admin.settings.advancedSettings.queueRetryLimitRequired'))
+    .int(t('admin.settings.advancedSettings.queueRetryLimitInt'))
+    .min(1, t('admin.settings.advancedSettings.queueRetryLimitMin'))
+    .max(50, t('admin.settings.advancedSettings.queueRetryLimitMax')),
+  paginationLimit: z.number(t('admin.settings.advancedSettings.paginationLimitRequired'))
+    .int(t('admin.settings.advancedSettings.paginationLimitInt'))
+    .min(10, t('admin.settings.advancedSettings.paginationLimitMin'))
+    .max(100, t('admin.settings.advancedSettings.paginationLimitMax')),
 }).superRefine((data, ctx) => {
   if (data.recaptchaEnabled) {
     if (data.recaptchaSiteKey.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['recaptchaSiteKey'],
-        message: 'Site key required when reCAPTCHA is enabled',
+        message: t('admin.settings.advancedSettings.siteKeyRequired'),
       })
     }
     if (data.recaptchaSecretKey.length === 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
         path: ['recaptchaSecretKey'],
-        message: 'Secret key required when reCAPTCHA is enabled',
+        message: t('admin.settings.advancedSettings.secretKeyRequired'),
       })
     }
   }
@@ -113,8 +114,8 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
     Object.assign(form, payload)
 
     toast.add({
-      title: 'Settings updated',
-      description: 'Advanced settings have been saved successfully',
+      title: t('admin.settings.advancedSettings.settingsUpdated'),
+      description: t('admin.settings.advancedSettings.settingsUpdatedDescription'),
       color: 'success',
     })
 
@@ -123,8 +124,8 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
   catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || 'Failed to update settings',
+      title: t('admin.settings.advancedSettings.updateFailed'),
+      description: err.data?.message || t('admin.settings.advancedSettings.updateFailed'),
       color: 'error',
     })
   }
@@ -137,8 +138,8 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 <template>
   <UCard>
     <template #header>
-      <h2 class="text-lg font-semibold">Advanced Settings</h2>
-      <p class="text-sm text-muted-foreground">Configure advanced panel features and integrations</p>
+      <h2 class="text-lg font-semibold">{{ t('admin.settings.advancedSettings.title') }}</h2>
+      <p class="text-sm text-muted-foreground">{{ t('admin.settings.advancedSettings.description') }}</p>
     </template>
 
     <UForm
@@ -151,73 +152,73 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
     >
 
       <div class="space-y-4">
-        <h3 class="text-sm font-semibold">System</h3>
+        <h3 class="text-sm font-semibold">{{ t('admin.settings.advancedSettings.system') }}</h3>
 
         <UFormField name="telemetryEnabled">
-          <USwitch v-model="form.telemetryEnabled" label="Enable anonymous telemetry" :disabled="isSubmitting" />
+          <USwitch v-model="form.telemetryEnabled" :label="t('admin.settings.advancedSettings.enableTelemetry')" :disabled="isSubmitting" />
         </UFormField>
 
         <UFormField name="debugMode">
-          <USwitch v-model="form.debugMode" label="Enable debug mode" description="Shows verbose logs and stack traces" :disabled="isSubmitting" />
+          <USwitch v-model="form.debugMode" :label="t('admin.settings.advancedSettings.enableDebugMode')" :description="t('admin.settings.advancedSettings.debugModeDescription')" :disabled="isSubmitting" />
         </UFormField>
       </div>
 
       <div class="space-y-4">
-        <h3 class="text-sm font-semibold">reCAPTCHA</h3>
+        <h3 class="text-sm font-semibold">{{ t('admin.settings.advancedSettings.recaptcha') }}</h3>
 
         <UFormField name="recaptchaEnabled">
           <USwitch
             v-model="form.recaptchaEnabled"
-            label="Enable Google reCAPTCHA"
-            description="Protect login and registration forms"
+            :label="t('admin.settings.advancedSettings.enableRecaptcha')"
+            :description="t('admin.settings.advancedSettings.recaptchaDescription')"
             :disabled="isSubmitting"
           />
         </UFormField>
 
         <div v-if="showRecaptchaFields" class="space-y-4">
-          <UFormField label="Site Key" name="recaptchaSiteKey" required>
-            <UInput v-model="form.recaptchaSiteKey" placeholder="6Lc..." :disabled="isSubmitting" class="w-full" />
+          <UFormField :label="t('admin.settings.advancedSettings.siteKey')" name="recaptchaSiteKey" required>
+            <UInput v-model="form.recaptchaSiteKey" :placeholder="t('admin.settings.advancedSettings.siteKeyPlaceholder')" :disabled="isSubmitting" class="w-full" />
             <template #help>
-              Get your keys from <a href="https://www.google.com/recaptcha/admin" target="_blank"
+              {{ t('admin.settings.advancedSettings.getKeysFrom') }} <a href="https://www.google.com/recaptcha/admin" target="_blank"
                 class="text-primary hover:underline">Google reCAPTCHA</a>
             </template>
           </UFormField>
 
-          <UFormField label="Secret Key" name="recaptchaSecretKey" required>
-            <UInput v-model="form.recaptchaSecretKey" type="password" placeholder="6Lc..." :disabled="isSubmitting" class="w-full" />
+          <UFormField :label="t('admin.settings.advancedSettings.secretKey')" name="recaptchaSecretKey" required>
+            <UInput v-model="form.recaptchaSecretKey" type="password" :placeholder="t('admin.settings.advancedSettings.secretKeyPlaceholder')" :disabled="isSubmitting" class="w-full" />
           </UFormField>
         </div>
       </div>
 
       <div class="space-y-4">
-        <h3 class="text-sm font-semibold">Sessions & Queue</h3>
+        <h3 class="text-sm font-semibold">{{ t('admin.settings.advancedSettings.sessionsQueue') }}</h3>
         <div class="grid gap-4 md:grid-cols-3">
-          <UFormField label="Session timeout" name="sessionTimeoutMinutes" required>
+          <UFormField :label="t('admin.settings.advancedSettings.sessionTimeout')" name="sessionTimeoutMinutes" required>
             <UInput v-model.number="form.sessionTimeoutMinutes" type="number" min="5" max="1440"
               suffix="min" :disabled="isSubmitting" class="w-full" />
             <template #description>
-              <span class="text-xs text-muted-foreground">After this period of inactivity users are signed out.</span>
+              <span class="text-xs text-muted-foreground">{{ t('admin.settings.advancedSettings.sessionTimeoutDescription') }}</span>
             </template>
           </UFormField>
 
-          <UFormField label="Queue concurrency" name="queueConcurrency" required>
+          <UFormField :label="t('admin.settings.advancedSettings.queueConcurrency')" name="queueConcurrency" required>
             <UInput v-model.number="form.queueConcurrency" type="number" min="1" max="32" :disabled="isSubmitting" class="w-full" />
             <template #description>
-              <span class="text-xs text-muted-foreground"># of jobs that can run in parallel.</span>
+              <span class="text-xs text-muted-foreground">{{ t('admin.settings.advancedSettings.queueConcurrencyDescription') }}</span>
             </template>
           </UFormField>
 
-          <UFormField label="Queue retry limit" name="queueRetryLimit" required>
+          <UFormField :label="t('admin.settings.advancedSettings.queueRetryLimit')" name="queueRetryLimit" required>
             <UInput v-model.number="form.queueRetryLimit" type="number" min="1" max="50" :disabled="isSubmitting" class="w-full" />
             <template #description>
-              <span class="text-xs text-muted-foreground">Max attempts before a job is marked failed.</span>
+              <span class="text-xs text-muted-foreground">{{ t('admin.settings.advancedSettings.queueRetryLimitDescription') }}</span>
             </template>
           </UFormField>
 
-          <UFormField label="Pagination limit" name="paginationLimit" required>
+          <UFormField :label="t('admin.settings.advancedSettings.paginationLimit')" name="paginationLimit" required>
             <UInput v-model.number="form.paginationLimit" type="number" min="10" max="100" :disabled="isSubmitting" class="w-full" />
             <template #description>
-              <span class="text-xs text-muted-foreground">Default number of items per page in admin lists.</span>
+              <span class="text-xs text-muted-foreground">{{ t('admin.settings.advancedSettings.paginationLimitDescription') }}</span>
             </template>
           </UFormField>
         </div>
@@ -225,7 +226,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 
       <div class="flex justify-end">
         <UButton type="submit" color="primary" :loading="isSubmitting" :disabled="isSubmitting">
-          Save Changes
+          {{ t('admin.settings.advancedSettings.saveChanges') }}
         </UButton>
       </div>
     </UForm>

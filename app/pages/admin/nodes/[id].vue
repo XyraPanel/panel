@@ -22,11 +22,11 @@ definePageMeta({
 
 const nodeId = computed(() => route.params.id as string)
 
-const maintenanceActions = [
-  { label: 'Sync node', icon: 'i-lucide-refresh-ccw', action: 'sync' },
-  { label: 'Rotate tokens', icon: 'i-lucide-key-round', action: 'rotate' },
-  { label: 'Transfer servers', icon: 'i-lucide-truck', action: 'transfer' },
-]
+const maintenanceActions = computed(() => [
+  { label: t('admin.nodes.maintenanceActions.syncNode'), icon: 'i-lucide-refresh-ccw', action: 'sync' },
+  { label: t('admin.nodes.maintenanceActions.rotateTokens'), icon: 'i-lucide-key-round', action: 'rotate' },
+  { label: t('admin.nodes.maintenanceActions.transferServers'), icon: 'i-lucide-truck', action: 'transfer' },
+])
 
 const actionLoading = ref<string | null>(null)
 const showTransferModal = ref(false)
@@ -57,6 +57,7 @@ const nodeOptions = computed(() => {
 const tab = ref<'overview' | 'servers' | 'allocations' | 'settings' | 'configuration' | 'system'>('overview')
 
 const toast = useToast()
+const { t } = useI18n()
 
 const serverQuery = reactive({ page: 1, perPage: 25, search: '' })
 const allocationQuery = reactive({ page: 1, perPage: 25, search: '' })
@@ -92,19 +93,19 @@ const allocationTable = await useAsyncData(
 
 const statusBadge = computed(() => {
   if (stats.value?.maintenanceMode) {
-    return { label: 'Maintenance', color: 'warning' as const }
+    return { label: t('admin.nodes.maintenance'), color: 'warning' as const }
   }
 
   if (node.value && !node.value.public) {
-    return { label: 'Private', color: 'neutral' as const }
+    return { label: t('admin.nodes.private'), color: 'neutral' as const }
   }
 
-  return { label: 'Online', color: 'primary' as const }
+  return { label: t('admin.nodes.online'), color: 'primary' as const }
 })
 
 function formatDateTime(value?: string | null) {
   if (!value) {
-    return 'Unknown'
+    return t('common.unknown')
   }
 
   const date = new Date(value)
@@ -260,22 +261,22 @@ async function handleMaintenanceAction(action: string) {
 
         if (response.connected) {
           toast.add({
-            title: 'Node synced',
-            description: 'Successfully connected to Wings daemon and updated node status.',
+            title: t('admin.nodes.nodeSynced'),
+            description: t('admin.nodes.nodeSyncedDescription'),
             color: 'success',
           })
           await refreshNode()
         } else {
           toast.add({
-            title: 'Sync failed',
-            description: response.message || 'Failed to connect to Wings daemon',
+            title: t('admin.nodes.syncFailed'),
+            description: response.message || t('admin.nodes.failedToConnectToWings'),
             color: 'error',
           })
         }
         break
       }
       case 'rotate': {
-        if (!confirm('Are you sure you want to rotate the node tokens? This will require reconfiguring Wings on the node.')) {
+        if (!confirm(t('admin.nodes.confirmRotateTokens'))) {
           return
         }
 
@@ -284,8 +285,8 @@ async function handleMaintenanceAction(action: string) {
         })
 
         toast.add({
-          title: 'Tokens rotated',
-          description: 'New deployment token has been generated. Update your Wings configuration.',
+          title: t('admin.nodes.tokensRotated'),
+          description: t('admin.nodes.tokensRotatedDescription'),
           color: 'success',
         })
         await refreshNode()
@@ -297,9 +298,9 @@ async function handleMaintenanceAction(action: string) {
       }
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : `Failed to ${action} node`
+    const message = error instanceof Error ? error.message : t('admin.nodes.failedToActionNode', { action })
     toast.add({
-      title: 'Error',
+      title: t('common.error'),
       description: message,
       color: 'error',
     })
@@ -325,20 +326,20 @@ function handleViewServer(row: AdminWingsNodeServerSummary) {
 }
 
 async function handleUnlinkServer(row: AdminWingsNodeServerSummary) {
-  if (!confirm(`Are you sure you want to unlink server "${row.name}" from this node? This will require manual intervention to reassign the server.`)) {
+  if (!confirm(t('admin.nodes.confirmUnlinkServer', { name: row.name }))) {
     return
   }
 
   try {
     toast.add({
-      title: 'Unlink server',
-      description: 'To unlink a server, please transfer it to another node using the server management page.',
+      title: t('admin.nodes.unlinkServer'),
+      description: t('admin.nodes.unlinkServerDescription'),
       color: 'warning',
     })
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to unlink server'
+    const message = error instanceof Error ? error.message : t('admin.nodes.failedToUnlinkServer')
     toast.add({
-      title: 'Error',
+      title: t('common.error'),
       description: message,
       color: 'error',
     })
@@ -348,15 +349,15 @@ async function handleUnlinkServer(row: AdminWingsNodeServerSummary) {
 async function togglePrimaryAllocation(row: AdminWingsNodeAllocationSummary) {
   if (!row.serverId) {
     toast.add({
-      title: 'Error',
-      description: 'Cannot set primary allocation for unassigned allocation',
+      title: t('common.error'),
+      description: t('admin.nodes.cannotSetPrimaryForUnassigned'),
       color: 'error',
     })
     return
   }
 
   const action = row.isPrimary ? 'demote' : 'promote'
-  if (!confirm(`Are you sure you want to ${action} allocation ${row.ip}:${row.port}?`)) {
+  if (!confirm(t('admin.nodes.confirmAllocationAction', { action, ip: row.ip, port: row.port }))) {
     return
   }
 
@@ -366,17 +367,17 @@ async function togglePrimaryAllocation(row: AdminWingsNodeAllocationSummary) {
     })
 
     toast.add({
-      title: row.isPrimary ? 'Allocation demoted' : 'Allocation promoted',
-      description: `Allocation ${row.ip}:${row.port} is now ${row.isPrimary ? 'secondary' : 'primary'}.`,
+      title: row.isPrimary ? t('admin.nodes.allocationDemoted') : t('admin.nodes.allocationPromoted'),
+      description: t('admin.nodes.allocationStatusChanged', { ip: row.ip, port: row.port, status: row.isPrimary ? t('admin.nodes.secondary') : t('admin.nodes.primary') }),
       color: 'success',
     })
 
     await allocationTable.refresh()
     await refreshNode()
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to update allocation'
+    const message = error instanceof Error ? error.message : t('admin.nodes.failedToUpdateAllocation')
     toast.add({
-      title: 'Error',
+      title: t('common.error'),
       description: message,
       color: 'error',
     })
@@ -386,16 +387,16 @@ async function togglePrimaryAllocation(row: AdminWingsNodeAllocationSummary) {
 function handleTransferAllocation(row: AdminWingsNodeAllocationSummary) {
   if (!row.serverId) {
     toast.add({
-      title: 'Error',
-      description: 'Cannot transfer unassigned allocation. Delete it instead.',
+      title: t('common.error'),
+      description: t('admin.nodes.cannotTransferUnassignedAllocation'),
       color: 'error',
     })
     return
   }
 
   toast.add({
-    title: 'Transfer allocation',
-    description: 'To transfer an allocation, transfer the server that uses it to another node.',
+    title: t('admin.nodes.transferAllocation'),
+    description: t('admin.nodes.transferAllocationDescription'),
     color: 'info',
   })
 }
@@ -403,14 +404,14 @@ function handleTransferAllocation(row: AdminWingsNodeAllocationSummary) {
 async function handleDeleteAllocation(row: AdminWingsNodeAllocationSummary) {
   if (row.serverId) {
     toast.add({
-      title: 'Cannot delete',
-      description: 'Cannot delete allocation that is assigned to a server. Unassign it first.',
+      title: t('admin.nodes.cannotDelete'),
+      description: t('admin.nodes.cannotDeleteAssignedAllocation'),
       color: 'error',
     })
     return
   }
 
-  if (!confirm(`Are you sure you want to delete allocation ${row.ip}:${row.port}? This action cannot be undone.`)) {
+  if (!confirm(t('admin.nodes.confirmDeleteAllocation', { ip: row.ip, port: row.port }))) {
     return
   }
 
@@ -420,17 +421,17 @@ async function handleDeleteAllocation(row: AdminWingsNodeAllocationSummary) {
     })
 
     toast.add({
-      title: 'Allocation deleted',
-      description: `Allocation ${row.ip}:${row.port} has been removed.`,
+      title: t('admin.nodes.allocationDeleted'),
+      description: t('admin.nodes.allocationDeletedDescription', { ip: row.ip, port: row.port }),
       color: 'success',
     })
 
     await allocationTable.refresh()
     await refreshNode()
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to delete allocation'
+    const message = error instanceof Error ? error.message : t('admin.nodes.failedToDeleteAllocation')
     toast.add({
-      title: 'Error',
+      title: t('common.error'),
       description: message,
       color: 'error',
     })
@@ -456,8 +457,8 @@ async function handleTransferServers() {
     await Promise.all(transferPromises)
 
     toast.add({
-      title: 'Transfer initiated',
-      description: `Transferring ${transferForm.serverIds.length} server(s) to target node...`,
+      title: t('admin.nodes.transferInitiated'),
+      description: t('admin.nodes.transferringServers', { count: transferForm.serverIds.length }),
       color: 'success',
     })
 
@@ -468,9 +469,9 @@ async function handleTransferServers() {
     await serverTable.refresh()
     await refreshNode()
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to initiate transfer'
+    const message = error instanceof Error ? error.message : t('admin.nodes.failedToInitiateTransfer')
     toast.add({
-      title: 'Error',
+      title: t('common.error'),
       description: message,
       color: 'error',
     })
@@ -486,14 +487,14 @@ function parsePorts(input: string): number[] {
     const start = Number.parseInt(startRaw!, 10)
     const end = Number.parseInt(endRaw!, 10)
     if (!Number.isFinite(start) || !Number.isFinite(end) || start < 1024 || end > 65535 || start > end) {
-      throw new Error('Port range must be between 1024-65535 and start must be less than or equal to end')
+      throw new Error(t('admin.nodes.portRangeInvalid'))
     }
     const ports: number[] = []
     for (let port = start; port <= end; port++) {
       ports.push(port)
     }
     if (ports.length > 1000) {
-      throw new Error('Port range cannot exceed 1000 ports')
+      throw new Error(t('admin.nodes.portRangeExceeded'))
     }
     return ports
   }
@@ -502,7 +503,7 @@ function parsePorts(input: string): number[] {
   const ports = segments.map(segment => {
     const port = Number.parseInt(segment, 10)
     if (!Number.isFinite(port) || port < 1024 || port > 65535) {
-      throw new Error('Ports must be between 1024 and 65535')
+      throw new Error(t('admin.nodes.portsMustBeInRange'))
     }
     return port
   })
@@ -515,8 +516,8 @@ async function handleCreateAllocations() {
 
   if (!createAllocationForm.ip || !createAllocationForm.ports) {
     toast.add({
-      title: 'Error',
-      description: 'IP address and ports are required',
+      title: t('common.error'),
+      description: t('admin.nodes.ipAndPortsRequired'),
       color: 'error',
     })
     return
@@ -532,7 +533,7 @@ async function handleCreateAllocations() {
       : ports.length
 
     if (estimatedCount > 10000) {
-      if (!confirm(`This will create approximately ${estimatedCount.toLocaleString()} allocations. Continue?`)) {
+      if (!confirm(t('admin.nodes.confirmCreateManyAllocations', { count: estimatedCount.toLocaleString() }))) {
         isCreatingAllocations.value = false
         return
       }
@@ -548,8 +549,8 @@ async function handleCreateAllocations() {
     })
 
     toast.add({
-      title: 'Allocations created',
-      description: `Created allocations for ${createAllocationForm.ip} with ${ports.length} port${ports.length === 1 ? '' : 's'}`,
+      title: t('admin.nodes.allocationsCreated'),
+      description: t('admin.nodes.allocationsCreatedDescription', { ip: createAllocationForm.ip, count: ports.length }),
       color: 'success',
     })
 
@@ -561,8 +562,8 @@ async function handleCreateAllocations() {
   } catch (error) {
     const err = error as { data?: { message?: string } }
     toast.add({
-      title: 'Error',
-      description: err.data?.message || (error instanceof Error ? error.message : 'Failed to create allocations'),
+      title: t('common.error'),
+      description: err.data?.message || (error instanceof Error ? error.message : t('admin.nodes.failedToCreateAllocations')),
       color: 'error',
     })
   } finally {
@@ -584,16 +585,16 @@ async function handleCreateAllocations() {
           </div>
         </div>
         <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
-          <template #title>Unable to load node details</template>
+          <template #title>{{ t('admin.nodes.unableToLoadNodeDetails') }}</template>
           <template #description>{{ (error as Error).message }}</template>
         </UAlert>
         <template v-else>
           <header class="flex flex-wrap items-center justify-between gap-4">
             <div class="space-y-1">
-              <p class="text-xs text-muted-foreground">Node {{ nodeId }}</p>
-              <h1 class="text-xl font-semibold">{{ node?.name ?? 'Unknown node' }}</h1>
+              <p class="text-xs text-muted-foreground">{{ t('admin.nodes.node') }} {{ nodeId }}</p>
+              <h1 class="text-xl font-semibold">{{ node?.name ?? t('admin.nodes.unknownNode') }}</h1>
               <p class="text-xs text-muted-foreground">
-                {{ node?.fqdn }} · {{ node?.scheme?.toUpperCase() === 'HTTPS' ? 'TLS' : 'HTTP' }} endpoint
+                {{ node?.fqdn }} · {{ node?.scheme?.toUpperCase() === 'HTTPS' ? t('admin.nodes.tls') : t('admin.nodes.http') }} {{ t('admin.nodes.endpoint') }}
               </p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
@@ -614,38 +615,38 @@ async function handleCreateAllocations() {
           </header>
 
           <UTabs v-model="tab" variant="link" :items="[
-            { label: 'Overview', value: 'overview', icon: 'i-lucide-layout-dashboard' },
-            { label: 'Servers', value: 'servers', icon: 'i-lucide-server' },
-            { label: 'Allocations', value: 'allocations', icon: 'i-lucide-network' },
-            { label: 'Settings', value: 'settings', icon: 'i-lucide-settings' },
-            { label: 'Configuration', value: 'configuration', icon: 'i-lucide-file-code' },
-            { label: 'System', value: 'system', icon: 'i-lucide-activity' },
+            { label: t('admin.nodes.tabs.overview'), value: 'overview', icon: 'i-lucide-layout-dashboard' },
+            { label: t('admin.nodes.tabs.servers'), value: 'servers', icon: 'i-lucide-server' },
+            { label: t('admin.nodes.tabs.allocations'), value: 'allocations', icon: 'i-lucide-network' },
+            { label: t('admin.nodes.tabs.settings'), value: 'settings', icon: 'i-lucide-settings' },
+            { label: t('admin.nodes.tabs.configuration'), value: 'configuration', icon: 'i-lucide-file-code' },
+            { label: t('admin.nodes.tabs.system'), value: 'system', icon: 'i-lucide-activity' },
           ]" class="w-full" />
 
           <div v-if="tab === 'overview'" class="grid gap-4 lg:grid-cols-3">
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
-                <h2 class="text-lg font-semibold">Status</h2>
+                <h2 class="text-lg font-semibold">{{ t('common.status') }}</h2>
               </template>
               <div class="space-y-3">
                 <div class="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Servers</span>
+                  <span>{{ t('admin.nodes.tabs.servers') }}</span>
                   <span>{{ stats?.serversTotal ?? 0 }}</span>
                 </div>
                 <div class="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Allocations</span>
+                  <span>{{ t('admin.nodes.tabs.allocations') }}</span>
                   <span>{{ stats?.allocationsTotal ?? 0 }}</span>
                 </div>
                 <div class="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Memory usage</span>
+                  <span>{{ t('admin.nodes.memoryUsage') }}</span>
                   <span>{{ formatUsage(resourceUsage.memory.used, resourceUsage.memory.total) }}</span>
                 </div>
                 <div class="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Disk usage</span>
+                  <span>{{ t('admin.nodes.diskUsage') }}</span>
                   <span>{{ formatUsage(resourceUsage.disk.used, resourceUsage.disk.total) }}</span>
                 </div>
                 <div class="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Last seen</span>
+                  <span>{{ t('admin.nodes.lastSeen') }}</span>
                   <span>{{ lastSeenDisplay }}</span>
                 </div>
               </div>
@@ -653,15 +654,15 @@ async function handleCreateAllocations() {
 
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
-                <h2 class="text-lg font-semibold">System snapshot</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.nodes.systemSnapshot') }}</h2>
               </template>
               <div class="space-y-3">
                 <UAlert v-if="systemError" color="warning" icon="i-lucide-alert-triangle" size="sm">
-                  <template #title>Unable to contact Wings node</template>
+                  <template #title>{{ t('admin.nodes.unableToContactWingsNode') }}</template>
                   <template #description>{{ systemError }}</template>
                 </UAlert>
                 <div v-else-if="systemMetrics.length === 0" class="text-xs text-muted-foreground">
-                  No system data was returned.
+                  {{ t('admin.nodes.noSystemDataReturned') }}
                 </div>
                 <ul v-else class="space-y-2">
                   <li v-for="metric in systemMetrics" :key="metric.label"
@@ -675,10 +676,10 @@ async function handleCreateAllocations() {
 
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
-                <h2 class="text-lg font-semibold">Recent servers</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.nodes.recentServers') }}</h2>
               </template>
               <div v-if="recentServers.length === 0" class="text-sm text-muted-foreground">
-                No servers were found for this node yet.
+                {{ t('admin.nodes.noServersForNodeYet') }}
               </div>
               <ul v-else class="space-y-3">
                 <li v-for="server in recentServers" :key="server.id" class="rounded-md border border-default px-4 py-3">
@@ -688,7 +689,7 @@ async function handleCreateAllocations() {
                       <p class="text-xs text-muted-foreground">{{ server.identifier }}</p>
                     </div>
                     <UBadge :color="server.primaryAllocation ? 'primary' : 'neutral'" size="xs">
-                      {{ server.primaryAllocation ? `${server.primaryAllocation.ip}:${server.primaryAllocation.port}` : 'No primary allocation' }}
+                      {{ server.primaryAllocation ? `${server.primaryAllocation.ip}:${server.primaryAllocation.port}` : t('server.network.noPrimaryAllocation') }}
                     </UBadge>
                   </div>
                 </li>
@@ -699,14 +700,14 @@ async function handleCreateAllocations() {
           <UCard v-else-if="tab === 'servers'" :ui="{ body: 'space-y-4' }">
             <template #header>
               <div class="flex flex-wrap items-center justify-between gap-2">
-                <h2 class="text-lg font-semibold">Servers</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.nodes.tabs.servers') }}</h2>
                 <div class="flex flex-wrap items-center gap-2">
-                  <UInput v-model="serverQuery.search" icon="i-lucide-search" placeholder="Search name or identifier"
+                  <UInput v-model="serverQuery.search" icon="i-lucide-search" :placeholder="t('admin.nodes.searchNameOrIdentifier')"
                     size="sm" />
                   <USelect v-model="serverQuery.perPage" :options="[
-                    { label: '25 / page', value: 25 },
-                    { label: '50 / page', value: 50 },
-                    { label: '100 / page', value: 100 },
+                    { label: t('common.perPage', { count: 25 }), value: 25 },
+                    { label: t('common.perPage', { count: 50 }), value: 50 },
+                    { label: t('common.perPage', { count: 100 }), value: 100 },
                   ]" size="sm" />
                 </div>
               </div>
@@ -715,20 +716,20 @@ async function handleCreateAllocations() {
               <table class="min-w-full divide-y divide-default text-sm">
                 <thead class="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
-                    <th class="px-3 py-2 text-left">Name</th>
-                    <th class="px-3 py-2 text-left">Identifier</th>
-                    <th class="px-3 py-2 text-left">Primary allocation</th>
-                    <th class="px-3 py-2 text-left">Created</th>
-                    <th class="px-3 py-2 text-left">Updated</th>
-                    <th class="px-3 py-2 text-right">Actions</th>
+                    <th class="px-3 py-2 text-left">{{ t('common.name') }}</th>
+                    <th class="px-3 py-2 text-left">{{ t('admin.nodes.identifier') }}</th>
+                    <th class="px-3 py-2 text-left">{{ t('server.network.primaryAllocation') }}</th>
+                    <th class="px-3 py-2 text-left">{{ t('common.created') }}</th>
+                    <th class="px-3 py-2 text-left">{{ t('common.updated') }}</th>
+                    <th class="px-3 py-2 text-right">{{ t('common.actions') }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-if="serverTable.pending.value" class="text-center text-sm text-muted-foreground">
-                    <td colspan="6" class="px-3 py-6">Loading servers…</td>
+                    <td colspan="6" class="px-3 py-6">{{ t('admin.nodes.loadingServers') }}</td>
                   </tr>
                   <tr v-else-if="serverRows.length === 0" class="text-center text-sm text-muted-foreground">
-                    <td colspan="6" class="px-3 py-6">No servers found.</td>
+                    <td colspan="6" class="px-3 py-6">{{ t('admin.nodes.noServersFound') }}</td>
                   </tr>
                   <tr v-for="server in serverRows" :key="server.id"
                     class="border-b border-default text-sm even:bg-muted/20">
@@ -752,12 +753,12 @@ async function handleCreateAllocations() {
                     <td class="px-3 py-2 text-right">
                       <UDropdownMenu :items="[
                         {
-                          label: 'View details',
+                          label: t('admin.nodes.viewDetails'),
                           icon: 'i-lucide-external-link',
                           click: () => handleViewServer(server),
                         },
                         {
-                          label: 'Unlink from node',
+                          label: t('admin.nodes.unlinkFromNode'),
                           icon: 'i-lucide-unlink',
                           color: 'warning',
                           click: () => handleUnlinkServer(server),
@@ -778,17 +779,17 @@ async function handleCreateAllocations() {
           <UCard v-else-if="tab === 'allocations'" :ui="{ body: 'space-y-4' }">
             <template #header>
               <div class="flex flex-wrap items-center justify-between gap-2">
-                <h2 class="text-lg font-semibold">Allocations</h2>
+                <h2 class="text-lg font-semibold">{{ t('admin.nodes.tabs.allocations') }}</h2>
                 <div class="flex flex-wrap items-center gap-2">
-                  <UInput v-model="allocationQuery.search" icon="i-lucide-search" placeholder="Filter by IP or port"
+                  <UInput v-model="allocationQuery.search" icon="i-lucide-search" :placeholder="t('admin.nodes.filterByIpOrPort')"
                     size="sm" />
                   <USelect v-model="allocationQuery.perPage" :options="[
-                    { label: '25 / page', value: 25 },
-                    { label: '50 / page', value: 50 },
-                    { label: '100 / page', value: 100 },
+                    { label: t('common.perPage', { count: 25 }), value: 25 },
+                    { label: t('common.perPage', { count: 50 }), value: 50 },
+                    { label: t('common.perPage', { count: 100 }), value: 100 },
                   ]" size="sm" />
                   <UButton icon="i-lucide-plus" color="primary" size="sm" @click="showCreateAllocationModal = true">
-                    Create Allocations
+                    {{ t('admin.nodes.createAllocations') }}
                   </UButton>
                 </div>
               </div>
@@ -797,20 +798,20 @@ async function handleCreateAllocations() {
               <table class="min-w-full divide-y divide-default text-sm">
                 <thead class="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
-                    <th class="px-3 py-2 text-left">IP</th>
-                    <th class="px-3 py-2 text-left">Port</th>
-                    <th class="px-3 py-2 text-left">Primary</th>
-                    <th class="px-3 py-2 text-left">Server</th>
-                    <th class="px-3 py-2 text-left">Identifier</th>
-                    <th class="px-3 py-2 text-right">Actions</th>
+                    <th class="px-3 py-2 text-left">{{ t('admin.nodes.ip') }}</th>
+                    <th class="px-3 py-2 text-left">{{ t('admin.nodes.port') }}</th>
+                    <th class="px-3 py-2 text-left">{{ t('admin.nodes.primary') }}</th>
+                    <th class="px-3 py-2 text-left">{{ t('common.server') }}</th>
+                    <th class="px-3 py-2 text-left">{{ t('admin.nodes.identifier') }}</th>
+                    <th class="px-3 py-2 text-right">{{ t('common.actions') }}</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-if="allocationTable.pending.value" class="text-center text-sm text-muted-foreground">
-                    <td colspan="6" class="px-3 py-6">Loading allocations…</td>
+                    <td colspan="6" class="px-3 py-6">{{ t('admin.nodes.loadingAllocations') }}</td>
                   </tr>
                   <tr v-else-if="allocationRows.length === 0" class="text-center text-sm text-muted-foreground">
-                    <td colspan="6" class="px-3 py-6">No allocations found.</td>
+                    <td colspan="6" class="px-3 py-6">{{ t('admin.nodes.noAllocationsFound') }}</td>
                   </tr>
                   <tr v-for="allocation in allocationRows" :key="allocation.id"
                     class="border-b border-default text-sm even:bg-muted/20">
@@ -818,7 +819,7 @@ async function handleCreateAllocations() {
                     <td class="px-3 py-2 font-mono text-xs">{{ allocation.port }}</td>
                     <td class="px-3 py-2">
                       <UBadge :color="allocation.isPrimary ? 'primary' : 'neutral'" size="xs">
-                        {{ allocation.isPrimary ? 'Primary' : 'Secondary' }}
+                        {{ allocation.isPrimary ? t('admin.nodes.primary') : t('admin.nodes.secondary') }}
                       </UBadge>
                     </td>
                     <td class="px-3 py-2">{{ allocation.serverName || 'N/A' }}</td>
@@ -826,17 +827,17 @@ async function handleCreateAllocations() {
                     <td class="px-3 py-2 text-right">
                       <UDropdownMenu :items="[
                         {
-                          label: allocation.isPrimary ? 'Mark as secondary' : 'Mark as primary',
+                          label: allocation.isPrimary ? t('admin.nodes.markAsSecondary') : t('admin.nodes.markAsPrimary'),
                           icon: 'i-lucide-badge-check',
                           click: () => togglePrimaryAllocation(allocation),
                         },
                         {
-                          label: 'Transfer to another node',
+                          label: t('admin.nodes.transferToAnotherNode'),
                           icon: 'i-lucide-send-horizontal',
                           click: () => handleTransferAllocation(allocation),
                         },
                         {
-                          label: 'Delete allocation',
+                          label: t('admin.nodes.deleteAllocation'),
                           icon: 'i-lucide-trash-2',
                           color: 'error',
                           click: () => handleDeleteAllocation(allocation),
@@ -856,21 +857,21 @@ async function handleCreateAllocations() {
 
           <UCard v-else-if="tab === 'settings'" :ui="{ body: 'space-y-4' }">
             <template #header>
-              <h2 class="text-lg font-semibold">Node Settings</h2>
+              <h2 class="text-lg font-semibold">{{ t('admin.nodes.tabs.settings') }}</h2>
             </template>
             <AdminNodeSettings v-if="node" :node="node" />
           </UCard>
 
           <UCard v-else-if="tab === 'configuration'" :ui="{ body: 'space-y-4' }">
             <template #header>
-              <h2 class="text-lg font-semibold">Auto-Deploy Configuration</h2>
+              <h2 class="text-lg font-semibold">{{ t('admin.nodes.autoDeployConfiguration') }}</h2>
             </template>
             <AdminNodeConfiguration v-if="node" :node-id="node.id" />
           </UCard>
 
           <UCard v-else-if="tab === 'system'" :ui="{ body: 'space-y-4' }">
             <template #header>
-              <h2 class="text-lg font-semibold">System Information</h2>
+              <h2 class="text-lg font-semibold">{{ t('admin.nodes.systemInformation') }}</h2>
             </template>
             <AdminNodeSystem v-if="node" :node-id="node.id" />
           </UCard>
@@ -880,29 +881,29 @@ async function handleCreateAllocations() {
 
     <UModal
       v-model:open="showTransferModal"
-      title="Transfer Servers"
-      description="Select servers to transfer to another node"
+      :title="t('admin.nodes.transferServers')"
+      :description="t('admin.nodes.transferServersDescription')"
     >
       <template #body>
         <div class="space-y-4">
           <UAlert icon="i-lucide-info">
-            <template #title>Server Transfer</template>
+            <template #title>{{ t('admin.nodes.serverTransfer') }}</template>
             <template #description>
-              Select servers from this node to transfer to another node. This action will move the servers and their allocations.
+              {{ t('admin.nodes.serverTransferDescription') }}
             </template>
           </UAlert>
-          <UFormField label="Target Node" name="targetNodeId" required>
+          <UFormField :label="t('admin.servers.manage.targetNodeLabel')" name="targetNodeId" required>
             <USelect
               v-model="transferForm.targetNodeId"
               :options="nodeOptions"
-              placeholder="Select target node"
+              :placeholder="t('admin.nodes.selectTargetNode')"
               searchable
             />
             <template #help>
-              Choose the node to transfer servers to
+              {{ t('admin.nodes.chooseNodeToTransferServersTo') }}
             </template>
           </UFormField>
-          <UFormField label="Servers to Transfer" name="serverIds">
+          <UFormField :label="t('admin.nodes.serversToTransfer')" name="serverIds">
             <div class="space-y-2">
               <div v-for="server in serverRows" :key="server.id" class="flex items-center gap-2">
                 <UCheckbox
@@ -917,13 +918,13 @@ async function handleCreateAllocations() {
       </template>
       <template #footer>
         <div class="flex justify-end gap-2">
-          <UButton variant="ghost" @click="showTransferModal = false">Cancel</UButton>
+          <UButton variant="ghost" @click="showTransferModal = false">{{ t('common.cancel') }}</UButton>
           <UButton
             color="primary"
             :disabled="!transferForm.targetNodeId || transferForm.serverIds.length === 0"
             @click="handleTransferServers"
           >
-            Transfer Servers
+            {{ t('admin.nodes.transferServers') }}
           </UButton>
         </div>
       </template>
@@ -931,53 +932,53 @@ async function handleCreateAllocations() {
 
     <UModal
       v-model:open="showCreateAllocationModal"
-      title="Create Allocations"
-      description="Add new IP address and port allocations for this node"
+      :title="t('admin.nodes.createAllocations')"
+      :description="t('admin.nodes.createAllocationsDescription')"
     >
       <template #body>
         <div class="space-y-4">
           <UAlert icon="i-lucide-info">
-            <template #title>Bulk Creation</template>
+            <template #title>{{ t('admin.nodes.bulkCreation') }}</template>
             <template #description>
               <ul class="list-disc list-inside space-y-1 text-sm">
-                <li>IP addresses: Use CIDR notation (e.g., <code>192.168.1.0/24</code>) to create multiple IPs, or a single IP (e.g., <code>192.168.1.1</code>)</li>
-                <li>Ports: Use a range (e.g., <code>25565-25665</code>) or comma-separated list (e.g., <code>25565,25566,25567</code>)</li>
-                <li>CIDR ranges must be between /25 and /32</li>
-                <li>Ports must be between 1024 and 65535</li>
+                <li>{{ t('admin.nodes.bulkCreationIpAddresses') }}</li>
+                <li>{{ t('admin.nodes.bulkCreationPorts') }}</li>
+                <li>{{ t('admin.nodes.bulkCreationCidrRange') }}</li>
+                <li>{{ t('admin.nodes.bulkCreationPortRange') }}</li>
               </ul>
             </template>
           </UAlert>
 
-          <UFormField label="IP Address or CIDR" name="ip" required>
+          <UFormField :label="t('admin.nodes.allocations.ipAddressOrCidr')" name="ip" required>
             <UInput 
               v-model="createAllocationForm.ip" 
-              placeholder="192.168.1.0/24 or 192.168.1.1"
+              :placeholder="t('admin.nodes.ipAddressOrCidrPlaceholder')"
               :disabled="isCreatingAllocations"
             />
             <template #help>
-              Single IP address (e.g., 192.168.1.1) or CIDR notation (e.g., 192.168.1.0/24) to create multiple IPs
+              {{ t('admin.nodes.ipAddressOrCidrHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="Ports" name="ports" required>
+          <UFormField :label="t('admin.nodes.allocations.ports')" name="ports" required>
             <UInput 
               v-model="createAllocationForm.ports" 
-              placeholder="25565-25665 or 25565,25566,25567"
+              :placeholder="t('admin.nodes.portsPlaceholder')"
               :disabled="isCreatingAllocations"
             />
             <template #help>
-              Port range (25565-25665) or comma-separated list (25565,25566,25567). Must be between 1024-65535.
+              {{ t('admin.nodes.portsHelp') }}
             </template>
           </UFormField>
 
-          <UFormField label="IP Alias (Optional)" name="ipAlias">
+          <UFormField :label="t('admin.nodes.allocations.ipAlias')" name="ipAlias">
             <UInput 
               v-model="createAllocationForm.ipAlias" 
-              placeholder="play.example.com"
+              :placeholder="t('admin.nodes.ipAliasPlaceholder')"
               :disabled="isCreatingAllocations"
             />
             <template #help>
-              Optional DNS alias for this IP address
+              {{ t('admin.nodes.ipAliasHelp') }}
             </template>
           </UFormField>
         </div>
@@ -985,7 +986,7 @@ async function handleCreateAllocations() {
       <template #footer>
         <div class="flex justify-end gap-2">
           <UButton variant="ghost" :disabled="isCreatingAllocations" @click="showCreateAllocationModal = false">
-            Cancel
+            {{ t('common.cancel') }}
           </UButton>
           <UButton 
             color="primary" 
@@ -993,7 +994,7 @@ async function handleCreateAllocations() {
             :disabled="isCreatingAllocations || !createAllocationForm.ip || !createAllocationForm.ports"
             @click="handleCreateAllocations"
           >
-            Create Allocations
+            {{ t('admin.nodes.createAllocations') }}
           </UButton>
         </div>
       </template>

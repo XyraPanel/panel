@@ -3,14 +3,15 @@ import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { NavigationMenuItem } from '@nuxt/ui'
 import { authClient } from '~/utils/auth-client'
-import * as locales from '@nuxt/ui/locale'
 
 const { data: session } = await authClient.useSession(useFetch)
 
+const { t } = useI18n()
 const route = useRoute()
+const localePath = useLocalePath()
 if (!session.value?.user) {
   await navigateTo({
-    path: '/auth/login',
+    path: localePath('/auth/login'),
     query: {
       redirect: route.fullPath,
     },
@@ -24,9 +25,10 @@ const signOutLoading = ref(false)
 const layoutUser = computed(() => {
   const sessionData = session.value
   if (!sessionData?.user) {
+    const { t } = useI18n()
     throw createError({
       statusCode: 401,
-      message: 'Unauthorized',
+      message: t('errors.unauthorized'),
     })
   }
   return sessionData.user
@@ -34,7 +36,7 @@ const layoutUser = computed(() => {
 
 const userLabel = computed(() => {
   const user = layoutUser.value
-  return user.username || user.email || user.name || 'User'
+  return user.username || user.email || user.name || t('common.user')
 })
 
 const userAvatar = computed(() => {
@@ -53,7 +55,7 @@ async function handleSignOut() {
   signOutLoading.value = true
   try {
     await authStore.logout()
-    await navigateTo('/auth/login')
+    await navigateTo(localePath('/auth/login'))
   }
   catch (error) {
     console.error('Failed to sign out', error)
@@ -64,22 +66,22 @@ async function handleSignOut() {
 const navigationItems = computed<NavigationMenuItem[]>(() => {
   const items: NavigationMenuItem[] = [
     {
-      label: 'Dashboard',
-      to: '/',
+      label: t('dashboard.title'),
+      to: localePath('index'),
     },
     {
-      label: 'Servers',
-      to: '/server',
+      label: t('server.list.title'),
+      to: localePath('/server'),
     },
     {
-      label: 'Account',
+      label: t('dashboard.account'),
       children: [
-        { label: 'Profile', to: '/account/profile' },
-        { label: 'Security', to: '/account/security' },
-        { label: 'API Keys', to: '/account/api-keys' },
-        { label: 'SSH Keys', to: '/account/ssh-keys' },
-        { label: 'Sessions', to: '/account/sessions' },
-        { label: 'Activity', to: '/account/activity' },
+        { label: t('account.profile.title'), to: localePath('/account/profile') },
+        { label: t('account.security.title'), to: localePath('/account/security') },
+        { label: t('account.apiKeys.title'), to: localePath('/account/api-keys') },
+        { label: t('account.sshKeys.title'), to: localePath('/account/ssh-keys') },
+        { label: t('account.sessions.title'), to: localePath('/account/sessions') },
+        { label: t('account.activity.title'), to: localePath('/account/activity') },
       ],
     },
   ]
@@ -93,25 +95,39 @@ const isAdminUser = computed(() => {
   return false
 })
 
-const { locale, setLocale, locales: i18nLocales } = useI18n()
+const { locale, locales, setLocale } = useI18n()
+const switchLocalePath = useSwitchLocalePath()
+const router = useRouter()
 
 const uiLocales = computed(() => {
-  try {
-    return Object.values(locales) || []
-  }
-  catch {
-    return []
-  }
+  return locales.value.map(loc => {
+    const dir = typeof loc === 'string' ? 'ltr' : (loc.dir || 'ltr')
+    return {
+      code: typeof loc === 'string' ? loc : loc.code,
+      name: typeof loc === 'string' ? loc : (loc.name || loc.code),
+      language: typeof loc === 'string' ? loc : (loc.language || loc.code),
+      dir: (dir === 'auto' ? 'ltr' : dir) as 'ltr' | 'rtl',
+      messages: {},
+    }
+  })
 })
 
-function handleLocaleChange(newLocale: string | undefined) {
-  if (!newLocale) return
-  if (newLocale === 'en' || newLocale === 'es') {
-    const validLocales = i18nLocales.value.map(loc => 
-      typeof loc === 'string' ? loc : loc.code
-    )
-    if (validLocales.includes(newLocale)) {
-      setLocale(newLocale)
+async function handleLocaleChange(newLocale: string | undefined) {
+  if (!newLocale || newLocale === locale.value) return
+  
+  const validLocale = locales.value.find(l => {
+    const code = typeof l === 'string' ? l : l.code
+    return code === newLocale
+  })
+  
+  if (validLocale) {
+    const code = typeof validLocale === 'string' ? validLocale : validLocale.code
+    const path = switchLocalePath(code as 'en' | 'es')
+    if (path) {
+      // Normalize path - ensure trailing slash for root locale paths
+      // switchLocalePath returns '/es' for root route, but we need '/es/'
+      const normalizedPath = (path === '/es' && route.path === '/') ? '/es/' : path
+      await navigateTo(normalizedPath)
     }
   }
 }
@@ -121,11 +137,11 @@ function handleLocaleChange(newLocale: string | undefined) {
   <UDashboardGroup class="min-h-screen bg-muted/30" storage="local" storage-key="client-dashboard">
     <UDashboardSidebar
       collapsible
-      :toggle="{ icon: 'i-lucide-menu', label: 'Navigation', color: 'neutral', variant: 'ghost' }"
+      :toggle="{ icon: 'i-lucide-menu', label: t('common.navigation'), color: 'neutral', variant: 'ghost' }"
       :ui="{ footer: 'border-t border-default' }"
     >
       <template #header="{ collapsed }">
-        <NuxtLink v-if="!collapsed" to="/" class="group inline-flex items-center gap-2">
+        <NuxtLink v-if="!collapsed" :to="localePath('index')" class="group inline-flex items-center gap-2">
           <h1 class="text-lg font-semibold text-muted-foreground group-hover:text-foreground transition">
             XyraPanel
           </h1>
@@ -165,14 +181,14 @@ function handleLocaleChange(newLocale: string | undefined) {
       <template #footer="{ collapsed }">
         <UDropdownMenu
           :items="[[
-            { label: 'Profile', to: '/account/profile' },
-            { label: 'Security', to: '/account/security' },
-            { label: 'API Keys', to: '/account/api-keys' },
-            { label: 'SSH Keys', to: '/account/ssh-keys' },
-            { label: 'Sessions', to: '/account/sessions' },
-            { label: 'Activity', to: '/account/activity' }
+            { label: t('account.profile.title'), to: localePath('/account/profile') },
+            { label: t('account.security.title'), to: localePath('/account/security') },
+            { label: t('account.apiKeys.title'), to: localePath('/account/api-keys') },
+            { label: t('account.sshKeys.title'), to: localePath('/account/ssh-keys') },
+            { label: t('account.sessions.title'), to: localePath('/account/sessions') },
+            { label: t('account.activity.title'), to: localePath('/account/activity') }
           ], [
-            { label: 'Sign out', click: handleSignOut, color: 'error' }
+            { label: t('auth.signOut'), click: handleSignOut, color: 'error' }
           ]]"
         >
           <UButton
@@ -207,7 +223,7 @@ function handleLocaleChange(newLocale: string | undefined) {
                   @update:model-value="handleLocaleChange($event)"
                 />
                 <UButton v-if="isAdminUser" icon="i-lucide-shield" variant="ghost" color="error" to="/admin">
-                  Admin
+                  {{ t('admin.title') }}
                 </UButton>
                 <template #fallback>
                   <span />
@@ -215,7 +231,7 @@ function handleLocaleChange(newLocale: string | undefined) {
               </ClientOnly>
               <UButton icon="i-lucide-log-out" color="primary" variant="subtle" :loading="signOutLoading"
                 @click="handleSignOut">
-                Sign out
+                {{ t('auth.signOut') }}
               </UButton>
             </div>
           </template>

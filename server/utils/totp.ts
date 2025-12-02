@@ -1,22 +1,4 @@
-import { authenticator } from 'otplib'
 import { randomBytes } from 'node:crypto'
-
-export function generateTotpSecret(): string {
-  return authenticator.generateSecret()
-}
-
-export function generateTotpUri(secret: string, username: string, issuer: string = 'XyraPanel'): string {
-  return authenticator.keyuri(username, issuer, secret)
-}
-
-export function verifyTotpToken(token: string, secret: string): boolean {
-  try {
-    return authenticator.verify({ token, secret })
-  }
-  catch {
-    return false
-  }
-}
 
 export function generateRecoveryTokens(count: number = 8): string[] {
   const tokens: string[] = []

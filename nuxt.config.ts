@@ -57,7 +57,6 @@ export default defineNuxtConfig({
     ...(isDev ? ['@nuxt/test-utils/module'] : []), // Only include test utils in development
     '@nuxt/hints',
     'nuxt-charts',
-    '@vite-pwa/nuxt',
     '@nuxtjs/robots',
     '@pinia/nuxt',
     '@pinia/colada-nuxt',
@@ -71,8 +70,20 @@ export default defineNuxtConfig({
     strategy: 'prefix_except_default',
     defaultLocale: 'en',
     locales: [
-      { code: 'en', name: 'English', language: 'en', dir: 'ltr', file: 'en.json' },
-      { code: 'es', name: 'Español', language: 'es', dir: 'ltr', file: 'es.json' },
+      {
+        code: 'en',
+        name: 'English',
+        language: 'en',
+        dir: 'ltr',
+        file: 'en.json',
+      },
+      // {
+      //   code: 'es',
+      //   name: 'Español',
+      //   language: 'es',
+      //   dir: 'ltr',
+      //   file: 'es.json',
+      // },
     ],
     restructureDir: 'i18n',
     langDir: 'locales',

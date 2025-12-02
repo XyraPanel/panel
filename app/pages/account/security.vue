@@ -10,6 +10,7 @@ definePageMeta({
   auth: true,
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const isMounted = ref(false)
 
@@ -41,12 +42,12 @@ const passwordForm = reactive<PasswordFormSchema>({
 
 const passwordStrengthHint = computed(() => {
   if (!passwordForm.newPassword)
-    return 'Use at least 12 characters with a mix of letters, numbers, and symbols.'
+    return t('account.security.password.passwordStrengthHint')
 
   if (passwordForm.newPassword.length < 12)
-    return 'Password must be at least 12 characters.'
+    return t('account.security.password.passwordMinLength')
 
-  return 'Looks good! Make sure it is unique to XyraPanel.'
+  return t('account.security.password.passwordLooksGood')
 })
 
 const passwordIsValid = computed(() => passwordSchema.safeParse(passwordForm).success)
@@ -68,10 +69,12 @@ async function handlePasswordSubmit(event: FormSubmitEvent<PasswordFormSchema>) 
     }) as { success: boolean; revokedSessions: number }
 
     toast.add({
-      title: 'Password updated',
+      title: t('account.security.password.passwordUpdated'),
       description: response.revokedSessions > 0
-        ? `Signed out ${response.revokedSessions} other session${response.revokedSessions === 1 ? '' : 's'}.`
-        : 'Your password has been changed.',
+        ? (response.revokedSessions === 1 
+          ? t('account.security.password.signedOutSessionsSingular', { count: response.revokedSessions })
+          : t('account.security.password.signedOutSessionsPlural', { count: response.revokedSessions }))
+        : t('account.security.password.passwordChanged'),
       color: 'success',
     })
 
@@ -85,11 +88,11 @@ async function handlePasswordSubmit(event: FormSubmitEvent<PasswordFormSchema>) 
     })
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to update password.'
+    const message = error instanceof Error ? error.message : t('account.security.password.unableToUpdatePassword')
     passwordError.value = message
 
     toast.add({
-      title: 'Failed to update password',
+      title: t('account.security.password.failedToUpdatePassword'),
       description: message,
       color: 'error',
     })
@@ -139,14 +142,14 @@ function clearSetupState() {
 async function beginTotpSetup() {
   if (totpEnabled.value) {
     toast.add({
-      title: 'Two-factor already enabled',
-      description: 'You need to disable it first if you want to reconfigure your authenticator.',
+      title: t('account.security.twoFactor.alreadyEnabled'),
+      description: t('account.security.twoFactor.disableFirst'),
     })
     return
   }
 
   if (!enableForm.password) {
-    twoFactorError.value = 'Enter your password to enable two-factor authentication.'
+    twoFactorError.value = t('account.security.twoFactor.enterPasswordToEnable')
     return
   }
 
@@ -164,16 +167,16 @@ async function beginTotpSetup() {
     enableForm.password = ''
 
     toast.add({
-      title: 'TOTP setup started',
-      description: 'Scan the QR code with your authenticator app and enter the 6-digit code to confirm.',
+      title: t('account.security.twoFactor.totpSetupStarted'),
+      description: t('account.security.twoFactor.scanQRCode'),
       color: 'primary',
     })
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to start two-factor setup.'
+    const message = error instanceof Error ? error.message : t('account.security.twoFactor.failedToStartSetup')
     twoFactorError.value = message
     toast.add({
-      title: 'Unable to start setup',
+      title: t('account.security.twoFactor.unableToStartSetup'),
       description: message,
       color: 'error',
     })
@@ -185,12 +188,12 @@ async function beginTotpSetup() {
 
 async function verifyTotp() {
   if (!totpSetup.value) {
-    twoFactorError.value = 'Start the setup process before verifying.'
+    twoFactorError.value = t('account.security.twoFactor.startSetupFirst')
     return
   }
 
   if (verificationCode.value.trim().length < 6) {
-    twoFactorError.value = 'Enter the 6-digit code from your authenticator app.'
+    twoFactorError.value = t('account.security.twoFactor.enter6DigitCodeFromApp')
     return
   }
 
@@ -207,17 +210,17 @@ async function verifyTotp() {
     totpStateOverride.value = true
     await authStore.syncSession()
     toast.add({
-      title: 'Two-factor enabled',
-      description: 'Keep your recovery tokens in a safe location.',
+      title: t('account.security.twoFactor.twoFactorEnabled'),
+      description: t('account.security.twoFactor.keepRecoveryTokens'),
       color: 'success',
     })
     clearSetupState()
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Invalid verification code.'
+    const message = error instanceof Error ? error.message : t('account.security.twoFactor.invalidVerificationCode')
     twoFactorError.value = message
     toast.add({
-      title: 'Verification failed',
+      title: t('account.security.twoFactor.verificationFailed'),
       description: message,
       color: 'error',
     })
@@ -232,7 +235,7 @@ async function disableTotp() {
     return
 
   if (!disableForm.password) {
-    twoFactorError.value = 'Enter your password to disable two-factor authentication.'
+    twoFactorError.value = t('account.security.twoFactor.confirmPasswordToDisable')
     return
   }
 
@@ -249,18 +252,18 @@ async function disableTotp() {
     await authStore.syncSession()
     totpStateOverride.value = false
     toast.add({
-      title: 'Two-factor disabled',
-      description: 'Authenticator requirements have been removed.',
+      title: t('account.security.twoFactor.twoFactorDisabled'),
+      description: t('account.security.twoFactor.authenticatorRemoved'),
       color: 'warning',
     })
     disableForm.password = ''
     clearSetupState()
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to disable two-factor authentication.'
+    const message = error instanceof Error ? error.message : t('account.security.twoFactor.unableToDisable')
     twoFactorError.value = message
     toast.add({
-      title: 'Disable failed',
+      title: t('account.security.twoFactor.disableFailed'),
       description: message,
       color: 'error',
     })
@@ -278,17 +281,17 @@ async function clearCompromisedFlag() {
     })
 
     toast.add({
-      title: 'Flag cleared',
-      description: 'Password compromised flag has been cleared. Refreshing session...',
+      title: t('account.security.password.flagCleared'),
+      description: t('account.security.password.flagClearedDescription'),
       color: 'success',
     })
 
     await authStore.syncSession({ force: true, bypassCache: true })
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to clear flag'
+    const message = error instanceof Error ? error.message : t('account.security.password.failedToClearFlag')
     toast.add({
-      title: 'Failed to clear flag',
+      title: t('account.security.password.failedToClearFlag'),
       description: message,
       color: 'error',
     })
@@ -303,8 +306,8 @@ async function clearCompromisedFlag() {
   <UPage>
     <UContainer>
       <UPageHeader
-        title="Security"
-        description="Harden your account with strong passwords and multifactor authentication."
+        :title="t('account.security.title')"
+        :description="t('account.security.description')"
       />
     </UContainer>
 
@@ -314,9 +317,9 @@ async function clearCompromisedFlag() {
           <UCard :ui="{ body: 'space-y-4' }">
             <template #header>
               <div>
-                <h2 class="text-lg font-semibold">Password</h2>
+                <h2 class="text-lg font-semibold">{{ t('account.security.password.title') }}</h2>
                 <p class="text-xs text-muted-foreground">
-                  Update your password to keep your account secure.
+                  {{ t('account.security.password.description') }}
                 </p>
               </div>
             </template>
@@ -328,8 +331,8 @@ async function clearCompromisedFlag() {
               icon="i-lucide-shield-alert"
               color="warning"
               variant="subtle"
-              title="Password Marked as Compromised"
-              description="Your password was previously marked as compromised. If you've already changed to a secure password, you can clear this flag manually."
+              :title="t('account.security.password.passwordMarkedCompromised')"
+              :description="t('account.security.password.passwordPreviouslyCompromised')"
               class="mb-4"
             >
               <template #actions>
@@ -341,7 +344,7 @@ async function clearCompromisedFlag() {
                   :disabled="isClearingCompromised"
                   @click="clearCompromisedFlag"
                 >
-                  Clear Flag
+                  {{ t('account.security.password.clearFlag') }}
                 </UButton>
               </template>
             </UAlert>
@@ -353,36 +356,36 @@ async function clearCompromisedFlag() {
               :disabled="isSavingPassword"
               @submit="handlePasswordSubmit"
             >
-              <UFormField label="Current password" name="currentPassword" required>
+              <UFormField :label="t('account.security.password.currentPassword')" name="currentPassword" required>
                 <UInput
                   v-model="passwordForm.currentPassword"
                   type="password"
                   autocomplete="current-password"
                   icon="i-lucide-lock"
-                  placeholder="Enter current password"
+                  :placeholder="t('account.security.password.enterCurrentPassword')"
                   class="w-full"
                 />
               </UFormField>
-              <UFormField label="New password" name="newPassword" required>
+              <UFormField :label="t('account.security.password.newPassword')" name="newPassword" required>
                 <UInput
                   v-model="passwordForm.newPassword"
                   type="password"
                   autocomplete="new-password"
                   icon="i-lucide-key"
-                  placeholder="Enter new password"
+                  :placeholder="t('account.security.password.enterNewPassword')"
                   class="w-full"
                 />
                 <template #help>
                   {{ passwordStrengthHint }}
                 </template>
               </UFormField>
-              <UFormField label="Confirm password" name="confirmPassword" required>
+              <UFormField :label="t('account.security.password.confirmPassword')" name="confirmPassword" required>
                 <UInput
                   v-model="passwordForm.confirmPassword"
                   type="password"
                   autocomplete="new-password"
                   icon="i-lucide-shield-check"
-                  placeholder="Confirm new password"
+                  :placeholder="t('account.security.password.confirmNewPassword')"
                   class="w-full"
                 />
               </UFormField>
@@ -395,7 +398,7 @@ async function clearCompromisedFlag() {
                   :loading="isSavingPassword"
                   :disabled="isSavingPassword || !passwordIsValid"
                 >
-                  Update password
+                  {{ t('account.security.password.updatePassword') }}
                 </UButton>
               </div>
             </UForm>
@@ -405,13 +408,13 @@ async function clearCompromisedFlag() {
             <template #header>
               <div class="flex items-center justify-between">
                 <div>
-                  <h2 class="text-lg font-semibold">Two-factor authentication</h2>
+                  <h2 class="text-lg font-semibold">{{ t('account.security.twoFactor.title') }}</h2>
                   <p class="text-xs text-muted-foreground">
-                    Protect your account with TOTP-compatible authenticator apps (Google Authenticator, 1Password, etc.).
+                    {{ t('account.security.twoFactor.description') }}
                   </p>
                 </div>
                 <UBadge :color="totpEnabled ? 'success' : 'warning'" variant="subtle">
-                  {{ totpEnabled ? 'Enabled' : 'Disabled' }}
+                  {{ totpEnabled ? t('account.security.twoFactor.enabled') : t('account.security.twoFactor.disabled') }}
                 </UBadge>
               </div>
             </template>
@@ -428,20 +431,20 @@ async function clearCompromisedFlag() {
             <template v-else>
               <div v-if="!totpEnabled && !totpSetup" class="space-y-4">
                 <p class="text-sm text-muted-foreground">
-                  Enter your password to generate a TOTP secret and recovery codes. You'll scan a QR code and confirm with a 6-digit code.
+                  {{ t('account.security.twoFactor.enterPasswordToEnable') }}
                 </p>
-                <UFormField label="Password confirmation" name="enablePassword" required>
+                <UFormField :label="t('account.security.twoFactor.passwordConfirmation')" name="enablePassword" required>
                   <UInput
                     v-model="enableForm.password"
                     type="password"
-                    placeholder="Enter your password"
+                    :placeholder="t('account.security.twoFactor.enterPassword')"
                     icon="i-lucide-lock"
                     class="w-full"
                     :disabled="enableSubmitting"
                     @keyup.enter="beginTotpSetup"
                   />
                   <template #help>
-                    Confirm your password to start two-factor authentication setup
+                    {{ t('account.security.twoFactor.confirmPasswordToStart') }}
                   </template>
                 </UFormField>
                 <UButton
@@ -452,7 +455,7 @@ async function clearCompromisedFlag() {
                   :disabled="!enableForm.password || enableSubmitting"
                   @click="beginTotpSetup"
                 >
-                  Start setup
+                  {{ t('account.security.twoFactor.startSetup') }}
                 </UButton>
               </div>
 
@@ -469,7 +472,7 @@ async function clearCompromisedFlag() {
                     />
                   </ClientOnly>
                   <p class="text-xs text-muted-foreground text-center">
-                    Scan this QR code or use the secret below.
+                    {{ t('account.security.twoFactor.scanQROrUseSecret') }}
                   </p>
                   <code class="break-all rounded bg-muted px-2 py-1 text-xs text-muted-foreground">
                     {{ totpSetup.secret }}
@@ -477,10 +480,10 @@ async function clearCompromisedFlag() {
                 </div>
 
                 <div class="space-y-3">
-                  <UFormField label="Authenticator code" name="verificationCode" required>
+                  <UFormField :label="t('account.security.twoFactor.authenticatorCode')" name="verificationCode" required>
                     <UInput
                       v-model="verificationCode"
-                      placeholder="Enter 6-digit code"
+                      :placeholder="t('account.security.twoFactor.enter6DigitCode')"
                       inputmode="numeric"
                       maxlength="6"
                       icon="i-lucide-smartphone"
@@ -488,7 +491,7 @@ async function clearCompromisedFlag() {
                       :disabled="verifyingToken"
                     />
                     <template #help>
-                      Enter the code from your authenticator app
+                      {{ t('account.security.twoFactor.enterCodeFromAuthenticator') }}
                     </template>
                   </UFormField>
                   <UButton
@@ -499,37 +502,37 @@ async function clearCompromisedFlag() {
                     :disabled="verifyingToken || verificationCode.length < 6"
                     @click="verifyTotp"
                   >
-                    Verify & Enable
+                    {{ t('account.security.twoFactor.verifyAndEnable') }}
                   </UButton>
                   <div>
-                    <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Recovery tokens</h3>
+                    <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('account.security.twoFactor.recoveryTokens') }}</h3>
                     <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
                       <code v-for="token in totpSetup.recoveryTokens" :key="token" class="rounded bg-muted px-2 py-1">
                         {{ token }}
                       </code>
                     </div>
-                    <p class="mt-2 text-[11px] text-muted-foreground">Save these codes in a secure password manager. Each token can be used once.</p>
+                    <p class="mt-2 text-[11px] text-muted-foreground">{{ t('account.security.twoFactor.saveCodesSecurely') }}</p>
                   </div>
                 </div>
               </div>
 
               <div v-else>
                 <p class="text-sm text-muted-foreground">
-                  Two-factor authentication is active. You’ll be prompted for a 6-digit code (or recovery token) on new logins.
+                  {{ t('account.security.twoFactor.twoFactorActive') }}
                 </p>
 
                 <div class="space-y-3">
-                  <UFormField label="Password confirmation" name="disablePassword" required>
+                  <UFormField :label="t('account.security.twoFactor.passwordConfirmation')" name="disablePassword" required>
                     <UInput
                       v-model="disableForm.password"
                       type="password"
-                      placeholder="Enter your password"
+                      :placeholder="t('account.security.twoFactor.enterPassword')"
                       icon="i-lucide-lock"
                       class="w-full"
                       :disabled="disableSubmitting"
                     />
                     <template #help>
-                      Confirm your password to disable two-factor authentication
+                      {{ t('account.security.twoFactor.confirmPasswordToDisable') }}
                     </template>
                   </UFormField>
                   <UButton
@@ -540,7 +543,7 @@ async function clearCompromisedFlag() {
                     :disabled="!disableForm.password"
                     @click="disableTotp"
                   >
-                    Disable Two-Factor
+                    {{ t('account.security.twoFactor.disableTwoFactor') }}
                   </UButton>
                 </div>
               </div>

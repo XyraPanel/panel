@@ -8,6 +8,7 @@ definePageMeta({
   adminSubtitle: 'Manage Wings daemons and monitor node health',
 })
 
+const { t } = useI18n()
 const toast = useToast()
 const requestURL = useRequestURL()
 
@@ -79,28 +80,28 @@ async function handleCreateNode() {
       method: 'POST',
       body: payload,
     })
-    toast.add({ title: 'Node registered', color: 'primary' })
+    toast.add({ title: t('admin.nodes.nodeRegistered'), color: 'primary' })
     resetCreateForm()
     showCreate.value = false
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unable to register node'
-    toast.add({ title: 'Failed to register node', description: message, color: 'error' })
+    const message = err instanceof Error ? err.message : t('admin.nodes.unableToRegisterNode')
+    toast.add({ title: t('admin.nodes.failedToRegisterNode'), description: message, color: 'error' })
   } finally {
     isSubmitting.value = false
   }
 }
 
 async function handleDeleteNode(id: string) {
-  if (!confirm('Remove this node from the panel?')) {
+  if (!confirm(t('admin.nodes.confirmRemoveNode'))) {
     return
   }
 
   try {
     await $fetch(`/api/wings/nodes/${id}`, { method: 'DELETE' })
-    toast.add({ title: 'Node removed', color: 'primary' })
+    toast.add({ title: t('admin.nodes.nodeRemoved'), color: 'primary' })
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unable to remove node'
-    toast.add({ title: 'Failed to remove node', description: message, color: 'error' })
+    const message = err instanceof Error ? err.message : t('admin.nodes.unableToRemoveNode')
+    toast.add({ title: t('admin.nodes.failedToRemoveNode'), description: message, color: 'error' })
   }
 }
 
@@ -133,9 +134,9 @@ async function handleIssueToken(node: WingsNodeSummary) {
     tokenModal.allowInsecure = node.allowInsecure
   }
   catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to issue deployment token'
+    const message = err instanceof Error ? err.message : t('admin.nodes.failedToIssueToken')
     tokenModal.error = message
-    toast.add({ title: 'Failed to issue token', description: message, color: 'error' })
+    toast.add({ title: t('admin.nodes.failedToIssueToken'), description: message, color: 'error' })
   }
   finally {
     issuingFor.value = null
@@ -150,12 +151,12 @@ async function copyInstallCommand() {
   try {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
       await navigator.clipboard.writeText(tokenModal.command)
-      toast.add({ title: 'Command copied', color: 'primary' })
+      toast.add({ title: t('admin.nodes.commandCopied'), color: 'primary' })
     }
   }
   catch (error) {
-    const message = error instanceof Error ? error.message : 'Unable to copy command'
-    toast.add({ title: 'Copy failed', description: message, color: 'error' })
+    const message = error instanceof Error ? error.message : t('common.failedToCopy')
+    toast.add({ title: t('common.failedToCopy'), description: message, color: 'error' })
   }
 }
 
@@ -183,9 +184,9 @@ async function fetchSystemInformation(nodeId: string) {
     systemModal.info = response.data
   }
   catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to retrieve system information'
+    const message = err instanceof Error ? err.message : t('admin.nodes.failedToRetrieveSystemInfo')
     systemModal.error = message
-    toast.add({ title: 'Failed to load system info', description: message, color: 'error' })
+    toast.add({ title: t('admin.nodes.failedToLoadSystemInfo'), description: message, color: 'error' })
   }
   finally {
     systemModal.loading = false
@@ -202,7 +203,7 @@ async function handleViewSystemInfo(node: WingsNodeSummary) {
 
 async function handleDownloadConfiguration(node: WingsNodeSummary) {
   if (typeof window === 'undefined') {
-    toast.add({ title: 'Unsupported environment', description: 'Configuration download is only available in the browser.', color: 'warning' })
+    toast.add({ title: t('admin.nodes.unsupportedEnvironment'), description: t('admin.nodes.configurationDownloadBrowserOnly'), color: 'warning' })
     return
   }
 
@@ -222,11 +223,11 @@ async function handleDownloadConfiguration(node: WingsNodeSummary) {
     document.body.removeChild(anchor)
     URL.revokeObjectURL(url)
 
-    toast.add({ title: 'Configuration downloaded', color: 'primary' })
+    toast.add({ title: t('admin.nodes.configurationDownloaded'), color: 'primary' })
   }
   catch (err) {
-    const message = err instanceof Error ? err.message : 'Failed to download configuration'
-    toast.add({ title: 'Download failed', description: message, color: 'error' })
+    const message = err instanceof Error ? err.message : t('admin.nodes.failedToDownloadConfiguration')
+    toast.add({ title: t('admin.nodes.configurationDownloadFailed'), description: message, color: 'error' })
   }
   finally {
     loadingConfigFor.value = null
@@ -252,9 +253,9 @@ watch(
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
                 <div class="flex items-center justify-between">
-                  <h2 class="text-lg font-semibold">Node inventory</h2>
+                  <h2 class="text-lg font-semibold">{{ t('admin.nodes.nodeInventory') }}</h2>
                   <UButton icon="i-lucide-plus" color="primary" variant="soft" @click="showCreate = true">
-                    Add node
+                    {{ t('admin.nodes.addNode') }}
                   </UButton>
                 </div>
               </template>
@@ -264,20 +265,20 @@ watch(
               </div>
               <div v-else-if="error"
                 class="rounded-md border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
-                Unable to load nodes: {{ (error as Error).message || 'unknown error' }}
+                {{ t('admin.nodes.unableToLoadNodes') }}: {{ (error as Error).message || t('common.unknown') }}
               </div>
               <div v-else>
                 <div v-if="nodes.length === 0"
                   class="rounded-md border border-dashed border-default p-6 text-center text-sm text-muted-foreground">
-                  No nodes linked yet. Add one to start syncing with Wings.
+                  {{ t('admin.nodes.noNodesLinked') }}
                 </div>
                 <div v-else class="overflow-hidden rounded-lg border border-default">
                   <div
                     class="grid grid-cols-12 bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    <span class="col-span-4">Name</span>
-                    <span class="col-span-4">Endpoint</span>
-                    <span class="col-span-2">Token</span>
-                    <span class="col-span-2 text-right">Actions</span>
+                    <span class="col-span-4">{{ t('common.name') }}</span>
+                    <span class="col-span-4">{{ t('admin.nodes.endpoint') }}</span>
+                    <span class="col-span-2">{{ t('admin.nodes.token') }}</span>
+                    <span class="col-span-2 text-right">{{ t('common.actions') }}</span>
                   </div>
                   <div class="divide-y divide-default">
                     <div v-for="node in nodes" :key="node.id"
@@ -287,17 +288,17 @@ watch(
                           class="text-sm font-semibold text-primary hover:underline">
                           {{ node.name }}
                         </NuxtLink>
-                        <p class="text-xs text-muted-foreground">ID: {{ node.id }}</p>
+                        <p class="text-xs text-muted-foreground">{{ t('admin.nodes.id') }}: {{ node.id }}</p>
                         <p v-if="node.description" class="text-xs text-muted-foreground">{{ node.description }}</p>
                       </div>
                       <div class="col-span-4 space-y-1 text-xs text-muted-foreground">
                         <code class="block truncate">{{ node.baseURL }}</code>
-                        <span>{{ node.allowInsecure ? 'TLS verification disabled' : 'TLS verification enforced' }}</span>
-                        <span>Updated {{ formatUpdatedAt(node.updatedAt) }}</span>
+                        <span>{{ node.allowInsecure ? t('admin.nodes.tlsVerificationDisabled') : t('admin.nodes.tlsVerificationEnforced') }}</span>
+                        <span>{{ t('admin.nodes.updated') }} {{ formatUpdatedAt(node.updatedAt) }}</span>
                       </div>
                       <div class="col-span-2">
                         <UBadge :color="node.hasToken ? 'primary' : 'warning'" size="xs">
-                          {{ node.hasToken ? 'Configured' : 'Missing token' }}
+                          {{ node.hasToken ? t('admin.nodes.configured') : t('admin.nodes.missingToken') }}
                         </UBadge>
                       </div>
                       <div class="col-span-2 flex justify-end gap-2">
@@ -321,25 +322,25 @@ watch(
       </UPageBody>
     </UPage>
 
-    <UModal v-model:open="showCreate" title="Register Wings node"
-      description="Store the connection details required to reach your Wings daemon." :ui="{ footer: 'justify-end' }">
+    <UModal v-model:open="showCreate" :title="t('admin.nodes.registerNode')"
+      :description="t('admin.nodes.registerNodeDescription')" :ui="{ footer: 'justify-end' }">
       <template #body>
         <UForm :state="createState" class="space-y-4" @submit.prevent="handleCreateNode">
-          <UFormField label="Name" name="name" required>
-            <UInput v-model="createState.name" placeholder="Ashburn node" required class="w-full" />
+          <UFormField :label="t('admin.nodes.nodeName')" name="name" required>
+            <UInput v-model="createState.name" :placeholder="t('admin.nodes.nodeNamePlaceholder')" required class="w-full" />
           </UFormField>
-          <UFormField label="Description" name="description">
-            <UTextarea v-model="createState.description" placeholder="Optional description" class="w-full" />
+          <UFormField :label="t('admin.nodes.nodeDescription')" name="description">
+            <UTextarea v-model="createState.description" :placeholder="t('admin.nodes.nodeDescriptionPlaceholder')" class="w-full" />
           </UFormField>
-          <UFormField label="Base URL" name="baseURL" required help="Example: https://node.example.com:8080">
+          <UFormField :label="t('admin.nodes.baseURL')" name="baseURL" required :help="t('admin.nodes.baseURLHelp')">
             <UInput v-model="createState.baseURL" type="url" required class="w-full" />
           </UFormField>
-          <UFormField label="API token" name="apiToken" help="Leave blank to generate a deployment token automatically">
+          <UFormField :label="t('admin.nodes.apiToken')" name="apiToken" :help="t('admin.nodes.apiTokenHelp')">
             <UInput v-model="createState.apiToken" type="password" class="w-full" />
           </UFormField>
           <UFormField name="allowInsecure">
             <label class="flex items-center justify-between gap-2 text-sm">
-              <span>Allow insecure TLS (self-signed)</span>
+              <span>{{ t('admin.nodes.allowInsecureTLS') }}</span>
               <USwitch v-model="createState.allowInsecure" />
             </label>
           </UFormField>
@@ -348,14 +349,14 @@ watch(
 
       <template #footer>
         <div class="flex gap-2">
-          <UButton variant="ghost" @click="showCreate = false">Cancel</UButton>
-          <UButton type="submit" color="primary" :loading="isSubmitting" @click="handleCreateNode">Save node</UButton>
+          <UButton variant="ghost" @click="showCreate = false">{{ t('common.cancel') }}</UButton>
+          <UButton type="submit" color="primary" :loading="isSubmitting" @click="handleCreateNode">{{ t('admin.nodes.saveNode') }}</UButton>
         </div>
       </template>
     </UModal>
 
-    <UModal v-model:open="tokenModal.visible" title="Wings deployment command"
-      :description="`Run this on the Wings host to link ${tokenModal.nodeName} (ID ${tokenModal.nodeId}) to the panel.`"
+    <UModal v-model:open="tokenModal.visible" :title="t('admin.nodes.wingsDeploymentCommand')"
+      :description="t('admin.nodes.runOnWingsHost', { name: tokenModal.nodeName, id: tokenModal.nodeId })"
       :ui="{ footer: 'justify-between items-center' }">
       <template #body>
         <div class="space-y-4">
@@ -364,16 +365,16 @@ watch(
             {{ tokenModal.error }}
           </div>
           <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Command</label>
+            <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.nodes.command') }}</label>
             <UTextarea :model-value="tokenModal.command" readonly autoresize class="font-mono text-sm w-full" />
           </div>
           <div class="space-y-1 text-xs text-muted-foreground">
-            <p>Includes <code>wings configure</code> flags:</p>
+            <p>{{ t('admin.nodes.includesWingsConfigureFlags') }}</p>
             <ul class="list-disc pl-5">
-              <li><code>--panel-url</code> set to {{ panelOrigin }}</li>
-              <li><code>--node</code> set to {{ tokenModal.nodeId }}</li>
-              <li><code>--token</code> set to the freshly issued deployment token</li>
-              <li v-if="tokenModal.allowInsecure"><code>--allow-insecure</code> to disable TLS verification</li>
+              <li><code>--panel-url</code> {{ t('admin.nodes.setTo') }} {{ panelOrigin }}</li>
+              <li><code>--node</code> {{ t('admin.nodes.setTo') }} {{ tokenModal.nodeId }}</li>
+              <li><code>--token</code> {{ t('admin.nodes.setToFreshlyIssuedToken') }}</li>
+              <li v-if="tokenModal.allowInsecure"><code>--allow-insecure</code> {{ t('admin.nodes.toDisableTLSVerification') }}</li>
             </ul>
           </div>
         </div>
@@ -381,16 +382,16 @@ watch(
 
       <template #footer>
         <div class="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4">
-          <span>Token: <code class="break-all">{{ tokenModal.token }}</code></span>
+          <span>{{ t('admin.nodes.token') }}: <code class="break-all">{{ tokenModal.token }}</code></span>
         </div>
         <div class="flex gap-2">
-          <UButton variant="ghost" @click="tokenModal.visible = false">Close</UButton>
-          <UButton color="primary" icon="i-lucide-clipboard" @click="copyInstallCommand">Copy command</UButton>
+          <UButton variant="ghost" @click="tokenModal.visible = false">{{ t('common.close') }}</UButton>
+          <UButton color="primary" icon="i-lucide-clipboard" @click="copyInstallCommand">{{ t('admin.nodes.copyCommand') }}</UButton>
         </div>
       </template>
     </UModal>
 
-    <UModal v-model:open="systemModal.visible" :title="`System information — ${systemModal.nodeName || 'Wings node'}`"
+    <UModal v-model:open="systemModal.visible" :title="t('admin.nodes.systemInformationModal', { name: systemModal.nodeName || t('admin.nodes.wingsNode') })"
       :ui="{ footer: 'justify-between items-center flex-wrap gap-3' }">
       <template #body>
         <div class="space-y-4">
@@ -398,11 +399,11 @@ watch(
             <USkeleton class="h-4" repeat="4" />
           </div>
           <UAlert v-else-if="systemModal.error" color="error" icon="i-lucide-alert-triangle">
-            <template #title>Unable to retrieve system information</template>
+            <template #title>{{ t('admin.nodes.unableToRetrieveSystemInfo') }}</template>
             <template #description>{{ systemModal.error }}</template>
           </UAlert>
           <div v-else class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Latest snapshot</label>
+            <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.nodes.latestSnapshot') }}</label>
             <pre class="max-h-[420px] overflow-auto rounded bg-muted/40 p-3 text-xs leading-relaxed">
       {{ JSON.stringify(systemModal.info, null, 2) }}
     </pre>
@@ -411,9 +412,9 @@ watch(
       </template>
 
       <template #footer>
-        <span class="text-xs text-muted-foreground">Fetched directly from the Wings node API.</span>
+        <span class="text-xs text-muted-foreground">{{ t('admin.nodes.fetchedFromWingsAPI') }}</span>
         <div class="flex items-center gap-2">
-          <UButton variant="ghost" @click="systemModal.visible = false">Close</UButton>
+          <UButton variant="ghost" @click="systemModal.visible = false">{{ t('common.close') }}</UButton>
         </div>
       </template>
     </UModal>

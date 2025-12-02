@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+const { t } = useI18n()
 const route = useRoute()
 const serverId = computed(() => route.params.id as string)
 
@@ -27,7 +28,7 @@ const serverName = computed(() => {
   if (import.meta.dev) {
     console.log('[Server Layout] serverName computed:', name)
   }
-  return name && name.trim() ? name : 'Server'
+  return name && name.trim() ? name : t('common.server')
 })
 
 const serverIdentifier = computed(() => {
@@ -41,61 +42,61 @@ const navItems = computed(() => {
 
   return [
     {
-      label: 'Console',
+      label: t('server.console.title'),
       icon: 'i-lucide-terminal',
       to: `${basePath}/console`,
       active: currentPath === `${basePath}/console`,
     },
     {
-      label: 'Activity',
+      label: t('server.activity.title'),
       icon: 'i-lucide-activity',
       to: `${basePath}/activity`,
       active: currentPath === `${basePath}/activity`,
     },
     {
-      label: 'Files',
+      label: t('server.files.title'),
       icon: 'i-lucide-folder-open',
       to: `${basePath}/files`,
       active: currentPath.startsWith(`${basePath}/files`),
     },
     {
-      label: 'Backups',
+      label: t('server.backups.title'),
       icon: 'i-lucide-database-backup',
       to: `${basePath}/backups`,
       active: currentPath.startsWith(`${basePath}/backups`),
     },
     {
-      label: 'Schedules',
+      label: t('server.schedules.title'),
       icon: 'i-lucide-calendar-clock',
       to: `${basePath}/schedules`,
       active: currentPath.startsWith(`${basePath}/schedules`),
     },
     {
-      label: 'Users',
+      label: t('server.users.title'),
       icon: 'i-lucide-users',
       to: `${basePath}/users`,
       active: currentPath.startsWith(`${basePath}/users`),
     },
     {
-      label: 'Databases',
+      label: t('server.databases.title'),
       icon: 'i-lucide-database',
       to: `${basePath}/databases`,
       active: currentPath.startsWith(`${basePath}/databases`),
     },
     {
-      label: 'Network',
+      label: t('server.network.title'),
       icon: 'i-lucide-network',
       to: `${basePath}/network`,
       active: currentPath.startsWith(`${basePath}/network`),
     },
     {
-      label: 'Startup',
+      label: t('server.startup.title'),
       icon: 'i-lucide-rocket',
       to: `${basePath}/startup`,
       active: currentPath.startsWith(`${basePath}/startup`),
     },
     {
-      label: 'Settings',
+      label: t('server.settings.title'),
       icon: 'i-lucide-cog',
       to: `${basePath}/settings`,
       active: currentPath.startsWith(`${basePath}/settings`),
@@ -108,7 +109,7 @@ const navItems = computed(() => {
   <UDashboardGroup class="min-h-screen bg-muted/20" storage="local" storage-key="server-dashboard">
     <UDashboardSidebar
       collapsible
-      :toggle="{ icon: 'i-lucide-menu', label: 'Server navigation', color: 'neutral', variant: 'ghost' }"
+      :toggle="{ icon: 'i-lucide-menu', label: t('layout.serverNavigation'), color: 'neutral', variant: 'ghost' }"
       :ui="{ body: 'flex flex-col gap-1 px-2 pb-4', header: 'px-4 py-4', footer: 'border-t border-default px-4 py-3' }"
     >
       <template #header="{ collapsed }">
@@ -116,7 +117,7 @@ const navItems = computed(() => {
           <UIcon v-if="collapsed" name="i-lucide-arrow-left" class="mx-auto size-4" />
           <template v-else>
             <UIcon name="i-lucide-arrow-left" class="size-3" />
-            Back to servers
+            {{ t('layout.backToServers') }}
           </template>
         </NuxtLink>
       </template>
@@ -140,7 +141,7 @@ const navItems = computed(() => {
             </div>
             <div class="flex items-center gap-2">
               <UButton icon="i-lucide-cog" variant="ghost" color="neutral" :to="`/server/${serverId.value}/settings`">
-                Settings
+                {{ t('server.settings.title') }}
               </UButton>
             </div>
           </div>

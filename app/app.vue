@@ -37,6 +37,7 @@ const passwordCompromised = computed(() => {
   return Boolean((user.value as { passwordCompromised?: boolean }).passwordCompromised)
 })
 
+const { t } = useI18n()
 const showPasswordWarning = ref(false)
 
 watch([passwordCompromised, () => route.path], () => {
@@ -50,20 +51,19 @@ watch([passwordCompromised, () => route.path], () => {
 
 <template>
   <UApp :locale="currentLocale">
-    <NuxtPwaManifest/>
     <NuxtLoadingIndicator color="#16a34a" error-color="#ef4444" :height="3" />    
     <UModal
       v-model:open="showPasswordWarning"
       :dismissible="false"
       modal
-      title="Password Security Alert"
+      :title="t('account.security.password.passwordMarkedCompromised')"
       :close="false"
     >
       <template #body>
         <div class="flex items-start gap-3">
           <UIcon name="i-lucide-shield-alert" class="size-6 text-error shrink-0 mt-0.5" />
           <p class="text-sm text-foreground">
-            Your password has been found in a data breach and may be compromised. You must change your password immediately to continue using the application.
+            {{ t('account.security.password.passwordPreviouslyCompromised') }}
           </p>
         </div>
       </template>
@@ -72,7 +72,7 @@ watch([passwordCompromised, () => route.path], () => {
         <div class="flex items-center justify-end w-full">
           <UButton
             color="error"
-            label="Change Password Now"
+            :label="t('auth.forcePasswordChange')"
             to="/account/security"
             size="lg"
           />
