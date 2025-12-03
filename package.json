@@ -67,7 +67,7 @@
     "@types/nodemailer": "^7.0.3",
     "@types/better-sqlite3": "^7.6.8",
     "@types/node": "^22.19.0",
-    "@vitest/ui": "4.0.9",
+    "@vitest/ui": "4.0.15",
     "@vue/test-utils": "^2.4.6",
     "drizzle-kit": "^0.31.6",
     "eslint": "^9.39.1",
