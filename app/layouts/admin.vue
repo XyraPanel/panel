@@ -320,20 +320,11 @@ const accountMenuItems = computed(() => [
       </template>
 
       <template #default="{ collapsed }">
-        <ClientOnly>
-          <UNavigationMenu
-            :collapsed="collapsed"
-            :items="[navItems]"
-            orientation="vertical"
-          />
-          <template #fallback>
-            <UNavigationMenu
-              :collapsed="collapsed"
-              :items="[[ADMIN_NAV_ITEMS.value[0]]]"
-              orientation="vertical"
-            />
-          </template>
-        </ClientOnly>
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="[navItems]"
+          orientation="vertical"
+        />
       </template>
 
       <template #footer="{ collapsed }">
