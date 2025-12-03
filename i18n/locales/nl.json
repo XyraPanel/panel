@@ -55,7 +55,8 @@
     "suspended": "Suspended",
     "transferring": "Transferring",
     "navigation": "Navigation",
-    "user": "User"
+    "user": "User",
+    "server": "Server"
   },
   "auth": {
     "signIn": "Sign In",
@@ -765,15 +766,48 @@
       "admin": "Admin",
       "userRole": "User",
       "searchUsers": "Search users...",
-      "name": "Name"
+      "name": "Name",
+      "userControls": "User Controls",
+      "userControlsDescription": "Manage user account settings and security options",
+      "tabs": {
+        "overview": "Overview",
+        "servers": "Servers",
+        "apiKeys": "API Keys",
+        "activity": "Activity"
+      },
+      "apiKeys": {
+        "noApiKeysYet": "No API keys yet",
+        "noApiKeysYetDescription": "This user has not created any API keys."
+      },
+      "sendResetLink": "Send Reset Link",
+      "temporaryPassword": "Temporary Password",
+      "passwordResetDescription": "Generate a temporary password or send a reset link to the user's email.",
+      "disable2FA": "Disable 2FA",
+      "disable2FADescription": "Remove two-factor authentication from this user's account.",
+      "emailVerification": "Email Verification",
+      "markVerified": "Mark Verified",
+      "markUnverified": "Mark Unverified",
+      "resendEmail": "Resend Email",
+      "emailVerificationDescription": "Manage email verification status for this user.",
+      "accountState": "Account State",
+      "suspendUser": "Suspend User",
+      "startImpersonation": "Start Impersonation",
+      "accountStateDescription": "Manage account suspension and access controls."
     },
     "servers": {
       "title": "Servers",
-      "description": "Manage all servers in the panel."
+      "description": "Manage all servers in the panel.",
+      "serverInventory": "Server Inventory",
+      "createServer": "Create Server",
+      "owner": "Owner",
+      "noServersFound": "No servers found",
+      "noServersFoundDescription": "No servers match your search criteria."
     },
     "nodes": {
       "title": "Nodes",
-      "description": "Manage server nodes."
+      "description": "Manage server nodes.",
+      "identifier": "Identifier",
+      "node": "Node"
     },
     "locations": {
       "title": "Locations",
@@ -936,12 +970,66 @@
     },
     "activity": {
       "title": "Activity",
-      "description": "View system-wide activity logs."
+      "description": "View system-wide activity logs.",
+      "actor": "Actor",
+      "auditLogEntry": "Audit Log Entry",
+      "copyJson": "Copy JSON",
+      "showingEvents": "Showing {current} of {total} events",
+      "exportCsv": "Export CSV"
     },
     "apiKeys": "API Keys",
+    "api": {
+      "activeKeys": "Active API Keys",
+      "activeKeysDescription": "Manage existing keys or create new ones for API access.",
+      "createApiKey": "Create API Key",
+      "noApiKeysYet": "No API keys yet",
+      "apiKeysDescription": "Create API keys for programmatic access to the panel.",
+      "memo": "Memo",
+      "memoPlaceholder": "Optional description for this key",
+      "memoHelp": "A friendly name to help identify this key",
+      "expiresAt": "Expires At",
+      "expiresAtHelp": "Optional expiration date for this API key",
+      "allowedIps": "Allowed IPs",
+      "allowedIpsPlaceholder": "Comma-separated IPv4 addresses (optional)",
+      "allowedIpsHelp": "Leave empty to allow from any IP. Enter IPv4 addresses separated by commas.",
+      "permissions": "Permissions",
+      "permissionsHelp": "Select the permissions this API key should have",
+      "servers": "Servers",
+      "nodes": "Nodes",
+      "allocations": "Allocations",
+      "users": "Users",
+      "locations": "Locations",
+      "nests": "Nests",
+      "eggs": "Eggs",
+      "databaseHosts": "Database Hosts",
+      "serverDatabases": "Server Databases",
+      "none": "None",
+      "read": "Read",
+      "readWrite": "Read & Write",
+      "createKey": "Create Key"
+    },
     "databaseHosts": {
       "title": "Database Hosts",
-      "description": "Manage database hosts."
+      "description": "Manage database hosts.",
+      "allDatabaseHosts": "All Database Hosts",
+      "addDatabaseHost": "Add Database Host",
+      "addDatabaseHostDescription": "Configure a new database host for server databases.",
+      "noDatabaseHostsYet": "No database hosts yet",
+      "name": "Name",
+      "namePlaceholder": "MySQL Host 1",
+      "hostname": "Hostname",
+      "hostnamePlaceholder": "db.example.com",
+      "port": "Port",
+      "username": "Username",
+      "usernamePlaceholder": "pterodactyl",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "defaultDatabase": "Default Database",
+      "defaultDatabasePlaceholder": "mysql",
+      "defaultDatabaseHelp": "Default database name to use when creating new databases",
+      "maxDatabases": "Max Databases",
+      "maxDatabasesHelp": "Maximum number of databases allowed on this host (0 for unlimited)",
+      "addHost": "Add Host"
     },
     "eggs": {
       "title": "Eggs",
@@ -949,11 +1037,33 @@
     },
     "mounts": {
       "title": "Mounts",
-      "description": "Manage server mounts."
+      "description": "Manage server mounts.",
+      "allMounts": "All Mounts",
+      "createMount": "Create Mount",
+      "createMountDescription": "Configure a new mount point for servers.",
+      "noMountsYet": "No mounts yet",
+      "mountsDescription": "Mounts allow you to share directories across multiple servers.",
+      "name": "Name",
+      "namePlaceholder": "Shared Data",
+      "descriptionPlaceholder": "Optional description for this mount",
+      "source": "Source",
+      "sourcePlaceholder": "/mnt/shared/data",
+      "sourceHelp": "Absolute path on the node where files are stored",
+      "target": "Target",
+      "targetPlaceholder": "/shared",
+      "targetHelp": "Path where the mount will appear in servers",
+      "readOnly": "Read Only",
+      "userMountable": "User Mountable",
+      "userMountableHelp": "Allow users to mount this on their servers",
+      "nodes": "Nodes",
+      "selectNodes": "Select Nodes",
+      "eggs": "Eggs",
+      "selectEggs": "Select Eggs"
     },
     "schedules": {
       "title": "Schedules",
-      "description": "Manage system schedules."
+      "description": "Manage system schedules.",
+      "showingSchedules": "Showing {current} of {total} schedules"
     },
     "navigation": {
       "backToPanel": "Back to panel",
