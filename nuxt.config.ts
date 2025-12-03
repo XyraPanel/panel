@@ -124,10 +124,10 @@ export default defineNuxtConfig({
     turnstile: {
       secretKey: process.env.NUXT_TURNSTILE_SECRET_KEY || '',
     },
-    debug: process.env.DEBUG === 'true' || process.env.NUXT_DEBUG === 'true' || isDev,
+    debug: process.env.DEBUG === 'true' || isDev,
     public: {
       appName: process.env.NUXT_APP_NAME,
-      debug: process.env.DEBUG === 'true' || process.env.NUXT_DEBUG === 'true' || isDev,
+      debug: process.env.DEBUG === 'true' || isDev,
       turnstile: {
         siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY || '',
       },
