@@ -5,7 +5,6 @@ import bcrypt from 'bcryptjs'
 import { useDrizzle, tables, eq, or } from '~~/server/utils/drizzle'
 import { sendWelcomeEmail } from '~~/server/utils/email'
 import type { Role } from '#shared/types/auth'
-import { checkPasswordCompromised } from '~~/server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   const body = await readBody<{ username?: string, email?: string, password?: string, role?: 'admin' | 'user' }>(event)
@@ -74,10 +73,6 @@ export default defineEventHandler(async (event) => {
       .where(eq(tables.users.id, id))
       .limit(1)
       .get()
-
-    await checkPasswordCompromised(id, password).catch((err) => {
-      console.error('Failed to check password compromise during registration:', err)
-    })
 
     if (createdUser) {
       await sendWelcomeEmail(createdUser.email, createdUser.username)

@@ -56,6 +56,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // CodeQL [js/insufficient-password-hash] SHA1 required by HIBP API, not for password storage
   const sha1Hash = createHash('sha1').update(password, 'utf8').digest('hex').toUpperCase()
   const prefix = sha1Hash.substring(0, 5)
   const suffix = sha1Hash.substring(5)

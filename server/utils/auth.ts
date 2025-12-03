@@ -23,10 +23,11 @@ const ADMIN_PANEL_PERMISSIONS = [
 ]
 
 /**
- * Checks if a password is compromised using Have I Been Pwned API
+ * Checks existing passwords on login against Have I Been Pwned API and sets database flag.
  */
 export async function checkPasswordCompromised(userId: string, password: string): Promise<void> {
   try {
+    // CodeQL [js/insufficient-password-hash] SHA1 required by HIBP API, not for password storage
     const sha1Hash = createHash('sha1').update(password, 'utf8').digest('hex').toUpperCase()
     const prefix = sha1Hash.substring(0, 5)
     const suffix = sha1Hash.substring(5)
