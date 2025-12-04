@@ -422,6 +422,7 @@ async function handleBulkArchive() {
       },
     })
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept intentionally for future use ig
     const archiveName = response?.data?.file ?? 'archive.tar'
     toast.add({
       title: t('common.success'),
