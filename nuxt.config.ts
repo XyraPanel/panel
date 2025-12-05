@@ -41,6 +41,12 @@ const maxUploadSize = process.env.NUXT_MAX_UPLOAD_SIZE_MB
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
+  builder: 'vite',
+  vite: {
+    build: {
+      chunkSizeWarningLimit: 4000
+    }
+  },
   devtools: {
     enabled: true,
 
@@ -64,6 +70,7 @@ export default defineNuxtConfig({
     '@nuxtjs/turnstile',
     '@nuxt/scripts',
     '@nuxtjs/i18n',
+    '@vite-pwa/nuxt',
   ],
 
   i18n: {
@@ -104,6 +111,62 @@ export default defineNuxtConfig({
       dropMessageCompiler: false,
     },
     debug: isDev,
+  },
+
+  pwa: {
+    registerType: 'autoUpdate',
+    injectRegister: 'auto',
+    includeAssets: ['favicon.ico'],
+
+    manifest: {
+      name: process.env.NUXT_APP_NAME || 'XyraPanel',
+      short_name: process.env.NUXT_APP_NAME || 'XyraPanel',
+      description: 'A powerful game server management panel.',
+      theme_color: '#0ea5a4',
+      background_color: '#ffffff',
+      display: 'standalone',
+      start_url: '/',
+      icons: [
+        { src: '/favicon.ico', sizes: '32x32', type: 'image/ico' },
+      ],
+    },
+
+    workbox: {
+      globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+      maximumFileSizeToCacheInBytes: 20 * 1024 * 1024,
+      runtimeCaching: [
+        {
+          urlPattern: /^\/api\/.*$/,
+          handler: 'NetworkFirst',
+          options: {
+            cacheName: 'api-cache',
+            expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 },
+            networkTimeoutSeconds: 10,
+          },
+        },
+        {
+          urlPattern: /\/_nuxt\/.*\.(js|css)/,
+          handler: 'StaleWhileRevalidate',
+          options: {
+            cacheName: 'asset-cache',
+            expiration: { maxEntries: 60 },
+          },
+        },
+        {
+          urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp)$/,
+          handler: 'CacheFirst',
+          options: {
+            cacheName: 'image-cache',
+            expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
+          },
+        },
+      ],
+    },
+
+    devOptions: {
+      enabled: isDev,
+      navigateFallback: '/index.html',
+    },
   },
 
   monacoEditor: {

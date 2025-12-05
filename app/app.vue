@@ -32,6 +32,7 @@ useHead(() => ({
     <NuxtLoadingIndicator color="#16a34a" error-color="#ef4444" :height="3" />
     <PasswordCompromisedModal />
     <NuxtLayout>
+      <NuxtPwaManifest />
       <NuxtPage />
     </NuxtLayout>
   </UApp>

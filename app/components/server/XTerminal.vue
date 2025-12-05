@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted, watch } from 'vue'
 import type { ServerTerminalProps } from '#shared/types/server'
-import type { Terminal } from 'xterm'
+import type { Terminal } from '@xterm/xterm'
 
 const { t } = useI18n()
 
@@ -12,10 +12,10 @@ defineEmits<{
 
 const terminalRef = ref<HTMLElement | null>(null)
 let terminal: Terminal | null = null
-let fitAddon: import('xterm-addon-fit').FitAddon | null = null
-let searchAddon: import('xterm-addon-search').SearchAddon | null = null
+let fitAddon: import('@xterm/addon-fit').FitAddon | null = null
+let searchAddon: import('@xterm/addon-search').SearchAddon | null = null
 let searchBarAddon: { dispose: () => void } | null = null
-let webLinksAddon: import('xterm-addon-web-links').WebLinksAddon | null = null
+let webLinksAddon: import('@xterm/addon-web-links').WebLinksAddon | null = null
 let lastProcessedLogCount = 0
 
 const HISTORY_KEY = `server-${props.serverId || 'default'}:command_history`
@@ -115,10 +115,10 @@ onUnmounted(() => {
 onMounted(async () => {
   if (!terminalRef.value) return
 
-  const { Terminal } = await import('xterm')
-  const { FitAddon } = await import('xterm-addon-fit')
-  const { SearchAddon } = await import('xterm-addon-search')
-  const { WebLinksAddon } = await import('xterm-addon-web-links')
+  const { Terminal } = await import('@xterm/xterm')
+  const { FitAddon } = await import('@xterm/addon-fit')
+  const { SearchAddon } = await import('@xterm/addon-search')
+  const { WebLinksAddon } = await import('@xterm/addon-web-links')
   await import('xterm/css/xterm.css')
   
   terminal = new Terminal({
@@ -144,10 +144,10 @@ onMounted(async () => {
   try {
     const searchBarModule = await import('xterm-addon-search-bar')
     type SearchBarModule = {
-      SearchAddonBar?: new (options: { searchAddon: import('xterm-addon-search').SearchAddon }) => { dispose: () => void }
+      SearchAddonBar?: new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void }
       default?: {
-        SearchAddonBar?: new (options: { searchAddon: import('xterm-addon-search').SearchAddon }) => { dispose: () => void }
-      } | (new (options: { searchAddon: import('xterm-addon-search').SearchAddon }) => { dispose: () => void })
+        SearchAddonBar?: new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void }
+      } | (new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void })
     }
     const module = searchBarModule as SearchBarModule
     const SearchAddonBar = module.SearchAddonBar || (module.default && ('SearchAddonBar' in module.default ? module.default.SearchAddonBar : module.default as typeof module.default))

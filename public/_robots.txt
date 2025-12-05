@@ -1,0 +1,8 @@
+User-agent: *
+
+Disallow: /server/
+Disallow: /admin/
+Disallow: /internal/
+Disallow: /private/
+
+Allow: /
