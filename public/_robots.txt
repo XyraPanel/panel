@@ -1,11 +1,8 @@
 User-agent: *
 
-Disallow: /node_modules/
 Disallow: /server/
 Disallow: /admin/
 Disallow: /internal/
-Disallow: /.env
-Disallow: /.git
 Disallow: /private/
 
 Allow: /
