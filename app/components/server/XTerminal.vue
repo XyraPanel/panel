@@ -144,20 +144,20 @@ onMounted(async () => {
   try {
     const searchBarModule = await import('xterm-addon-search-bar-upgraded')
     type SearchBarModule = {
-      SearchAddonBar?: new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void }
+      SearchBarAddon?: new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void }
       default?: {
-        SearchAddonBar?: new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void }
+        SearchBarAddon?: new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void }
       } | (new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void })
     }
     const module = searchBarModule as SearchBarModule
-    const SearchAddonBar = module.SearchAddonBar || (module.default && ('SearchAddonBar' in module.default ? module.default.SearchAddonBar : module.default as typeof module.default))
-    if (SearchAddonBar) {
-      searchBarAddon = new SearchAddonBar({ searchAddon })
+    const SearchBarAddon = module.SearchBarAddon || (module.default && ('SearchBarAddon' in module.default ? module.default.SearchBarAddon : module.default as typeof module.default))
+    if (SearchBarAddon) {
+      searchBarAddon = new SearchBarAddon({ searchAddon })
       terminal.loadAddon(searchBarAddon)
     }
   } catch (e) {
     if (import.meta.dev) {
-      console.warn('[XTerminal] SearchAddonBar not available:', e)
+      console.warn('[XTerminal] SearchBarAddon not available:', e)
     }
   }
 
