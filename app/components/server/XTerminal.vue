@@ -142,7 +142,7 @@ onMounted(async () => {
   terminal.loadAddon(webLinksAddon)
   
   try {
-    const searchBarModule = await import('xterm-addon-search-bar')
+    const searchBarModule = await import('xterm-addon-search-bar-upgraded')
     type SearchBarModule = {
       SearchAddonBar?: new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void }
       default?: {
