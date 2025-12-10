@@ -4,7 +4,6 @@
       <UPageHeader
         :title="welcomeTitle"
         :description="t('dashboard.description')"
-        :links="headerLinks"
       />
     </UContainer>
 
@@ -55,8 +54,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
-import type { ButtonProps } from '#ui/types'
-
 import type {
   ClientDashboardMetric,
   ClientDashboardResponse,
@@ -71,23 +68,6 @@ definePageMeta({
 
 const { t } = useI18n()
 const authStore = useAuthStore()
-
-const headerLinks = computed<ButtonProps[]>(() => [
-  {
-    label: t('dashboard.accountActivity'),
-    icon: 'i-lucide-clock',
-    to: '/account/activity',
-    variant: 'soft',
-    size: 'sm',
-  },
-  {
-    label: t('dashboard.sessions'),
-    icon: 'i-lucide-shield',
-    to: '/account/sessions',
-    variant: 'soft',
-    size: 'sm',
-  },
-])
 
 const {
   data: meData,

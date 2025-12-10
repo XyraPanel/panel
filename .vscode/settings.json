@@ -3,4 +3,7 @@
     "source.fixAll": "never",
     "source.fixAll.eslint": "explicit",
   },
+  "conventionalCommits.scopes": [
+    "deps"
+  ],
 }

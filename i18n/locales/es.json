@@ -1145,7 +1145,7 @@
       "showingEvents": "Showing {current} of {total} events",
       "exportCsv": "Export CSV"
     },
-    "apiKeys": "API Keys",
+    "apiKeys": "Claves API",
     "api": {
       "activeKeys": "Active API Keys",
       "activeKeysDescription": "Manage existing keys or create new ones for API access.",
