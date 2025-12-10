@@ -119,7 +119,7 @@ onMounted(async () => {
   const { FitAddon } = await import('@xterm/addon-fit')
   const { SearchAddon } = await import('@xterm/addon-search')
   const { WebLinksAddon } = await import('@xterm/addon-web-links')
-  await import('xterm/css/xterm.css')
+  await import('@xterm/xterm/css/xterm.css')
   
   terminal = new Terminal({
     theme,

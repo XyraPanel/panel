@@ -93,8 +93,8 @@ importers:
         specifier: ^3.5.25
         version: 3.5.25(typescript@5.9.3)
       xterm-addon-search-bar-upgraded:
-        specifier: ^0.3.4
-        version: 0.3.4(@xterm/addon-search@0.15.0(@xterm/xterm@5.5.0))(@xterm/xterm@5.5.0)
+        specifier: ^0.3.5
+        version: 0.3.5(@xterm/addon-search@0.15.0(@xterm/xterm@5.5.0))(@xterm/xterm@5.5.0)
     devDependencies:
       '@iconify-json/lucide':
         specifier: ^1.2.79
@@ -8046,8 +8046,8 @@ packages:
     engines: {node: '>= 0.10.0'}
     hasBin: true
 
-  xterm-addon-search-bar-upgraded@0.3.4:
-    resolution: {integrity: sha512-VzN3WkQM8m0j92Lhw9Eqv4D6WFCJIgrDDArlwuiA/degccQmOUgrYUC/ANAIT6t5u3nVKunDjGOOEt9BGs6VDQ==}
+  xterm-addon-search-bar-upgraded@0.3.5:
+    resolution: {integrity: sha512-cwMCfaAYT1JIQ1t78XgFP9v+Ej2+4OOLMTjcZ8+w5lxz66mVTUtU6B3f/2KGotuSn2OtQhl/fMC+5/ZUzSrj5g==}
     peerDependencies:
       '@xterm/addon-search': ^0.13.0
       '@xterm/xterm': ^5.3.0
@@ -17419,7 +17419,7 @@ snapshots:
       commander: 2.20.3
       cssfilter: 0.0.10
 
-  xterm-addon-search-bar-upgraded@0.3.4(@xterm/addon-search@0.15.0(@xterm/xterm@5.5.0))(@xterm/xterm@5.5.0):
+  xterm-addon-search-bar-upgraded@0.3.5(@xterm/addon-search@0.15.0(@xterm/xterm@5.5.0))(@xterm/xterm@5.5.0):
     dependencies:
       '@xterm/addon-search': 0.15.0(@xterm/xterm@5.5.0)
       '@xterm/xterm': 5.5.0
