@@ -70,7 +70,7 @@
     "@vitest/ui": "4.0.15",
     "@vue/test-utils": "^2.4.6",
     "drizzle-kit": "^0.31.8",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.15",
