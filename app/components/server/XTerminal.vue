@@ -148,7 +148,7 @@ onMounted(async () => {
   terminal.loadAddon(webLinksAddon)
   
   try {
-    const searchBarModule = await import('xterm-addon-search-bar-upgraded')
+    const searchBarModule = await import('@kingironman2011/xterm-addon-search-bar')
     const module = searchBarModule as Record<string, unknown>
     type Constructor = new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => SearchBarAddonInstance
 
