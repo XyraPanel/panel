@@ -24,11 +24,11 @@ importers:
         specifier: ^1.1.1
         version: 1.1.1(@nuxt/scripts@0.13.0(@unhead/vue@2.0.19(vue@3.5.25(typescript@5.9.3)))(db0@0.3.4(better-sqlite3@12.5.0)(drizzle-orm@0.45.0(@types/better-sqlite3@7.6.13)(better-sqlite3@12.5.0)(kysely@0.28.8)))(ioredis@5.8.2)(magicast@0.5.1)(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(magicast@0.5.1)
       '@pinia/colada':
-        specifier: ^0.18.0
-        version: 0.18.0(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(vue@3.5.25(typescript@5.9.3))
+        specifier: ^0.18.1
+        version: 0.18.1(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(vue@3.5.25(typescript@5.9.3))
       '@pinia/colada-nuxt':
         specifier: 0.2.4
-        version: 0.2.4(@pinia/colada@0.18.0(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(vue@3.5.25(typescript@5.9.3)))(magicast@0.5.1)
+        version: 0.2.4(@pinia/colada@0.18.1(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(vue@3.5.25(typescript@5.9.3)))(magicast@0.5.1)
       '@pinia/nuxt':
         specifier: ^0.11.3
         version: 0.11.3(magicast@0.5.1)(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))
@@ -2098,8 +2098,8 @@ packages:
     peerDependencies:
       '@pinia/colada': '>=0.17.7'
 
-  '@pinia/colada@0.18.0':
-    resolution: {integrity: sha512-HttY9k3kID6cPlKeFAR75nTkI/4C9kAAauyU0p8kw72JEW6uCLJ5kuKCDNUJdTy4TumcmPzJCwOi1sMEDyOzHA==}
+  '@pinia/colada@0.18.1':
+    resolution: {integrity: sha512-oZnVrRmWimn4uQcZExsZThwm4goAb2TM9VclSbDeJvIVc20EOl+hFUgkKSdxaWV/syZvwObdIAAt1cN8h+s+AQ==}
     peerDependencies:
       pinia: ^2.2.6 || ^3.0.0
       vue: ^3.5.17
@@ -9444,14 +9444,14 @@ snapshots:
       '@parcel/watcher-win32-ia32': 2.5.1
       '@parcel/watcher-win32-x64': 2.5.1
 
-  '@pinia/colada-nuxt@0.2.4(@pinia/colada@0.18.0(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(vue@3.5.25(typescript@5.9.3)))(magicast@0.5.1)':
+  '@pinia/colada-nuxt@0.2.4(@pinia/colada@0.18.1(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(vue@3.5.25(typescript@5.9.3)))(magicast@0.5.1)':
     dependencies:
       '@nuxt/kit': 4.2.1(magicast@0.5.1)
-      '@pinia/colada': 0.18.0(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(vue@3.5.25(typescript@5.9.3))
+      '@pinia/colada': 0.18.1(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(vue@3.5.25(typescript@5.9.3))
     transitivePeerDependencies:
       - magicast
 
-  '@pinia/colada@0.18.0(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(vue@3.5.25(typescript@5.9.3))':
+  '@pinia/colada@0.18.1(pinia@3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3)))(vue@3.5.25(typescript@5.9.3))':
     dependencies:
       '@vue/devtools-api': 8.0.5
       pinia: 3.0.4(typescript@5.9.3)(vue@3.5.25(typescript@5.9.3))
