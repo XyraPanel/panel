@@ -41,12 +41,6 @@ const maxUploadSize = process.env.NUXT_MAX_UPLOAD_SIZE_MB
 
 export default defineNuxtConfig({
   compatibilityDate: '2024-11-01',
-  builder: 'vite',
-  vite: {
-    build: {
-      chunkSizeWarningLimit: 4000
-    }
-  },
   devtools: {
     enabled: true,
 
