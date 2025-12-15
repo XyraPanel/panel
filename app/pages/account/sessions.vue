@@ -354,7 +354,7 @@ async function handleSignOutAll(includeCurrent = false) {
                     <span class="hidden sm:inline">•</span>
                     <div class="flex items-center gap-2 shrink-0">
                       <span class="truncate">
-                        {{ t('account.sessions.active') }}:
+                        {{ t('account.sessions.active') }}
                         <template v-if="session.lastSeenAt">
                           <NuxtTime :datetime="session.lastSeenAt" class="font-medium" />
                         </template>
@@ -362,7 +362,7 @@ async function handleSignOutAll(includeCurrent = false) {
                       </span>
                       <span class="hidden sm:inline">•</span>
                       <span class="truncate">
-                        {{ t('account.sessions.expires') }}:
+                        {{ t('account.sessions.expires') }}
                         <template v-if="session.expiresAtTimestamp">
                           <NuxtTime :datetime="session.expiresAtTimestamp * 1000" class="font-medium" />
                         </template>

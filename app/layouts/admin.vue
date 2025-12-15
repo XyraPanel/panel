@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
+import type { CommandPaletteGroup, CommandPaletteItem } from '@nuxt/ui'
 import type { SessionUser } from '#shared/types/auth'
 import type { SecuritySettings, AdminNavItem } from '#shared/types/admin'
 import { useAuthStore } from '~/stores/auth'
@@ -95,6 +96,57 @@ const ADMIN_NAV_ITEMS = computed<AdminNavItem[]>(() => [
   },
 ])
 
+const CLIENT_NAV_ITEMS = computed(() => [
+  {
+    id: 'client-dashboard',
+    label: t('dashboard.title'),
+    to: '/',
+    order: 0,
+  },
+  {
+    id: 'client-servers',
+    label: t('server.list.title'),
+    to: '/server',
+    order: 10,
+  },
+  {
+    id: 'client-account-profile',
+    label: t('account.profile.title'),
+    to: '/account/profile',
+    order: 20,
+  },
+  {
+    id: 'client-account-security',
+    label: t('account.security.title'),
+    to: '/account/security',
+    order: 25,
+  },
+  {
+    id: 'client-account-api-keys',
+    label: t('account.apiKeys.title'),
+    to: '/account/api-keys',
+    order: 30,
+  },
+  {
+    id: 'client-account-ssh-keys',
+    label: t('account.sshKeys.title'),
+    to: '/account/ssh-keys',
+    order: 35,
+  },
+  {
+    id: 'client-account-sessions',
+    label: t('account.sessions.title'),
+    to: '/account/sessions',
+    order: 40,
+  },
+  {
+    id: 'client-account-activity',
+    label: t('account.activity.title'),
+    to: '/account/activity',
+    order: 45,
+  },
+])
+
 const route = useRoute()
 const router = useRouter()
 const {
@@ -112,10 +164,20 @@ const createDefaultSecuritySettings = (): SecuritySettings => ({
   announcementMessage: '',
 })
 
-const { data: securitySettings } = await useFetch<SecuritySettings>('/api/admin/settings/security', {
-  key: 'admin-layout-security-settings',
-  default: () => createDefaultSecuritySettings(),
-})
+const requestFetch = useRequestFetch() as (input: string, init?: Record<string, unknown>) => Promise<unknown>
+
+async function fetchSecuritySettings(): Promise<SecuritySettings> {
+  const result = await requestFetch('/api/admin/settings/security') as unknown
+  return result as SecuritySettings
+}
+
+const { data: securitySettings } = await useAsyncData<SecuritySettings>(
+  'admin-layout-security-settings',
+  fetchSecuritySettings,
+  {
+    default: () => createDefaultSecuritySettings(),
+  },
+)
 
 const sessionUser = computed<SessionUser | null>(() => storeUser.value ?? null)
 
@@ -268,6 +330,83 @@ const accountMenuItems = computed(() => [
     { label: t('auth.signOut'), click: handleSignOut, color: 'error' },
   ],
 ])
+
+const dashboardSearchOpen = ref(false)
+const dashboardSearchTerm = ref('')
+const dashboardSearchShortcut = 'meta_k'
+
+const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
+  const navigationItems: CommandPaletteItem[] = navItems.value.map(item => ({
+    id: item.id,
+    label: item.label,
+    suffix: item.to,
+    to: item.to,
+    onSelect: (evt) => {
+      evt?.preventDefault?.()
+      if (item.to) {
+        router.push(item.to)
+      }
+      dashboardSearchOpen.value = false
+    },
+  }))
+
+  const clientItems: CommandPaletteItem[] = CLIENT_NAV_ITEMS.value
+    .slice()
+    .sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY))
+    .map(item => ({
+      id: item.id,
+      label: item.label,
+      suffix: item.to,
+      to: item.to,
+      onSelect: (evt) => {
+        evt?.preventDefault?.()
+        if (item.to) {
+          router.push(item.to)
+        }
+        dashboardSearchOpen.value = false
+      },
+    }))
+
+  const accountItems: CommandPaletteItem[] = [
+    {
+      id: 'admin-account-security',
+      label: t('account.security.title'),
+      to: '/account/security',
+      onSelect: (evt) => {
+        evt?.preventDefault?.()
+        navigateToSecuritySettings()
+        dashboardSearchOpen.value = false
+      },
+    },
+    {
+      id: 'admin-sign-out',
+      label: t('auth.signOut'),
+      onSelect: async (evt) => {
+        evt?.preventDefault?.()
+        await handleSignOut()
+        dashboardSearchOpen.value = false
+      },
+    },
+  ]
+
+  return [
+    {
+      id: 'navigation',
+      label: t('common.navigation'),
+      items: navigationItems,
+    },
+    {
+      id: 'client',
+      label: t('dashboard.title'),
+      items: clientItems,
+    },
+    {
+      id: 'account',
+      label: t('dashboard.account'),
+      items: accountItems,
+    },
+  ]
+})
 </script>
 
 <template>
@@ -290,6 +429,13 @@ const accountMenuItems = computed(() => [
       </template>
 
       <template #default="{ collapsed }">
+        <UDashboardSearchButton
+          v-model:open="dashboardSearchOpen"
+          class="mb-3 w-full"
+          :block="collapsed"
+          :shortcut="dashboardSearchShortcut"
+          :label="t('common.search')"
+        />
         <UNavigationMenu
           :collapsed="collapsed"
           :items="[navItems]"
@@ -352,6 +498,22 @@ const accountMenuItems = computed(() => [
         </div>
       </template>
     </UDashboardSidebar>
+    <UDashboardSearch
+      v-model:open="dashboardSearchOpen"
+      v-model:search-term="dashboardSearchTerm"
+      :groups="dashboardSearchGroups"
+      :shortcut="dashboardSearchShortcut"
+      :placeholder="t('common.search')"
+      :color-mode="false"
+      :fuse="{
+        fuseOptions: {
+          threshold: 0.3,
+          ignoreLocation: true,
+          keys: ['label', 'suffix'],
+        },
+        resultLimit: 40,
+      }"
+    />
     <UDashboardPanel :ui="{ body: 'flex flex-1 flex-col p-0' }">
       <template #body>
         <header class="border-b border-default bg-background/70 backdrop-blur">

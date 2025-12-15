@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { generateRawToken, hashToken } from '~~/server/utils/crypto'
 import { useDrizzle, tables, eq, and, lt } from '~~/server/utils/drizzle'
 
@@ -27,9 +28,14 @@ export async function createEmailVerificationToken(userId: string): Promise<{ to
 
   db.insert(tables.verificationTokens)
     .values({
+      id: randomUUID(),
       identifier,
       token: storedToken,
+      value: null,
       expires: expiresAt,
+      expiresAt,
+      createdAt: now,
+      updatedAt: now,
     })
     .run()
 

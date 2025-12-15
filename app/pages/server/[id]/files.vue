@@ -414,18 +414,16 @@ async function handleBulkArchive() {
   compressStatus.target = items.length === 1 ? singleItemLabel : `${items.length} items`
 
   try {
-    const response = await $fetch<{ success: boolean; data: { file: string } }>(`/api/servers/${serverId.value}/files/compress`, {
+    await $fetch<{ success: boolean; data: { file: string } }>(`/api/servers/${serverId.value}/files/compress`, {
       method: 'POST',
       body: {
         root: currentDirectory.value,
         files: items.map(item => item.name),
       },
     })
-
-    const archiveName = response?.data?.file ?? 'archive.tar'
     toast.add({
       title: t('common.success'),
-      description: t('server.files.title'),
+      description: t('server.files.archiveCreated'),
     })
 
     await fetchDirectory()

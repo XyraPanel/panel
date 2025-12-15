@@ -33,73 +33,15 @@ async function fetchDashboard() {
 }
 
 fetchDashboard()
-
-function relativeTime(value: string | null): string {
-  if (!value) {
-    return t('admin.dashboard.unknownTime')
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return t('admin.dashboard.unknownTime')
-  }
-
-  const diffMs = Date.now() - date.getTime()
-  if (diffMs < 0) {
-    return t('admin.dashboard.inTheFuture')
-  }
-
-  const diffMinutes = Math.floor(diffMs / 60000)
-  if (diffMinutes < 1) {
-    return t('admin.dashboard.justNow')
-  }
-  if (diffMinutes < 60) {
-    return t('admin.dashboard.minutesAgo', { count: diffMinutes })
-  }
-
-  const diffHours = Math.floor(diffMinutes / 60)
-  if (diffHours < 24) {
-    return t('admin.dashboard.hoursAgo', { count: diffHours })
-  }
-
-  const diffDays = Math.floor(diffHours / 24)
-  if (diffDays < 7) {
-    return t('admin.dashboard.daysAgo', { count: diffDays })
-  }
-
-  const diffWeeks = Math.floor(diffDays / 7)
-  if (diffWeeks < 5) {
-    return t('admin.dashboard.weeksAgo', { count: diffWeeks })
-  }
-
-  const diffMonths = Math.floor(diffDays / 30)
-  if (diffMonths < 12) {
-    return t('admin.dashboard.monthsAgo', { count: diffMonths })
-  }
-
-  const diffYears = Math.floor(diffDays / 365)
-  return t('admin.dashboard.yearsAgo', { count: diffYears })
-}
-
-function formatTimestamp(value: string | null): string {
-  if (!value) {
-    return t('admin.dashboard.unknownTime')
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return t('admin.dashboard.unknownTime')
-  }
-
-  return date.toLocaleString()
-}
 </script>
+
 
 <template>
   <UPage>
     <UPageBody>
       <UContainer>
         <section class="space-y-6">
+
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <template v-if="loading">
               <UCard v-for="i in 4" :key="`metric-skeleton-${i}`" :ui="{ body: 'space-y-3' }">
@@ -134,8 +76,8 @@ function formatTimestamp(value: string | null): string {
             </template>
           </div>
 
-          <div class="grid gap-4 xl:grid-cols-3">
-            <UCard :ui="{ body: 'space-y-3' }" class="xl:col-span-2">
+          <div class="grid gap-4 xl:grid-cols-2">
+            <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
                 <div class="flex items-center justify-between">
                   <h2 class="text-lg font-semibold">{{ t('admin.dashboard.nodeHealth') }}</h2>
@@ -149,9 +91,7 @@ function formatTimestamp(value: string | null): string {
                 <div v-if="loading" class="space-y-3 p-4">
                   <USkeleton v-for="i in 3" :key="`node-skeleton-${i}`" class="h-12 w-full" />
                 </div>
-                <div v-else-if="error" class="p-4 text-sm text-destructive">
-                  {{ error }}
-                </div>
+                <div v-else-if="error" class="p-4 text-sm text-destructive">{{ error }}</div>
                 <div v-else-if="nodes.length === 0" class="p-4 text-sm text-muted-foreground">
                   {{ t('admin.dashboard.noNodes') }}
                 </div>
@@ -163,8 +103,7 @@ function formatTimestamp(value: string | null): string {
                         <h3 class="text-sm font-semibold">{{ node.name }}</h3>
                         <UBadge size="xs"
                           :color="node.status === 'online' ? 'primary' : node.status === 'maintenance' ? 'warning' : 'warning'">
-                          {{ node.status === 'online' ? t('admin.dashboard.online') : node.status === 'maintenance' ? t('admin.dashboard.maintenance') :
-                          t('admin.dashboard.unknown') }}
+                          {{ node.status === 'online' ? t('admin.dashboard.online') : node.status === 'maintenance' ? t('admin.dashboard.maintenance') : t('admin.dashboard.unknown') }}
                         </UBadge>
                       </div>
                       <p class="text-xs text-muted-foreground">{{ node.fqdn }}</p>
@@ -181,7 +120,8 @@ function formatTimestamp(value: string | null): string {
                         <UIcon name="i-lucide-alert-triangle" class="size-3" /> {{ node.issue }}
                       </span>
                       <span v-if="node.lastSeenAt" class="inline-flex items-center gap-1">
-                        <UIcon name="i-lucide-clock" class="size-3" /> {{ t('admin.dashboard.lastSeen') }} {{ relativeTime(node.lastSeenAt) }}
+                        <UIcon name="i-lucide-clock" class="size-3" />
+                        <NuxtTime :datetime="node.lastSeenAt" relative relative-style="long" />
                       </span>
                     </div>
                   </div>
@@ -193,7 +133,9 @@ function formatTimestamp(value: string | null): string {
               <template #header>
                 <div class="flex items-center justify-between">
                   <h2 class="text-lg font-semibold">{{ t('admin.dashboard.openIncidents') }}</h2>
-                  <UButton size="xs" variant="ghost" color="neutral" :disabled="loading">{{ t('admin.dashboard.viewAll') }}</UButton>
+                  <UButton size="xs" variant="ghost" color="neutral" :disabled="loading">
+                    {{ t('admin.dashboard.viewAll') }}
+                  </UButton>
                 </div>
               </template>
 
@@ -204,31 +146,29 @@ function formatTimestamp(value: string | null): string {
                 <li v-else-if="error" class="rounded-md border border-default px-3 py-3 text-sm text-destructive">
                   {{ error }}
                 </li>
-                <li v-else-if="incidents.length === 0"
-                  class="rounded-md border border-default px-3 py-3 text-sm text-muted-foreground">
+                <li v-else-if="incidents.length === 0" class="rounded-md border border-default px-3 py-3 text-sm text-muted-foreground">
                   {{ t('admin.dashboard.noIncidents') }}
                 </li>
                 <template v-else>
-                  <li v-for="incident in incidents" :key="incident.id"
-                    class="rounded-md border border-default px-3 py-3">
+                  <li v-for="incident in incidents" :key="incident.id" class="rounded-md border border-default px-3 py-3">
                     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                       <span class="text-sm font-semibold">{{ incident.action }}</span>
-                      <span class="text-xs text-muted-foreground">
-                        {{ formatTimestamp(incident.occurredAt) }}
-                      </span>
+                      <NuxtTime :datetime="incident.occurredAt" locale="en-US" />
                     </div>
                     <div class="mt-2 space-y-1 text-xs text-muted-foreground">
-                      <div class="flex items-center gap-2">
-                        <UIcon name="i-lucide-target" class="size-3" />
-                        <span>{{ incident.target ?? t('admin.dashboard.noTarget') }}</span>
-                      </div>
-                      <div v-if="incident.actor" class="flex items-center gap-2">
+                      <div v-if="incident.actorUsername || incident.actor" class="flex items-center gap-2">
                         <UIcon name="i-lucide-user" class="size-3" />
-                        <span>{{ incident.actor }}</span>
+                        <NuxtLink
+                          v-if="incident.actor"
+                          :to="`/admin/users/${incident.actor}`"
+                          class="text-primary hover:underline"
+                        >
+                          {{ incident.actorUsername ?? incident.actor }}
+                        </NuxtLink>
                       </div>
                       <div class="flex items-center gap-2 text-muted-foreground/80">
                         <UIcon name="i-lucide-clock" class="size-3" />
-                        <span>{{ relativeTime(incident.occurredAt) }}</span>
+                        <NuxtTime :datetime="incident.occurredAt" relative relative-style="long" />
                       </div>
                     </div>
                   </li>
@@ -251,16 +191,17 @@ function formatTimestamp(value: string | null): string {
               <li v-else-if="error" class="rounded-md border border-default px-4 py-3 text-sm text-destructive">
                 {{ error }}
               </li>
-              <li v-else-if="operations.length === 0"
-                class="rounded-md border border-default px-4 py-3 text-sm text-muted-foreground">
+              <li v-else-if="operations.length === 0" class="rounded-md border border-default px-4 py-3 text-sm text-muted-foreground">
                 {{ t('admin.dashboard.noOperations') }}
               </li>
               <template v-else>
                 <li v-for="operation in operations" :key="operation.key"
-                  class="flex flex-col gap-1 rounded-md border border-default px-4 py-3 md:flex-row md:items-center md:justify-between">
+                    class="flex flex-col gap-1 rounded-md border border-default px-4 py-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <p class="text-sm font-semibold">{{ operation.label }}</p>
-                    <p class="text-xs text-muted-foreground">{{ operation.detail }}</p>
+                    <p class="text-xs text-muted-foreground">
+                      {{ operation.detail }}
+                    </p>
                   </div>
                 </li>
               </template>

@@ -11,11 +11,11 @@ const { t } = useI18n()
 const toast = useToast()
 const isSubmitting = ref(false)
 
-const schemeOptions = [
+type SchemeOption = 'http' | 'https'
+const schemeOptions: { label: string; value: SchemeOption }[] = [
   { label: 'HTTP', value: 'http' },
   { label: 'HTTPS', value: 'https' },
-] as const
-type SchemeOption = (typeof schemeOptions)[number]['value']
+]
 
 const schema = z.object({
   name: z.string().trim().min(1, 'Node name is required').max(100, 'Node name must be 100 characters or less'),
@@ -25,13 +25,13 @@ const schema = z.object({
   public: z.boolean(),
   maintenanceMode: z.boolean(),
   behindProxy: z.boolean(),
-  memory: z.number({ invalid_type_error: 'Total memory must be a number' }).int('Memory must be a whole number').positive('Memory must be greater than 0'),
-  memoryOverallocate: z.number({ invalid_type_error: 'Memory overallocation must be a number' }).int('Memory overallocate must be a whole number').min(-1, 'Value must be -1 or greater'),
-  disk: z.number({ invalid_type_error: 'Total disk must be a number' }).int('Disk must be a whole number').positive('Disk must be greater than 0'),
-  diskOverallocate: z.number({ invalid_type_error: 'Disk overallocation must be a number' }).int('Disk overallocate must be a whole number').min(-1, 'Value must be -1 or greater'),
-  uploadSize: z.number({ invalid_type_error: 'Upload size must be a number' }).int('Upload size must be a whole number').min(1, 'Upload size must be at least 1 MB').max(1024, 'Upload size cannot exceed 1024 MB'),
-  daemonListen: z.number({ invalid_type_error: 'Daemon port must be a number' }).int('Daemon port must be a whole number').min(1, 'Daemon port must be between 1 and 65535').max(65535, 'Daemon port must be between 1 and 65535'),
-  daemonSftp: z.number({ invalid_type_error: 'SFTP port must be a number' }).int('SFTP port must be a whole number').min(1, 'SFTP port must be between 1 and 65535').max(65535, 'SFTP port must be between 1 and 65535'),
+  memory: z.number().int('Memory must be a whole number').positive('Memory must be greater than 0'),
+  memoryOverallocate: z.number().int('Memory overallocate must be a whole number').min(-1, 'Value must be -1 or greater'),
+  disk: z.number().int('Disk must be a whole number').positive('Disk must be greater than 0'),
+  diskOverallocate: z.number().int('Disk overallocate must be a whole number').min(-1, 'Value must be -1 or greater'),
+  uploadSize: z.number().int('Upload size must be a whole number').min(1, 'Upload size must be at least 1 MB').max(1024, 'Upload size cannot exceed 1024 MB'),
+  daemonListen: z.number().int('Daemon port must be a whole number').min(1, 'Daemon port must be between 1 and 65535').max(65535, 'Daemon port must be between 1 and 65535'),
+  daemonSftp: z.number().int('SFTP port must be a whole number').min(1, 'SFTP port must be between 1 and 65535').max(65535, 'SFTP port must be between 1 and 65535'),
   daemonBase: z.string().trim().min(1, 'Daemon base directory is required'),
 }).superRefine((data, ctx) => {
   if (!data.daemonBase.startsWith('/')) {
@@ -74,7 +74,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
   isSubmitting.value = true
 
   try {
-    await $fetch(`/api/admin/wings/nodes/${props.node.id}`, {
+    await ($fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>)(`/api/admin/wings/nodes/${props.node.id}`, {
       method: 'patch',
       body: event.data,
     })

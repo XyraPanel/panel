@@ -2,6 +2,7 @@
 import { z } from 'zod'
 import type { FormSubmitEvent, TableColumn } from '@nuxt/ui'
 import type { Allocation } from '#shared/types/server'
+import type { AdminNodeAllocationsResponse } from '#shared/types/admin'
 
 const props = defineProps<{
   nodeId: string
@@ -14,13 +15,20 @@ const pageSize = ref(50)
 const filter = ref<'all' | 'assigned' | 'unassigned'>('all')
 const isCreating = ref(false)
 
-const allocationsData = ref<{ data: Allocation[] } | null>(null)
+const allocationsData = ref<AdminNodeAllocationsResponse | null>(null)
 const pending = ref(false)
+const requestFetch = useRequestFetch() as (input: string, init?: Record<string, unknown>) => Promise<unknown>
+
+const fetchAllocations: (nodeId: string) => Promise<AdminNodeAllocationsResponse> = async (nodeId) => {
+  const endpoint: string = `/api/admin/nodes/${nodeId}/allocations`
+  const result = await requestFetch(endpoint) as unknown
+  return result as AdminNodeAllocationsResponse
+}
 
 async function loadAllocations() {
   pending.value = true
   try {
-    const response = await $fetch<{ data: Allocation[] }>(`/api/admin/nodes/${props.nodeId}/allocations`)
+    const response = await fetchAllocations(props.nodeId)
     allocationsData.value = response
   } catch (error) {
     console.error('Failed to load allocations:', error)
@@ -131,7 +139,7 @@ async function createAllocations(event: FormSubmitEvent<CreateFormSchema>) {
       }
     }
 
-    await $fetch(`/api/admin/nodes/${props.nodeId}/allocations`, {
+    await ($fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>)(`/api/admin/nodes/${props.nodeId}/allocations`, {
       method: 'POST',
       body: {
         ip: event.data.ip,
@@ -175,7 +183,7 @@ function handleAliasBlur(allocation: Allocation, event: Event) {
 async function updateAlias(allocation: Allocation, newAlias: string) {
   updatingAlias.value = allocation.id
   try {
-    await $fetch(`/api/admin/allocations/${allocation.id}`, {
+    await ($fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>)(`/api/admin/allocations/${allocation.id}`, {
       method: 'patch',
       body: { ipAlias: newAlias || null },
     })
@@ -203,7 +211,7 @@ async function deleteAllocation(allocation: Allocation) {
   }
 
   try {
-    await $fetch(`/api/admin/allocations/${allocation.id}`, {
+    await ($fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>)(`/api/admin/allocations/${allocation.id}`, {
       method: 'DELETE',
     })
 
@@ -223,12 +231,12 @@ async function deleteAllocation(allocation: Allocation) {
   }
 }
 
-const columns: TableColumn[] = [
-  { key: 'ip', label: t('admin.nodes.ip') },
-  { key: 'ipAlias', label: t('admin.nodes.allocations.ipAlias') },
-  { key: 'port', label: t('admin.nodes.port') },
-  { key: 'server', label: t('admin.nodes.allocations.assignedTo') },
-  { key: 'actions', label: '' },
+const columns: TableColumn<Allocation>[] = [
+  { accessorKey: 'ip', header: t('admin.nodes.ip') },
+  { accessorKey: 'ipAlias', header: t('admin.nodes.allocations.ipAlias') },
+  { accessorKey: 'port', header: t('admin.nodes.port') },
+  { accessorKey: 'server', header: t('admin.nodes.allocations.assignedTo') },
+  { id: 'actions', header: '' },
 ]
 
 const assignedCount = computed(() => allocations.value.filter(a => a.serverId !== null).length)

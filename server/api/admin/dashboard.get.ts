@@ -15,23 +15,13 @@ import type {
 } from '#shared/types/admin'
 
 function parseMetadata(raw: string | null): Record<string, unknown> | null {
-  if (!raw) {
-    return null
-  }
-
-  try {
-    return JSON.parse(raw) as Record<string, unknown>
-  }
-  catch {
-    return { raw }
-  }
+  if (!raw) return null
+  try { return JSON.parse(raw) as Record<string, unknown> } 
+  catch { return { raw } }
 }
 
 function formatHelperRange(current: number, total: number, suffix: string): string {
-  if (total === 0) {
-    return `0 ${suffix}`
-  }
-
+  if (total === 0) return `0 ${suffix}`
   return `${current}/${total} ${suffix}`
 }
 
@@ -47,17 +37,12 @@ export default defineEventHandler(async (): Promise<DashboardResponse> => {
     try {
       const response = await remotePaginateServers(1, 1, node.id)
       serverCount = response.meta.total
-      if (!node.maintenanceMode) {
-        status = 'online'
-      }
-    }
-    catch (error) {
+      if (!node.maintenanceMode) status = 'online'
+    } catch (error) {
       issue = error instanceof Error ? error.message : 'Failed to contact Wings node'
     }
 
-    if (node.maintenanceMode) {
-      status = 'maintenance'
-    }
+    if (node.maintenanceMode) status = 'maintenance'
 
     return {
       id: node.id,
@@ -72,23 +57,26 @@ export default defineEventHandler(async (): Promise<DashboardResponse> => {
     }
   }))
 
-  const respondingNodes = nodeResults.filter(node => node.status === 'online').length
-  const maintenanceNodes = nodeResults.filter(node => node.status === 'maintenance').length
-  const unreachableNodes = nodeResults.filter(node => node.status === 'unknown').length
-  const totalServers = nodeResults.reduce((sum, node) => sum + (node.serverCount ?? 0), 0)
+  const respondingNodes = nodeResults.filter(n => n.status === 'online').length
+  const maintenanceNodes = nodeResults.filter(n => n.status === 'maintenance').length
+  const unreachableNodes = nodeResults.filter(n => n.status === 'unknown').length
+  const totalServers = nodeResults.reduce((sum, n) => sum + (n.serverCount ?? 0), 0)
+
+  const users = db.select({ id: tables.users.id, displayUsername: tables.users.displayUsername }).from(tables.users).all()
+  const usersMap = Object.fromEntries(users.map(u => [u.id, u.displayUsername]))
 
   const userRows = db.select({ role: tables.users.role }).from(tables.users).all()
   const totalUsers = userRows.length
-  const adminUsers = userRows.filter(user => user.role === 'admin').length
+  const adminUsers = userRows.filter(u => u.role === 'admin').length
 
   const scheduleRows = db.select({
     enabled: tables.serverSchedules.enabled,
     nextRunAt: tables.serverSchedules.nextRunAt,
   }).from(tables.serverSchedules).all()
 
-  const activeSchedules = scheduleRows.filter(schedule => schedule.enabled).length
+  const activeSchedules = scheduleRows.filter(s => s.enabled).length
   const soonThreshold = new Date(Date.now() + 30 * 60 * 1000)
-  const dueSoonCount = scheduleRows.filter(schedule => schedule.enabled && schedule.nextRunAt && schedule.nextRunAt <= soonThreshold).length
+  const dueSoonCount = scheduleRows.filter(s => s.enabled && s.nextRunAt && s.nextRunAt <= soonThreshold).length
 
   const audits = db.select({
     id: tables.auditEvents.id,
@@ -104,10 +92,11 @@ export default defineEventHandler(async (): Promise<DashboardResponse> => {
     .limit(5)
     .all()
 
-  const incidents: DashboardIncident[] = audits.map((event) => ({
+  const incidents: DashboardIncident[] = audits.map(event => ({
     id: event.id,
     occurredAt: event.occurredAt.toISOString(),
     actor: event.actor,
+    actorUsername: usersMap[event.actor] ?? undefined,
     action: event.action,
     target: event.targetId ? `${event.targetType}#${event.targetId}` : event.targetType,
     metadata: parseMetadata(event.metadata),
@@ -150,53 +139,12 @@ export default defineEventHandler(async (): Promise<DashboardResponse> => {
 
   const operations: DashboardOperation[] = []
 
-  if (nodes.length === 0) {
-    operations.push({
-      key: 'connect-node',
-      label: 'Connect a Wings node',
-      detail: 'No Wings nodes are configured. Add a node to start provisioning servers.',
-    })
-  }
-
-  if (unreachableNodes > 0) {
-    operations.push({
-      key: 'resolve-nodes',
-      label: 'Resolve unreachable nodes',
-      detail: `${unreachableNodes} node${unreachableNodes === 1 ? '' : 's'} failed to respond to the remote API. Verify networking and credentials.`,
-    })
-  }
-
-  if (totalServers === 0 && nodes.length > 0) {
-    operations.push({
-      key: 'provision-servers',
-      label: 'Provision servers',
-      detail: 'No servers are registered across your Wings nodes. Create a server from the Servers page.',
-    })
-  }
-
-  if (adminUsers <= 1) {
-    operations.push({
-      key: 'invite-admin',
-      label: 'Invite additional admin',
-      detail: 'Only one administrator account exists. Invite a teammate to ensure redundant access.',
-    })
-  }
-
-  if (dueSoonCount > 0) {
-    operations.push({
-      key: 'review-schedules',
-      label: 'Review upcoming schedules',
-      detail: `${dueSoonCount} schedule${dueSoonCount === 1 ? '' : 's'} are scheduled to run within the next 30 minutes.`,
-    })
-  }
-
-  if (operations.length === 0) {
-    operations.push({
-      key: 'all-clear',
-      label: 'All systems nominal',
-      detail: 'Wings nodes and panel services are responding as expected.',
-    })
-  }
+  if (nodes.length === 0) operations.push({ key: 'connect-node', label: 'Connect a Wings node', detail: 'No Wings nodes are configured. Add a node to start provisioning servers.' })
+  if (unreachableNodes > 0) operations.push({ key: 'resolve-nodes', label: 'Resolve unreachable nodes', detail: `${unreachableNodes} node${unreachableNodes === 1 ? '' : 's'} failed to respond to the remote API.` })
+  if (totalServers === 0 && nodes.length > 0) operations.push({ key: 'provision-servers', label: 'Provision servers', detail: 'No servers are registered across your Wings nodes. Create a server from the Servers page.' })
+  if (adminUsers <= 1) operations.push({ key: 'invite-admin', label: 'Invite additional admin', detail: 'Only one administrator account exists. Invite a teammate to ensure redundant access.' })
+  if (dueSoonCount > 0) operations.push({ key: 'review-schedules', label: 'Review upcoming schedules', detail: `${dueSoonCount} schedule${dueSoonCount === 1 ? '' : 's'} scheduled within 30 minutes.` })
+  if (operations.length === 0) operations.push({ key: 'all-clear', label: 'All systems nominal', detail: 'Wings nodes and panel services are responding as expected.' })
 
   return {
     metrics,

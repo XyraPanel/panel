@@ -1,20 +1,46 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
-import type { AccountActivityResponse } from '#shared/types/account'
+import type { AccountActivityItem, PaginatedAccountActivityResponse } from '#shared/types/account'
 
-definePageMeta({
-  auth: true,
-})
+definePageMeta({ auth: true })
 
 const { t } = useI18n()
+
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+const requestFetch = useRequestFetch() as (input: string, init?: Record<string, unknown>) => Promise<unknown>
+
+async function fetchAccountActivity(page: number, limit: number): Promise<PaginatedAccountActivityResponse> {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  })
+  const result = await requestFetch(`/api/account/activity?${params.toString()}`) as unknown
+  return result as PaginatedAccountActivityResponse
+}
+
 const {
   data: activityResponse,
-  pending: loading,
-  error: fetchError,
+  error,
+  pending,
   refresh: refreshActivity,
-} = await useFetch<AccountActivityResponse>('/api/account/activity', {
-  key: 'account-activity',
-})
+} = await useAsyncData<PaginatedAccountActivityResponse>(
+  'account-activity',
+  () => fetchAccountActivity(currentPage.value, itemsPerPage.value),
+  {
+    default: () => ({
+      data: [],
+      pagination: {
+        page: 1,
+        perPage: itemsPerPage.value,
+        total: 0,
+        totalPages: 0,
+      },
+      generatedAt: new Date().toISOString(),
+    }),
+    watch: [currentPage, itemsPerPage],
+  },
+)
 
 let refreshInterval: ReturnType<typeof setInterval> | null = null
 
@@ -25,33 +51,33 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval)
-  }
+  if (refreshInterval) clearInterval(refreshInterval)
 })
 
-const entries = computed(() => activityResponse.value?.data ?? [])
+const entries = computed<AccountActivityItem[]>(() => activityResponse.value?.data ?? [])
+const pagination = computed(() => activityResponse.value?.pagination)
 const generatedAt = computed(() => activityResponse.value?.generatedAt ?? null)
-const generatedAtDate = computed(() => (generatedAt.value ? new Date(generatedAt.value) : null))
-const error = computed(() => {
-  if (!fetchError.value) return null
-  return fetchError.value instanceof Error ? fetchError.value.message : t('account.activity.failedToLoad')
+const generatedAtDate = computed(() =>
+  generatedAt.value ? new Date(generatedAt.value) : null
+)
+
+const displayError = computed(() => {
+  if (!error.value) return null
+  return error.value instanceof Error
+    ? error.value.message
+    : t('account.activity.failedToLoad')
 })
 
 const expandedEntries = ref<Set<string>>(new Set())
 const toast = useToast()
 
 function toggleEntry(id: string) {
-  if (expandedEntries.value.has(id)) {
-    expandedEntries.value.delete(id)
-  } else {
-    expandedEntries.value.add(id)
-  }
+  if (expandedEntries.value.has(id)) expandedEntries.value.delete(id)
+  else expandedEntries.value.add(id)
 }
 
 function formatJson(data: Record<string, unknown> | null): string {
-  if (!data) return 'null'
-  return JSON.stringify(data, null, 2)
+  return data ? JSON.stringify(data, null, 2) : 'null'
 }
 
 function getFullAuditData(entry: typeof entries.value[0]) {
@@ -68,7 +94,7 @@ function getFullAuditData(entry: typeof entries.value[0]) {
 async function copyJson(entry: typeof entries.value[0]) {
   const json = formatJson(getFullAuditData(entry))
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
+    if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(json)
     } else {
       const textArea = document.createElement('textarea')
@@ -78,21 +104,24 @@ async function copyJson(entry: typeof entries.value[0]) {
       document.body.appendChild(textArea)
       textArea.select()
       document.execCommand('copy')
-      document.body.removeChild(textArea)
+      textArea.remove()
     }
+
     toast.add({
       title: t('account.activity.copiedToClipboard'),
       description: t('account.activity.copiedToClipboardDescription'),
     })
-  } catch (error) {
+  } catch (err) {
     toast.add({
       title: t('account.activity.failedToCopy'),
-      description: error instanceof Error ? error.message : t('account.activity.failedToCopyDescription'),
+      description:
+        err instanceof Error
+          ? err.message
+          : t('account.activity.failedToCopyDescription'),
       color: 'error',
     })
   }
 }
-
 </script>
 
 <template>
@@ -118,19 +147,26 @@ async function copyJson(entry: typeof entries.value[0]) {
       <UContainer>
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
-            <h2 class="text-lg font-semibold">{{ t('account.activity.recentActivity') }}</h2>
+            <div class="flex items-center justify-between">
+              <h2 class="text-lg font-semibold">{{ t('account.activity.recentActivity') }}</h2>
+              <UBadge v-if="pagination" color="neutral" variant="soft" size="xs">
+                {{ pagination.total }} {{ t('activity.total') }}
+              </UBadge>
+            </div>
           </template>
 
-          <template v-if="loading">
+          <template v-if="pending">
             <div class="space-y-2">
-              <USkeleton v-for="i in 5" :key="`activity-skeleton-${i}`" class="h-14 w-full" />
+              <USkeleton v-for="i in 5" :key="i" class="h-14 w-full" />
             </div>
           </template>
-          <template v-else-if="error">
+
+          <template v-else-if="displayError">
             <div class="rounded-lg border border-dashed border-default p-4 text-sm text-destructive">
-              {{ error }}
+              {{ displayError }}
             </div>
           </template>
+
           <UEmpty
             v-else-if="entries.length === 0"
             icon="i-lucide-activity"
@@ -138,6 +174,7 @@ async function copyJson(entry: typeof entries.value[0]) {
             :description="t('account.activity.noActivityDescription')"
             variant="subtle"
           />
+
           <template v-else>
             <div class="space-y-3">
               <div
@@ -157,22 +194,28 @@ async function copyJson(entry: typeof entries.value[0]) {
                         class="size-4 text-muted-foreground shrink-0"
                       />
                     </div>
-                    <p v-if="entry.target && !entry.target.startsWith('user#')" class="text-xs text-muted-foreground mt-1">
+                    <p
+                      v-if="entry.target && !entry.target.startsWith('user#')"
+                      class="text-xs text-muted-foreground mt-1"
+                    >
                       {{ entry.target }}
                     </p>
                   </div>
+
                   <div class="text-xs text-muted-foreground shrink-0">
                     <NuxtTime :datetime="entry.occurredAt" relative />
                   </div>
                 </button>
-                
+
                 <div
                   v-if="expandedEntries.has(entry.id)"
                   class="border-t border-default bg-muted/30 p-4"
                 >
                   <div class="space-y-2">
                     <div class="flex items-center justify-between mb-2">
-                      <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('account.activity.auditLogEntry') }}</p>
+                      <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                        {{ t('account.activity.auditLogEntry') }}
+                      </p>
                       <UButton
                         variant="ghost"
                         size="xs"
@@ -182,10 +225,35 @@ async function copyJson(entry: typeof entries.value[0]) {
                         {{ t('account.activity.copyJSON') }}
                       </UButton>
                     </div>
-                    <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatJson(getFullAuditData(entry)) }}</code></pre>
+
+                    <pre
+                      class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
+                    >
+<code>{{ formatJson(getFullAuditData(entry)) }}</code>
+</pre>
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div
+              v-if="pagination && pagination.totalPages > 1"
+              class="flex items-center justify-between border-t border-default pt-4"
+            >
+              <div class="text-sm text-muted-foreground">
+                {{ t('activity.showingEvents', { 
+                    start: ((pagination.page - 1) * pagination.perPage) + 1,
+                    end: Math.min(pagination.page * pagination.perPage, pagination.total),
+                    total: pagination.total
+                }) }}
+              </div>
+
+              <UPagination
+                v-model:page="currentPage"
+                :total="pagination.total"
+                :items-per-page="pagination.perPage"
+                size="sm"
+              />
             </div>
           </template>
         </UCard>

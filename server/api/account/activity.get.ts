@@ -1,28 +1,9 @@
 import { createError, getQuery } from 'h3'
-import { desc, eq, or } from 'drizzle-orm'
+import { desc, eq, or, sql } from 'drizzle-orm'
 import { getServerSession } from '~~/server/utils/session'
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import type { AccountActivityItem, AccountActivityResponse } from '#shared/types/account'
-import type { ActivityMetadata } from '#shared/types/audit'
 
-function parseMetadata(raw: string | null): ActivityMetadata | null {
-  if (!raw) {
-    return null
-  }
-
-  try {
-    const value = JSON.parse(raw) as unknown
-    if (value && typeof value === 'object') {
-      return value as ActivityMetadata
-    }
-    return { value }
-  }
-  catch {
-    return { raw }
-  }
-}
-
-export default defineEventHandler(async (event): Promise<AccountActivityResponse> => {
+export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
 
   if (!session?.user?.id) {
@@ -30,45 +11,69 @@ export default defineEventHandler(async (event): Promise<AccountActivityResponse
   }
 
   const query = getQuery(event)
-  const limitParam = Number.parseInt(typeof query.limit === 'string' ? query.limit : '20', 10)
-  const limit = Number.isNaN(limitParam) ? 20 : Math.min(Math.max(limitParam, 1), 100)
+
+  const page = Math.max(Number(query.page) || 1, 1)
+  const limitParam = Number.parseInt(
+    typeof query.limit === 'string' ? query.limit : '10',
+    10
+  )
+  const limit = Number.isNaN(limitParam) ? 10 : Math.min(Math.max(limitParam, 1), 100)
+  const offset = (page - 1) * limit
 
   const db = useDrizzle()
 
   const userId = session.user.id
   const userEmail = session.user.email
 
-  const conditions = [eq(tables.auditEvents.actor, userId)]
+  /** TODO: normalize actor column type */
+  const actorId = String(userId)
+
+  const conditions = [eq(tables.auditEvents.actor, actorId)]
+
   if (userEmail) {
     conditions.push(eq(tables.auditEvents.actor, userEmail))
   }
 
-  const rows = db.select({
-    id: tables.auditEvents.id,
-    occurredAt: tables.auditEvents.occurredAt,
-    action: tables.auditEvents.action,
-    actor: tables.auditEvents.actor,
-    targetType: tables.auditEvents.targetType,
-    targetId: tables.auditEvents.targetId,
-    metadata: tables.auditEvents.metadata,
-  })
+  const totalResult = db
+    .select({ count: sql<number>`count(*)` })
+    .from(tables.auditEvents)
+    .where(or(...conditions))
+    .get()
+
+  const total = Number(totalResult?.count ?? 0)
+
+  const rows = db
+    .select({
+      id: tables.auditEvents.id,
+      occurredAt: tables.auditEvents.occurredAt,
+      action: tables.auditEvents.action,
+      actor: tables.auditEvents.actor,
+      targetType: tables.auditEvents.targetType,
+      targetId: tables.auditEvents.targetId,
+      metadata: tables.auditEvents.metadata,
+    })
     .from(tables.auditEvents)
     .where(or(...conditions))
     .orderBy(desc(tables.auditEvents.occurredAt))
     .limit(limit)
+    .offset(offset)
     .all()
 
-  const data: AccountActivityItem[] = rows.map((row) => ({
-    id: row.id,
-    occurredAt: row.occurredAt.toISOString(),
-    action: row.action,
-    target: row.targetId ? `${row.targetType}#${row.targetId}` : row.targetType,
-    actor: row.actor,
-    metadata: parseMetadata(row.metadata),
-  }))
-
   return {
-    data,
+    data: rows.map((row) => ({
+      id: row.id,
+      occurredAt: row.occurredAt.toISOString(),
+      action: row.action,
+      target: row.targetId ? `${row.targetType}#${row.targetId}` : row.targetType,
+      actor: row.actor,
+      metadata: row.metadata ? JSON.parse(row.metadata) : null,
+    })),
+    pagination: {
+      page,
+      perPage: limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
     generatedAt: new Date().toISOString(),
   }
 })

@@ -14,7 +14,13 @@ const terminalRef = ref<HTMLElement | null>(null)
 let terminal: Terminal | null = null
 let fitAddon: import('@xterm/addon-fit').FitAddon | null = null
 let searchAddon: import('@xterm/addon-search').SearchAddon | null = null
-let searchBarAddon: { dispose: () => void } | null = null
+type SearchBarAddonInstance = {
+  dispose: () => void
+  show?: () => void
+  hide?: () => void
+}
+
+let searchBarAddon: SearchBarAddonInstance | null = null
 let webLinksAddon: import('@xterm/addon-web-links').WebLinksAddon | null = null
 let lastProcessedLogCount = 0
 
@@ -143,17 +149,21 @@ onMounted(async () => {
   
   try {
     const searchBarModule = await import('xterm-addon-search-bar-upgraded')
-    type SearchBarModule = {
-      SearchBarAddon?: new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void }
-      default?: {
-        SearchBarAddon?: new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void }
-      } | (new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => { dispose: () => void })
-    }
-    const module = searchBarModule as SearchBarModule
-    const SearchBarAddon = module.SearchBarAddon || (module.default && ('SearchBarAddon' in module.default ? module.default.SearchBarAddon : module.default as typeof module.default))
-    if (SearchBarAddon) {
-      searchBarAddon = new SearchBarAddon({ searchAddon })
-      terminal.loadAddon(searchBarAddon)
+    const module = searchBarModule as Record<string, unknown>
+    type Constructor = new (options: { searchAddon: import('@xterm/addon-search').SearchAddon }) => SearchBarAddonInstance
+
+    const SearchAddonBarCtor: Constructor | undefined =
+      typeof module.default === 'function'
+        ? module.default as Constructor
+        : module.default && typeof module.default === 'object' && 'SearchAddonBar' in module.default && typeof module.default.SearchAddonBar === 'function'
+          ? module.default.SearchAddonBar as Constructor
+          : typeof module.SearchAddonBar === 'function'
+            ? module.SearchAddonBar as Constructor
+            : undefined
+
+    if (SearchAddonBarCtor) {
+      searchBarAddon = new SearchAddonBarCtor({ searchAddon })
+      terminal.loadAddon(searchBarAddon as unknown as import('@xterm/xterm').ITerminalAddon)
     }
   } catch (e) {
     if (import.meta.dev) {
@@ -182,7 +192,7 @@ onMounted(async () => {
     // Ctrl+F or Cmd+F: Open search
     if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
       e.preventDefault()
-      if (searchBarAddon && typeof searchBarAddon.show === 'function') {
+      if (searchBarAddon?.show) {
         searchBarAddon.show()
       } else if (searchAddon) {
         if (import.meta.client && typeof globalThis !== 'undefined' && 'prompt' in globalThis) {
@@ -194,7 +204,7 @@ onMounted(async () => {
       }
       return false
     }
-    if (e.key === 'Escape' && searchBarAddon && typeof searchBarAddon.hide === 'function') {
+    if (e.key === 'Escape' && searchBarAddon?.hide) {
       searchBarAddon.hide()
       return false
     }

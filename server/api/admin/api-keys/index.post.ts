@@ -49,6 +49,7 @@ export default defineEventHandler(async (event): Promise<CreateApiKeyResponse> =
     keyType: 1,
     identifier,
     token: hashedToken,
+    key: formatApiKey(identifier, token),
     allowedIps: body.allowedIps ? JSON.stringify(body.allowedIps) : null,
     memo: body.memo || null,
     lastUsedAt: null,

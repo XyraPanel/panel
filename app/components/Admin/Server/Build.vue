@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FetchError } from 'ofetch'
 import type { Server, ServerLimits } from '#shared/types/server'
 import { serverBuildFormSchema } from '#shared/schema/admin/server'
 
@@ -10,6 +11,7 @@ const props = defineProps<{
 
 const toast = useToast()
 const isSubmitting = ref(false)
+const requestFetch = useRequestFetch()
 
 const {
   data: limitsData,
@@ -19,8 +21,13 @@ const {
   `server-limits-${props.server.id}`,
   async () => {
     try {
-      const response = await $fetch(`/api/admin/servers/${props.server.id}/limits`)
-      return (response as { data: ServerLimits } | null)?.data ?? null
+      const result = await requestFetch(`/api/admin/servers/${props.server.id}/limits`) as unknown
+      if (result && typeof result === 'object' && 'data' in result) {
+        const payload = result as { data?: ServerLimits | null }
+        return payload.data ?? null
+      }
+      console.warn('[Build Form] Unexpected limits response shape:', result)
+      return null
     }
     catch (error) {
       console.error('Failed to load server limits', error)
@@ -71,6 +78,10 @@ watch(limits, (value) => {
   }
 }, { immediate: true, deep: true })
 
+function isFetchError(error: unknown): error is FetchError<unknown> {
+  return typeof error === 'object' && error !== null && ('status' in error || 'statusText' in error || 'response' in error)
+}
+
 async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
   if (isSubmitting.value)
     return
@@ -96,14 +107,14 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 
     let response: unknown
     try {
-      response = await $fetch(`/api/admin/servers/${props.server.id}/build`, {
+      response = await requestFetch(`/api/admin/servers/${props.server.id}/build`, {
         method: 'patch',
         body: payload,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-      })
+      }) as unknown
 
       console.log('[Build Form] Update response:', response)
       console.log('[Build Form] Response type:', typeof response)
@@ -120,17 +131,19 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       }
     } catch (fetchError: unknown) {
       const error = fetchError instanceof Error ? fetchError : new Error(String(fetchError))
+      const httpError = isFetchError(fetchError) ? fetchError : null
+
       console.error('[Build Form] Fetch error:', {
         error: fetchError,
         message: error?.message,
-        status: error?.status,
-        statusText: error?.statusText,
-        data: error?.data,
-        response: error?.response,
-        responseText: typeof error?.response === 'string' ? error.response.substring(0, 200) : undefined,
+        status: httpError?.status,
+        statusText: httpError?.statusText,
+        data: (httpError as FetchError<{ message?: string }> | null)?.data,
+        response: httpError?.response,
+        responseText: typeof httpError?.data === 'string' ? httpError.data.slice(0, 200) : undefined,
       })
       
-      if (error?.response && typeof error.response === 'string' && error.response.includes('<!DOCTYPE html>')) {
+      if (typeof httpError?.data === 'string' && httpError.data.includes('<!DOCTYPE html>')) {
         toast.add({
           title: 'Route Error',
           description: 'The API endpoint is not registered. Please restart the dev server.',

@@ -20,10 +20,10 @@ const isCreating = ref(false)
 const copySuccess = ref(false)
 const createError = ref<string | null>(null)
 
-const keySchema = computed(() => z.object({
+const keySchema = z.object({
   memo: z.string().trim().max(255, t('validation.memoMaxLength')).optional().default(''),
   allowedIps: z.string().trim().optional().default('')
-    .refine(value => {
+    .refine((value) => {
       if (!value)
         return true
 
@@ -36,22 +36,39 @@ const keySchema = computed(() => z.object({
         return ipv4Regex.test(trimmed)
       })
     }, t('validation.invalidIPs')),
-}))
+})
 
-type KeyFormSchema = z.output<ReturnType<typeof keySchema.value>>
+type KeyFormSchema = z.infer<typeof keySchema>
 
-const createForm = reactive<KeyFormSchema>(keySchema.value.parse({}))
+const createForm = reactive<KeyFormSchema>(keySchema.parse({}))
+
+const keysFetch = useRequestFetch() as (input: string, init?: Record<string, unknown>) => Promise<unknown>
+const untypedFetch = $fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>
+
+type AccountApiKey = ApiKeyResponse['data']
+interface AccountApiKeysResponse {
+  data: AccountApiKey[]
+}
+
+async function fetchApiKeys(): Promise<AccountApiKeysResponse> {
+  const result = await keysFetch('/api/account/api-keys') as unknown
+  return result as AccountApiKeysResponse
+}
 
 const {
   data: keysData,
   pending: keysPending,
   refresh: refreshKeys,
   error: keysError,
-} = await useFetch('/api/account/api-keys', {
-  key: 'account-api-keys',
-})
+} = await useAsyncData(
+  'account-api-keys',
+  () => fetchApiKeys(),
+  {
+    default: () => ({ data: [] }),
+  },
+)
 
-const apiKeys = computed(() => keysData.value?.data ?? [])
+const apiKeys = computed<AccountApiKey[]>(() => keysData.value?.data ?? [])
 const showSkeleton = computed(() => keysPending.value && apiKeys.value.length === 0)
 const loadError = computed(() => {
   const err = keysError.value
@@ -78,17 +95,17 @@ function formatJson(data: Record<string, unknown>): string {
   return JSON.stringify(data, null, 2)
 }
 
-function getFullKeyData(key: typeof apiKeys.value[0]) {
+function getFullKeyData(key: AccountApiKey) {
   return {
     identifier: key.identifier,
     description: key.description,
-    allowed_ips: (key as { allowed_ips?: string[] }).allowed_ips || [],
+    allowed_ips: key.allowed_ips ?? [],
     last_used_at: key.last_used_at,
     created_at: key.created_at,
   }
 }
 
-async function copyJson(key: typeof apiKeys.value[0]) {
+async function copyJson(key: AccountApiKey) {
   const json = formatJson(getFullKeyData(key))
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
@@ -120,7 +137,7 @@ function resetCreateState() {
   createError.value = null
   copySuccess.value = false
   newKeyToken.value = null
-  Object.assign(createForm, keySchema.value.parse({}))
+  Object.assign(createForm, keySchema.parse({}))
 }
 
 watch(showCreateModal, (open) => {
@@ -142,25 +159,25 @@ async function createApiKey(event: FormSubmitEvent<KeyFormSchema>) {
     const payload = event.data
     const allowedIps = payload.allowedIps
       .split(',')
-      .map(ip => ip.trim())
+      .map((ip: string) => ip.trim())
       .filter(Boolean)
 
     const formattedIps = allowedIps.length > 0 ? allowedIps : null
 
-    const response = await $fetch<ApiKeyResponse>('/api/account/api-keys', {
+    const response = await untypedFetch('/api/account/api-keys', {
       method: 'POST',
       body: {
         memo: payload.memo && payload.memo.length > 0 ? payload.memo : null,
         allowedIps: formattedIps,
       },
-    })
+    }) as ApiKeyResponse
 
-    if (!response?.meta?.secret_token) {
+    if (!response.meta?.secret_token) {
       throw new Error(t('account.apiKeys.tokenNotReturned'))
     }
 
     newKeyToken.value = response.meta.secret_token
-    Object.assign(createForm, keySchema.value.parse({}))
+    Object.assign(createForm, keySchema.parse({}))
     showCreateModal.value = true
 
     await refreshKeys()
@@ -200,7 +217,7 @@ async function confirmDelete() {
   isDeleting.value = true
 
   try {
-    await $fetch(`/api/account/api-keys/${keyToDelete.value}`, {
+    await untypedFetch(`/api/account/api-keys/${keyToDelete.value}`, {
       method: 'DELETE',
     })
 
@@ -327,7 +344,7 @@ async function copyToken() {
           </UAlert>
 
           <UForm
-            :schema="keySchema.value"
+            :schema="keySchema"
             :state="createForm"
             class="space-y-4"
             :disabled="isCreating"

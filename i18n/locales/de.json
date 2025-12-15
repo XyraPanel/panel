@@ -169,6 +169,7 @@
       "username": "Username",
       "enterUsername": "Username",
       "email": "Email",
+      "updated": "Updated",
       "enterEmail": "Enter email address",
       "saveChanges": "Save changes"
     },

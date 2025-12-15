@@ -1,4 +1,7 @@
+import type { GeneralSettings } from '#shared/types/admin'
 import { SETTINGS_KEYS, getSetting, getSettingWithDefault } from '~~/server/utils/settings'
+
+type BrandingSettings = Pick<GeneralSettings, 'name' | 'showBrandLogo' | 'brandLogoUrl'>
 
 export default defineEventHandler((): BrandingSettings => {
   const name = getSettingWithDefault(SETTINGS_KEYS.PANEL_NAME, 'XyraPanel')

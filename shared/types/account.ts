@@ -18,6 +18,16 @@ export interface AccountActivityResponse {
   generatedAt: string
 }
 
+export interface PaginatedAccountActivityResponse {
+  data: AccountActivityItem[]
+  pagination: {
+    page: number
+    perPage: number
+    total: number
+    totalPages: number
+  }
+  generatedAt: string
+}
 export interface SSHKeyManagerOptions {
   userId?: string
   skipAudit?: boolean
