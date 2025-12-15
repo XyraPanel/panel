@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref } from 'vue'
 import type { AccountActivityItem, PaginatedAccountActivityResponse } from '#shared/types/account'
 
 definePageMeta({ auth: true })
@@ -19,48 +19,32 @@ async function fetchAccountActivity(page: number, limit: number): Promise<Pagina
   return result as PaginatedAccountActivityResponse
 }
 
+const defaultActivityResponse = (): PaginatedAccountActivityResponse => ({
+  data: [],
+  pagination: {
+    page: 1,
+    perPage: itemsPerPage.value,
+    total: 0,
+    totalPages: 0,
+  },
+  generatedAt: new Date().toISOString(),
+})
+
 const {
   data: activityResponse,
   error,
   pending,
-  refresh: refreshActivity,
 } = await useAsyncData<PaginatedAccountActivityResponse>(
   'account-activity',
   () => fetchAccountActivity(currentPage.value, itemsPerPage.value),
   {
-    default: () => ({
-      data: [],
-      pagination: {
-        page: 1,
-        perPage: itemsPerPage.value,
-        total: 0,
-        totalPages: 0,
-      },
-      generatedAt: new Date().toISOString(),
-    }),
+    default: defaultActivityResponse,
     watch: [currentPage, itemsPerPage],
   },
 )
 
-let refreshInterval: ReturnType<typeof setInterval> | null = null
-
-onMounted(() => {
-  refreshInterval = setInterval(() => {
-    refreshActivity()
-  }, 30000)
-})
-
-onUnmounted(() => {
-  if (refreshInterval) clearInterval(refreshInterval)
-})
-
-const entries = computed<AccountActivityItem[]>(() => activityResponse.value?.data ?? [])
-const pagination = computed(() => activityResponse.value?.pagination)
-const generatedAt = computed(() => activityResponse.value?.generatedAt ?? null)
-const generatedAtDate = computed(() =>
-  generatedAt.value ? new Date(generatedAt.value) : null
-)
-
+const entries = computed<AccountActivityItem[]>(() => activityResponse.value?.data ?? defaultActivityResponse().data)
+const pagination = computed(() => activityResponse.value?.pagination ?? defaultActivityResponse().pagination)
 const displayError = computed(() => {
   if (!error.value) return null
   return error.value instanceof Error
@@ -129,16 +113,7 @@ async function copyJson(entry: typeof entries.value[0]) {
     <UContainer>
       <UPageHeader :title="t('account.activity.title')">
         <template #description>
-          <span>
-            {{ t('account.activity.descriptionWithTime') }}
-            <NuxtTime
-              v-if="generatedAtDate"
-              :datetime="generatedAtDate"
-              relative
-              class="font-medium"
-            />
-            <span v-else>{{ t('account.activity.recently') }}</span>
-          </span>
+          {{ t('account.activity.description') }}
         </template>
       </UPageHeader>
     </UContainer>
