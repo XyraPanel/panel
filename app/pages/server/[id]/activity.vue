@@ -87,7 +87,7 @@ function formatAction(action: string): string {
             <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
           </div>
 
-          <UCard v-else>
+          <UCard v-else variant="subtle">
             <template #header>
               <div class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold">{{ t('server.activity.recentEvents') }}</h2>

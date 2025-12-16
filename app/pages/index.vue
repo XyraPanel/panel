@@ -13,7 +13,7 @@
           <h2 class="sr-only">{{ t('dashboard.keyMetrics') }}</h2>
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
             <template v-if="loading">
-              <UCard v-for="i in 2" :key="`metric-skeleton-${i}`">
+              <UCard v-for="i in 2" :key="`metric-skeleton-${i}`" variant="subtle">
                 <div class="space-y-3">
                   <USkeleton class="h-3 w-24" />
                   <USkeleton class="h-8 w-20" />
@@ -22,17 +22,17 @@
               </UCard>
             </template>
             <template v-else-if="error">
-              <UCard>
+              <UCard variant="subtle">
                 <p class="text-sm text-destructive">{{ error }}</p>
               </UCard>
             </template>
             <template v-else-if="metrics.length === 0">
-              <UCard>
+              <UCard variant="subtle">
                 <p class="text-sm text-muted-foreground">{{ t('dashboard.noStatistics') }}</p>
               </UCard>
             </template>
             <template v-else>
-              <UCard v-for="card in metrics" :key="card.key">
+              <UCard v-for="card in metrics" :key="card.key" variant="subtle">
                 <div class="flex items-start justify-between">
                   <div>
                     <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ card.label }}</p>

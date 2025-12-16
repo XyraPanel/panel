@@ -55,7 +55,7 @@ function formatIp(allocation: ServerAllocation): string {
           </div>
 
           <template v-else>
-            <UCard>
+            <UCard variant="subtle">
               <template #header>
                 <div class="flex flex-wrap items-start justify-between gap-4">
                   <div>
@@ -108,7 +108,7 @@ function formatIp(allocation: ServerAllocation): string {
               </div>
             </UCard>
 
-            <UCard>
+            <UCard variant="subtle">
               <template #header>
                 <div class="flex items-center justify-between">
                   <h2 class="text-lg font-semibold">{{ t('server.network.additionalAllocations') }}</h2>

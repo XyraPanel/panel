@@ -45,32 +45,32 @@ function maskIp(ip: string) {
             <p class="text-xs text-muted-foreground">Consolidated account metadata, status, and metrics.</p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <UBadge v-if="user?.rootAdmin" size="sm" color="error" variant="soft" class="uppercase">Root admin</UBadge>
-            <UBadge :color="user?.role === 'admin' ? 'error' : 'primary'" size="sm" variant="soft" class="uppercase">{{ user?.role?.toUpperCase() }}</UBadge>
+            <UBadge v-if="user?.rootAdmin" size="sm" color="error" variant="subtle" class="uppercase">Root admin</UBadge>
+            <UBadge :color="user?.role === 'admin' ? 'error' : 'primary'" size="sm" variant="subtle" class="uppercase">{{ user?.role?.toUpperCase() }}</UBadge>
             <UBadge v-if="isSuspended" size="sm" color="error" variant="solid" class="uppercase">Suspended</UBadge>
-            <UBadge v-if="requiresPasswordReset" size="sm" color="warning" variant="soft" class="uppercase">Reset required</UBadge>
+            <UBadge v-if="requiresPasswordReset" size="sm" color="warning" variant="subtle" class="uppercase">Reset required</UBadge>
           </div>
         </div>
       </template>
 
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <UCard variant="soft" :ui="{ body: 'p-3 space-y-1' }">
+        <UCard variant="subtle" :ui="{ body: 'p-3 space-y-1' }">
           <p class="text-xs uppercase tracking-wide text-muted-foreground">Owned servers</p>
           <p class="text-sm font-semibold">{{ profile?.stats.serverCount ?? 0 }}</p>
         </UCard>
-        <UCard variant="soft" :ui="{ body: 'p-3 space-y-1' }">
+        <UCard variant="subtle" :ui="{ body: 'p-3 space-y-1' }">
           <p class="text-xs uppercase tracking-wide text-muted-foreground">API keys</p>
           <p class="text-sm font-semibold">{{ profile?.stats.apiKeyCount ?? 0 }}</p>
         </UCard>
-        <UCard variant="soft" :ui="{ body: 'p-3 space-y-1' }">
+        <UCard variant="subtle" :ui="{ body: 'p-3 space-y-1' }">
           <p class="text-xs uppercase tracking-wide text-muted-foreground">Email verified</p>
-          <UBadge size="sm" :color="user?.emailVerified ? 'success' : 'warning'" variant="soft">
+          <UBadge size="sm" :color="user?.emailVerified ? 'success' : 'warning'" variant="subtle">
             {{ user?.emailVerified ? 'Yes' : 'No' }}
           </UBadge>
         </UCard>
-        <UCard variant="soft" :ui="{ body: 'p-3 space-y-1' }">
+        <UCard variant="subtle" :ui="{ body: 'p-3 space-y-1' }">
           <p class="text-xs uppercase tracking-wide text-muted-foreground">Two-factor</p>
-          <UBadge size="sm" :color="hasTwoFactor ? 'success' : 'warning'" variant="soft">
+          <UBadge size="sm" :color="hasTwoFactor ? 'success' : 'warning'" variant="subtle">
             {{ hasTwoFactor ? 'Enabled' : 'Disabled' }}
           </UBadge>
         </UCard>
@@ -118,7 +118,7 @@ function maskIp(ip: string) {
           <div class="flex justify-between gap-3">
             <dt class="text-muted-foreground">Account status</dt>
             <dd>
-              <UBadge size="sm" :color="isSuspended ? 'error' : 'success'" variant="soft">
+              <UBadge size="sm" :color="isSuspended ? 'error' : 'success'" variant="subtle">
                 {{ isSuspended ? 'Suspended' : 'Active' }}
               </UBadge>
             </dd>
@@ -173,7 +173,7 @@ function maskIp(ip: string) {
               >
                 <UBadge
                   size="xs"
-                  variant="soft"
+                  variant="subtle"
                   color="neutral"
                   class="font-mono cursor-help"
                 >
@@ -183,7 +183,7 @@ function maskIp(ip: string) {
               <UBadge
                 v-if="security.uniqueIps.length > 5"
                 size="xs"
-                variant="soft"
+                variant="subtle"
                 color="neutral"
               >
                 +{{ security.uniqueIps.length - 5 }} more

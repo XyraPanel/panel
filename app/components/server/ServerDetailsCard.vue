@@ -21,7 +21,7 @@ function formatLimit(value: number | null | undefined, suffix: string) {
 </script>
 
 <template>
-  <UCard v-if="server">
+  <UCard v-if="server" variant="subtle">
     <template #header>
       <h3 class="text-sm font-semibold">{{ t('server.details.serverInformation') }}</h3>
     </template>
