@@ -391,8 +391,8 @@
     },
     "activity": {
       "title": "Account activity",
-      "description": "Personal actions you've taken across XyraPanel. Use this log to verify recent changes and sign-ins. Updated {time}",
-      "descriptionWithTime": "Personal actions you've taken across XyraPanel. Use this log to verify recent changes and sign-ins. Updated",
+      "description": "Personal actions you've taken across XyraPanel. Use this log to verify recent changes and sign-ins.",
+      "descriptionWithTime": "Personal actions you've taken across XyraPanel. Use this log to verify recent changes and sign-ins.",
       "recently": "recently",
       "recentActivity": "Recent activity",
       "noActivity": "No activity yet",
