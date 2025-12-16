@@ -37,8 +37,6 @@ const timezoneOptions = [
 ] satisfies { label: string; value: TimezoneValue }[]
 
 const baseSchema = z.object({
-  name: z.string().trim().min(2, t('admin.settings.generalSettings.panelNameMinLength')),
-  url: z.string().trim().pipe(z.url(t('admin.settings.generalSettings.panelUrlInvalid'))),
   locale: z.string(),
   timezone: z.enum(timezoneEnumValues, { message: t('admin.settings.generalSettings.timezoneInvalid') }),
   showBrandLogo: z.boolean(),
@@ -87,8 +85,6 @@ function resolveTimezone(value: string | null | undefined): TimezoneValue {
 
 function createFormState(source?: GeneralSettings | null): FormSchema {
   return {
-    name: source?.name ?? '',
-    url: source?.url ?? '',
     locale: resolveLocale(source?.locale),
     timezone: resolveTimezone(source?.timezone),
     showBrandLogo: source?.showBrandLogo ?? false,
@@ -235,14 +231,6 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       :validate-on="['input']"
       @submit="handleSubmit"
     >
-      <UFormField :label="t('admin.settings.generalSettings.panelName')" name="name" required>
-        <UInput v-model="form.name" :placeholder="t('admin.settings.generalSettings.panelNamePlaceholder')" :disabled="isSubmitting" class="w-full" />
-      </UFormField>
-
-      <UFormField :label="t('admin.settings.generalSettings.panelUrl')" name="url" required>
-        <UInput v-model="form.url" type="url" :placeholder="t('admin.settings.generalSettings.panelUrlPlaceholder')" :disabled="isSubmitting" class="w-full" />
-      </UFormField>
-
       <UFormField :label="t('admin.settings.generalSettings.language')" name="locale" required>
         <ULocaleSelect
           v-model="form.locale"

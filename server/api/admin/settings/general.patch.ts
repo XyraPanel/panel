@@ -16,14 +16,6 @@ export default defineEventHandler(async (event) => {
   const updates: Record<string, string> = {}
   const deletions: string[] = []
 
-  if (body.name !== undefined) {
-    updates[SETTINGS_KEYS.PANEL_NAME] = body.name
-  }
-
-  if (body.url !== undefined) {
-    updates[SETTINGS_KEYS.PANEL_URL] = body.url
-  }
-
   if (body.locale !== undefined) {
     updates[SETTINGS_KEYS.PANEL_LOCALE] = body.locale
   }

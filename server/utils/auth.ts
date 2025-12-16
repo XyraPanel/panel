@@ -219,7 +219,7 @@ function createAuth() {
             subject: 'Confirm Account Deletion',
             html: `
               <h2>Confirm Account Deletion</h2>
-              <p>You requested to delete your XyraPanel account.</p>
+              <p>You requested to delete your ${runtimeConfig.public.appName || 'XyraPanel'} account.</p>
               <p><strong>Warning:</strong> This action cannot be undone. All your data, servers, and settings will be permanently deleted.</p>
               <p>Click the link below to confirm account deletion:</p>
               <p><a href="${url}" style="color: #ef4444; font-weight: bold;">Delete My Account</a></p>

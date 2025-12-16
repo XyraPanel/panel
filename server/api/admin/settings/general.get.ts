@@ -11,13 +11,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const name = getSettingWithDefault(SETTINGS_KEYS.PANEL_NAME, 'XyraPanel')
   const showLogoSetting = getSetting(SETTINGS_KEYS.BRAND_SHOW_LOGO)
   const logoPath = getSetting(SETTINGS_KEYS.BRAND_LOGO_PATH)
 
   return {
-    name,
-    url: getSettingWithDefault(SETTINGS_KEYS.PANEL_URL, 'http://localhost:3000'),
     locale: getSettingWithDefault(SETTINGS_KEYS.PANEL_LOCALE, 'en'),
     timezone: getSettingWithDefault(SETTINGS_KEYS.PANEL_TIMEZONE, 'UTC'),
     showBrandLogo: showLogoSetting ? showLogoSetting === 'true' : false,

@@ -1,9 +1,6 @@
 import { useDrizzle, tables, eq, inArray } from '~~/server/utils/drizzle'
 
 export const SETTINGS_KEYS = {
-
-  PANEL_NAME: 'app:name',
-  PANEL_URL: 'app:url',
   PANEL_LOCALE: 'app:locale',
   PANEL_TIMEZONE: 'app:timezone',
   BRAND_SHOW_LOGO: 'branding:show_logo',

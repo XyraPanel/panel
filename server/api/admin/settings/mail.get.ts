@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     username: getSettingWithDefault(SETTINGS_KEYS.MAIL_USERNAME, ''),
     password: getSettingWithDefault(SETTINGS_KEYS.MAIL_PASSWORD, ''),
     encryption: getSettingWithDefault(SETTINGS_KEYS.MAIL_ENCRYPTION, 'tls'),
-    fromAddress: getSettingWithDefault(SETTINGS_KEYS.MAIL_FROM_ADDRESS, 'noreply@XyraPanel.local'),
-    fromName: getSettingWithDefault(SETTINGS_KEYS.MAIL_FROM_NAME, 'XyraPanel'),
+    fromAddress: getSettingWithDefault(SETTINGS_KEYS.MAIL_FROM_ADDRESS, 'noreply@xyrapanel.local'),
+    fromName: getSettingWithDefault(SETTINGS_KEYS.MAIL_FROM_NAME, useRuntimeConfig().public.appName || 'XyraPanel'),
   }
 })

@@ -995,12 +995,6 @@
       "generalSettings": {
         "title": "General Settings",
         "description": "Configure basic panel information",
-        "panelName": "Panel Name",
-        "panelNamePlaceholder": "XyraPanel",
-        "panelNameMinLength": "Panel name must be at least 2 characters",
-        "panelUrl": "Panel URL",
-        "panelUrlPlaceholder": "https://panel.example.com",
-        "panelUrlInvalid": "Enter a valid URL",
         "language": "Language",
         "languageInvalid": "Select a valid language",
         "timezone": "Timezone",

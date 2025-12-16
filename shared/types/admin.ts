@@ -397,8 +397,6 @@ export interface ServerActionResponse {
 
 
 export interface GeneralSettings {
-  name: string
-  url: string
   locale: string
   timezone: string
   showBrandLogo: boolean

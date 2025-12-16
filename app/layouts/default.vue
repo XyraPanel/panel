@@ -6,6 +6,8 @@ import type { NavigationMenuItem } from '@nuxt/ui'
 const { t } = useI18n()
 const route = useRoute()
 const localePath = useLocalePath()
+const runtimeConfig = useRuntimeConfig()
+const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel')
 
 const authStore = useAuthStore()
 const { user, isAdmin: isAdminRef } = storeToRefs(authStore)
@@ -119,7 +121,7 @@ async function handleLocaleChange(newLocale: string | undefined) {
       <template #header="{ collapsed }">
         <NuxtLink v-if="!collapsed" :to="localePath('index')" class="group inline-flex items-center gap-2">
           <h1 class="text-lg font-semibold text-muted-foreground group-hover:text-foreground transition">
-            XyraPanel
+            {{ appName }}
           </h1>
         </NuxtLink>
         <UIcon v-else name="i-simple-icons-nuxtdotjs" class="mx-auto size-5 text-primary" />
