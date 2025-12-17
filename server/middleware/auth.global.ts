@@ -38,7 +38,8 @@ const PUBLIC_API_PATTERNS = [
   /^\/api\/remote(?:\/|$)/,
   /^\/api\/application(?:\/|$)/,
   /^\/api\/_nuxt_icon(?:\/|$)/,
-  /^\/api\/_nuxt(?:\/|$)/, 
+  /^\/api\/_nuxt(?:\/|$)/,
+  /^\/api\/maintenance-status(?:\/|$)/,
 ]
 
 function isAssetPath(path: string): boolean {

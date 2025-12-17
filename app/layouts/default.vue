@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import type { NavigationMenuItem } from '@nuxt/ui'
-
 const { t } = useI18n()
 const route = useRoute()
 const localePath = useLocalePath()
@@ -10,8 +9,24 @@ const runtimeConfig = useRuntimeConfig()
 const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel')
 
 const authStore = useAuthStore()
-const { user, isAdmin: isAdminRef } = storeToRefs(authStore)
+const { user, isAdmin: isAdminRef, status: authStatus } = storeToRefs(authStore)
 const signOutLoading = ref(false)
+
+const { data: securitySettings } = await useFetch('/api/admin/settings/security', {
+  key: 'default-layout-security-settings',
+  default: () => ({
+    maintenanceMode: false,
+    maintenanceMessage: '',
+  } as { maintenanceMode: boolean; maintenanceMessage: string }),
+})
+
+const isMaintenanceMode = computed(() => {
+  if (!securitySettings.value?.maintenanceMode) return false
+  if (authStatus.value === 'loading' || authStatus.value === 'unauthenticated') return false
+  const isAdmin = isAdminRef.value || user.value?.role === 'admin'
+  return !isAdmin
+})
+const maintenanceMessage = computed(() => securitySettings.value?.maintenanceMessage?.trim() || t('layout.defaultMaintenanceMessage'))
 
 const userLabel = computed(() => {
   if (!user.value) return t('common.user')
@@ -186,7 +201,17 @@ async function handleLocaleChange(newLocale: string | undefined) {
         </UDashboardNavbar>
 
         <main class="flex-1 overflow-y-auto">
-          <div class="mx-auto w-full max-w-6xl px-6 py-8">
+          <div v-if="isMaintenanceMode" class="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-6 py-16 text-center">
+            <UIcon name="i-lucide-construction" class="size-16 text-warning" />
+            <div class="space-y-2">
+              <h2 class="text-xl font-semibold">{{ t('layout.weArePerformingMaintenance') }}</h2>
+              <p class="text-sm text-muted-foreground whitespace-pre-wrap">{{ maintenanceMessage }}</p>
+            </div>
+            <UButton variant="ghost" color="neutral" @click="handleSignOut">
+              {{ t('auth.signOut') }}
+            </UButton>
+          </div>
+          <div v-else class="mx-auto w-full max-w-6xl px-6 py-8">
             <slot />
           </div>
         </main>

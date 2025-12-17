@@ -2,6 +2,17 @@
 import { computed } from 'vue'
 
 const { t, locale, locales } = useI18n()
+
+const { data: maintenanceStatus } = await useFetch('/api/maintenance-status', {
+  key: 'auth-layout-maintenance-status',
+  default: () => ({
+    maintenanceMode: false,
+    maintenanceMessage: '',
+  } as { maintenanceMode: boolean; maintenanceMessage: string }),
+})
+
+const isMaintenanceMode = computed(() => maintenanceStatus.value?.maintenanceMode ?? false)
+const maintenanceMessage = computed(() => maintenanceStatus.value?.maintenanceMessage?.trim() || t('layout.defaultMaintenanceMessage'))
 const route = useRoute()
 const switchLocalePath = useSwitchLocalePath()
 
@@ -44,6 +55,13 @@ async function handleLocaleChange(newLocale: string | undefined) {
   <div class="relative min-h-screen">
     <UContainer class="min-h-screen flex items-center justify-center py-12">
       <div class="w-full max-w-md space-y-4">
+        <UAlert v-if="isMaintenanceMode" color="warning" variant="subtle" icon="i-lucide-construction">
+          <template #title>{{ t('layout.underMaintenance') }}</template>
+          <template #description>
+            <span class="whitespace-pre-wrap">{{ maintenanceMessage }}</span>
+          </template>
+        </UAlert>
+
         <UCard :ui="{
           body: 'space-y-6',
           header: 'text-center space-y-2',

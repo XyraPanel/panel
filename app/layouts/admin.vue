@@ -162,6 +162,9 @@ const createDefaultSecuritySettings = (): SecuritySettings => ({
   maintenanceMessage: '',
   announcementEnabled: false,
   announcementMessage: '',
+  sessionTimeoutMinutes: 60,
+  queueConcurrency: 4,
+  queueRetryLimit: 3,
 })
 
 const requestFetch = useRequestFetch() as (input: string, init?: Record<string, unknown>) => Promise<unknown>
@@ -180,16 +183,6 @@ const { data: securitySettings } = await useAsyncData<SecuritySettings>(
 )
 
 const sessionUser = computed<SessionUser | null>(() => storeUser.value ?? null)
-
-const announcement = computed(() => (securitySettings.value?.announcementEnabled ? securitySettings.value?.announcementMessage?.trim() : ''))
-const maintenanceMessage = computed(() => securitySettings.value?.maintenanceMessage?.trim() || t('layout.defaultMaintenanceMessage'))
-
-const isMaintenanceGateActive = computed(() => {
-  if (!securitySettings.value?.maintenanceMode) {
-    return false
-  }
-  return !sessionUser.value || sessionUser.value.role !== 'admin'
-})
 
 const requiresTwoFactor = computed(() => Boolean(securitySettings.value?.enforceTwoFactor))
 const hasTwoFactor = computed(() => Boolean(sessionUser.value && 'useTotp' in sessionUser.value && sessionUser.value.useTotp))
@@ -556,25 +549,8 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
           <USeparator />
         </header>
 
-        <div v-if="announcement" class="border-b border-primary/20 bg-primary/5">
-          <div class="mx-auto flex w-full max-w-7xl items-center gap-3 px-6 py-3 text-sm text-primary">
-            <UIcon name="i-lucide-info" class="size-4 shrink-0" />
-            <span class="whitespace-pre-wrap">{{ announcement }}</span>
-          </div>
-        </div>
-
         <main class="flex-1 overflow-y-auto">
-          <div v-if="isMaintenanceGateActive" class="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-6 py-16 text-center">
-            <UIcon name="i-lucide-construction" class="size-10 text-warning" />
-            <div class="space-y-2">
-              <h2 class="text-xl font-semibold">{{ t('layout.weArePerformingMaintenance') }}</h2>
-              <p class="text-sm text-muted-foreground">{{ maintenanceMessage }}</p>
-            </div>
-            <UButton variant="ghost" color="neutral" @click="handleSignOut">
-              {{ t('auth.signOut') }}
-            </UButton>
-          </div>
-          <div v-else class="mx-auto w-full max-w-7xl px-6 py-10 space-y-6">
+          <div class="mx-auto w-full max-w-7xl px-6 py-10 space-y-6">
             <UAlert v-if="showTwoFactorPrompt" color="warning" variant="soft" icon="i-lucide-shield-check">
               <template #title>{{ t('layout.enableTwoFactorAuthentication') }}</template>
               <template #description>

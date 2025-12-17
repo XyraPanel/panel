@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth/minimal'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { username, twoFactor, customSession, apiKey, bearer, haveIBeenPwned, admin, multiSession, captcha } from 'better-auth/plugins'
-import { createAuthMiddleware } from 'better-auth/api'
+import { createAuthMiddleware, APIError } from 'better-auth/api'
 import type { AuthContext } from '@better-auth/core'
 import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
 import type { Role } from '#shared/types/auth'
@@ -399,6 +399,41 @@ function createAuth() {
       level: isProduction ? 'error' : 'warn',
     },
     hooks: {
+      before: createAuthMiddleware(async (ctx) => {
+        if (ctx.path.startsWith('/sign-in')) {
+          const { getSetting, SETTINGS_KEYS } = await import('~~/server/utils/settings')
+          const maintenanceMode = getSetting(SETTINGS_KEYS.MAINTENANCE_MODE) === 'true'
+          
+          if (maintenanceMode) {
+            const requestBody = (ctx as { body?: { email?: string; username?: string } }).body
+            const identifier = requestBody?.email || requestBody?.username
+            
+            if (identifier) {
+              const db = useDrizzle()
+              const user = db
+                .select({
+                  role: tables.users.role,
+                  rootAdmin: tables.users.rootAdmin,
+                })
+                .from(tables.users)
+                .where(
+                  identifier.includes('@')
+                    ? eq(tables.users.email, identifier)
+                    : eq(tables.users.username, identifier)
+                )
+                .get()
+              
+              const isAdmin = user?.rootAdmin || user?.role === 'admin'
+              
+              if (!isAdmin) {
+                throw new APIError('FORBIDDEN', {
+                  message: 'The panel is currently under maintenance. Please try again later.',
+                })
+              }
+            }
+          }
+        }
+      }),
       after: createAuthMiddleware(async (ctx) => {
         if (ctx.path.startsWith('/sign-in')) {
           const newSession = ctx.context.newSession
