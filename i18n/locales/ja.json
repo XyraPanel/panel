@@ -940,6 +940,7 @@
       "editLocation": "Edit location",
       "editLocationDescription": "Update the metadata for this location.",
       "noLocationsYet": "No locations configured yet.",
+      "noLocationsYetDescription": "Create a location to group nodes by geography or datacenter.",
       "failedToLoadLocations": "Failed to load locations",
       "nodes": "nodes",
       "node": "node",
@@ -1111,7 +1112,9 @@
       "auditLogEntry": "Audit Log Entry",
       "copyJson": "Copy JSON",
       "showingEvents": "Showing {current} of {total} events",
-      "exportCsv": "Export CSV"
+      "exportCsv": "Export CSV",
+      "noActivityYet": "No activity yet",
+      "noActivityYetDescription": "Activity logs will appear here as actions are performed."
     },
     "apiKeys": "API Keys",
     "api": {
@@ -1151,6 +1154,7 @@
       "addDatabaseHost": "Add Database Host",
       "addDatabaseHostDescription": "Configure a new database host for server databases.",
       "noDatabaseHostsYet": "No database hosts yet",
+      "noDatabaseHostsYetDescription": "Configure a database host to provision MySQL databases for servers.",
       "name": "Name",
       "namePlaceholder": "MySQL Host 1",
       "hostname": "Hostname",
@@ -1169,7 +1173,9 @@
     },
     "eggs": {
       "title": "Eggs",
-      "description": "Manage server eggs."
+      "description": "Manage server eggs.",
+      "noVariablesDefined": "No variables defined",
+      "noVariablesDefinedDescription": "Add environment variables to customize server behavior."
     },
     "mounts": {
       "title": "Mounts",
@@ -1199,7 +1205,9 @@
     "schedules": {
       "title": "Schedules",
       "description": "Manage system schedules.",
-      "showingSchedules": "Showing {current} of {total} schedules"
+      "showingSchedules": "Showing {current} of {total} schedules",
+      "noSchedulesFound": "No schedules found",
+      "noSchedulesFoundDescription": "Schedules will appear here when servers have automated tasks configured."
     },
     "navigation": {
       "backToPanel": "Back to panel",
