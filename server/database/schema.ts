@@ -526,6 +526,8 @@ export type SettingRow = typeof settings.$inferSelect
 
 export const apiKeys = sqliteTable('apikey', {
   id: text('id').primaryKey(),
+  identifier: text('identifier'),
+  memo: text('memo'),
   name: text('name'),
   start: text('start'),
   prefix: text('prefix'),
@@ -534,6 +536,7 @@ export const apiKeys = sqliteTable('apikey', {
   refillInterval: integer('refill_interval'),
   refillAmount: integer('refill_amount'),
   lastRefillAt: integer('last_refill_at', { mode: 'timestamp' }),
+  lastUsedAt: integer('last_used_at', { mode: 'timestamp' }),
   enabled: integer('enabled', { mode: 'boolean' }).notNull().default(true),
   rateLimitEnabled: integer('rate_limit_enabled', { mode: 'boolean' }).notNull().default(true),
   rateLimitTimeWindow: integer('rate_limit_time_window'),
