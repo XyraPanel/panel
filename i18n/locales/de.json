@@ -57,8 +57,8 @@
     "navigation": "Navigation",
     "user": "Benutzer",
     "server": "Server",
-    "warning": "Warning",
-    "irreversibleAction": "This action cannot be undone."
+    "warning": "Warnung",
+    "irreversibleAction": "Diese Aktion kann nicht rückgängig gemacht werden."
   },
   "auth": {
     "signIn": "Anmelden",
@@ -171,7 +171,7 @@
       "username": "Username",
       "enterUsername": "Username",
       "email": "Email",
-      "updated": "Updated",
+      "updated": "Aktualisiert",
       "enterEmail": "Enter email address",
       "saveChanges": "Save changes"
     },
@@ -747,27 +747,27 @@
       "userControls": "User Controls",
       "userControlsDescription": "Manage user account settings and security options",
       "tabs": {
-        "overview": "Overview",
-        "servers": "Servers",
-        "apiKeys": "API Keys",
-        "activity": "Activity"
+        "overview": "Übersicht",
+        "servers": "Server",
+        "apiKeys": "API-Schlüssel",
+        "activity": "Aktivität"
       },
       "apiKeys": {
         "noApiKeysYet": "No API keys yet",
         "noApiKeysYetDescription": "This user has not created any API keys."
       },
-      "sendResetLink": "Send Reset Link",
-      "temporaryPassword": "Temporary Password",
+      "sendResetLink": "Link zum Zurücksetzen senden",
+      "temporaryPassword": "Temporäres Passwort",
       "passwordResetDescription": "Generate a temporary password or send a reset link to the user's email.",
-      "disable2FA": "Disable 2FA",
+      "disable2FA": "2FA deaktivieren",
       "disable2FADescription": "Remove two-factor authentication from this user's account.",
-      "emailVerification": "Email Verification",
+      "emailVerification": "E-Mail-Verifizierung",
       "markVerified": "Mark Verified",
       "markUnverified": "Mark Unverified",
-      "resendEmail": "Resend Email",
+      "resendEmail": "E-Mail erneut senden",
       "emailVerificationDescription": "Manage email verification status for this user.",
       "accountState": "Account State",
-      "suspendUser": "Suspend User",
+      "suspendUser": "Benutzer sperren",
       "startImpersonation": "Start Impersonation",
       "accountStateDescription": "Manage account suspension and access controls."
     },
