@@ -98,12 +98,12 @@ async function copyJson(schedule: AdminScheduleResponse) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: t('admin.schedules.copiedToClipboard'),
-      description: t('admin.schedules.scheduleJsonCopied'),
+      title: t('common.copied'),
+      description: t('common.copiedToClipboard'),
     })
   } catch (error) {
     toast.add({
-      title: t('admin.schedules.failedToCopy'),
+      title: t('common.failedToCopy'),
       description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
     })
@@ -146,7 +146,6 @@ async function copyJson(schedule: AdminScheduleResponse) {
               icon="i-lucide-calendar-clock"
               :title="t('admin.schedules.noSchedulesFound')"
               :description="t('admin.schedules.noSchedulesFoundDescription')"
-              variant="subtle"
             />
             <template v-else>
               <div class="space-y-3">

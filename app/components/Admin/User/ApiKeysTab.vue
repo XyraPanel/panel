@@ -75,13 +75,13 @@ async function copyApiKeyJson(key: AdminUserApiKeySummary) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: t('common.copiedToClipboard'),
-      description: t('admin.users.apiKeys.apiKeyDataJsonCopied'),
+      title: t('common.copied'),
+      description: t('common.copiedToClipboard'),
     })
   } catch (error) {
     toast.add({
       title: t('common.failedToCopy'),
-      description: error instanceof Error ? error.message : t('admin.users.apiKeys.unableToCopyToClipboard'),
+      description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
     })
   }

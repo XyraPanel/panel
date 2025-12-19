@@ -190,16 +190,18 @@ export interface ApiKeyWithToken extends ApiKey {
   apiKey: string
 }
 
+export type PermissionAction = 'read' | 'write' | 'delete'
+
 export interface ApiKeyPermissions {
-  rServers?: number
-  rNodes?: number
-  rAllocations?: number
-  rUsers?: number
-  rLocations?: number
-  rNests?: number
-  rEggs?: number
-  rDatabaseHosts?: number
-  rServerDatabases?: number
+  servers?: PermissionAction[]
+  nodes?: PermissionAction[]
+  allocations?: PermissionAction[]
+  users?: PermissionAction[]
+  locations?: PermissionAction[]
+  nests?: PermissionAction[]
+  eggs?: PermissionAction[]
+  databaseHosts?: PermissionAction[]
+  serverDatabases?: PermissionAction[]
 }
 
 export interface CreateApiKeyPayload {
@@ -397,13 +399,13 @@ export interface ServerActionResponse {
 
 
 export interface GeneralSettings {
-  name: string
-  url: string
   locale: string
   timezone: string
   showBrandLogo: boolean
   brandLogoUrl: string | null
   customCss?: string
+  paginationLimit: number
+  telemetryEnabled: boolean
 }
 
 export interface MailSettings {
@@ -418,20 +420,15 @@ export interface MailSettings {
   fromName: string
 }
 
-export interface AdvancedSettings {
-  telemetryEnabled: boolean
-  sessionTimeoutMinutes: number
-  queueConcurrency: number
-  queueRetryLimit: number
-  paginationLimit: number
-}
-
 export interface SecuritySettings {
   enforceTwoFactor: boolean
   maintenanceMode: boolean
   maintenanceMessage: string
   announcementEnabled: boolean
   announcementMessage: string
+  sessionTimeoutMinutes: number
+  queueConcurrency: number
+  queueRetryLimit: number
 }
 
 

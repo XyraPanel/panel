@@ -116,13 +116,12 @@ function viewNest(nest: NestWithEggCount) {
               <template #description>{{ error.message }}</template>
             </UAlert>
 
-            <div v-else-if="nests.length === 0" class="py-12 text-center">
-              <UIcon name="i-lucide-box" class="mx-auto size-12 text-muted-foreground opacity-50" />
-              <p class="mt-4 text-sm text-muted-foreground">{{ t('admin.nests.noNestsYet') }}</p>
-              <p class="mt-1 text-xs text-muted-foreground">
-                {{ t('admin.nests.nestsDescription') }}
-              </p>
-            </div>
+            <UEmpty
+              v-else-if="nests.length === 0"
+              icon="i-lucide-box"
+              :title="t('admin.nests.noNestsYet')"
+              :description="t('admin.nests.nestsDescription')"
+            />
 
             <div v-else class="divide-y divide-default">
               <div v-for="nest in nests" :key="nest.id"

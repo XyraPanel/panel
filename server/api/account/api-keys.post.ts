@@ -6,7 +6,6 @@ import { createApiKeySchema } from '#shared/schema/account'
 import type { ApiKeyResponse } from '#shared/types/api'
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { generateIdentifier, generateApiToken, hashApiToken, formatApiKey } from '~~/server/utils/apiKeys'
 
 export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
   const session = await getServerSession(event)
@@ -28,62 +27,81 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
   try {
     const db = useDrizzle()
     const now = new Date()
-    const identifier = generateIdentifier()
-    const token = generateApiToken()
-    const hashedToken = await hashApiToken(token)
     const apiKeyId = randomUUID()
+    const apiKeyPermId = randomUUID()
+
+    const rawKey = `sk_${randomUUID()}`
 
     await db.insert(tables.apiKeys)
       .values({
         id: apiKeyId,
         userId: session.user.id,
+        name: body.memo || 'API Key',
+        key: rawKey,
+        start: rawKey.slice(0, 6),
+        prefix: 'sk',
+        expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+        createdAt: now,
+        updatedAt: now,
+        enabled: true,
+        rateLimitEnabled: true,
+        requestCount: 0,
+      })
+      .run()
+
+    await db.insert(tables.apiKeyMetadata)
+      .values({
+        id: apiKeyPermId,
+        apiKeyId: apiKeyId,
         keyType: 1,
-        identifier,
-        token: hashedToken,
-        key: formatApiKey(identifier, token),
         allowedIps: body.allowedIps ? JSON.stringify(body.allowedIps) : null,
         memo: body.memo || null,
         lastUsedAt: null,
-        expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
+        rServers: 0,
+        rNodes: 0,
+        rAllocations: 0,
+        rUsers: 0,
+        rLocations: 0,
+        rNests: 0,
+        rEggs: 0,
+        rDatabaseHosts: 0,
+        rServerDatabases: 0,
         createdAt: now,
         updatedAt: now,
       })
       .run()
-
-    const secretToken = formatApiKey(identifier, token)
 
     await recordAuditEventFromRequest(event, {
       actor: session.user.id,
       actorType: 'user',
       action: 'account.api_key.create',
       targetType: 'user',
-      targetId: identifier,
+      targetId: apiKeyId,
       metadata: {
-        identifier,
-        hasDescription: !!body.memo,
+        description: body.memo || null,
         allowedIpsCount: body.allowedIps?.length || 0,
       },
     })
 
     return {
       data: {
-        identifier,
+        identifier: apiKeyId,
         description: body.memo || null,
         allowed_ips: body.allowedIps || [],
         last_used_at: null,
         created_at: now.toISOString(),
       },
       meta: {
-        secret_token: secretToken,
+        secret_token: rawKey,
       },
     }
   } catch (error) {
     console.error('Error creating API key:', error)
-    
+
     if (error && typeof error === 'object' && 'statusCode' in error) {
       throw error
     }
-    
+
     throw createError({
       statusCode: 500,
       statusMessage: 'Internal Server Error',

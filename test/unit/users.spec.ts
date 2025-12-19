@@ -708,8 +708,16 @@ describe('Complete User Lifecycle Integration', () => {
         sessionStore.set(sessionId, session)
         currentSession = session
         return {
-          user: session.user!,
-          session: session.session!,
+          user: {
+            id: session.user!.id,
+            email: session.user!.email,
+            username: session.user!.username ?? undefined,
+            role: session.user!.role ?? undefined,
+          },
+          session: {
+            id: session.session!.id,
+            token: session.session!.token,
+          },
         }
       },
       getSession: async ({ headers: _headers }) => {

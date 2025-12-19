@@ -31,7 +31,7 @@ jobs:
         run: pnpm lint --fix
 
       - name: Run unit tests
-        run: pnpm test:unit
+        run: pnpm test
 
       - name: Run build
         run: pnpm build

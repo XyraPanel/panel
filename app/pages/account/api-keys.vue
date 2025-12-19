@@ -121,13 +121,13 @@ async function copyJson(key: AccountApiKey) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: t('account.apiKeys.copiedToClipboard'),
-      description: t('account.apiKeys.copiedToClipboardDescription'),
+      title: t('common.copied'),
+      description: t('common.copiedToClipboard'),
     })
   } catch (error) {
     toast.add({
-      title: t('account.apiKeys.failedToCopy'),
-      description: error instanceof Error ? error.message : t('account.apiKeys.failedToCopyDescription'),
+      title: t('common.failedToCopy'),
+      description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
     })
   }
@@ -194,7 +194,7 @@ async function createApiKey(event: FormSubmitEvent<KeyFormSchema>) {
     createError.value = message
 
     toast.add({
-      title: t('account.apiKeys.unableToCreateKeyTitle'),
+      title: t('common.error'),
       description: message,
       color: 'error',
     })
@@ -227,7 +227,7 @@ async function confirmDelete() {
     keyToDelete.value = null
 
     toast.add({
-      title: t('account.apiKeys.keyDeleted'),
+      title: t('common.success'),
       description: t('account.apiKeys.keyDeletedDescription'),
       color: 'success',
     })
@@ -274,7 +274,7 @@ async function copyToken() {
     copySuccess.value = true
     toast.add({
       title: t('common.copied'),
-      description: t('account.apiKeys.copiedToClipboardDescription'),
+      description: t('common.copiedToClipboard'),
       color: 'success',
     })
   }
@@ -417,7 +417,7 @@ async function copyToken() {
               close()
             }"
           >
-            {{ t('account.apiKeys.done') }}
+            {{ t('common.done') }}
           </UButton>
         </template>
       </template>
@@ -426,13 +426,13 @@ async function copyToken() {
     <UModal
       v-model:open="showDeleteModal"
       :title="t('account.apiKeys.deleteAPIKey')"
-      :description="t('account.apiKeys.cannotBeUndone')"
+      :description="t('common.irreversibleAction')"
       :ui="{ footer: 'flex justify-end gap-2' }"
     >
       <template #body>
         <div class="space-y-4">
           <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle">
-            <template #title>{{ t('account.apiKeys.warning') }}</template>
+            <template #title>{{ t('common.warning') }}</template>
             <template #description>
               {{ t('account.apiKeys.confirmDeleteDescription') }}
             </template>
@@ -464,7 +464,7 @@ async function copyToken() {
           :disabled="isDeleting"
           @click="confirmDelete"
         >
-          {{ t('account.apiKeys.deleteKey') }}
+          {{ t('common.delete') }}
         </UButton>
       </template>
     </UModal>

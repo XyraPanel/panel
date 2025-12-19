@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 
 definePageMeta({
@@ -8,86 +8,56 @@ definePageMeta({
 })
 
 const { t } = useI18n()
-const route = useRoute()
-const router = useRouter()
 const authStore = useAuthStore()
 const { user: sessionUser, permissions } = storeToRefs(authStore)
 
-const baseTabs = computed<AdminSettingsTabDefinition[]>(() => [
+interface SettingsSection {
+  id: string
+  label: string
+  description: string
+  icon: string
+  component: ReturnType<typeof defineAsyncComponent>
+  permission?: string
+  order: number
+}
+
+const baseSections = computed<SettingsSection[]>(() => [
   {
+    id: 'general',
     label: t('admin.settings.general'),
-    value: 'general',
+    description: t('admin.settings.generalSettings.description'),
     icon: 'i-lucide-settings',
-    component: 'AdminSettingsGeneral',
+    component: defineAsyncComponent(() => import('~/components/Admin/Settings/General.vue')),
     order: 0,
   },
   {
+    id: 'security',
     label: t('admin.settings.security'),
-    value: 'security',
+    description: t('admin.settings.securitySettings.description'),
     icon: 'i-lucide-shield-check',
-    component: 'AdminSettingsSecurity',
+    component: defineAsyncComponent(() => import('~/components/Admin/Settings/Security.vue')),
     order: 10,
   },
   {
+    id: 'mail',
     label: t('admin.settings.mail'),
-    value: 'mail',
+    description: t('admin.settings.mailSettings.description'),
     icon: 'i-lucide-mail',
-    component: 'AdminSettingsMail',
+    component: defineAsyncComponent(() => import('~/components/Admin/Settings/Mail.vue')),
     order: 20,
-  },
-  {
-    label: t('admin.settings.advanced'),
-    value: 'advanced',
-    icon: 'i-lucide-sparkles',
-    component: 'AdminSettingsAdvanced',
-    order: 30,
   },
 ])
 
-const availableTabs = computed(() => {
+const availableSections = computed(() => {
   const userPermissions = permissions.value ?? sessionUser.value?.permissions ?? []
 
-  return baseTabs.value
-    .filter(tab => !tab.permission || userPermissions.includes(tab.permission))
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+  return baseSections.value
+    .filter(section => !section.permission || userPermissions.includes(section.permission))
+    .sort((a, b) => a.order - b.order)
 })
 
-const tabItems = computed(() => availableTabs.value.map(tab => ({
-  label: tab.label,
-  value: tab.value,
-  icon: tab.icon,
-})))
-
-const activeTab = computed<string>({
-  get: () => {
-    const fallback = availableTabs.value[0]?.value ?? ''
-    const value = (route.query.tab as string | undefined) ?? fallback
-    if (value && availableTabs.value.some(tab => tab.value === value))
-      return value
-    return fallback
-  },
-  set: (value) => {
-    router.push({ query: { tab: value || undefined } })
-  },
-})
-
-const currentTab = computed<AdminSettingsTabDefinition | null>(() =>
-  availableTabs.value.find(tab => tab.value === activeTab.value) ?? null,
-)
-
-const tabComponents = {
-  general: defineAsyncComponent(() => import('~/components/Admin/Settings/General.vue')),
-  security: defineAsyncComponent(() => import('~/components/Admin/Settings/Security.vue')),
-  mail: defineAsyncComponent(() => import('~/components/Admin/Settings/Mail.vue')),
-  advanced: defineAsyncComponent(() => import('~/components/Admin/Settings/Advanced.vue')),
-} as const
-
-const currentTabComponent = computed(() => {
-  if (!currentTab.value)
-    return null
-
-  const key = currentTab.value.value as keyof typeof tabComponents
-  return tabComponents[key] ?? null
+const openSections = ref<Record<string, boolean>>({
+  general: true,
 })
 </script>
 
@@ -95,18 +65,45 @@ const currentTabComponent = computed(() => {
   <UPage>
     <UPageBody>
       <UContainer>
-        <div class="space-y-4">
-          <UTabs v-model="activeTab" variant="link" :items="tabItems" class="w-full" />
-          <div v-if="currentTabComponent" key="settings-tab">
-            <component :is="currentTabComponent" />
+        <UCard v-if="availableSections.length > 0" :ui="{ body: 'p-0 divide-y divide-default' }">
+          <div
+            v-for="section in availableSections"
+            :key="section.id"
+          >
+            <UCollapsible v-model:open="openSections[section.id]" :unmount-on-hide="false">
+              <template #default>
+                <div
+                  class="flex w-full items-center justify-between p-4 cursor-pointer"
+                >
+                  <div class="flex items-center gap-3">
+                    <UIcon :name="section.icon" class="size-5 text-primary" />
+                    <div>
+                      <h3 class="text-base font-semibold">{{ section.label }}</h3>
+                      <p class="text-sm text-muted-foreground">{{ section.description }}</p>
+                    </div>
+                  </div>
+                  <UIcon
+                    name="i-lucide-chevron-down"
+                    class="size-5 text-muted-foreground transition-transform duration-200"
+                    :class="{ 'rotate-180': openSections[section.id] }"
+                  />
+                </div>
+              </template>
+
+              <template #content>
+                <div class="border-t border-default p-4">
+                  <component :is="section.component" />
+                </div>
+              </template>
+            </UCollapsible>
           </div>
-          <UAlert v-else color="warning" variant="soft" icon="i-lucide-alert-triangle">
-            <template #title>{{ t('admin.settings.noSettingsAvailable') }}</template>
-            <template #description>
-              {{ t('admin.settings.noSettingsAvailableDescription') }}
-            </template>
-          </UAlert>
-        </div>
+        </UCard>
+        <UAlert v-else color="warning" variant="soft" icon="i-lucide-alert-triangle">
+          <template #title>{{ t('admin.settings.noSettingsAvailable') }}</template>
+          <template #description>
+            {{ t('admin.settings.noSettingsAvailableDescription') }}
+          </template>
+        </UAlert>
       </UContainer>
     </UPageBody>
   </UPage>

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { AdminServerDatabaseListResponse, AdminServerDatabase } from '#shared/types/admin'
 import { serverDatabaseCreateSchema } from '#shared/schema/admin/server'

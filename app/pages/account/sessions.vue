@@ -129,13 +129,13 @@ async function copyJson(session: UserSessionSummary) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: t('account.sessions.copiedToClipboard'),
-      description: t('account.sessions.copiedToClipboardDescription'),
+      title: t('common.copied'),
+      description: t('common.copiedToClipboard'),
     })
   } catch (error) {
     toast.add({
-      title: t('account.sessions.failedToCopy'),
-      description: error instanceof Error ? error.message : t('account.sessions.failedToCopyDescription'),
+      title: t('common.failedToCopy'),
+      description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
     })
   }

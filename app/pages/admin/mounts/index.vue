@@ -138,13 +138,12 @@ async function handleDelete(mount: MountWithRelations) {
               <template #description>{{ error.message }}</template>
             </UAlert>
 
-            <div v-else-if="mounts.length === 0" class="py-12 text-center">
-              <UIcon name="i-lucide-folder-tree" class="mx-auto size-12 text-muted-foreground opacity-50" />
-              <p class="mt-4 text-sm text-muted-foreground">{{ t('admin.mounts.noMountsYet') }}</p>
-              <p class="mt-1 text-xs text-muted-foreground">
-                {{ t('admin.mounts.mountsDescription') }}
-              </p>
-            </div>
+            <UEmpty
+              v-else-if="mounts.length === 0"
+              icon="i-lucide-folder-tree"
+              :title="t('admin.mounts.noMountsYet')"
+              :description="t('admin.mounts.mountsDescription')"
+            />
 
             <div v-else class="divide-y divide-default">
               <div v-for="mount in mounts" :key="mount.id" class="flex items-start justify-between py-4">

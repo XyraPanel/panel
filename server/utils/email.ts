@@ -5,6 +5,11 @@ import type { EmailConfig } from '#shared/types/email'
 
 let transporter: Transporter | null = null
 
+function getAppName(): string {
+  const runtimeConfig = useRuntimeConfig()
+  return (runtimeConfig.public?.appName as string) || 'XyraPanel'
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -125,8 +130,9 @@ export async function sendEmail(options: {
     return
   }
 
+  const appName = getAppName()
   const fromAddress = getSettingWithDefault(SETTINGS_KEYS.MAIL_FROM_ADDRESS, 'noreply@xyrapanel.local')
-  const fromName = getSettingWithDefault(SETTINGS_KEYS.MAIL_FROM_NAME, 'XyraPanel')
+  const fromName = getSettingWithDefault(SETTINGS_KEYS.MAIL_FROM_NAME, appName)
   const from = fromName ? `${fromName} <${fromAddress}>` : fromAddress
 
   await transporter.sendMail({
@@ -145,7 +151,7 @@ export async function sendPasswordResetEmail(
 ): Promise<void> {
   const html = `
     <h2>Password Reset Request</h2>
-    <p>You requested a password reset for your XyraPanel account.</p>
+    <p>You requested a password reset for your ${getAppName()} account.</p>
     <p>Click the link below to reset your password:</p>
     <p><a href="${resetUrl}?token=${resetToken}">Reset Password</a></p>
     <p>This link will expire in 1 hour.</p>
@@ -169,7 +175,7 @@ export async function sendEmailVerificationEmail(options: {
   const verifyUrl = `${baseUrl}/auth/email/verify?token=${encodeURIComponent(options.token)}`
 
   const htmlLines = [
-    '<h2>Verify your XyraPanel email address</h2>',
+    `<h2>Verify your ${getAppName()} email address</h2>`,
     options.username
       ? `<p>Hi ${escapeHtml(options.username)},</p>`
       : '<p>Hello,</p>',
@@ -193,7 +199,7 @@ export async function sendWelcomeEmail(
   name: string
 ): Promise<void> {
   const html = `
-    <h2>Welcome to XyraPanel!</h2>
+    <h2>Welcome to ${getAppName()}!</h2>
     <p>Hi ${name},</p>
     <p>Your account has been created successfully.</p>
     <p>You can now log in and start managing your servers.</p>
@@ -202,7 +208,7 @@ export async function sendWelcomeEmail(
 
   await sendEmail({
     to: email,
-    subject: 'Welcome to XyraPanel',
+    subject: `Welcome to ${getAppName()}`,
     html,
   })
 }
@@ -292,7 +298,7 @@ export async function sendAdminUserCreatedEmail(options: {
   const loginUrl = `${baseUrl}/auth/login`
 
   const bodyLines = [
-    '<h2>Your XyraPanel account is ready</h2>',
+    `<h2>Your ${getAppName()} account is ready</h2>`,
     `<p>An administrator has created an account for you with username <strong>${options.username}</strong>.</p>`,
   ]
 
@@ -309,7 +315,7 @@ export async function sendAdminUserCreatedEmail(options: {
 
   await sendEmail({
     to: options.to,
-    subject: 'Your XyraPanel account has been created',
+    subject: `Your ${getAppName()} account has been created`,
     html: bodyLines.join('\n'),
   })
 }

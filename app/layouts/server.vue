@@ -6,13 +6,10 @@ const route = useRoute()
 
 const serverId = computed(() => route.params.id as string)
 
-const { data: serverResponse } = await useAsyncData(
-  () => `server-${serverId.value}`,
-  async () => {
-    const response = await $fetch(`/api/servers/${serverId.value}`)
-    return response as { data: { name: string; identifier: string } }
-  },
+const { data: serverResponse } = await useFetch(
+  `/api/servers/${serverId.value}`,
   {
+    key: `server-layout-${serverId.value}`,
     watch: [serverId],
   },
 )

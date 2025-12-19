@@ -37,8 +37,6 @@ const timezoneOptions = [
 ] satisfies { label: string; value: TimezoneValue }[]
 
 const baseSchema = z.object({
-  name: z.string().trim().min(2, t('admin.settings.generalSettings.panelNameMinLength')),
-  url: z.string().trim().pipe(z.url(t('admin.settings.generalSettings.panelUrlInvalid'))),
   locale: z.string(),
   timezone: z.enum(timezoneEnumValues, { message: t('admin.settings.generalSettings.timezoneInvalid') }),
   showBrandLogo: z.boolean(),
@@ -50,6 +48,11 @@ const baseSchema = z.object({
     },
     z.string().trim().pipe(z.url(t('validation.invalidUrl'))).nullable(),
   ),
+  paginationLimit: z.number()
+    .int(t('admin.settings.generalSettings.paginationLimitInt'))
+    .min(10, t('admin.settings.generalSettings.paginationLimitMin'))
+    .max(100, t('admin.settings.generalSettings.paginationLimitMax')),
+  telemetryEnabled: z.boolean(),
 })
 
 const schema = computed(() => {
@@ -87,12 +90,12 @@ function resolveTimezone(value: string | null | undefined): TimezoneValue {
 
 function createFormState(source?: GeneralSettings | null): FormSchema {
   return {
-    name: source?.name ?? '',
-    url: source?.url ?? '',
     locale: resolveLocale(source?.locale),
     timezone: resolveTimezone(source?.timezone),
     showBrandLogo: source?.showBrandLogo ?? false,
     brandLogoUrl: source?.brandLogoUrl ?? null,
+    paginationLimit: source?.paginationLimit ?? 25,
+    telemetryEnabled: source?.telemetryEnabled ?? true,
   }
 }
 
@@ -220,13 +223,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <h2 class="text-lg font-semibold">{{ t('admin.settings.generalSettings.title') }}</h2>
-      <p class="text-sm text-muted-foreground">{{ t('admin.settings.generalSettings.description') }}</p>
-    </template>
-
-    <UForm
+  <UForm
       ref="generalSettingsForm"
       :schema="schema"
       :state="form"
@@ -235,14 +232,6 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       :validate-on="['input']"
       @submit="handleSubmit"
     >
-      <UFormField :label="t('admin.settings.generalSettings.panelName')" name="name" required>
-        <UInput v-model="form.name" :placeholder="t('admin.settings.generalSettings.panelNamePlaceholder')" :disabled="isSubmitting" class="w-full" />
-      </UFormField>
-
-      <UFormField :label="t('admin.settings.generalSettings.panelUrl')" name="url" required>
-        <UInput v-model="form.url" type="url" :placeholder="t('admin.settings.generalSettings.panelUrlPlaceholder')" :disabled="isSubmitting" class="w-full" />
-      </UFormField>
-
       <UFormField :label="t('admin.settings.generalSettings.language')" name="locale" required>
         <ULocaleSelect
           v-model="form.locale"
@@ -254,6 +243,13 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 
       <UFormField :label="t('admin.settings.generalSettings.timezone')" name="timezone" required>
         <USelect v-model="form.timezone" :items="timezoneOptions" value-key="value" :disabled="isSubmitting" />
+      </UFormField>
+
+      <UFormField :label="t('admin.settings.generalSettings.paginationLimit')" name="paginationLimit" required>
+        <UInput v-model.number="form.paginationLimit" type="number" min="10" max="100" :disabled="isSubmitting" class="w-full max-w-32" />
+        <template #description>
+          <span class="text-xs text-muted-foreground">{{ t('admin.settings.generalSettings.paginationLimitDescription') }}</span>
+        </template>
       </UFormField>
 
       <USeparator />
@@ -298,11 +294,22 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
         </div>
       </div>
 
+      <USeparator />
+
+      <div class="space-y-4">
+        <div>
+          <h3 class="text-sm font-medium">{{ t('admin.settings.generalSettings.system') }}</h3>
+        </div>
+
+        <UFormField name="telemetryEnabled">
+          <USwitch v-model="form.telemetryEnabled" :label="t('admin.settings.generalSettings.enableTelemetry')" :disabled="isSubmitting" />
+        </UFormField>
+      </div>
+
       <div class="flex justify-end">
         <UButton type="submit" color="primary" variant="subtle" :loading="isSubmitting" :disabled="isSubmitting">
           {{ t('admin.settings.generalSettings.saveChanges') }}
         </UButton>
       </div>
-    </UForm>
-  </UCard>
+  </UForm>
 </template>

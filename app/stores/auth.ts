@@ -54,8 +54,12 @@ export const useAuthStore = defineStore('auth', () => {
     await authClient.getSession()
   }
 
-  async function logout() {
+  async function logout(options?: { revokeOthersFirst?: boolean }) {
     try {
+      if (options?.revokeOthersFirst && typeof authClient.revokeOtherSessions === 'function') {
+        await authClient.revokeOtherSessions()
+      }
+
       await authClient.signOut()
     }
     catch (err) {
@@ -119,6 +123,17 @@ export const useAuthStore = defineStore('auth', () => {
         return { error: twoFactorResult.error.message }
       }
     }
+
+    if (typeof authClient.revokeOtherSessions === 'function') {
+      try {
+        await authClient.revokeOtherSessions()
+      }
+      catch (error) {
+        console.warn('[auth] Failed to revoke other sessions after login:', error)
+      }
+    }
+
+    await syncSession()
 
     return result
   }

@@ -231,19 +231,13 @@ async function handleTestEmail() {
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-lg font-semibold">{{ t('admin.settings.mailSettings.title') }}</h2>
-          <p class="text-sm text-muted-foreground">{{ t('admin.settings.mailSettings.description') }}</p>
-        </div>
-        <UButton icon="i-lucide-mail" color="primary" variant="soft" :loading="isTesting"
-          :disabled="isTesting || isSubmitting" @click="handleTestEmail">
-          {{ t('admin.settings.mailSettings.sendTestEmail') }}
-        </UButton>
-      </div>
-    </template>
+  <div>
+    <div class="flex justify-end mb-4">
+      <UButton icon="i-lucide-mail" color="primary" variant="soft" :loading="isTesting"
+        :disabled="isTesting || isSubmitting" @click="handleTestEmail">
+        {{ t('admin.settings.mailSettings.sendTestEmail') }}
+      </UButton>
+    </div>
 
     <UForm
       :schema="schema"
@@ -329,5 +323,5 @@ async function handleTestEmail() {
         </UButton>
       </div>
     </UForm>
-  </UCard>
+  </div>
 </template>

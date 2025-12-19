@@ -7,6 +7,11 @@
 :root {
   --font-sans: "Inter", sans-serif;
 }
+
+.admin-layout {
+  --ui-container: 100%;
+}
+
 /* Hide scrollbar in all browsers */
 * {
   scrollbar-width: none;

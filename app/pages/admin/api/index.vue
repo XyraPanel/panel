@@ -18,62 +18,58 @@ const isSubmitting = ref(false)
 const { data, refresh } = await useAsyncData(
   'admin-api-keys',
   async () => {
-    const response = await $fetch<{ data: ApiKey[] }>('/api/admin/api-keys')
+    // @ts-expect-error - Nuxt typed routes cause deep type inference, waiting on Nitro v3 fix
+    const response = await $fetch('/api/admin/api-keys')
     return response
   },
 )
 
-const apiKeys = computed(() => data.value?.data ?? [])
+const apiKeys = computed(() => (data.value as unknown as { data: ApiKey[] } | null)?.data ?? [])
 
 const form = reactive({
   memo: '',
   expiresAt: '',
   allowedIps: '',
   permissions: {
-    rServers: 0,
-    rNodes: 0,
-    rAllocations: 0,
-    rUsers: 0,
-    rLocations: 0,
-    rNests: 0,
-    rEggs: 0,
-    rDatabaseHosts: 0,
-    rServerDatabases: 0,
-  } as Record<string, number>,
+    servers: [],
+    nodes: [],
+    allocations: [],
+    users: [],
+    locations: [],
+    nests: [],
+    eggs: [],
+    databaseHosts: [],
+    serverDatabases: [],
+  } as Record<string, string[]>,
 })
 
 const RESOURCE_NAMES = computed<Record<string, string>>(() => ({
-  rServers: t('admin.api.servers'),
-  rNodes: t('admin.api.nodes'),
-  rAllocations: t('admin.api.allocations'),
-  rUsers: t('admin.api.users'),
-  rLocations: t('admin.api.locations'),
-  rNests: t('admin.api.nests'),
-  rEggs: t('admin.api.eggs'),
-  rDatabaseHosts: t('admin.api.databaseHosts'),
-  rServerDatabases: t('admin.api.serverDatabases'),
+  servers: t('admin.api.servers'),
+  nodes: t('admin.api.nodes'),
+  allocations: t('admin.api.allocations'),
+  users: t('admin.api.users'),
+  locations: t('admin.api.locations'),
+  nests: t('admin.api.nests'),
+  eggs: t('admin.api.eggs'),
+  databaseHosts: t('admin.api.databaseHosts'),
+  serverDatabases: t('admin.api.serverDatabases'),
 }))
 
-const PERMISSION_OPTIONS = computed(() => [
-  { label: t('admin.api.none'), value: 0 },
-  { label: t('admin.api.read'), value: 1 },
-  { label: t('admin.api.readWrite'), value: 3 },
-])
 
 function resetForm() {
   form.memo = ''
   form.expiresAt = ''
   form.allowedIps = ''
   form.permissions = {
-    rServers: 0,
-    rNodes: 0,
-    rAllocations: 0,
-    rUsers: 0,
-    rLocations: 0,
-    rNests: 0,
-    rEggs: 0,
-    rDatabaseHosts: 0,
-    rServerDatabases: 0,
+    servers: [],
+    nodes: [],
+    allocations: [],
+    users: [],
+    locations: [],
+    nests: [],
+    eggs: [],
+    databaseHosts: [],
+    serverDatabases: [],
   }
 }
 
@@ -144,7 +140,7 @@ function copyToClipboard(text: string) {
   navigator.clipboard.writeText(text)
   toast.add({
     title: t('common.copied'),
-    description: t('admin.api.apiKeyCopiedToClipboard'),
+    description: t('common.copiedToClipboard'),
     color: 'success',
   })
 }
@@ -169,8 +165,8 @@ function copyToClipboard(text: string) {
               </div>
             </template>
 
-            <UEmpty v-if="apiKeys.length === 0" :icon="'i-lucide-key'" :title="t('admin.api.noApiKeysYet')"
-              :description="t('admin.api.apiKeysDescription')" variant="subtle" />
+            <UEmpty v-if="apiKeys.length === 0" icon="i-lucide-key" :title="t('admin.api.noApiKeysYet')"
+              :description="t('admin.api.apiKeysDescription')" />
 
             <div v-else class="divide-y divide-default">
               <div v-for="key in apiKeys" :key="key.id" class="flex items-center justify-between gap-4 py-4">
@@ -254,15 +250,25 @@ function copyToClipboard(text: string) {
                   class="grid grid-cols-4 gap-4 p-3 items-center hover:bg-muted/30 transition-colors"
                 >
                   <div class="font-medium text-sm">{{ resourceName }}</div>
-                  <div class="col-span-3">
-                    <URadioGroup
-                      :model-value="form.permissions[resourceKey]"
-                      :items="PERMISSION_OPTIONS"
+                  <div class="col-span-3 flex gap-4">
+                    <UCheckbox
+                      v-for="action in ['read', 'write', 'delete']"
+                      :key="action"
+                      :model-value="(form.permissions[resourceKey] as string[])?.includes(action) ?? false"
                       :disabled="isSubmitting"
-                      orientation="horizontal"
-                      variant="list"
-                      size="sm"
-                      @update:model-value="form.permissions[resourceKey] = typeof $event === 'string' ? Number.parseInt($event, 10) : Number($event)"
+                      :label="t(`admin.api.${action}`)"
+                      @update:model-value="
+                        (checked) => {
+                          const actions = form.permissions[resourceKey] as string[] || []
+                          if (checked) {
+                            if (!actions.includes(action)) {
+                              form.permissions[resourceKey] = [...actions, action]
+                            }
+                          } else {
+                            form.permissions[resourceKey] = actions.filter(a => a !== action)
+                          }
+                        }
+                      "
                     />
                   </div>
                 </div>

@@ -13,6 +13,18 @@ const rawSchema = z.object({
   maintenanceMessage: z.string().trim().max(500, t('admin.settings.securitySettings.maintenanceMessageMaxLength')),
   announcementEnabled: z.boolean(),
   announcementMessage: z.string().trim().max(500, t('admin.settings.securitySettings.announcementMessageMaxLength')),
+  sessionTimeoutMinutes: z.number()
+    .int(t('admin.settings.securitySettings.sessionTimeoutInt'))
+    .min(5, t('admin.settings.securitySettings.sessionTimeoutMin'))
+    .max(1440, t('admin.settings.securitySettings.sessionTimeoutMax')),
+  queueConcurrency: z.number()
+    .int(t('admin.settings.securitySettings.queueConcurrencyInt'))
+    .min(1, t('admin.settings.securitySettings.queueConcurrencyMin'))
+    .max(32, t('admin.settings.securitySettings.queueConcurrencyMax')),
+  queueRetryLimit: z.number()
+    .int(t('admin.settings.securitySettings.queueRetryLimitInt'))
+    .min(1, t('admin.settings.securitySettings.queueRetryLimitMin'))
+    .max(50, t('admin.settings.securitySettings.queueRetryLimitMax')),
 })
 
 const schema = rawSchema.superRefine((data, ctx) => {
@@ -42,6 +54,9 @@ function createFormState(source?: SecuritySettings | null): FormSchema {
     maintenanceMessage: source?.maintenanceMessage ?? '',
     announcementEnabled: source?.announcementEnabled ?? false,
     announcementMessage: source?.announcementMessage ?? '',
+    sessionTimeoutMinutes: source?.sessionTimeoutMinutes ?? 60,
+    queueConcurrency: source?.queueConcurrency ?? 4,
+    queueRetryLimit: source?.queueRetryLimit ?? 5,
   }
 }
 
@@ -101,12 +116,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 </script>
 
 <template>
-  <UCard>
-    <template #header>
-      <h2 class="text-lg font-semibold">{{ t('admin.settings.securitySettings.title') }}</h2>
-    </template>
-
-    <UForm
+  <UForm
       :schema="schema"
       :state="form"
       class="space-y-6"
@@ -146,11 +156,37 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
         </transition>
       </div>
 
+      <div class="space-y-4">
+        <h3 class="text-sm font-semibold">{{ t('admin.settings.securitySettings.sessionsQueue') }}</h3>
+        <div class="grid gap-4 md:grid-cols-3">
+          <UFormField :label="t('admin.settings.securitySettings.sessionTimeout')" name="sessionTimeoutMinutes" required>
+            <UInput v-model.number="form.sessionTimeoutMinutes" type="number" min="5" max="1440"
+              suffix="min" :disabled="isSubmitting" class="w-full" />
+            <template #description>
+              <span class="text-xs text-muted-foreground">{{ t('admin.settings.securitySettings.sessionTimeoutDescription') }}</span>
+            </template>
+          </UFormField>
+
+          <UFormField :label="t('admin.settings.securitySettings.queueConcurrency')" name="queueConcurrency" required>
+            <UInput v-model.number="form.queueConcurrency" type="number" min="1" max="32" :disabled="isSubmitting" class="w-full" />
+            <template #description>
+              <span class="text-xs text-muted-foreground">{{ t('admin.settings.securitySettings.queueConcurrencyDescription') }}</span>
+            </template>
+          </UFormField>
+
+          <UFormField :label="t('admin.settings.securitySettings.queueRetryLimit')" name="queueRetryLimit" required>
+            <UInput v-model.number="form.queueRetryLimit" type="number" min="1" max="50" :disabled="isSubmitting" class="w-full" />
+            <template #description>
+              <span class="text-xs text-muted-foreground">{{ t('admin.settings.securitySettings.queueRetryLimitDescription') }}</span>
+            </template>
+          </UFormField>
+        </div>
+      </div>
+
       <div class="flex justify-end">
         <UButton type="submit" color="primary" variant="subtle" :loading="isSubmitting" :disabled="isSubmitting">
           {{ t('admin.settings.securitySettings.saveChanges') }}
         </UButton>
       </div>
-    </UForm>
-  </UCard>
+  </UForm>
 </template>

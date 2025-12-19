@@ -36,6 +36,18 @@ export default defineEventHandler(async (event) => {
     updates[SETTINGS_KEYS.ANNOUNCEMENT_MESSAGE] = body.announcementMessage
   }
 
+  if (body.sessionTimeoutMinutes !== undefined) {
+    updates[SETTINGS_KEYS.SESSION_TIMEOUT_MINUTES] = String(body.sessionTimeoutMinutes)
+  }
+
+  if (body.queueConcurrency !== undefined) {
+    updates[SETTINGS_KEYS.QUEUE_CONCURRENCY] = String(body.queueConcurrency)
+  }
+
+  if (body.queueRetryLimit !== undefined) {
+    updates[SETTINGS_KEYS.QUEUE_RETRY_LIMIT] = String(body.queueRetryLimit)
+  }
+
   if (Object.keys(updates).length === 0) {
     throw createError({
       statusCode: 400,

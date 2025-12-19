@@ -5,6 +5,12 @@
         :title="welcomeTitle"
         :description="t('dashboard.description')"
       />
+
+      <UAlert v-if="announcement" color="warning" variant="subtle" icon="i-lucide-info" class="mt-4">
+        <template #description>
+          <span class="whitespace-pre-wrap">{{ announcement }}</span>
+        </template>
+      </UAlert>
     </UContainer>
 
     <UPageBody>
@@ -61,6 +67,7 @@ import type {
   DashboardData,
 } from '#shared/types/dashboard'
 import type { AccountSessionsResponse } from '#shared/types/auth'
+import type { SecuritySettings } from '#shared/types/admin'
 
 definePageMeta({
   auth: true,
@@ -83,6 +90,21 @@ const {
   data: sessionsResponse,
 } = await useFetch<AccountSessionsResponse>('/api/account/sessions', { key: 'dashboard-sessions' })
 
+const { data: securitySettings } = await useFetch<SecuritySettings>('/api/admin/settings/security', {
+  key: 'dashboard-security-settings',
+  default: () => ({
+    enforceTwoFactor: false,
+    maintenanceMode: false,
+    maintenanceMessage: '',
+    announcementEnabled: false,
+    announcementMessage: '',
+    sessionTimeoutMinutes: 60,
+    queueConcurrency: 4,
+    queueRetryLimit: 3,
+  }),
+})
+
+const announcement = computed(() => (securitySettings.value?.announcementEnabled ? securitySettings.value?.announcementMessage?.trim() : ''))
 
 function translateMetric(metric: ClientDashboardMetric): ClientDashboardMetric {
   // Translate label based on metric key

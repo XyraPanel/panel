@@ -1,9 +1,17 @@
 
 export type ActorType = 'user' | 'system' | 'daemon'
 
-export type TargetType = 'user' | 'server' | 'backup' | 'node' | 'database' | 'file' | 'settings' | 'session'
+export type TargetType = 'user' | 'server' | 'backup' | 'node' | 'database' | 'file' | 'settings' | 'session' | 'api_key'
 
-export type ActivityAction = string
+export type ActivityAction = 
+  | 'account.api_key.create'
+  | 'account.api_key.delete'
+  | 'account.api_key.used'
+  | 'account.api_key.invalid'
+  | 'admin.api_key.create'
+  | 'admin.api_key.delete'
+  | 'account.password.update'
+  | string
 
 export interface ActivityMetadata {
   ip?: string

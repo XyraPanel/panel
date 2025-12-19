@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import type { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
 import type { MountUI as Mount } from '#shared/types/ui'
 import { attachMountSchema } from '#shared/schema/server/operations'
@@ -12,33 +13,28 @@ const showAttachModal = ref(false)
 const isSubmitting = ref(false)
 
 const {
-  data: mountsData,
+  data: mountsResponse,
   pending: mountsPending,
   refresh,
   error: mountsError,
-} = await useFetch<{ data: Mount[] }>(`/api/admin/servers/${props.serverId}/mounts`, {
-  key: `server-mounts-${props.serverId}`,
-  transform: (response) => response.data ?? null,
-  default: () => null,
-  onResponseError({ response }) {
-    console.error('Failed to load server mounts', response._data)
-  },
+} = await useAsyncData(`server-mounts-${props.serverId}`, async () => {
+  const url = `/api/admin/servers/${props.serverId}/mounts`
+  // @ts-expect-error - Nuxt typed routes cause deep type
+  return await $fetch(url) as { data: Mount[] }
 })
-const serverMounts = computed(() => mountsData.value ?? [])
+const serverMounts = computed(() => mountsResponse.value?.data ?? [])
 
 const {
-  data: availableMountsData,
+  data: availableMountsResponse,
   pending: availablePending,
   error: availableError,
-} = await useFetch<{ data: Mount[] }>('/api/admin/mounts', {
+} = await useFetch('/api/admin/mounts', {
   key: 'admin-mounts-list',
-  transform: (response) => response.data ?? null,
-  default: () => null,
   onResponseError({ response }) {
     console.error('Failed to load mounts', response._data)
   },
 })
-const availableMounts = computed(() => availableMountsData.value ?? [])
+const availableMounts = computed(() => (availableMountsResponse.value as { data: Mount[] } | null)?.data ?? [])
 
 const attachSchema = attachMountSchema
 

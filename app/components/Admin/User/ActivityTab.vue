@@ -15,14 +15,14 @@ const expandedActivityEntries = ref<Set<string>>(new Set())
 
 const {
   data: activityData,
-} = await useFetch<PaginatedActivityResponse>(
-  () => `/api/admin/users/${props.userId}/activity`,
+} = await useAsyncData(
+  `admin-user-activity-${props.userId}`,
+  async () => {
+    const url = `/api/admin/users/${props.userId}/activity?page=${activityPage.value}&limit=${props.itemsPerPage}`
+    // @ts-expect-error - Nuxt typed routes cause deep type
+    return await $fetch(url) as PaginatedActivityResponse
+  },
   {
-    key: `admin-user-activity-${props.userId}`,
-    query: computed(() => ({
-      page: activityPage.value,
-      limit: props.itemsPerPage,
-    })),
     default: () => ({ data: [], pagination: { page: 1, perPage: props.itemsPerPage, total: 0, totalPages: 0 } }),
     watch: [activityPage, () => props.itemsPerPage],
   },

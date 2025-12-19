@@ -9,6 +9,9 @@
 > [!CAUTION]
 > **BETA:** The project is unstable. APIs, UI, and behavior will change. Do not use in production.
 
+> [!NOTE]
+> **TypeScript:** With 280+ API routes, Nuxt's typed routes cause "Type instantiation is excessively deep" errors. We use `@ts-expect-error` as a workaround until [nuxt/nuxt#33005](https://github.com/nuxt/nuxt/pull/33005) (Nitro v3) ships.
+
 XyraPanel is a game management panel similar to Pterodactyl, but built with modern technologies and today’s community expectations in mind.
 
 [![Dashboard](.github/images/dashboard.png)](.github/images/dashboard.png)

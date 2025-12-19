@@ -72,7 +72,7 @@ async function createBackup() {
     })
 
     useToast().add({
-      title: t('server.backups.backupStarted'),
+      title: t('common.success'),
       description: t('server.backups.backupStartedDescription'),
       color: 'success',
     })
@@ -81,7 +81,7 @@ async function createBackup() {
   }
   catch (err) {
     useToast().add({
-      title: t('server.backups.backupFailed'),
+      title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.backups.backupFailed'),
       color: 'error',
     })
@@ -102,7 +102,7 @@ async function downloadBackup(backupId: string) {
   }
   catch (err) {
     useToast().add({
-      title: t('server.backups.downloadFailed'),
+      title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.backups.downloadFailed'),
       color: 'error',
     })
@@ -124,14 +124,14 @@ async function restoreBackup(backupId: string) {
     })
 
     useToast().add({
-      title: t('server.backups.restoreStarted'),
+      title: t('common.success'),
       description: t('server.backups.restoreStartedDescription'),
       color: 'success',
     })
   }
   catch (err) {
     useToast().add({
-      title: t('server.backups.restoreFailed'),
+      title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.backups.restoreFailed'),
       color: 'error',
     })
@@ -149,7 +149,7 @@ async function toggleLock(backupId: string) {
     })
 
     useToast().add({
-      title: t('server.backups.lockToggled'),
+      title: t('common.success'),
       description: t('server.backups.lockToggledDescription'),
       color: 'success',
     })
@@ -158,7 +158,7 @@ async function toggleLock(backupId: string) {
   }
   catch (err) {
     useToast().add({
-      title: t('server.backups.lockFailed'),
+      title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.backups.lockFailed'),
       color: 'error',
     })
@@ -180,7 +180,7 @@ async function deleteBackup(backupId: string) {
     })
 
     useToast().add({
-      title: t('server.backups.backupDeleted'),
+      title: t('common.success'),
       description: t('server.backups.backupDeletedDescription'),
       color: 'success',
     })
@@ -189,7 +189,7 @@ async function deleteBackup(backupId: string) {
   }
   catch (err) {
     useToast().add({
-      title: t('server.backups.deleteFailed'),
+      title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.backups.deleteFailed'),
       color: 'error',
     })

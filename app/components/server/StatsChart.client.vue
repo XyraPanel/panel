@@ -120,7 +120,7 @@ const xFormatter = (i: number): string => {
 <template>
   <div v-if="history.length > 0" class="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
 
-    <UCard>
+    <UCard variant="subtle">
       <template #header>
         <div class="flex items-center justify-between">
           <span class="text-sm font-semibold">{{ t('server.stats.cpuUsage') }}</span>
@@ -134,7 +134,7 @@ const xFormatter = (i: number): string => {
         :grid-line-y="true" />
     </UCard>
 
-    <UCard>
+    <UCard variant="subtle">
       <template #header>
         <div class="flex items-center justify-between">
           <span class="text-sm font-semibold">{{ t('server.stats.memoryUsage') }}</span>
@@ -148,7 +148,7 @@ const xFormatter = (i: number): string => {
         :y-num-ticks="3" :grid-line-y="true" />
     </UCard>
 
-    <UCard>
+    <UCard variant="subtle">
       <template #header>
         <div class="flex items-center justify-between">
           <span class="text-sm font-semibold">{{ t('server.stats.networkIO') }}</span>
@@ -163,7 +163,7 @@ const xFormatter = (i: number): string => {
         :y-num-ticks="3" :grid-line-y="true" />
     </UCard>
 
-    <UCard>
+    <UCard variant="subtle">
       <template #header>
         <div class="flex items-center justify-between">
           <span class="text-sm font-semibold">{{ t('server.stats.diskIO') }}</span>

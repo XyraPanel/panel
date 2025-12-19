@@ -230,11 +230,14 @@ async function handleExportEgg() {
                 </div>
               </template>
 
-              <div v-if="egg.variables.length === 0" class="py-8 text-center">
-                <UIcon name="i-lucide-variable" class="mx-auto size-10 text-muted-foreground opacity-50" />
-                <p class="mt-3 text-sm text-muted-foreground">{{ t('admin.eggs.noVariablesDefined') }}</p>
+              <UEmpty
+                v-if="egg.variables.length === 0"
+                icon="i-lucide-variable"
+                :title="t('admin.eggs.noVariablesDefined')"
+                :description="t('admin.eggs.noVariablesDefinedDescription')"
+              >
                 <UButton class="mt-4" size="sm" @click="openCreateVariableModal">{{ t('admin.eggs.addFirstVariable') }}</UButton>
-              </div>
+              </UEmpty>
 
               <div v-else class="divide-y divide-default">
                 <div v-for="variable in egg.variables" :key="variable.id" class="py-4">

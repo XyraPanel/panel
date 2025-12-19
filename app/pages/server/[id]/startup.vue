@@ -148,7 +148,7 @@ async function updateDockerImage() {
           </div>
 
           <template v-else>
-            <UCard>
+            <UCard variant="subtle">
               <template #header>
                 <div class="flex items-center gap-2">
                   <UIcon name="i-lucide-rocket" class="size-5" />
@@ -170,7 +170,7 @@ async function updateDockerImage() {
               </div>
             </UCard>
 
-            <UCard>
+            <UCard variant="subtle">
               <template #header>
                 <div class="flex items-center gap-2">
                   <UIcon name="i-lucide-container" class="size-5" />
@@ -225,7 +225,7 @@ async function updateDockerImage() {
               </div>
             </UCard>
 
-            <UCard>
+            <UCard variant="subtle">
               <template #header>
                 <div class="flex items-center gap-2">
                   <UIcon name="i-lucide-variable" class="size-5" />

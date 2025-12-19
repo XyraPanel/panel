@@ -15,12 +15,13 @@ export default defineEventHandler(async (event) => {
   try {
     const { sendEmail } = await import('~~/server/utils/email')
 
+    const appName = useRuntimeConfig().public.appName || 'XyraPanel'
     await sendEmail({
       to: user?.email || 'admin@example.com',
-      subject: 'XyraPanel - Test Email',
+      subject: `${appName} - Test Email`,
       html: `
         <h2>Test Email</h2>
-        <p>This is a test email from XyraPanel.</p>
+        <p>This is a test email from ${appName}.</p>
         <p>If you received this, your email configuration is working correctly!</p>
         <p>Sent at: ${new Date().toISOString()}</p>
       `,

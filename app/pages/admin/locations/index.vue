@@ -131,10 +131,12 @@ async function handleDelete(location: LocationWithNodeCount) {
               <template #description>{{ error.message }}</template>
             </UAlert>
 
-            <div v-else-if="locations.length === 0" class="py-12 text-center">
-              <UIcon name="i-lucide-map-pin" class="mx-auto size-12 text-muted-foreground opacity-50" />
-              <p class="mt-4 text-sm text-muted-foreground">{{ t('admin.locations.noLocationsYet') }}</p>
-            </div>
+            <UEmpty
+              v-else-if="locations.length === 0"
+              icon="i-lucide-map-pin"
+              :title="t('admin.locations.noLocationsYet')"
+              :description="t('admin.locations.noLocationsYetDescription')"
+            />
 
             <div v-else class="divide-y divide-default">
               <div v-for="location in locations" :key="location.id" class="flex items-center justify-between py-4">

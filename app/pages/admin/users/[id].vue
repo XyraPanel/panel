@@ -85,11 +85,11 @@ watch(error, (value) => {
 const profile = computed(() => data.value)
 const user = computed(() => profile.value?.user)
 
-const { data: advancedSettings } = await useFetch<{ paginationLimit: number }>('/api/admin/settings/advanced', {
-  key: 'admin-settings-advanced',
+const { data: generalSettings } = await useFetch<{ paginationLimit: number }>('/api/admin/settings/general', {
+  key: 'admin-settings-general',
   default: () => ({ paginationLimit: 25 }),
 })
-const itemsPerPage = computed(() => advancedSettings.value?.paginationLimit ?? 25)
+const itemsPerPage = computed(() => generalSettings.value?.paginationLimit ?? 25)
 
 const { data: serversData } = await useFetch<PaginatedServersResponse>(
   () => `/api/admin/users/${userId.value}/servers`,

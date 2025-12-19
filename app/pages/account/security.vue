@@ -24,7 +24,6 @@ const { status, user } = storeToRefs(authStore)
 
 const passwordError = ref<string | null>(null)
 const isSavingPassword = ref(false)
-const isClearingCompromised = ref(false)
 
 const passwordCompromised = computed(() => {
   if (!user.value) return false
@@ -64,6 +63,7 @@ async function handlePasswordSubmit(event: FormSubmitEvent<PasswordFormSchema>) 
   try {
     const payload = event.data
 
+    // @ts-expect-error - Nuxt typed routes cause deep type
     const response = await $fetch<PasswordUpdateResponse>('/api/account/password', {
       method: 'PUT',
       body: payload,
@@ -283,33 +283,6 @@ async function disableTotp() {
   }
 }
 
-async function clearCompromisedFlag() {
-  isClearingCompromised.value = true
-  try {
-    await $fetch('/api/account/password/clear-compromised', {
-      method: 'POST',
-    })
-
-    toast.add({
-      title: t('account.security.password.flagCleared'),
-      description: t('account.security.password.flagClearedDescription'),
-      color: 'success',
-    })
-
-    await authStore.syncSession()
-  }
-  catch (error) {
-    const message = error instanceof Error ? error.message : t('account.security.password.failedToClearFlag')
-    toast.add({
-      title: t('account.security.password.failedToClearFlag'),
-      description: message,
-      color: 'error',
-    })
-  }
-  finally {
-    isClearingCompromised.value = false
-  }
-}
 </script>
 
 <template>
@@ -342,22 +315,9 @@ async function clearCompromisedFlag() {
               color="warning"
               variant="subtle"
               :title="t('account.security.password.passwordMarkedCompromised')"
-              :description="t('account.security.password.passwordPreviouslyCompromised')"
+              :description="t('account.security.password.compromisedChangePassword')"
               class="mb-4"
-            >
-              <template #actions>
-                <UButton
-                  color="warning"
-                  variant="outline"
-                  size="xs"
-                  :loading="isClearingCompromised"
-                  :disabled="isClearingCompromised"
-                  @click="clearCompromisedFlag"
-                >
-                  {{ t('account.security.password.clearFlag') }}
-                </UButton>
-              </template>
-            </UAlert>
+            />
 
             <UForm
               :schema="passwordSchema"

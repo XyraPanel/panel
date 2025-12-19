@@ -126,7 +126,7 @@ export default defineNuxtConfig({
     },
     debug: process.env.DEBUG === 'true',
     public: {
-      appName: process.env.NUXT_APP_NAME,
+      appName: process.env.APP_NAME || 'XyraPanel',
       debug: process.env.DEBUG === 'true',
       turnstile: {
         siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY || '',
@@ -221,7 +221,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: process.env.NUXT_APP_NAME,
+      title: process.env.APP_NAME || 'XyraPanel',
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
       meta: [
         // Remove Origin-Agent-Cluster header to fix the warning

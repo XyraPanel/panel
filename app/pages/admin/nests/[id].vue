@@ -182,14 +182,14 @@ function handleFileChange(event: Event) {
                 </div>
               </template>
 
-              <div v-if="eggs.length === 0" class="py-12 text-center">
-                <UIcon name="i-lucide-egg" class="mx-auto size-12 text-muted-foreground opacity-50" />
-                <p class="mt-4 text-sm text-muted-foreground">{{ t('admin.nests.createEgg.noEggsInNest') }}</p>
-                <p class="mt-1 text-xs text-muted-foreground">
-                  {{ t('admin.nests.createEgg.eggsDescription') }}
-                </p>
+              <UEmpty
+                v-if="eggs.length === 0"
+                icon="i-lucide-egg"
+                :title="t('admin.nests.createEgg.noEggsInNest')"
+                :description="t('admin.nests.createEgg.eggsDescription')"
+              >
                 <UButton class="mt-4" size="sm" @click="openCreateEggModal">{{ t('admin.nests.createEgg.createFirstEgg') }}</UButton>
-              </div>
+              </UEmpty>
 
               <div v-else class="divide-y divide-default">
                 <div v-for="egg in eggs" :key="egg.id"

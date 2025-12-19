@@ -119,10 +119,12 @@ async function handleDelete(host: DatabaseHostWithStats) {
               <template #description>{{ error.message }}</template>
             </UAlert>
 
-            <div v-else-if="hosts.length === 0" class="py-12 text-center">
-              <UIcon name="i-lucide-database" class="mx-auto size-12 text-muted-foreground opacity-50" />
-              <p class="mt-4 text-sm text-muted-foreground">{{ t('admin.databaseHosts.noDatabaseHostsYet') }}</p>
-            </div>
+            <UEmpty
+              v-else-if="hosts.length === 0"
+              icon="i-lucide-database"
+              :title="t('admin.databaseHosts.noDatabaseHostsYet')"
+              :description="t('admin.databaseHosts.noDatabaseHostsYetDescription')"
+            />
 
             <div v-else class="divide-y divide-default">
               <div v-for="host in hosts" :key="host.id" class="flex items-start justify-between py-4">

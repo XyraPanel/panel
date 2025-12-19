@@ -13,13 +13,15 @@ const serverId = computed(() => route.params.id as string)
 
 const { data: databasesData, pending, error } = await useAsyncData(
   `server-${serverId.value}-databases`,
-  () => $fetch<{ data: ServerDatabase[] }>(`/api/servers/${serverId.value}/databases`),
+  () =>
+    // @ts-expect-error - Nuxt typed routes trigger deep inference
+    $fetch<{ data: ServerDatabase[] }>(`/api/servers/${serverId.value}/databases`),
   {
     watch: [serverId],
   },
 )
 
-const databases = computed(() => databasesData.value?.data || [])
+const databases = computed<ServerDatabase[]>(() => (databasesData.value as { data: ServerDatabase[] } | null)?.data ?? [])
 
 function getStatusColor(status: string) {
   switch (status) {
@@ -90,7 +92,7 @@ async function createDatabase() {
     showPasswordModal.value = true
 
     useToast().add({
-      title: t('server.databases.databaseCreated'),
+      title: t('common.success'),
       description: t('server.databases.databaseCreatedDescription', { name: response.data.name }),
       color: 'success',
     })
@@ -102,7 +104,7 @@ async function createDatabase() {
   }
   catch (err) {
     useToast().add({
-      title: t('server.databases.createFailed'),
+      title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.databases.createFailed'),
       color: 'error',
     })
@@ -119,21 +121,21 @@ async function rotatePassword(databaseId: string) {
       },
     )
 
-    const db = databases.value.find(d => d.id === databaseId)
+    const db = databases.value.find(database => database.id === databaseId)
     if (db) {
       selectedDatabase.value = { ...db, password: response.data.password } as ServerDatabase & { password: string }
       showPasswordModal.value = true
     }
 
     useToast().add({
-      title: t('server.databases.passwordRotated'),
+      title: t('common.success'),
       description: t('server.databases.passwordRotatedDescription'),
       color: 'success',
     })
   }
   catch (err) {
     useToast().add({
-      title: t('server.databases.rotationFailed'),
+      title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.databases.rotationFailed'),
       color: 'error',
     })
@@ -161,7 +163,7 @@ async function deleteDatabase() {
     })
 
     useToast().add({
-      title: t('server.databases.databaseDeleted'),
+      title: t('common.success'),
       description: t('server.databases.databaseDeletedDescription'),
       color: 'success',
     })
@@ -173,7 +175,7 @@ async function deleteDatabase() {
   }
   catch (err) {
     useToast().add({
-      title: t('server.databases.deleteFailed'),
+      title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.databases.deleteFailed'),
       color: 'error',
     })
@@ -406,9 +408,10 @@ async function deleteDatabase() {
 
         <div class="space-y-4">
           <UAlert color="error" icon="i-lucide-alert-triangle">
-            <template #title>{{ t('server.databases.confirmDeleteDatabase') }}</template>
+            <template #title>{{ t('common.warning') }}</template>
             <template #description>
-              {{ t('server.databases.confirmDeleteDatabaseDescription') }}
+              <span>{{ t('server.databases.confirmDeleteDatabaseDescription') }}</span>
+              <span class="mt-1 block text-sm text-muted-foreground">{{ t('common.irreversibleAction') }}</span>
             </template>
           </UAlert>
 

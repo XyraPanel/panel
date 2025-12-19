@@ -1,12 +1,20 @@
 import { createError, parseCookies } from 'h3'
 import { auth, normalizeHeadersForAuth } from '~~/server/utils/auth'
-import type { UserSessionSummary, AccountSessionsResponse } from '#shared/types/auth'
+import type { UserSessionSummary, AccountSessionsResponse, AuthContext } from '#shared/types/auth'
 import { parseUserAgent } from '~~/server/utils/user-agent'
 
 export default defineEventHandler(async (event): Promise<AccountSessionsResponse> => {
-  const session = await auth.api.getSession({
-    headers: normalizeHeadersForAuth(event.node.req.headers),
-  })
+  const middlewareAuth = (event.context as { auth?: AuthContext }).auth
+  
+  let session: AuthContext | null
+  if (middlewareAuth?.user?.id) {
+    session = middlewareAuth
+  } else {
+    const betterAuthSession = await auth.api.getSession({
+      headers: normalizeHeadersForAuth(event.node.req.headers),
+    })
+    session = betterAuthSession as unknown as AuthContext | null
+  }
 
   if (!session?.user?.id) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })

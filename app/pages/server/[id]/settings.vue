@@ -240,7 +240,7 @@ function formatIo(io: number | null): string {
 
             <div class="space-y-4">
               <UAlert color="warning" icon="i-lucide-alert-triangle">
-                <template #title>{{ t('server.settings.reinstallWarning') }}</template>
+                <template #title>{{ t('common.warning') }}</template>
                 <template #description>
                   {{ t('server.settings.reinstallWarningDescription') }}
                 </template>
@@ -287,7 +287,7 @@ function formatIo(io: number | null): string {
       <template #body>
         <div class="space-y-4">
           <UAlert color="error" icon="i-lucide-alert-triangle">
-            <template #title>{{ t('server.settings.reinstallWarning') }}</template>
+            <template #title>{{ t('common.warning') }}</template>
             <template #description>
               {{ t('server.settings.reinstallWarningDescription') }}
             </template>

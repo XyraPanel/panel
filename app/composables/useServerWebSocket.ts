@@ -475,7 +475,8 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
 
     tokenRefreshInFlight.value = true
     try {
-      const credentials = await $fetch<{ token: string; socket: string }>(`/api/client/servers/${actualServerId}/websocket`)
+      // @ts-expect-error - Nuxt typed routes cause deep type
+      const credentials: { token: string; socket: string } = await $fetch(`/api/client/servers/${actualServerId}/websocket`)
       currentToken.value = credentials.token
 
       if (currentSocketUrl.value && currentSocketUrl.value !== credentials.socket) {

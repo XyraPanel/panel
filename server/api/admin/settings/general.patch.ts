@@ -16,14 +16,6 @@ export default defineEventHandler(async (event) => {
   const updates: Record<string, string> = {}
   const deletions: string[] = []
 
-  if (body.name !== undefined) {
-    updates[SETTINGS_KEYS.PANEL_NAME] = body.name
-  }
-
-  if (body.url !== undefined) {
-    updates[SETTINGS_KEYS.PANEL_URL] = body.url
-  }
-
   if (body.locale !== undefined) {
     updates[SETTINGS_KEYS.PANEL_LOCALE] = body.locale
   }
@@ -43,6 +35,21 @@ export default defineEventHandler(async (event) => {
     else {
       updates[SETTINGS_KEYS.BRAND_LOGO_PATH] = body.brandLogoUrl
     }
+  }
+
+  if (body.paginationLimit !== undefined) {
+    const value = body.paginationLimit
+    if (!Number.isInteger(value) || value < 10 || value > 100) {
+      throw createError({
+        statusCode: 422,
+        message: 'Pagination limit must be an integer between 10 and 100',
+      })
+    }
+    updates[SETTINGS_KEYS.PAGINATION_LIMIT] = String(value)
+  }
+
+  if (body.telemetryEnabled !== undefined) {
+    updates[SETTINGS_KEYS.TELEMETRY_ENABLED] = body.telemetryEnabled ? 'true' : 'false'
   }
 
   if (Object.keys(updates).length === 0 && deletions.length === 0) {

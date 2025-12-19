@@ -19,12 +19,14 @@ const {
   pending,
   error: fetchError,
   refresh,
-} = await useFetch<AuditEventsPayload>('/api/admin/audit', {
-  query: computed(() => ({ limit: limit.value, page: page.value })),
+} = await useFetch('/api/admin/audit', {
+  query: { limit, page },
   key: 'admin-activity',
 })
 
-watch(data, (newData: AuditEventsPayload | null) => {
+const auditData = computed(() => data.value as AuditEventsPayload | null)
+
+watch(auditData, (newData) => {
   if (newData?.data) {
     if (page.value === 1) {
       allActivities.value = newData.data
@@ -40,7 +42,7 @@ watch(data, (newData: AuditEventsPayload | null) => {
 }, { immediate: true })
 
 const activities = computed<AdminActivityEntry[]>(() => allActivities.value)
-const pagination = computed(() => data.value?.pagination)
+const pagination = computed(() => auditData.value?.pagination)
 const hasMore = computed(() => Boolean(pagination.value?.hasMore))
 
 async function loadMore() {
@@ -98,12 +100,12 @@ async function copyJson(entry: typeof activities.value[0]) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: t('admin.activity.copiedToClipboard'),
-      description: t('admin.activity.auditLogJsonCopied'),
+      title: t('common.copied'),
+      description: t('common.copiedToClipboard'),
     })
   } catch (error) {
     toast.add({
-      title: t('admin.activity.failedToCopy'),
+      title: t('common.failedToCopy'),
       description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
     })
@@ -220,7 +222,6 @@ function exportCsv() {
               icon="i-lucide-activity"
               :title="t('admin.activity.noActivityYet')"
               :description="t('admin.activity.noActivityYetDescription')"
-              variant="subtle"
             />
             <template v-else>
               <div class="space-y-3">

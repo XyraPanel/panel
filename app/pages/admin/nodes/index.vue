@@ -268,10 +268,12 @@ watch(
                 {{ t('admin.nodes.unableToLoadNodes') }}: {{ (error as Error).message || t('common.unknown') }}
               </div>
               <div v-else>
-                <div v-if="nodes.length === 0"
-                  class="rounded-md border border-dashed border-default p-6 text-center text-sm text-muted-foreground">
-                  {{ t('admin.nodes.noNodesLinked') }}
-                </div>
+                <UEmpty
+                  v-if="nodes.length === 0"
+                  icon="i-lucide-server"
+                  :title="t('admin.nodes.noNodesLinked')"
+                  :description="t('admin.nodes.description')"
+                />
                 <div v-else class="overflow-hidden rounded-lg border border-default">
                   <div
                     class="grid grid-cols-12 bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

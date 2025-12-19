@@ -64,13 +64,13 @@ async function copyJson(key: typeof sshKeys.value[0]) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: t('account.sshKeys.copiedToClipboard'),
-      description: t('account.sshKeys.copiedToClipboardDescription'),
+      title: t('common.copied'),
+      description: t('common.copiedToClipboard'),
     })
   } catch (error) {
     toast.add({
-      title: t('account.sshKeys.failedToCopy'),
-      description: error instanceof Error ? error.message : t('account.sshKeys.failedToCopyDescription'),
+      title: t('common.failedToCopy'),
+      description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
     })
   }
@@ -230,7 +230,7 @@ async function confirmDelete() {
           color="error"
           variant="soft"
           icon="i-lucide-alert-triangle"
-          :title="t('account.sshKeys.warning')"
+          :title="t('common.warning')"
           :description="t('account.sshKeys.deleteWarning')"
         />
       </template>
@@ -253,7 +253,7 @@ async function confirmDelete() {
             :disabled="isDeleting"
             @click="confirmDelete"
           >
-            {{ t('account.sshKeys.deleteSSHKey') }}
+            {{ t('common.delete') }}
           </UButton>
         </div>
       </template>

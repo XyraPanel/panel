@@ -110,7 +110,7 @@ const infoStats = computed(() => {
         <USkeleton v-else-if="pending" class="h-72 w-full" />
 
         <div v-else-if="server" class="space-y-6">
-        <UCard :ui="{ body: 'space-y-4' }">
+        <UCard variant="subtle" :ui="{ body: 'space-y-4' }">
           <template #header>
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold">{{ t('server.details.serverOverview') }}</h2>
@@ -148,7 +148,7 @@ const infoStats = computed(() => {
           </div>
         </UCard>
 
-        <UCard :ui="{ body: 'space-y-3' }">
+        <UCard variant="subtle" :ui="{ body: 'space-y-3' }">
           <template #header>
             <div class="flex items-center justify-between">
               <h2 class="text-lg font-semibold">{{ t('server.details.networkAllocations') }}</h2>
@@ -193,7 +193,7 @@ const infoStats = computed(() => {
     <template #right>
       <UPageAside>
         <div class="space-y-4">
-          <UCard :ui="{ body: 'space-y-3' }">
+          <UCard variant="subtle" :ui="{ body: 'space-y-3' }">
             <h2 class="text-sm font-semibold">{{ t('server.details.atAGlance') }}</h2>
             <div
               v-for="stat in infoStats"
