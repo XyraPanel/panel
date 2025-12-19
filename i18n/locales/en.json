@@ -1029,7 +1029,7 @@
         "announcementMessageMaxLength": "Announcement message must be 500 characters or fewer",
         "saveChanges": "Save changes",
         "settingsSaved": "Security settings saved",
-        "settingsSavedDescription": "Your security settings have been updated successfully.",
+        "settingsSavedDescription": "Safety and maintenance preferences were updated successfully.",
         "updateFailed": "Update failed",
         "updateFailedDescription": "Unable to save security settings. Try again.",
         "description": "Configure security, sessions, and queue settings",
