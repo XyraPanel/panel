@@ -197,9 +197,9 @@
         "signedOutSessionsPlural": "Signed out {count} other sessions.",
         "failedToUpdatePassword": "Failed to update password",
         "unableToUpdatePassword": "Unable to update password.",
-        "passwordMarkedCompromised": "Password Marked as Compromised",
-        "passwordPreviouslyCompromised": "Your password was previously marked as compromised. If you've already changed to a secure password, you can clear this flag manually.",
-        "compromisedChangePassword": "Your password was found in a data breach. Please change it below to secure your account. The flag will be cleared automatically when you update your password."
+        "passwordResetRequiredBanner": "Password Reset Required",
+        "passwordResetExplanation": "Your password needs to be updated before you can return to the panel.",
+        "passwordResetNextSteps": "Choose a new password below. You'll regain access as soon as the update succeeds."
       },
       "twoFactor": {
         "title": "Two-factor authentication",
