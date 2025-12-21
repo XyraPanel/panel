@@ -1,4 +1,4 @@
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { useDrizzle, tables, eq, or } from '~~/server/utils/drizzle'
 import { buildCacheKey, withCache } from '~~/server/utils/cache'
 import type { getServerSession } from '~~/server/utils/session'
 
@@ -29,7 +29,13 @@ export async function getServerWithAccess(identifier: string, session: Awaited<R
 
   const [server] = db.select()
     .from(tables.servers)
-    .where(eq(tables.servers.identifier, identifier))
+    .where(
+      or(
+        eq(tables.servers.identifier, identifier),
+        eq(tables.servers.uuid, identifier),
+        eq(tables.servers.id, identifier),
+      ),
+    )
     .limit(1)
     .all()
 

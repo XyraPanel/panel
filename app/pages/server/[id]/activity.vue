@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import type { ServerActivityEvent } from '#shared/types/server'
+import { computed, ref, watch } from 'vue'
+import type { PaginatedServerActivityResponse, ServerActivityEvent } from '#shared/types/server'
 
 const { t } = useI18n()
 const route = useRoute()
+const toast = useToast()
+const requestFetch = useRequestFetch() as typeof $fetch
 
 definePageMeta({
   auth: true,
@@ -10,26 +13,116 @@ definePageMeta({
 })
 
 const serverId = computed(() => route.params.id as string)
+const currentPage = ref(1)
+const itemsPerPage = ref(10)
+const expandedEntries = ref<Set<string>>(new Set())
 
-const { data: activityData, pending, error } = await useFetch<{ data: ServerActivityEvent[]; generatedAt: string }>(
-  `/api/servers/${serverId.value}/activity`,
+watch(serverId, () => {
+  currentPage.value = 1
+  expandedEntries.value.clear()
+})
+
+async function fetchServerActivity(page: number, limit: number): Promise<PaginatedServerActivityResponse> {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  })
+  const url = `/api/servers/${serverId.value}/activity?${params.toString()}`
+  return await requestFetch(url) as PaginatedServerActivityResponse
+}
+
+const defaultResponse = (): PaginatedServerActivityResponse => ({
+  data: [],
+  pagination: {
+    page: 1,
+    perPage: itemsPerPage.value,
+    total: 0,
+    totalPages: 0,
+  },
+  generatedAt: new Date().toISOString(),
+})
+
+const {
+  data: activityResponse,
+  pending,
+  error,
+} = await useAsyncData<PaginatedServerActivityResponse>(
+  'server-activity',
+  () => fetchServerActivity(currentPage.value, itemsPerPage.value),
   {
-    watch: [serverId],
+    default: defaultResponse,
+    watch: [serverId, currentPage, itemsPerPage],
   },
 )
 
-const events = computed(() => activityData.value?.data || [])
+const entries = computed<ServerActivityEvent[]>(() => activityResponse.value?.data ?? [])
+const pagination = computed(() => activityResponse.value?.pagination ?? defaultResponse().pagination)
 
-function formatDate(dateString: string): string {
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  }).format(date)
+const displayError = computed(() => {
+  if (!error.value)
+    return null
+  return error.value instanceof Error ? error.value.message : t('server.activity.failedToLoadActivity')
+})
+
+function toggleEntry(id: string) {
+  if (expandedEntries.value.has(id))
+    expandedEntries.value.delete(id)
+  else
+    expandedEntries.value.add(id)
+}
+
+function formatAction(action: string): string {
+  return action
+    .split('.')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
+}
+
+function formatJson(data: Record<string, unknown> | null): string {
+  return data ? JSON.stringify(data, null, 2) : 'null'
+}
+
+function getFullEvent(entry: ServerActivityEvent) {
+  return {
+    id: entry.id,
+    occurredAt: entry.occurredAt,
+    actor: entry.actor,
+    actorType: entry.actorType,
+    action: entry.action,
+    targetType: entry.targetType,
+    targetId: entry.targetId,
+    metadata: entry.metadata,
+  }
+}
+
+async function copyJson(entry: ServerActivityEvent) {
+  const json = formatJson(getFullEvent(entry))
+  try {
+    if (navigator.clipboard?.writeText)
+      await navigator.clipboard.writeText(json)
+    else {
+      const textArea = document.createElement('textarea')
+      textArea.value = json
+      textArea.style.position = 'fixed'
+      textArea.style.opacity = '0'
+      document.body.appendChild(textArea)
+      textArea.select()
+      document.execCommand('copy')
+      textArea.remove()
+    }
+
+    toast.add({
+      title: t('common.copied'),
+      description: t('common.copiedToClipboard'),
+    })
+  }
+  catch (err) {
+    toast.add({
+      title: t('common.failedToCopy'),
+      description: err instanceof Error ? err.message : t('common.failedToCopy'),
+      color: 'error',
+    })
+  }
 }
 
 function getActionIcon(action: string): string {
@@ -52,77 +145,134 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
   if (action.includes('restart') || action.includes('update')) return 'warning'
   return 'neutral'
 }
-
-function formatAction(action: string): string {
-  return action
-    .split('.')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-}
 </script>
 
 <template>
   <UPage>
+    <UContainer>
+      <UPageHeader :title="t('server.activity.auditTrail')">
+        <template #description>
+          {{ t('server.activity.serverActivity', { id: serverId }) }}
+        </template>
+      </UPageHeader>
+    </UContainer>
+
     <UPageBody>
       <UContainer>
-        <section class="space-y-6">
-          <header class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p class="text-xs text-muted-foreground">{{ t('server.activity.serverActivity', { id: serverId }) }}</p>
-              <h1 class="text-xl font-semibold">{{ t('server.activity.auditTrail') }}</h1>
-            </div>
-          </header>
-
-          <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
-            <div class="flex items-start gap-2">
-              <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
+        <UCard :ui="{ body: 'space-y-3' }">
+          <template #header>
+            <div class="flex items-center justify-between">
               <div>
-                <p class="font-medium">{{ t('server.activity.failedToLoadActivity') }}</p>
-                <p class="mt-1 text-xs opacity-80">{{ error.message }}</p>
-              </div>
-            </div>
-          </div>
-
-          <div v-else-if="pending" class="flex items-center justify-center py-12">
-            <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
-          </div>
-
-          <UCard v-else variant="subtle">
-            <template #header>
-              <div class="flex items-center justify-between">
                 <h2 class="text-lg font-semibold">{{ t('server.activity.recentEvents') }}</h2>
+                <p class="text-xs text-muted-foreground">
+                  {{ t('server.activity.auditDescription') }}
+                </p>
               </div>
-            </template>
+              <UBadge v-if="pagination" color="neutral" variant="soft" size="xs">
+                {{ pagination.total }} {{ t('activity.total') }}
+              </UBadge>
+            </div>
+          </template>
 
-            <div v-if="events.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
-              <UIcon name="i-lucide-activity" class="mx-auto size-12 text-muted-foreground/50" />
-              <p class="mt-3 text-sm font-medium">{{ t('server.activity.noActivityRecorded') }}</p>
-              <p class="mt-1 text-xs text-muted-foreground">{{ t('server.activity.noActivityRecordedDescription') }}</p>
+          <template v-if="pending">
+            <div class="space-y-2">
+              <USkeleton v-for="i in 5" :key="`server-activity-skeleton-${i}`" class="h-14 w-full" />
+            </div>
+          </template>
+
+          <template v-else-if="displayError">
+            <UAlert color="error" icon="i-lucide-alert-triangle">
+              <template #title>{{ t('server.activity.failedToLoadActivity') }}</template>
+              <template #description>{{ displayError }}</template>
+            </UAlert>
+          </template>
+
+          <UEmpty
+            v-else-if="entries.length === 0"
+            icon="i-lucide-activity"
+            :title="t('server.activity.noActivityRecorded')"
+            :description="t('server.activity.noActivityRecordedDescription')"
+            variant="subtle"
+          />
+
+          <template v-else>
+            <div class="space-y-3">
+              <div
+                v-for="entry in entries"
+                :key="entry.id"
+                class="rounded-lg border border-default overflow-hidden"
+              >
+                <button
+                  class="w-full flex flex-col gap-2 p-3 text-left hover:bg-elevated/50 transition-colors md:flex-row md:items-center md:justify-between"
+                  @click="toggleEntry(entry.id)"
+                >
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <UIcon
+                        :name="getActionIcon(entry.action)"
+                        class="size-4"
+                        :class="`text-${getActionColor(entry.action)}`"
+                      />
+                      <p class="text-sm font-medium font-mono truncate">{{ entry.action }}</p>
+                      <UIcon
+                        :name="expandedEntries.has(entry.id) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                        class="size-4 text-muted-foreground shrink-0"
+                      />
+                    </div>
+                    <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span>{{ t('admin.activity.actor') }}: <span class="font-medium">{{ entry.actor }}</span></span>
+                      <span>{{ formatAction(entry.targetType) }} <span v-if="entry.targetId">#{{ entry.targetId }}</span></span>
+                    </div>
+                  </div>
+                  <div class="text-xs text-muted-foreground shrink-0">
+                    <NuxtTime :datetime="entry.occurredAt" relative />
+                  </div>
+                </button>
+
+                <div
+                  v-if="expandedEntries.has(entry.id)"
+                  class="border-t border-default bg-muted/30 p-4"
+                >
+                  <div class="flex items-center justify-between mb-2">
+                    <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      {{ t('account.activity.auditLogEntry') }}
+                    </p>
+                    <UButton
+                      variant="ghost"
+                      size="xs"
+                      icon="i-lucide-copy"
+                      @click.stop="copyJson(entry)"
+                    >
+                      {{ t('account.activity.copyJSON') }}
+                    </UButton>
+                  </div>
+                  <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default">
+<code>{{ formatJson(getFullEvent(entry)) }}</code>
+</pre>
+                </div>
+              </div>
             </div>
 
-            <ul v-else class="space-y-4">
-              <li
-                v-for="event in events"
-                :key="event.id"
-                class="flex flex-col gap-3 rounded-md border border-default px-4 py-3 lg:flex-row lg:items-center lg:justify-between"
-              >
-                <div class="flex items-start gap-3">
-                  <UIcon :name="getActionIcon(event.action)" class="mt-0.5 size-4" :class="`text-${getActionColor(event.action)}`" />
-                  <div>
-                    <div class="flex flex-wrap items-center gap-2">
-                      <h3 class="font-semibold">{{ formatAction(event.action) }}</h3>
-                      <UBadge size="xs" :color="getActionColor(event.action)">{{ event.actor }}</UBadge>
-                    </div>
-                    <p class="text-sm text-muted-foreground">{{ event.actorType }}</p>
-                  </div>
-                </div>
-                <div class="flex flex-col items-start gap-1 text-xs text-muted-foreground lg:items-end">
-                  <span>{{ formatDate(event.occurredAt) }}</span>
-                </div>
-              </li>
-            </ul>
-          </UCard>
-        </section>
+            <div
+              v-if="pagination && pagination.totalPages > 1"
+              class="flex flex-col gap-3 border-t border-default pt-4 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <p class="text-sm text-muted-foreground">
+                {{ t('activity.showingEvents', {
+                  start: ((pagination.page - 1) * pagination.perPage) + 1,
+                  end: Math.min(pagination.page * pagination.perPage, pagination.total),
+                  total: pagination.total,
+                }) }}
+              </p>
+              <UPagination
+                v-model:page="currentPage"
+                :total="pagination.total"
+                :items-per-page="pagination.perPage"
+                size="sm"
+              />
+            </div>
+          </template>
+        </UCard>
       </UContainer>
     </UPageBody>
 

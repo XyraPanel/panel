@@ -1,19 +1,14 @@
-import { getServerSession, getSessionUser  } from '~~/server/utils/session'
 import { getWingsClientForServer } from '~~/server/utils/wings-client'
+import { requirePermission } from '~~/server/utils/permission-middleware'
+import { recordServerActivity } from '~~/server/utils/server-activity'
 
 export default defineEventHandler(async (event) => {
-  const session = await getServerSession(event)
-  const user = getSessionUser(session)
-
-  if (!user) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
-  }
-
   const serverIdentifier = getRouterParam(event, 'server')
   if (!serverIdentifier) {
     throw createError({ statusCode: 400, statusMessage: 'Server identifier required' })
   }
 
+  const { userId } = await requirePermission(event, 'server.command', serverIdentifier)
   const body = await readBody<{ command: string }>(event)
 
   if (!body.command || body.command.trim().length === 0) {
@@ -25,12 +20,11 @@ export default defineEventHandler(async (event) => {
     const { client, server } = await getWingsClientForServer(serverIdentifier)
     await client.sendCommand(server.uuid as string, body.command)
 
-    await recordAuditEvent({
-      actor: user.email || 'unknown',
-      actorType: 'user',
+    await recordServerActivity({
+      event,
+      actorId: userId,
       action: 'server.command',
-      targetType: 'server',
-      targetId: serverIdentifier,
+      server: { id: server.id as string, uuid: server.uuid as string },
       metadata: { command: body.command },
     })
 

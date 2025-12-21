@@ -1,6 +1,8 @@
 import { serverManager } from '~~/server/utils/server-manager'
 import { WingsConnectionError, WingsAuthError } from '~~/server/utils/wings-client'
 import { requireServerPermission } from '~~/server/utils/permission-middleware'
+import { recordServerActivity } from '~~/server/utils/server-activity'
+import { findServerByIdentifier } from '~~/server/utils/serversStore'
 
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server')
@@ -29,6 +31,21 @@ export default defineEventHandler(async (event) => {
     await serverManager.powerAction(serverIdentifier, body.action, {
       userId,
     })
+
+    const server = await findServerByIdentifier(serverIdentifier)
+
+    if (server) {
+      await recordServerActivity({
+        event,
+        actorId: userId,
+        action: `server.power.${body.action}`,
+        server: { id: server.id as string, uuid: server.uuid as string },
+        metadata: { action: body.action },
+      })
+    }
+    else {
+      console.warn('[Server Activity] Unable to find server for power event logging', { serverIdentifier })
+    }
 
     return {
       success: true,

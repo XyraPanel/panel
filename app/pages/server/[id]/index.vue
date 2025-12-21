@@ -12,7 +12,7 @@ const router = useRouter()
 const serverId = computed(() => route.params.id as string)
 
 const { data: serverResponse, pending, error } = await useFetch<{ data: PanelServerDetails }>(
-  `/api/servers/${serverId.value}`,
+  `/api/client/servers/${serverId.value}`,
   {
     watch: [serverId],
     immediate: true,

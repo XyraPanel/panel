@@ -30,6 +30,7 @@ const extraConnectSources = process.env.NUXT_SECURITY_CONNECT_SRC
 
 const connectSrcDirectives = ["'self'", 'https:', 'wss:', 'ws:', ...extraConnectSources]
 const isDev = process.env.NODE_ENV !== 'production'
+const enableHintsModule = process.env.NUXT_ENABLE_HINTS === 'true'
 
 const maxRequestSize = process.env.NUXT_MAX_REQUEST_SIZE_MB
   ? Number.parseInt(process.env.NUXT_MAX_REQUEST_SIZE_MB) * 1024 * 1024
@@ -55,7 +56,7 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     'nuxt-security',
     ...(isDev ? ['@nuxt/test-utils/module'] : []), // Only include test utils in development
-    '@nuxt/hints',
+    ...(enableHintsModule ? ['@nuxt/hints'] : []),
     'nuxt-charts',
     '@nuxtjs/robots',
     '@pinia/nuxt',
@@ -145,6 +146,7 @@ export default defineNuxtConfig({
         crossOriginEmbedderPolicy: 'unsafe-none',
         crossOriginOpenerPolicy: 'unsafe-none',
         crossOriginResourcePolicy: 'same-origin',
+        originAgentCluster: false,
       },
       corsHandler: {
         origin: '*',
@@ -183,6 +185,7 @@ export default defineNuxtConfig({
         crossOriginEmbedderPolicy: 'unsafe-none',
         crossOriginOpenerPolicy: 'same-origin-allow-popups',
         crossOriginResourcePolicy: 'cross-origin',
+        originAgentCluster: false,
         strictTransportSecurity: {
           maxAge: 31536000,
           includeSubdomains: true,
@@ -223,10 +226,6 @@ export default defineNuxtConfig({
     head: {
       title: process.env.APP_NAME || 'XyraPanel',
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
-      meta: [
-        // Remove Origin-Agent-Cluster header to fix the warning
-        { 'http-equiv': 'Origin-Agent-Cluster', content: '?0' },
-      ],
     },
   },
   site: { 
@@ -234,21 +233,6 @@ export default defineNuxtConfig({
   },
   robots: {
     blockAiBots: true, // Block AI bots from crawling !
-  },
-  routeRules: {
-    '/api/**': { ssr: false },
-    '/api/admin/servers/:id/build': {
-      ssr: false,
-      prerender: false,
-    },
-    '/api/servers/:id/files/write': {
-      ssr: false,
-      prerender: false,
-    },
-    '/api/servers/:id/files': {
-      ssr: false,
-      prerender: false,
-    },
   },
   nitro: {
     preset: 'node-server',
@@ -272,6 +256,11 @@ export default defineNuxtConfig({
         method: 'post',
         handler: './server/api/servers/[id]/files/write.post.ts',
         lazy: true,
+      },
+      {
+        route: '/api/servers/:id',
+        method: 'get',
+        handler: './server/api/servers/[id]/index.get.ts',
       },
       {
         route: '/api/servers/:id/files',

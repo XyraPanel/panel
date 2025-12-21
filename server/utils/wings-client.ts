@@ -169,7 +169,7 @@ export class WingsClient {
   ): Promise<WingsFileObject[]> {
     const params = new URLSearchParams({ directory })
     return this.request<WingsFileObject[]>(
-      `/api/servers/${serverUuid}/files/list?${params}`
+      `/api/servers/${serverUuid}/files/list-directory?${params}`
     )
   }
 

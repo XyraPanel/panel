@@ -1,32 +1,20 @@
-import { createError, getQuery, getRouterParam } from 'h3'
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
+import { getQuery } from 'h3'
 import { getServerSession } from '~~/server/utils/session'
-import { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
-import { findServerByIdentifier } from '~~/server/utils/serversStore'
-import { useDrizzle } from '~~/server/utils/drizzle'
-import * as tables from '~~/server/database/schema'
+import { useDrizzle, tables } from '~~/server/utils/drizzle'
+import { getServerWithAccess } from '~~/server/utils/server-helpers'
 
-interface ServerActivityEvent {
-  id: string
-  occurredAt: string
-  actor: string
-  actorType: string
-  action: string
-  targetType: string
-  targetId: string | null
-  metadata: Record<string, unknown> | null
-}
+import type { PaginatedServerActivityResponse, ServerActivityEvent } from '#shared/types/server'
 
 function parseMetadata(raw: string | null): Record<string, unknown> | null {
-  if (!raw) {
+  if (!raw)
     return null
-  }
 
   try {
     const value = JSON.parse(raw) as unknown
-    if (value && typeof value === 'object') {
+    if (value && typeof value === 'object')
       return value as Record<string, unknown>
-    }
+
     return { value }
   }
   catch {
@@ -34,34 +22,32 @@ function parseMetadata(raw: string | null): Record<string, unknown> | null {
   }
 }
 
-export default defineEventHandler(async (event) => {
-  const identifier = getRouterParam(event, 'id') || event.context.params?.id
-  if (!identifier || typeof identifier !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing server identifier' })
-  }
-
+export default defineEventHandler(async (event): Promise<PaginatedServerActivityResponse> => {
   const session = await getServerSession(event)
-  const user = resolveSessionUser(session)
+  const serverIdentifier = getRouterParam(event, 'id')
 
-  if (!user) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+  if (!serverIdentifier) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Server identifier is required',
+    })
   }
 
-  const server = await findServerByIdentifier(identifier)
-  if (!server) {
-    throw createError({ statusCode: 404, statusMessage: 'Server not found' })
-  }
-
-  if (user.role !== 'admin' && server.ownerId !== user.id) {
-    throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
-  }
+  const { server } = await getServerWithAccess(serverIdentifier, session)
 
   const query = getQuery(event)
-  const limit = Math.min(Number.parseInt(query.limit as string ?? '50', 10), 100)
+  const page = Math.max(Number.parseInt((query.page as string) ?? '1', 10) || 1, 1)
+  const limit = Math.min(Math.max(Number.parseInt((query.limit as string) ?? '25', 10) || 25, 1), 100)
+  const offset = (page - 1) * limit
 
   const db = useDrizzle()
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(tables.auditEvents)
+    .where(eq(tables.auditEvents.targetId, server.id))
+    .limit(1)
 
-  const events = await db
+  const rows = await db
     .select({
       id: tables.auditEvents.id,
       occurredAt: tables.auditEvents.occurredAt,
@@ -75,12 +61,13 @@ export default defineEventHandler(async (event) => {
     .from(tables.auditEvents)
     .where(eq(tables.auditEvents.targetId, server.id))
     .orderBy(desc(tables.auditEvents.occurredAt))
-    .limit(Number.isNaN(limit) || limit <= 0 ? 50 : limit)
+    .limit(limit)
+    .offset(offset)
     .all()
 
-  const data: ServerActivityEvent[] = events.map((row) => ({
+  const data: ServerActivityEvent[] = rows.map((row) => ({
     id: row.id,
-    occurredAt: row.occurredAt.toISOString(),
+    occurredAt: row.occurredAt instanceof Date ? row.occurredAt.toISOString() : new Date(row.occurredAt).toISOString(),
     actor: row.actor,
     actorType: row.actorType,
     action: row.action,
@@ -89,8 +76,17 @@ export default defineEventHandler(async (event) => {
     metadata: parseMetadata(row.metadata),
   }))
 
+  const total = Number(count ?? 0)
+  const totalPages = Math.max(Math.ceil(total / limit), 1)
+
   return {
     data,
+    pagination: {
+      page,
+      perPage: limit,
+      total,
+      totalPages,
+    },
     generatedAt: new Date().toISOString(),
   }
 })

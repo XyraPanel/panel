@@ -43,6 +43,7 @@ export interface ServerListEntry
   status: string
   ownership: 'mine' | 'shared'
   isTransferring?: boolean
+  primaryAllocation?: string | null
 }
 
 export interface ServersResponse {
@@ -663,6 +664,17 @@ export interface ServerActivityEvent extends BaseActivityEvent {
   actorType: string
   targetType: string
   targetId: string | null
+}
+
+export interface PaginatedServerActivityResponse {
+  data: ServerActivityEvent[]
+  pagination: {
+    page: number
+    perPage: number
+    total: number
+    totalPages: number
+  }
+  generatedAt: string
 }
 
 

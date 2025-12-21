@@ -11,6 +11,8 @@ definePageMeta({
 const { t } = useI18n()
 const toast = useToast()
 const serverId = computed(() => route.params.id as string)
+const clientApiBase = computed(() => `/api/client/servers/${serverId.value}`)
+const requestFetch = useRequestFetch() as typeof $fetch
 
 const rootDirectory = '/'
 const currentDirectory = ref(rootDirectory)
@@ -85,7 +87,8 @@ const decompressStatus = reactive({
 })
 
 const visibleEntries = computed<ServerFileListItem[]>(() => {
-  const entries = directoryEntries.value.map((entry): ServerFileListItem => ({
+  const sourceEntries = directoryEntries.value ?? []
+  const entries = sourceEntries.map((entry): ServerFileListItem => ({
     name: entry.name,
     type: entry.isDirectory ? 'directory' : 'file',
     size: entry.isDirectory ? t('common.na') : formatBytes(entry.size),
@@ -279,7 +282,7 @@ async function handleBulkCopy() {
     try {
       for (const item of items) {
         copyStatus.summary = t('server.files.transferring')
-      await $fetch(`/api/servers/${serverId.value}/files/copy`, {
+      await requestFetch(`${clientApiBase.value}/files/copy`, {
         method: 'POST',
         body: {
           location: item.path,
@@ -329,7 +332,7 @@ async function submitBulkMove() {
       to: joinDirectoryPath(destination, item.name),
     }))
 
-    await $fetch(`/api/servers/${serverId.value}/files/rename`, {
+    await requestFetch(`${clientApiBase.value}/files/rename`, {
       method: 'POST',
       body: {
         root: '/',
@@ -372,7 +375,7 @@ async function submitBulkDelete() {
   const pathsToRemove = new Set(items.map(item => item.path))
 
   try {
-    await $fetch(`/api/servers/${serverId.value}/files/delete`, {
+    await requestFetch(`${clientApiBase.value}/files/delete`, {
       method: 'POST',
       body: {
         root: '/',
@@ -414,7 +417,7 @@ async function handleBulkArchive() {
   compressStatus.target = items.length === 1 ? singleItemLabel : `${items.length} items`
 
   try {
-    await $fetch<{ success: boolean; data: { file: string } }>(`/api/servers/${serverId.value}/files/compress`, {
+    await requestFetch<{ success: boolean; data: { file: string } }>(`${clientApiBase.value}/files/compress`, {
       method: 'POST',
       body: {
         root: currentDirectory.value,
@@ -452,7 +455,7 @@ async function handleBulkUnarchive() {
   try {
     for (const archive of archives) {
       decompressStatus.target = archive.name
-      await $fetch(`/api/servers/${serverId.value}/files/decompress`, {
+      await requestFetch(`${clientApiBase.value}/files/decompress`, {
         method: 'POST',
         body: {
           root: currentDirectory.value,
@@ -510,7 +513,7 @@ async function _submitNewFile() {
 
   try {
     newFileModal.loading = true
-    await $fetch(`/api/servers/${serverId.value}/files/write`, {
+    await requestFetch(`${clientApiBase.value}/files/write`, {
       method: 'POST',
       body: {
         file: targetPath,
@@ -556,7 +559,7 @@ async function _submitNewFolder() {
 
   try {
     newFolderModal.loading = true
-    await $fetch(`/api/servers/${serverId.value}/files/create-directory`, {
+    await requestFetch(`${clientApiBase.value}/files/create-directory`, {
       method: 'POST',
       body: {
         root: currentDirectory.value,
@@ -602,7 +605,7 @@ async function handleFileUpload(event: Event) {
 
   try {
     uploadInProgress.value = true
-    await $fetch(`/api/servers/${serverId.value}/files/upload`, {
+    await requestFetch(`${clientApiBase.value}/files/upload`, {
       method: 'POST',
       body: formData,
     })
@@ -631,7 +634,7 @@ async function handleDownload(file: ServerFileListItem) {
   try {
     downloadStatus.active = true
     downloadStatus.name = file.name
-    const { data } = await $fetch<{ success: true; data: { url: string } }>(`/api/servers/${serverId.value}/files/download`, {
+    const { data } = await requestFetch<{ success: true; data: { url: string } }>(`${clientApiBase.value}/files/download`, {
       query: { file: file.path },
     })
 
@@ -676,7 +679,7 @@ async function submitRename() {
 
   try {
     renameModal.loading = true
-    await $fetch(`/api/servers/${serverId.value}/files/rename`, {
+    await $fetch(`${clientApiBase.value}/files/rename`, {
       method: 'POST',
       body: {
         root: currentDirectory.value,
@@ -714,7 +717,7 @@ async function submitDelete() {
 
   try {
     deleteModal.loading = true
-    await $fetch(`/api/servers/${serverId.value}/files/delete`, {
+    await $fetch(`${clientApiBase.value}/files/delete`, {
       method: 'POST',
       body: {
         root: currentDirectory.value,
@@ -760,7 +763,7 @@ async function submitChmod() {
 
   try {
     chmodModal.loading = true
-    await $fetch(`/api/servers/${serverId.value}/files/chmod`, {
+    await $fetch(`${clientApiBase.value}/files/chmod`, {
       method: 'POST',
       body: {
         root: currentDirectory.value,
@@ -800,7 +803,7 @@ async function submitPull() {
   try {
     pullModal.loading = true
     pullInProgress.value = true
-    await $fetch(`/api/servers/${serverId.value}/files/pull`, {
+    await $fetch(`${clientApiBase.value}/files/pull`, {
       method: 'POST',
       body: {
         url,
@@ -869,7 +872,7 @@ const fetchDirectory = async () => {
   directoryError.value = null
 
   try {
-    const { data } = await $fetch<{ data: { directory: string; entries: ServerFileEntry[] } }>(`/api/servers/${serverId.value}/files`, {
+    const { data } = await $fetch<{ data: { directory: string; entries: ServerFileEntry[] } }>(`${clientApiBase.value}/files/list`, {
       query: { directory: currentDirectory.value },
     })
 
@@ -1021,7 +1024,7 @@ watch(selectedFile, async (file, previous) => {
   editorValue.value = ''
 
   try {
-    const url = `/api/servers/${serverId.value}/files-content`
+    const url = `${clientApiBase.value}/files/contents`
     
     const response = await $fetch<{ data: { path: string; content: string } }>(url, {
       query: { file: file.path },
@@ -1168,7 +1171,7 @@ async function saveEditor(event?: Event) {
   }
   
   if (fileSaving.value) {
-    console.warn('[Files Save] Save already in progress')
+    console.log('[Files Save] Save already in progress')
     return
   }
 
@@ -1177,14 +1180,14 @@ async function saveEditor(event?: Event) {
     filePath: file.path, 
     contentLength: content.length,
     serverId: serverId.value,
-    url: `/api/servers/${serverId.value}/files/write`,
+    url: `${clientApiBase.value}/files/write`,
   })
 
   try {
     fileSaving.value = true
     isSavingFile.value = true
     
-    const url = `/api/servers/${serverId.value}/files/write`
+    const url = `${clientApiBase.value}/files/write`
     const body = {
       file: file.path,
       content: content,

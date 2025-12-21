@@ -1,9 +1,8 @@
-import { getServerSession } from '~~/server/utils/session'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
+import { requirePermission } from '~~/server/utils/permission-middleware'
 import { getWingsClientForServer } from '~~/server/utils/wings-client'
+import { recordServerActivity } from '~~/server/utils/server-activity'
 
 export default defineEventHandler(async (event) => {
-  const session = await getServerSession(event)
   const serverId = getRouterParam(event, 'server')
 
   if (!serverId) {
@@ -23,11 +22,19 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { server } = await getServerWithAccess(serverId, session)
+  const { userId } = await requirePermission(event, 'server.files.write', serverId)
 
   try {
-    const { client } = await getWingsClientForServer(server.uuid)
-    await client.chmodFiles(server.uuid, root || '/', files)
+    const { client, server } = await getWingsClientForServer(serverId)
+    await client.chmodFiles(server.uuid as string, root || '/', files)
+
+    await recordServerActivity({
+      event,
+      actorId: userId,
+      action: 'server.file.chmod',
+      server: { id: server.id as string, uuid: server.uuid as string },
+      metadata: { root: root || '/', files },
+    })
 
     return {
       success: true,
