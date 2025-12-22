@@ -30,7 +30,7 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
-    "@nuxt/scripts": "0.13.1",
+    "@nuxt/scripts": "0.13.2",
     "@nuxt/ui": "4.3.0",
     "@nuxtjs/i18n": "^10.2.1",
     "@nuxtjs/robots": "5.6.7",
