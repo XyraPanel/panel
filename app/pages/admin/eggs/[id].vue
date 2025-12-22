@@ -341,14 +341,14 @@ async function handleExportEgg() {
 
           <div class="flex gap-4">
             <UFormField :label="t('admin.eggs.userViewable')" name="userViewable">
-              <UToggle v-model="variableForm.userViewable" :disabled="isSubmitting" />
+              <USwitch v-model="variableForm.userViewable" :disabled="isSubmitting" />
               <template #help>
                 {{ t('admin.eggs.userViewableHelp') }}
               </template>
             </UFormField>
 
             <UFormField :label="t('admin.eggs.userEditable')" name="userEditable">
-              <UToggle v-model="variableForm.userEditable" :disabled="isSubmitting" />
+              <USwitch v-model="variableForm.userEditable" :disabled="isSubmitting" />
               <template #help>
                 {{ t('admin.eggs.userEditableHelp') }}
               </template>

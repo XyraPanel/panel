@@ -7,7 +7,7 @@ const route = useRoute()
 const serverId = computed(() => route.params.id as string)
 
 const { data: serverResponse } = await useFetch(
-  `/api/servers/${serverId.value}`,
+  `/api/client/servers/${serverId.value}`,
   {
     key: `server-layout-${serverId.value}`,
     watch: [serverId],

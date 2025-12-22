@@ -9,6 +9,7 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+const requestFetch = useRequestFetch()
 const metrics = ref<DashboardResponse['metrics']>([])
 const nodes = ref<DashboardResponse['nodes']>([])
 const incidents = ref<DashboardResponse['incidents']>([])
@@ -20,7 +21,7 @@ async function fetchDashboard() {
   loading.value = true
   error.value = null
   try {
-    const response = await $fetch<DashboardResponse>('/api/admin/dashboard')
+    const response = await requestFetch<DashboardResponse>('/api/admin/dashboard')
     metrics.value = response.metrics
     nodes.value = response.nodes
     incidents.value = response.incidents

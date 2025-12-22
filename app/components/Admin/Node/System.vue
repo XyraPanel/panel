@@ -143,10 +143,13 @@ const systemMetrics = computed(() => {
     </div>
 
     <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      <div v-for="metric in systemMetrics" :key="metric.label"
-        class="flex items-start gap-3 rounded-lg border border-default p-4">
-        <div class="rounded-md bg-primary/10 p-2">
-          <UIcon :name="metric.icon" class="size-5 text-primary" />
+      <div
+        v-for="metric in systemMetrics"
+        :key="metric.label"
+        class="flex items-start gap-3 rounded-lg border border-default p-4"
+      >
+        <div class="p-2 text-primary">
+          <UIcon :name="metric.icon" class="size-5" />
         </div>
         <div class="flex-1 space-y-1">
           <div class="text-xs text-muted-foreground">{{ metric.label }}</div>

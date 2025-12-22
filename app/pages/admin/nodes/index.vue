@@ -394,6 +394,7 @@ watch(
     </UModal>
 
     <UModal v-model:open="systemModal.visible" :title="t('admin.nodes.systemInformationModal', { name: systemModal.nodeName || t('admin.nodes.wingsNode') })"
+      :description="t('admin.nodes.systemInformationModalDescription')"
       :ui="{ footer: 'justify-between items-center flex-wrap gap-3' }">
       <template #body>
         <div class="space-y-4">

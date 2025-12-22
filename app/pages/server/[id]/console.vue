@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import type { PowerAction, PanelServerDetails } from '#shared/types/server'
+import { useAuthStore } from '~/stores/auth'
 
 const route = useRoute()
 
@@ -27,6 +29,11 @@ const primaryAllocation = computed(() => {
   return server.value?.allocations?.primary ?? null
 })
 const serverLimits = computed(() => server.value?.limits ?? null)
+
+const authStore = useAuthStore()
+const { user: sessionUser, isAdmin } = storeToRefs(authStore)
+const currentUserId = computed(() => sessionUser.value?.id ?? null)
+const serverPermissions = computed(() => server.value?.permissions ?? [])
 
 watch(server, (newServer) => {
   if (import.meta.client && newServer) {
@@ -55,7 +62,15 @@ const showStats = ref(true)
 const terminalRef = ref<{ search?: (term: string) => void; clear?: () => void; downloadLogs?: () => void; scrollToBottom?: () => void } | null>(null)
 
 const canSendCommands = computed(() => {
-  const perms = server.value?.permissions || []
+  const perms = serverPermissions.value
+  const ownerId = server.value?.owner?.id ?? null
+  const currentUser = currentUserId.value
+  const isOwner = Boolean(ownerId && currentUser && ownerId === currentUser)
+
+  if (isAdmin.value || isOwner) {
+    return true
+  }
+
   return perms.includes('control.console') || perms.includes('*')
 })
 
@@ -84,6 +99,34 @@ function saveHistory() {
   }
 }
 
+function addCommandToHistory(command: string) {
+  if (!command.trim()) return
+
+  const index = commandHistory.value.indexOf(command)
+  if (index > -1) {
+    commandHistory.value.splice(index, 1)
+  }
+
+  commandHistory.value.unshift(command)
+  if (commandHistory.value.length > 32) {
+    commandHistory.value = commandHistory.value.slice(0, 32)
+  }
+  saveHistory()
+}
+
+function submitCommand(event?: Event) {
+  event?.preventDefault()
+  const command = commandInput.value.trim()
+  if (!command) {
+    return
+  }
+
+  addCommandToHistory(command)
+  handleCommand(command)
+  commandInput.value = ''
+  historyIndex.value = -1
+}
+
 function handleCommandKeyDown(e: KeyboardEvent) {
   if (e.key === 'ArrowUp') {
     e.preventDefault()
@@ -101,23 +144,6 @@ function handleCommandKeyDown(e: KeyboardEvent) {
       commandInput.value = ''
       historyIndex.value = -1
     }
-  } else if (e.key === 'Enter' && commandInput.value.trim()) {
-    e.preventDefault()
-    const command = commandInput.value.trim()
-    
-    const index = commandHistory.value.indexOf(command)
-    if (index > -1) {
-      commandHistory.value.splice(index, 1)
-    }
-    commandHistory.value.unshift(command)
-    if (commandHistory.value.length > 32) {
-      commandHistory.value = commandHistory.value.slice(0, 32)
-    }
-    saveHistory()
-    
-    handleCommand(command)
-    commandInput.value = ''
-    historyIndex.value = -1
   }
 }
 
@@ -384,21 +410,17 @@ function handleSearch() {
               </ClientOnly>
             </div>
             
-            <div v-if="canSendCommands" class="relative border-t border-gray-800">
-              <input
+            <div v-if="canSendCommands" class="border-t border-default p-3">
+              <UChatPrompt
                 v-model="commandInput"
-                type="text"
+                variant="soft"
                 :placeholder="t('server.console.enterCommand')"
                 :disabled="!connected"
-                autocomplete="off"
-                autocorrect="off"
-                autocapitalize="none"
-                class="w-full bg-gray-900 px-10 py-2 text-gray-100 font-mono text-sm border-0 border-b-2 border-transparent focus:border-cyan-500 focus:ring-0 outline-none transition-colors"
+                :rows="1"
+                :autoresize="false"
+                @submit="submitCommand"
                 @keydown="handleCommandKeyDown"
-              >
-              <div class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-100 pointer-events-none">
-                <UIcon name="i-lucide-chevron-right" class="w-4 h-4" />
-              </div>
+              />
             </div>
           </UCard>
 

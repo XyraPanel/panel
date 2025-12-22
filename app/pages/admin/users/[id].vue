@@ -463,7 +463,7 @@ async function impersonateUser() {
 
               <UCard variant="outline" :ui="{ body: 'space-y-3' }">
                 <div class="space-y-2">
-                  <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('account.security.twoFactor') }}</p>
+                  <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ t('account.security.twoFactor.title') }}</p>
                   <div class="flex flex-wrap items-center gap-2">
                     <UButton
                       icon="i-lucide-shield-off"

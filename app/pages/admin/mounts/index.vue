@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { USwitch } from '#components'
 import type { MountWithRelations, CreateMountPayload } from '#shared/types/admin'
 
 definePageMeta({
@@ -213,11 +214,11 @@ async function handleDelete(mount: MountWithRelations) {
 
           <div class="flex gap-4">
             <UFormField :label="t('admin.mounts.readOnly')" name="readOnly">
-              <UToggle v-model="form.readOnly" :disabled="isSubmitting" />
+              <USwitch v-model="form.readOnly" :disabled="isSubmitting" />
             </UFormField>
 
             <UFormField :label="t('admin.mounts.userMountable')" name="userMountable">
-              <UToggle v-model="form.userMountable" :disabled="isSubmitting" />
+              <USwitch v-model="form.userMountable" :disabled="isSubmitting" />
               <template #help>
                 {{ t('admin.mounts.userMountableHelp') }}
               </template>

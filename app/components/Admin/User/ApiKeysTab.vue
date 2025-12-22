@@ -23,7 +23,6 @@ const {
 } = await useFetch<PaginatedApiKeysResponse>(
   () => `/api/admin/users/${props.userId}/api-keys`,
   {
-    key: `admin-user-api-keys-${props.userId}`,
     query: computed(() => ({
       page: apiKeysPage.value,
       limit: props.itemsPerPage,
