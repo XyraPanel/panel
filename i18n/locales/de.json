@@ -58,7 +58,20 @@
     "user": "Benutzer",
     "server": "Server",
     "warning": "Warnung",
-    "irreversibleAction": "Diese Aktion kann nicht rückgängig gemacht werden."
+    "irreversibleAction": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "bytes": "bytes",
+    "kb": "KB",
+    "mb": "MB",
+    "gb": "GB",
+    "tb": "TB",
+    "na": "N/A"
+  },
+  "units": {
+    "bytes": "bytes",
+    "kb": "KB",
+    "mb": "MB",
+    "gb": "GB",
+    "tb": "TB"
   },
   "auth": {
     "signIn": "Anmelden",
@@ -390,6 +403,36 @@
     }
   },
   "server": {
+    "websocket": {
+      "connecting": "Connecting...",
+      "connectionError": "Connection error",
+      "connectionClosed": "Connection closed",
+      "connectionClosedAbnormally": "Connection closed abnormally",
+      "connectionClosedWithReason": "Connection closed: {reason}",
+      "connectionClosedWithCode": "Connection closed (code {code})",
+      "connectionTimeout": "Connection timed out",
+      "failedToConnect": "Failed to connect",
+      "failedToEstablish": "Failed to establish connection",
+      "failedToRefreshToken": "Failed to refresh WebSocket token",
+      "failedToFetchCredentials": "Failed to fetch WebSocket credentials",
+      "invalidCredentials": "Invalid WebSocket credentials",
+      "invalidResponseFormat": "Server returned an invalid response format",
+      "serverReturnedHTML": "Server returned HTML instead of JSON",
+      "serverReturnedNonJSON": "Server returned a non-JSON response ({contentType})",
+      "clientSideOnly": "WebSocket connections are only available in the browser",
+      "notAvailable": "WebSocket is not available in this environment",
+      "protocolError": "Protocol error",
+      "invalidDataReceived": "Invalid data received",
+      "policyViolation": "Connection closed due to policy violation",
+      "serverError": "Server encountered an error",
+      "authenticationFailed": "Authentication failed",
+      "installationInProgress": "Installation in progress",
+      "installationCompleted": "Installation completed",
+      "transferInProgress": "Transfer in progress",
+      "backupRestoreFailed": "Backup restore failed",
+      "backupRestoreFinished": "Backup restore finished",
+      "backupCompleted": "Backup completed"
+    },
     "list": {
       "title": "Servers",
       "description": "Overview of containers you can access across the cluster. Updated {time}",
@@ -400,6 +443,10 @@
       "registeredServers": "Registered servers",
       "allServersInPanel": "All servers in the panel",
       "serversAssignedToAccount": "Servers assigned to your account",
+      "scopeMineLabel": "My servers only",
+      "scopeMineDescription": "Show servers assigned to your account.",
+      "scopeAllLabel": "All servers",
+      "scopeAllDescription": "Display every server in the panel (admin only).",
       "noServersFound": "No servers found",
       "tryAdjustingSearch": "Try adjusting your search terms",
       "noServersAvailable": "No servers are available",
@@ -408,6 +455,7 @@
       "cpuLimit": "CPU limit",
       "diskLimit": "Disk limit",
       "memoryLimit": "Memory limit",
+      "primaryAllocationLabel": "Primary allocation",
       "noDescriptionProvided": "No description provided."
     },
     "details": {
@@ -447,6 +495,10 @@
       "serverOffline": "Server is offline",
       "sendCommand": "Send command",
       "enterCommand": "Enter command...",
+      "enterCommandPlaceholder": "Enter a command",
+      "search": "Search console",
+      "searchTerminal": "Search terminal output",
+      "searchInConsole": "Search in console",
       "powerActions": "Power Actions",
       "start": "Start",
       "stop": "Stop",
@@ -462,8 +514,9 @@
       "toggleStats": "Toggle stats",
       "clearConsole": "Clear console",
       "downloadLogs": "Download logs",
+      "downloadFilename": "xyrapanel-console",
       "scrollToBottom": "Scroll to bottom",
-      "searchInConsole": "Search in console",
+      "ipPort": "IP · Port",
       "noConsoleAccess": "You don't have permission to access the console.",
       "commandSent": "Command sent",
       "commandSentDescription": "Command has been sent to the server.",
@@ -472,6 +525,19 @@
       "powerActionSentDescription": "Power action has been sent to the server.",
       "failedToSendPowerAction": "Failed to send power action",
       "noPermission": "You don't have permission to perform this action."
+    },
+    "stats": {
+      "cpuUsage": "CPU usage",
+      "cpuPercent": "CPU %",
+      "memoryUsage": "Memory usage",
+      "memoryMB": "Memory (MB)",
+      "networkIO": "Network I/O",
+      "rxMBs": "Download (MiB/s)",
+      "txMBs": "Upload (MiB/s)",
+      "diskIO": "Disk I/O",
+      "readMBs": "Read (MiB/s)",
+      "writeMBs": "Write (MiB/s)",
+      "secondsAgo": "{count} second ago | {count} seconds ago"
     },
     "files": {
       "title": "Files",
@@ -494,7 +560,11 @@
       "edit": "Edit",
       "back": "Back",
       "folder": "Folder",
-      "file": "File"
+      "file": "File",
+      "selectAllEntries": "Select all entries",
+      "selectEntry": "Select entry",
+      "moveSelectedItems": "Move selected items",
+      "deleteSelectedItems": "Delete selected items"
     },
     "databases": {
       "title": "Databases",
@@ -662,11 +732,22 @@
     },
     "activity": {
       "title": "Activity",
-      "description": "View server activity logs."
+      "description": "View server activity logs.",
+      "serverActivity": "Server activity",
+      "auditTrail": "Audit trail",
+      "recentEvents": "Recent events",
+      "noActivityRecorded": "No activity recorded",
+      "noActivityRecordedDescription": "This server has no recorded audit events yet.",
+      "failedToLoadActivity": "Failed to load server activity.",
+      "auditLogEntry": "Audit log entry",
+      "actorLabel": "{actor} ({type})",
+      "copyJSON": "Copy JSON",
+      "auditDescription": "Detailed audit log of all server actions and events."
     },
     "network": {
       "title": "Network",
-      "description": "Manage network allocations and ports."
+      "description": "Manage network allocations and ports.",
+      "primaryAllocation": "Primary allocation"
     },
     "status": {
       "nodeUnderMaintenance": "Node Under Maintenance",
@@ -856,6 +937,8 @@
       "description": "Manage Wings nodes connected to the panel.",
       "nodeInventory": "Node inventory",
       "addNode": "Add node",
+      "online": "Online",
+      "http": "HTTP",
       "unableToLoadNodes": "Unable to load nodes",
       "noNodesLinked": "No nodes linked yet. Register a Wings node to begin managing infrastructure.",
       "identifier": "Identifier",
@@ -908,7 +991,70 @@
       "wingsNode": "Wings node",
       "unableToRetrieveSystemInfo": "Unable to retrieve system information",
       "latestSnapshot": "Latest snapshot",
-      "fetchedFromWingsAPI": "Fetched directly from the Wings API."
+      "fetchedFromWingsAPI": "Fetched directly from the Wings API.",
+      "maintenanceActions": {
+        "syncNode": "Sync node",
+        "rotateTokens": "Rotate tokens",
+        "transferServers": "Transfer servers"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "servers": "Servers",
+        "allocations": "Allocations",
+        "settings": "Settings",
+        "configuration": "Configuration",
+        "system": "System"
+      },
+      "autoDeployConfiguration": "Auto-deploy configuration",
+      "systemInformation": "System information",
+      "allocations": {
+        "filterByIpOrPort": "Filter by IP or port",
+        "createAllocations": "Create allocations",
+        "ip": "IP",
+        "port": "Port",
+        "primary": "Primary",
+        "secondary": "Secondary",
+        "server": "Server",
+        "identifier": "Identifier",
+        "actions": "Actions"
+      },
+      "servers": {
+        "searchNameOrIdentifier": "Search name or identifier",
+        "name": "Name",
+        "identifier": "Identifier",
+        "primaryAllocation": "Primary allocation",
+        "created": "Created",
+        "updated": "Updated",
+        "actions": "Actions"
+      },
+      "settings": {
+        "nodeName": "Node name",
+        "nodeNamePlaceholder": "Nodes are usually named after their location, e.g. CA-1",
+        "fqdn": "FQDN / IP address",
+        "description": "Description",
+        "descriptionPlaceholder": "Optional notes or details about this node",
+        "scheme": "Scheme",
+        "uploadSizeLimit": "Maximum upload size (MB)",
+        "publicNode": "Public node",
+        "publicNodeDescription": "Allow this node to appear when creating or transferring servers.",
+        "maintenanceMode": "Maintenance mode",
+        "maintenanceModeDescription": "Suspend scheduling on this node while you perform maintenance.",
+        "behindProxy": "Behind reverse proxy",
+        "behindProxyDescription": "Enable if the daemon is behind a proxy so generated commands omit TLS flags.",
+        "totalMemory": "Total memory (MiB)",
+        "memoryOverallocate": "Memory overallocation (%)",
+        "totalDisk": "Total disk (MiB)",
+        "diskOverallocate": "Disk overallocation (%)",
+        "daemonPort": "Daemon port",
+        "sftpPort": "SFTP port",
+        "daemonBaseDirectory": "Daemon base directory"
+      },
+      "memoryUsage": "Memory usage",
+      "diskUsage": "Disk usage",
+      "lastSeen": "Last seen",
+      "systemSnapshot": "System snapshot",
+      "recentServers": "Recent servers",
+      "noServersForNodeYet": "No servers on this node yet."
     },
     "locations": {
       "title": "Locations",
