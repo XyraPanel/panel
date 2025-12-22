@@ -247,6 +247,21 @@ export default defineNuxtConfig({
         method: 'patch',
         handler: './server/api/admin/servers/[id]/build.patch.ts',
       },
+      {
+        route: '/api/admin/servers/:id/limits',
+        method: 'get',
+        handler: './server/api/admin/servers/[id]/limits.get.ts',
+      },
+      {
+        route: '/api/admin/servers/:id/startup',
+        method: 'get',
+        handler: './server/api/admin/servers/[id]/startup.get.ts',
+      },
+      {
+        route: '/api/admin/servers/:id/startup',
+        method: 'patch',
+        handler: './server/api/admin/servers/[id]/startup.patch.ts',
+      },
       // CRITICAL: The files/write route MUST match exactly
       // The route file is at: server/api/servers/[id]/files/write.post.ts
       // This should auto-scan to: /api/servers/:id/files/write (POST)

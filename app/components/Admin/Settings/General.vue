@@ -69,7 +69,7 @@ type FormSchema = z.infer<typeof baseSchema> & {
 }
 
 const { data: settings, refresh } = await useAsyncData(
-  'admin-settings-general',
+  'admin-settings-general-form',
   async () => {
     const response = await fetch('/api/admin/settings/general')
     if (!response.ok) {

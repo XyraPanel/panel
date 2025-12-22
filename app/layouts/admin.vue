@@ -429,11 +429,20 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
           :shortcut="dashboardSearchShortcut"
           :label="t('common.search')"
         />
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="[navItems]"
-          orientation="vertical"
-        />
+        <ClientOnly>
+          <UNavigationMenu
+            :collapsed="collapsed"
+            :items="[navItems]"
+            orientation="vertical"
+          />
+          <template #fallback>
+            <div class="space-y-2">
+              <USkeleton class="h-9 w-full rounded-md" />
+              <USkeleton class="h-9 w-3/4 rounded-md" />
+              <USkeleton class="h-9 w-2/3 rounded-md" />
+            </div>
+          </template>
+        </ClientOnly>
       </template>
 
       <template #footer="{ collapsed }">

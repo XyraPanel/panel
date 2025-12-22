@@ -731,11 +731,19 @@ async function handleCreateAllocations() {
                   <tr v-else-if="serverRows.length === 0" class="text-center text-sm text-muted-foreground">
                     <td colspan="6" class="px-3 py-6">{{ t('admin.nodes.noServersFound') }}</td>
                   </tr>
-                  <tr v-for="server in serverRows" :key="server.id"
-                    class="border-b border-default text-sm even:bg-muted/20">
+                  <tr
+                    v-for="server in serverRows"
+                    :key="server.id"
+                    class="border-b border-default text-sm even:bg-muted/20"
+                  >
                     <td class="px-3 py-2">
                       <div class="flex flex-col">
-                        <span class="font-medium">{{ server.name }}</span>
+                        <NuxtLink
+                          :to="`/admin/servers/${server.id}`"
+                          class="font-medium text-primary hover:underline"
+                        >
+                          {{ server.name }}
+                        </NuxtLink>
                         <span class="text-xs text-muted-foreground">{{ server.uuid }}</span>
                       </div>
                     </td>

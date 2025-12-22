@@ -72,6 +72,16 @@ function formatRawArgs(args?: unknown[]): string | undefined {
 
 export function useServerWebSocket(serverId: string | ComputedRef<string>) {
   const { t } = useI18n()
+  const runtimeConfig = useRuntimeConfig()
+  const appDisplayName = runtimeConfig.public?.appName || 'XyraPanel'
+  const appShellHost = appDisplayName.replace(/\s+/g, '').toLowerCase()
+  const PRIMARY_TERMINAL_COLOR = '\u001b[38;2;59;130;246m'
+  const RESET = '\u001b[0m'
+  const TERMINAL_PRELUDE = `\u001b[1m${PRIMARY_TERMINAL_COLOR}container@${appShellHost}~ ${RESET}`
+  const DAEMON_LABEL = `${PRIMARY_TERMINAL_COLOR}[${appDisplayName} Daemon]${RESET}`
+  const ESC = '\u001b'
+  const CONTAINER_PROMPT_PATTERN = new RegExp(`(?:${ESC}\\[[0-9;]*m)*(?:container(?:@[A-Za-z0-9._-]+)?~)`, 'gi')
+
   const actualServerId = typeof serverId === 'string' ? serverId : serverId.value
   const persistentState = getOrCreateInstance(actualServerId)
   const socket = ref<WebSocket | null>(null)
@@ -160,6 +170,12 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
     send('auth', [token])
   }
 
+  const brandConsoleLine = (line: string) => {
+    return line
+      .replace(/\[(?:Pterodactyl|Wings) Daemon\]/gi, DAEMON_LABEL)
+      .replace(CONTAINER_PROMPT_PATTERN, TERMINAL_PRELUDE)
+  }
+
   const handleConsoleOutput = (args?: unknown[] | string[]) => {
     let normalized: string[]
     if (Array.isArray(args) && args.length > 0 && typeof args[0] === 'string' && args[0].includes('\u001b')) {
@@ -175,7 +191,8 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
         console.log('[WebSocket] Console output:', lineCount, 'line(s)', previewLines)
       }
       normalized.forEach((line) => {
-        logs.value.push(line)
+        const brandedLine = brandConsoleLine(line)
+        logs.value.push(brandedLine)
         if (logs.value.length > 1000) {
           logs.value.shift()
         }
@@ -230,7 +247,6 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
             recordEvent({ event: 'status', message: stateArg, timestamp: Date.now() })
             
             if (previousState !== stateArg) {
-              const TERMINAL_PRELUDE = '\u001b[1m\u001b[33mcontainer@xyrapanel~ \u001b[0m'
               const powerMessage = TERMINAL_PRELUDE + `Server marked as ${stateArg}...\u001b[0m`
               handleConsoleOutput([powerMessage])
             }
@@ -274,7 +290,6 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
           const rawLines = normalizeMessageArgs(message.args)
           if (rawLines.length > 0) {
             console.log(`[WebSocket] Received daemon message (${rawLines.length} line(s))`)
-            const TERMINAL_PRELUDE = '\u001b[1m\u001b[33mcontainer@xyrapanel~ \u001b[0m'
             const linesWithPrelude = rawLines.map(line => TERMINAL_PRELUDE + line.replace(/(?:\r\n|\r|\n)$/im, '') + '\u001b[0m')
             handleConsoleOutput(linesWithPrelude)
             recordEvent({ event: message.event, raw: rawLines.join('\n'), timestamp: Date.now() })
@@ -290,7 +305,6 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
           const rawLines = normalizeMessageArgs(message.args)
           if (rawLines.length > 0) {
             console.log(`[WebSocket] Received daemon error (${rawLines.length} line(s))`)
-            const TERMINAL_PRELUDE = '\u001b[1m\u001b[33mcontainer@xyrapanel~ \u001b[0m'
             const linesWithFormatting = rawLines.map(line => 
               TERMINAL_PRELUDE + '\u001b[1m\u001b[41m' + line.replace(/(?:\r\n|\r|\n)$/im, '') + '\u001b[0m'
             )
@@ -475,7 +489,6 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
 
     tokenRefreshInFlight.value = true
     try {
-      // @ts-expect-error - Nuxt typed routes cause deep type
       const credentials: { token: string; socket: string } = await $fetch(`/api/client/servers/${actualServerId}/websocket`)
       currentToken.value = credentials.token
 

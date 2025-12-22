@@ -506,16 +506,33 @@ export async function remoteGetInstallationScript(uuid: string, nodeId?: string)
 export async function remotePaginateServers(page: number, perPage: number, nodeId?: string) {
   try {
     const node = requireNode(nodeId)
-    const data = await wingsFetch<WingsPaginatedResponse<WingsRemoteServer>>('/api/servers', {
+    const resolvedNodeId = nodeId || node.id
+    const plainSecret = getPlainTokenSecret(resolvedNodeId)
+    const response = await wingsFetch<WingsPaginatedResponse<WingsRemoteServer> | WingsRemoteServer[]>('/api/servers', {
       baseURL: node.baseURL,
-      token: node.apiToken,
+      token: plainSecret,
       allowInsecure: node.allowInsecure,
       query: {
         page,
         per_page: perPage,
       },
     })
-    return data
+
+    if (Array.isArray(response)) {
+      return {
+        data: response,
+        meta: {
+          current_page: 1,
+          last_page: 1,
+          per_page: response.length,
+          from: response.length > 0 ? 1 : 0,
+          to: response.length,
+          total: response.length,
+        },
+      }
+    }
+
+    return response
   }
   catch (error) {
     throw toWingsHttpError(error, { operation: 'paginate Wings servers', nodeId })

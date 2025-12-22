@@ -9,6 +9,7 @@ interface Props {
 
 const props = defineProps<Props>()
 
+const { t } = useI18n()
 const toast = useToast()
 const activityPage = ref(1)
 const expandedActivityEntries = ref<Set<string>>(new Set())
@@ -16,10 +17,8 @@ const expandedActivityEntries = ref<Set<string>>(new Set())
 const {
   data: activityData,
 } = await useAsyncData(
-  `admin-user-activity-${props.userId}`,
   async () => {
     const url = `/api/admin/users/${props.userId}/activity?page=${activityPage.value}&limit=${props.itemsPerPage}`
-    // @ts-expect-error - Nuxt typed routes cause deep type
     return await $fetch(url) as PaginatedActivityResponse
   },
   {
@@ -71,13 +70,13 @@ async function copyActivityJson(entry: typeof activity.value[0]) {
       document.body.removeChild(textArea)
     }
     toast.add({
-      title: 'Copied to clipboard',
-      description: 'Audit log entry JSON has been copied.',
+      title: t('common.copied'),
+      description: t('common.copiedToClipboard'),
     })
   } catch (error) {
     toast.add({
-      title: 'Failed to copy',
-      description: error instanceof Error ? error.message : 'Unable to copy to clipboard.',
+      title: t('common.failedToCopy'),
+      description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
     })
   }
@@ -88,16 +87,18 @@ async function copyActivityJson(entry: typeof activity.value[0]) {
   <UCard :ui="{ body: 'space-y-3' }">
     <template #header>
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-semibold">Recent activity</h2>
-        <UBadge color="neutral" variant="soft" size="xs">{{ activityPagination?.total ?? 0 }} total</UBadge>
+        <h2 class="text-lg font-semibold">{{ t('account.activity.recentActivity') }}</h2>
+        <UBadge color="neutral" variant="soft" size="xs">
+          {{ activityPagination?.total ?? 0 }} {{ t('activity.total') }}
+        </UBadge>
       </div>
     </template>
 
     <UEmpty
       v-if="activity.length === 0"
       icon="i-lucide-activity"
-      title="No activity yet"
-      description="No audit events recorded for this user yet."
+      :title="t('account.activity.noActivity')"
+      :description="t('account.activity.noActivityDescription')"
       variant="subtle"
     />
     <div v-else class="space-y-3">
@@ -133,14 +134,16 @@ async function copyActivityJson(entry: typeof activity.value[0]) {
         >
           <div class="space-y-2">
             <div class="flex items-center justify-between mb-2">
-              <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Audit Log Entry</p>
+              <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                {{ t('account.activity.auditLogEntry') }}
+              </p>
               <UButton
                 variant="ghost"
                 size="xs"
                 icon="i-lucide-copy"
                 @click.stop="copyActivityJson(entry)"
               >
-                Copy JSON
+                {{ t('account.activity.copyJSON') }}
               </UButton>
             </div>
             <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatActivityJson(getFullActivityData(entry)) }}</code></pre>
@@ -149,9 +152,11 @@ async function copyActivityJson(entry: typeof activity.value[0]) {
       </div>
       <div v-if="activityPagination && activityPagination.totalPages > 1" class="flex items-center justify-between border-t border-default pt-4">
         <div class="text-sm text-muted-foreground">
-          Showing {{ ((activityPagination.page - 1) * activityPagination.perPage) + 1 }} to
-          {{ Math.min(activityPagination.page * activityPagination.perPage, activityPagination.total) }} of
-          {{ activityPagination.total }} events
+          {{ t('activity.showingEvents', {
+            start: ((activityPagination.page - 1) * activityPagination.perPage) + 1,
+            end: Math.min(activityPagination.page * activityPagination.perPage, activityPagination.total),
+            total: activityPagination.total,
+          }) }}
         </div>
         <UPagination
           v-model:page="activityPage"
