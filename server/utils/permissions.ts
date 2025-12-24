@@ -1,5 +1,5 @@
 import { and, eq, useDrizzle, tables } from '~~/server/utils/drizzle'
-import { withCache } from '~~/server/utils/cache'
+import { withCache, setCacheItem } from '~~/server/utils/cache'
 import { buildServerUserPermissionsCacheKey } from './cache-keys'
 
 export const PERMISSIONS = {
@@ -53,6 +53,78 @@ export const PERMISSIONS = {
 
 const SERVER_USER_PERMISSIONS_CACHE_TTL = 60
 
+function isTruthyPermissionValue(value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value
+  }
+
+  if (typeof value === 'number') {
+    return value > 0
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    return normalized === 'true' || normalized === '1'
+  }
+
+  return false
+}
+
+function normalizePermissionList(payload: unknown): string[] {
+  if (!payload) {
+    return []
+  }
+
+  if (Array.isArray(payload)) {
+    return Array.from(
+      new Set(
+        payload
+          .filter((item): item is string => typeof item === 'string')
+          .map(item => item.trim())
+          .filter(item => item.length > 0),
+      ),
+    )
+  }
+
+  if (payload instanceof Set) {
+    return normalizePermissionList(Array.from(payload))
+  }
+
+  if (typeof payload === 'string') {
+    try {
+      const parsed = JSON.parse(payload)
+      return normalizePermissionList(parsed)
+    } catch {
+      return []
+    }
+  }
+
+  if (typeof payload === 'object') {
+    const objectPayload = payload as Record<string, unknown>
+
+    if (Array.isArray(objectPayload.permissions)) {
+      return normalizePermissionList(objectPayload.permissions)
+    }
+
+    return Object.entries(objectPayload)
+      .filter(([, value]) => isTruthyPermissionValue(value))
+      .map(([permission]) => permission.trim())
+      .filter(permission => permission.length > 0)
+  }
+
+  return []
+}
+
+function resolveServerOwnerPermissions(): Array<keyof typeof PERMISSIONS> {
+  const allPermissions = Object.keys(PERMISSIONS) as Array<keyof typeof PERMISSIONS>
+  const wingsPermissions = [
+    'file.write',
+    'file.update',
+  ]
+
+  return allPermissions.filter(permission => !wingsPermissions.includes(permission))
+}
+
 async function resolveUserPermissions(
   userId: string,
   serverId: string,
@@ -70,22 +142,7 @@ async function resolveUserPermissions(
   }
 
   if (server.ownerId === userId) {
-    const allPermissions = Object.keys(PERMISSIONS) as Array<keyof typeof PERMISSIONS>
-    const wingsPermissions = [
-      'file.write',
-      'file.upload',
-      'file.download',
-      'file.copy',
-      'file.compress',
-      'file.decompress',
-      'file.chmod',
-      'file.rename',
-      'file.pull',
-      'websocket.connect',
-    ] as const
-
-    const combined = [...allPermissions, ...wingsPermissions]
-    return Array.from(new Set(combined)) as Array<keyof typeof PERMISSIONS>
+    return resolveServerOwnerPermissions()
   }
 
   const subuser = await db
@@ -103,9 +160,7 @@ async function resolveUserPermissions(
     return []
   }
 
-  return subuser.permissions
-    ? JSON.parse(subuser.permissions as string) as Array<keyof typeof PERMISSIONS>
-    : []
+  return normalizePermissionList(subuser.permissions) as Array<keyof typeof PERMISSIONS>
 }
 
 export async function getUserPermissions(
@@ -113,9 +168,17 @@ export async function getUserPermissions(
   serverId: string,
 ): Promise<Array<keyof typeof PERMISSIONS>> {
   const cacheKey = buildServerUserPermissionsCacheKey(serverId, userId)
-  return withCache(cacheKey, () => resolveUserPermissions(userId, serverId), {
+  const cached = await withCache<unknown>(cacheKey, () => resolveUserPermissions(userId, serverId), {
     ttl: SERVER_USER_PERMISSIONS_CACHE_TTL,
   })
+
+  const normalized = normalizePermissionList(cached) as Array<keyof typeof PERMISSIONS>
+
+  if (!Array.isArray(cached) || cached.length !== normalized.length || cached.some((value, index) => value !== normalized[index])) {
+    await setCacheItem(cacheKey, normalized, { ttl: SERVER_USER_PERMISSIONS_CACHE_TTL })
+  }
+
+  return normalized
 }
 
 export async function hasPermission(
