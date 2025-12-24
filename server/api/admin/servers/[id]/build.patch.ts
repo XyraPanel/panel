@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
   const { cpu, memory, swap, disk, io, threads, oomDisabled, databaseLimit, allocationLimit, backupLimit } = body
 
   const db = useDrizzle()
-  const { findServerByIdentifier } = await import('~~/server/utils/serversStore')
+  const { findServerByIdentifier, invalidateServerCaches } = await import('~~/server/utils/serversStore')
   const server = await findServerByIdentifier(identifier)
 
   if (!server) {
@@ -103,6 +103,12 @@ export default defineEventHandler(async (event) => {
       .where(eq(tables.servers.id, serverId))
       .run()
   }
+
+  await invalidateServerCaches({
+    id: server.id,
+    uuid: server.uuid,
+    identifier: server.identifier,
+  })
 
   const { getWingsClientForServer } = await import('~~/server/utils/wings-client')
   const result = await getWingsClientForServer(server.uuid)

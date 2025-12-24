@@ -51,6 +51,13 @@ export default defineEventHandler(async (event) => {
     .where(eq(tables.servers.uuid, serverId))
     .run()
 
+  const { invalidateServerCaches } = await import('~~/server/utils/serversStore')
+  await invalidateServerCaches({
+    id: server.id,
+    uuid: server.uuid,
+    identifier: server.identifier,
+  })
+
   return {
     success: true,
     message: 'Server renamed successfully',

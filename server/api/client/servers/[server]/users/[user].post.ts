@@ -1,6 +1,7 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
+import { invalidateServerSubusersCache } from '~~/server/utils/subusers'
 
 interface UpdateSubuserPayload {
   permissions: string[]
@@ -58,6 +59,8 @@ export default defineEventHandler(async (event) => {
     .leftJoin(tables.users, eq(tables.serverSubusers.userId, tables.users.id))
     .where(eq(tables.serverSubusers.id, subuserId))
     .get()
+
+  await invalidateServerSubusersCache(server.id, [subuser.userId])
 
   return {
     data: {

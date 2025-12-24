@@ -1,6 +1,6 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { listServerDatabases } from '~~/server/utils/databases'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -15,11 +15,7 @@ export default defineEventHandler(async (event) => {
 
   const { server } = await getServerWithAccess(serverId, session)
 
-  const db = useDrizzle()
-  const databases = db.select()
-    .from(tables.serverDatabases)
-    .where(eq(tables.serverDatabases.serverId, server.id))
-    .all()
+  const databases = await listServerDatabases(server.id)
 
   return {
     object: 'list',

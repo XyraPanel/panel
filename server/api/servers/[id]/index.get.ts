@@ -6,6 +6,7 @@ import { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { findServerByIdentifier, getServerLimits, listServerAllocations } from '~~/server/utils/serversStore'
 import { permissionManager } from '~~/server/utils/permission-manager'
+import { getServerStatus } from '~~/server/utils/server-status'
 import type { PanelServerDetails, ServerAllocationSummary } from '#shared/types/server'
 
 export default defineEventHandler(async (event) => {
@@ -98,29 +99,15 @@ export default defineEventHandler(async (event) => {
   let actualStatus = server.status ?? null
   let actualSuspended = Boolean(server.suspended)
 
-  if (server.nodeId && server.uuid) {
+  if (server.uuid) {
     try {
-      const { getWingsClientForServer } = await import('~~/server/utils/wings-client')
-      const { client } = await getWingsClientForServer(server.uuid)
-      const details = await client.getServerDetails(server.uuid)
-      actualStatus = details.state || actualStatus
-      actualSuspended = details.isSuspended ?? actualSuspended
-
-      if (actualStatus !== server.status || actualSuspended !== server.suspended) {
-        await db
-          .update(tables.servers)
-          .set({
-            status: actualStatus,
-            suspended: actualSuspended,
-            updatedAt: new Date(),
-          })
-          .where(eq(tables.servers.id, server.id))
-          .run()
-      }
+      const status = await getServerStatus(server.uuid)
+      actualStatus = status.state || actualStatus
+      actualSuspended = status.isSuspended ?? actualSuspended
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error)
       if (!errorMessage.includes('404') && !errorMessage.includes('not found')) {
-        console.warn(`Failed to sync server status from Wings for ${server.uuid}:`, errorMessage)
+        console.warn(`Failed to resolve cached status for server ${server.uuid}:`, errorMessage)
       }
     }
   }

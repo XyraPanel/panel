@@ -1,6 +1,6 @@
 import type { WingsJWTClaims as _WingsJWTClaims } from '#shared/types/wings'
 import { ADMIN_PERMISSIONS, DEFAULT_SUBUSER_PERMISSIONS, type GetUserPermissionsOptions } from '#shared/types/server'
-import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
+import { getUserPermissions as getServerUserPermissions } from '~~/server/utils/permissions'
 
 export function normalizePermissionPayload(payload: unknown): string[] {
   if (!payload) {
@@ -37,7 +37,7 @@ async function _getUserPermissionsJWT(
     return ADMIN_PERMISSIONS
   }
 
-  const explicitPermissions = subuserPermissions ?? await fetchSubuserPermissions(userId, serverId)
+  const explicitPermissions = subuserPermissions ?? await getServerUserPermissions(userId, serverId)
 
   if (!explicitPermissions || explicitPermissions.length === 0) {
     return DEFAULT_SUBUSER_PERMISSIONS
@@ -52,25 +52,3 @@ async function _getUserPermissionsJWT(
   return deduped
 }
 
-async function fetchSubuserPermissions(userId: string, serverId: string): Promise<string[] | null> {
-  if (!userId) {
-    return null
-  }
-
-  const db = useDrizzle()
-  const record = db
-    .select({ permissions: tables.serverSubusers.permissions })
-    .from(tables.serverSubusers)
-    .where(and(
-      eq(tables.serverSubusers.serverId, serverId),
-      eq(tables.serverSubusers.userId, userId),
-    ))
-    .limit(1)
-    .get()
-
-  if (!record) {
-    return null
-  }
-
-  return normalizePermissionPayload(record.permissions)
-}

@@ -1,6 +1,7 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
+import { invalidateScheduleCaches } from '~~/server/utils/serversStore'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -38,6 +39,8 @@ export default defineEventHandler(async (event) => {
   db.delete(tables.serverSchedules)
     .where(eq(tables.serverSchedules.id, scheduleId))
     .run()
+
+  await invalidateScheduleCaches({ serverId: server.id, scheduleId })
 
   return {
     success: true,

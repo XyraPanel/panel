@@ -1,6 +1,7 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
+import { invalidateServerSubusersCache } from '~~/server/utils/subusers'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -38,6 +39,8 @@ export default defineEventHandler(async (event) => {
   db.delete(tables.serverSubusers)
     .where(eq(tables.serverSubusers.id, subuserId))
     .run()
+
+  await invalidateServerSubusersCache(server.id, [subuser.userId])
 
   return {
     success: true,

@@ -1,8 +1,12 @@
 import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
 import { getWingsClientForServer, WingsConnectionError, WingsAuthError } from '~~/server/utils/wings-client'
 import type { ServerStatus } from '#shared/types/server'
+import { getCacheItem, setCacheItem, deleteCacheItem } from './cache'
+import { buildServerStatusCacheKey } from './cache-keys'
 
-export async function getServerStatus(serverUuid: string): Promise<ServerStatus> {
+const SERVER_STATUS_CACHE_TTL = 5
+
+async function fetchServerStatus(serverUuid: string): Promise<ServerStatus> {
   const db = useDrizzle()
   
   const server = await db
@@ -55,9 +59,29 @@ export async function getServerStatus(serverUuid: string): Promise<ServerStatus>
   }
 }
 
+export async function getServerStatus(serverUuid: string, options: { skipCache?: boolean } = {}): Promise<ServerStatus> {
+  const cacheKey = buildServerStatusCacheKey(serverUuid)
+
+  if (!options.skipCache) {
+    const cached = await getCacheItem<ServerStatus>(cacheKey)
+    if (cached) {
+      return cached
+    }
+  }
+
+  const status = await fetchServerStatus(serverUuid)
+  await setCacheItem(cacheKey, status, { ttl: SERVER_STATUS_CACHE_TTL })
+  return status
+}
+
+export async function invalidateServerStatusCache(serverUuid: string): Promise<void> {
+  const cacheKey = buildServerStatusCacheKey(serverUuid)
+  await deleteCacheItem(cacheKey)
+}
+
 export async function updateServerStatus(serverUuid: string): Promise<void> {
   const db = useDrizzle()
-  const status = await getServerStatus(serverUuid)
+  const status = await getServerStatus(serverUuid, { skipCache: true })
 
   await db
     .update(tables.servers)

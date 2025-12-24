@@ -4,6 +4,7 @@ import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
 import { createTaskSchema } from '#shared/schema/server/operations'
+import { invalidateScheduleCaches } from '~~/server/utils/serversStore'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -77,6 +78,8 @@ export default defineEventHandler(async (event) => {
     .from(tables.serverScheduleTasks)
     .where(eq(tables.serverScheduleTasks.id, taskId))
     .get()
+
+  await invalidateScheduleCaches({ serverId: server.id, scheduleId })
 
   return {
     data: {

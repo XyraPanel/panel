@@ -1,6 +1,6 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { listServerSubusers } from '~~/server/utils/subusers'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -15,29 +15,18 @@ export default defineEventHandler(async (event) => {
 
   const { server } = await getServerWithAccess(serverId, session)
 
-  const db = useDrizzle()
-  const subusers = db
-    .select({
-      subuser: tables.serverSubusers,
-      user: tables.users,
-    })
-    .from(tables.serverSubusers)
-    .leftJoin(tables.users, eq(tables.serverSubusers.userId, tables.users.id))
-    .where(eq(tables.serverSubusers.serverId, server.id))
-    .all()
-
   return {
-    data: subusers.map(({ subuser, user }) => ({
-      id: subuser.id,
+    data: (await listServerSubusers(server.id)).map((entry) => ({
+      id: entry.id,
       user: {
-        id: user!.id,
-        username: user!.username,
-        email: user!.email,
-        image: user!.image,
+        id: entry.userId,
+        username: entry.username,
+        email: entry.email,
+        image: entry.image,
       },
-      permissions: JSON.parse(subuser.permissions),
-      created_at: subuser.createdAt,
-      updated_at: subuser.updatedAt,
+      permissions: entry.permissions,
+      created_at: entry.createdAt,
+      updated_at: entry.updatedAt,
     })),
   }
 })

@@ -2,6 +2,7 @@ import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
 import { randomBytes } from 'crypto'
+import { invalidateServerCaches } from '~~/server/utils/serversStore'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -45,6 +46,8 @@ export default defineEventHandler(async (event) => {
     })
     .where(eq(tables.serverDatabases.id, databaseId))
     .run()
+
+  await invalidateServerCaches({ id: server.id, uuid: server.uuid, identifier: server.identifier })
 
   return {
     object: 'server_database',

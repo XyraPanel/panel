@@ -1,6 +1,7 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
+import { listServerScheduleTasks } from '~~/server/utils/serversStore'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -35,12 +36,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const tasks = db
-    .select()
-    .from(tables.serverScheduleTasks)
-    .where(eq(tables.serverScheduleTasks.scheduleId, schedule.id))
-    .orderBy(tables.serverScheduleTasks.sequenceId)
-    .all()
+  const tasks = await listServerScheduleTasks(schedule.id)
 
   return {
     data: {

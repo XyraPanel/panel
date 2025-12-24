@@ -1,5 +1,8 @@
-import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
+import { and, eq, useDrizzle, tables } from '~~/server/utils/drizzle'
 import type { Permission, PermissionCheck, UserPermissions } from '#shared/types/server'
+import { invalidateServerSubusersCache } from './subusers'
+import { buildUserPermissionsMapCacheKey } from './cache-keys'
+import { withCache } from './cache'
 
 export class PermissionManager {
   private db = useDrizzle()
@@ -80,6 +83,11 @@ export class PermissionManager {
   }
 
   async getUserPermissions(userId: string): Promise<UserPermissions> {
+    const cacheKey = buildUserPermissionsMapCacheKey(userId)
+    return withCache(cacheKey, () => this.computeUserPermissions(userId), { ttl: 60 })
+  }
+
+  private async computeUserPermissions(userId: string): Promise<UserPermissions> {
     const user = await this.db
       .select()
       .from(tables.users)
@@ -223,6 +231,8 @@ export class PermissionManager {
       createdAt: now,
       updatedAt: now,
     })
+
+    await invalidateServerSubusersCache(serverId, [userId])
   }
 
   async updateServerSubuser(
@@ -257,6 +267,8 @@ export class PermissionManager {
       })
       .where(eq(tables.serverSubusers.id, subuser.id))
       .run()
+
+    await invalidateServerSubusersCache(serverId, [userId])
   }
 
   async removeServerSubuser(
@@ -286,6 +298,8 @@ export class PermissionManager {
       .delete(tables.serverSubusers)
       .where(eq(tables.serverSubusers.id, subuser.id))
       .run()
+
+    await invalidateServerSubusersCache(serverId, [userId])
   }
 
   async getServerSubusers(serverId: string, actorUserId: string) {

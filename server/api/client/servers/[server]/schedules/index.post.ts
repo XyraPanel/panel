@@ -2,6 +2,7 @@ import { randomUUID } from 'crypto'
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
+import { invalidateScheduleCaches } from '~~/server/utils/serversStore'
 
 interface CreateSchedulePayload {
   name: string
@@ -56,6 +57,8 @@ export default defineEventHandler(async (event) => {
     .from(tables.serverSchedules)
     .where(eq(tables.serverSchedules.id, scheduleId))
     .get()
+
+  await invalidateScheduleCaches({ serverId: server.id, scheduleId })
 
   return {
     data: {

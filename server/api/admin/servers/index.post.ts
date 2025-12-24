@@ -149,6 +149,13 @@ export default defineEventHandler(async (event) => {
     }
   }
 
+  const { invalidateServerCaches } = await import('~~/server/utils/serversStore')
+  await invalidateServerCaches({
+    id: serverId,
+    uuid: serverUuid,
+    identifier,
+  })
+
   // This prevents the HTTP request from hanging while waiting for installation
   // Use setImmediate to ensure the response is sent before provisioning starts
   setImmediate(async () => {

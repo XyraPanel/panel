@@ -1,6 +1,6 @@
-
-
-import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
+import { and, eq, useDrizzle, tables } from '~~/server/utils/drizzle'
+import { withCache } from '~~/server/utils/cache'
+import { buildServerUserPermissionsCacheKey } from './cache-keys'
 
 export const PERMISSIONS = {
 
@@ -51,78 +51,11 @@ export const PERMISSIONS = {
   'settings.reinstall': 'Reinstall server',
 } as const
 
-export async function hasPermission(
+const SERVER_USER_PERMISSIONS_CACHE_TTL = 60
+
+async function resolveUserPermissions(
   userId: string,
   serverId: string,
-  permission: keyof typeof PERMISSIONS
-): Promise<boolean> {
-  const db = useDrizzle()
-
-  const server = await db
-    .select()
-    .from(tables.servers)
-    .where(eq(tables.servers.id, serverId))
-    .get()
-
-  if (!server) {
-    return false
-  }
-
-  if (server.ownerId === userId) {
-    return true
-  }
-
-  const subuser = await db
-    .select()
-    .from(tables.serverSubusers)
-    .where(
-      and(
-        eq(tables.serverSubusers.serverId, serverId),
-        eq(tables.serverSubusers.userId, userId)
-      )
-    )
-    .get()
-
-  if (!subuser) {
-    return false
-  }
-
-  const permissions = subuser.permissions
-    ? JSON.parse(subuser.permissions as string) as Array<keyof typeof PERMISSIONS>
-    : []
-
-  return permissions.includes(permission)
-}
-
-export async function hasAllPermissions(
-  userId: string,
-  serverId: string,
-  permissions: Array<keyof typeof PERMISSIONS>
-): Promise<boolean> {
-  for (const permission of permissions) {
-    if (!(await hasPermission(userId, serverId, permission))) {
-      return false
-    }
-  }
-  return true
-}
-
-export async function hasAnyPermission(
-  userId: string,
-  serverId: string,
-  permissions: Array<keyof typeof PERMISSIONS>
-): Promise<boolean> {
-  for (const permission of permissions) {
-    if (await hasPermission(userId, serverId, permission)) {
-      return true
-    }
-  }
-  return false
-}
-
-export async function getUserPermissions(
-  userId: string,
-  serverId: string
 ): Promise<Array<keyof typeof PERMISSIONS>> {
   const db = useDrizzle()
 
@@ -139,18 +72,18 @@ export async function getUserPermissions(
   if (server.ownerId === userId) {
     const allPermissions = Object.keys(PERMISSIONS) as Array<keyof typeof PERMISSIONS>
     const wingsPermissions = [
-      'file.write', // (maps to file.update)
-      'file.upload', 
-      'file.download', 
-      'file.copy', 
-      'file.compress', 
-      'file.decompress', 
-      'file.chmod', 
-      'file.rename', 
-      'file.pull', 
-      'websocket.connect', 
+      'file.write',
+      'file.upload',
+      'file.download',
+      'file.copy',
+      'file.compress',
+      'file.decompress',
+      'file.chmod',
+      'file.rename',
+      'file.pull',
+      'websocket.connect',
     ] as const
-    
+
     const combined = [...allPermissions, ...wingsPermissions]
     return Array.from(new Set(combined)) as Array<keyof typeof PERMISSIONS>
   }
@@ -173,4 +106,41 @@ export async function getUserPermissions(
   return subuser.permissions
     ? JSON.parse(subuser.permissions as string) as Array<keyof typeof PERMISSIONS>
     : []
+}
+
+export async function getUserPermissions(
+  userId: string,
+  serverId: string,
+): Promise<Array<keyof typeof PERMISSIONS>> {
+  const cacheKey = buildServerUserPermissionsCacheKey(serverId, userId)
+  return withCache(cacheKey, () => resolveUserPermissions(userId, serverId), {
+    ttl: SERVER_USER_PERMISSIONS_CACHE_TTL,
+  })
+}
+
+export async function hasPermission(
+  userId: string,
+  serverId: string,
+  permission: keyof typeof PERMISSIONS,
+): Promise<boolean> {
+  const permissions = await getUserPermissions(userId, serverId)
+  return permissions.includes(permission)
+}
+
+export async function hasAllPermissions(
+  userId: string,
+  serverId: string,
+  permissions: Array<keyof typeof PERMISSIONS>,
+): Promise<boolean> {
+  const granted = await getUserPermissions(userId, serverId)
+  return permissions.every(permission => granted.includes(permission))
+}
+
+export async function hasAnyPermission(
+  userId: string,
+  serverId: string,
+  permissions: Array<keyof typeof PERMISSIONS>,
+): Promise<boolean> {
+  const granted = await getUserPermissions(userId, serverId)
+  return permissions.some(permission => granted.includes(permission))
 }

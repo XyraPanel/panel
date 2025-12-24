@@ -1,6 +1,7 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { listServerSchedules } from '~~/server/utils/schedules'
+import { listServerScheduleTasks } from '~~/server/utils/serversStore'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -15,21 +16,11 @@ export default defineEventHandler(async (event) => {
 
   const { server } = await getServerWithAccess(serverId, session)
 
-  const db = useDrizzle()
-  const schedules = db
-    .select()
-    .from(tables.serverSchedules)
-    .where(eq(tables.serverSchedules.serverId, server.id))
-    .all()
+  const schedules = await listServerSchedules(server.id)
 
   const schedulesWithTasks = await Promise.all(
     schedules.map(async (schedule) => {
-      const tasks = db
-        .select()
-        .from(tables.serverScheduleTasks)
-        .where(eq(tables.serverScheduleTasks.scheduleId, schedule.id))
-        .orderBy(tables.serverScheduleTasks.sequenceId)
-        .all()
+      const tasks = await listServerScheduleTasks(schedule.id)
 
       return {
         id: schedule.id,
@@ -54,7 +45,7 @@ export default defineEventHandler(async (event) => {
           updated_at: task.updatedAt,
         })),
       }
-    })
+    }),
   )
 
   return {

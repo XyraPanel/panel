@@ -1,6 +1,6 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { listServerBackups } from '~~/server/utils/backups'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -15,11 +15,7 @@ export default defineEventHandler(async (event) => {
 
   const { server } = await getServerWithAccess(serverId, session)
 
-  const db = useDrizzle()
-  const backups = db.select()
-    .from(tables.serverBackups)
-    .where(eq(tables.serverBackups.serverId, server.id))
-    .all()
+  const backups = await listServerBackups(server.id)
 
   return {
     object: 'list',
@@ -28,7 +24,7 @@ export default defineEventHandler(async (event) => {
       attributes: {
         uuid: backup.uuid,
         name: backup.name,
-        ignored_files: backup.ignoredFiles ? JSON.parse(backup.ignoredFiles) : [],
+        ignored_files: backup.ignoredFiles,
         sha256_hash: backup.checksum,
         bytes: backup.bytes,
         created_at: backup.createdAt,

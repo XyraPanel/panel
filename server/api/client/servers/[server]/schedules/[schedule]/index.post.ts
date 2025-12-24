@@ -1,6 +1,7 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
+import { invalidateScheduleCaches } from '~~/server/utils/serversStore'
 
 type ServerScheduleUpdate = typeof tables.serverSchedules.$inferInsert
 
@@ -77,6 +78,8 @@ export default defineEventHandler(async (event) => {
     .from(tables.serverSchedules)
     .where(eq(tables.serverSchedules.id, scheduleId))
     .get()
+
+  await invalidateScheduleCaches({ serverId: server.id, scheduleId })
 
   const tasks = db
     .select()

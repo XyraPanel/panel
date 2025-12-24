@@ -5,7 +5,7 @@ import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables } from '~~/server/utils/drizzle'
 import { permissionManager } from '~~/server/utils/permission-manager'
 import { getServerLimits, listServerAllocations } from '~~/server/utils/serversStore'
-import { getWingsClientForServer } from '~~/server/utils/wings-client'
+import { getServerStatus } from '~~/server/utils/server-status'
 
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server')
@@ -50,16 +50,15 @@ export default defineEventHandler(async (event) => {
   let actualStatus = server.status ?? null
   let actualSuspended = Boolean(server.suspended)
 
-  if (server.uuid && server.nodeId) {
+  if (server.uuid) {
     try {
-      const { client } = await getWingsClientForServer(server.uuid)
-      const details = await client.getServerDetails(server.uuid)
-      actualStatus = details.state || actualStatus
-      actualSuspended = details.isSuspended ?? actualSuspended
+      const status = await getServerStatus(server.uuid)
+      actualStatus = status.state || actualStatus
+      actualSuspended = status.isSuspended ?? actualSuspended
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       if (!message.includes('404') && !message.includes('not found')) {
-        console.warn(`Failed to sync Wings status for server ${server.uuid}:`, message)
+        console.warn(`Failed to resolve cached status for server ${server.uuid}:`, message)
       }
     }
   }

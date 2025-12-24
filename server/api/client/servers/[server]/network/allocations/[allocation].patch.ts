@@ -3,6 +3,7 @@ import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
 import { updateAllocationSchema } from '#shared/schema/server/subusers'
+import { invalidateServerCaches } from '~~/server/utils/serversStore'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -56,6 +57,8 @@ export default defineEventHandler(async (event) => {
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.id, allocationId))
     .get()
+
+  await invalidateServerCaches({ id: server.id, uuid: server.uuid, identifier: server.identifier })
 
   return {
     data: {

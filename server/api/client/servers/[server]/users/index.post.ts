@@ -4,6 +4,7 @@ import { getServerWithAccess } from '~~/server/utils/server-helpers'
 import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
 import { createSubuserSchema } from '#shared/schema/server/subusers'
+import { invalidateServerSubusersCache } from '~~/server/utils/subusers'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -75,6 +76,8 @@ export default defineEventHandler(async (event) => {
     .from(tables.serverSubusers)
     .where(eq(tables.serverSubusers.id, subuserId))
     .get()
+
+  await invalidateServerSubusersCache(server.id, [user.id])
 
   return {
     data: {

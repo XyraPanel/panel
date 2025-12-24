@@ -122,6 +122,17 @@ export default defineEventHandler(async (event) => {
     .where(eq(tables.servers.id, serverId))
     .get()
 
+  if (!updated) {
+    throw createError({ statusCode: 500, message: 'Server update failed' })
+  }
+
+  const { invalidateServerCaches } = await import('~~/server/utils/serversStore')
+  await invalidateServerCaches({
+    id: updated.id,
+    uuid: updated.uuid,
+    identifier: updated.identifier,
+  })
+
   console.info('[admin][servers:update]', {
     serverId,
     actor: session?.user?.email,

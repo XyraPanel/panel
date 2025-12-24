@@ -618,6 +618,7 @@ export interface ServerSubuser {
   userId: string
   username: string
   email: string
+  image: string | null
   permissions: string[]
   createdAt: string
   updatedAt: string
