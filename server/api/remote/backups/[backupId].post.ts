@@ -2,6 +2,7 @@ import { createError, readBody, type H3Event } from 'h3'
 import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
 import { recordAuditEventFromRequest } from '~~/server/utils/audit'
 import { getNodeIdFromAuth } from '~~/server/utils/wings/auth'
+import { invalidateServerBackupsCache } from '~~/server/utils/backups'
 
 interface BackupPart {
   etag: string
@@ -53,6 +54,7 @@ export default defineEventHandler(async (event: H3Event) => {
     .set(updates)
     .where(eq(tables.serverBackups.id, backup.id))
     .run()
+  await invalidateServerBackupsCache(backup.serverId)
 
   const server = db
     .select()

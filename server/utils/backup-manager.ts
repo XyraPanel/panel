@@ -2,6 +2,7 @@ import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
 import { getWingsClientForServer } from '~~/server/utils/wings-client'
 import { recordAuditEvent } from '~~/server/utils/audit'
 import { sendBackupCompletedEmail } from '~~/server/utils/email'
+import { invalidateServerBackupsCache } from '~~/server/utils/backups'
 import { randomUUID } from 'crypto'
 import type { BackupManagerOptions, CreateBackupOptions, BackupInfo } from '#shared/types/server'
 
@@ -46,21 +47,10 @@ export class BackupManager {
     }
 
     await this.db.insert(tables.serverBackups).values(backupRecord)
+    await invalidateServerBackupsCache(server.id as string)
 
     try {
-      const wingsBackup = await client.createBackup(serverUuid, backupName, options.ignoredFiles)
-      
-      await this.db
-        .update(tables.serverBackups)
-        .set({
-          checksum: wingsBackup.sha256_hash,
-          bytes: wingsBackup.bytes,
-          isSuccessful: true,
-          completedAt: wingsBackup.completed_at ? new Date(wingsBackup.completed_at) : new Date(),
-          updatedAt: new Date(),
-        })
-        .where(eq(tables.serverBackups.id, backupId))
-        .run()
+      await client.createBackup(serverUuid, backupUuid, options.ignoredFiles)
 
       if (!options.skipAudit && options.userId) {
         await recordAuditEvent({
@@ -72,7 +62,6 @@ export class BackupManager {
           metadata: { 
             backupId,
             backupName,
-            size: wingsBackup.bytes,
           },
         })
       }
@@ -88,12 +77,12 @@ export class BackupManager {
         name: backupName,
         serverId: server.id as string,
         serverUuid,
-        size: wingsBackup.bytes,
-        isSuccessful: true,
+        size: 0,
+        isSuccessful: false,
         isLocked: false,
-        checksum: wingsBackup.sha256_hash,
+        checksum: undefined,
         ignoredFiles: options.ignoredFiles,
-        completedAt: wingsBackup.completed_at ? new Date(wingsBackup.completed_at) : new Date(),
+        completedAt: null,
         createdAt: now,
       }
     } catch (error) {
@@ -105,6 +94,7 @@ export class BackupManager {
         })
         .where(eq(tables.serverBackups.id, backupId))
         .run()
+      await invalidateServerBackupsCache(server.id as string)
 
       throw error
     }
@@ -136,6 +126,7 @@ export class BackupManager {
       .delete(tables.serverBackups)
       .where(eq(tables.serverBackups.id, backup.id))
       .run()
+    await invalidateServerBackupsCache(server.id as string)
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({
@@ -278,6 +269,7 @@ export class BackupManager {
       })
       .where(eq(tables.serverBackups.id, backup.id))
       .run()
+    await invalidateServerBackupsCache(server.id as string)
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({
@@ -318,6 +310,7 @@ export class BackupManager {
       })
       .where(eq(tables.serverBackups.id, backup.id))
       .run()
+    await invalidateServerBackupsCache(server.id as string)
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({

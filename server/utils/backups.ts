@@ -2,12 +2,16 @@ import { eq, desc } from 'drizzle-orm'
 import type { ServerBackup } from '#shared/types/server'
 import { useDrizzle } from '~~/server/utils/drizzle'
 import * as tables from '~~/server/database/schema'
-import { withCache, buildCacheKey } from './cache'
+import { withCache, buildCacheKey, deleteCacheItem } from './cache'
 
 const SERVER_BACKUPS_CACHE_TTL = 60
 
+function getServerBackupsCacheKey(serverId: string) {
+  return buildCacheKey('server', serverId, 'backups')
+}
+
 export async function listServerBackups(serverId: string): Promise<ServerBackup[]> {
-  const cacheKey = buildCacheKey('server', serverId, 'backups')
+  const cacheKey = getServerBackupsCacheKey(serverId)
 
   return withCache(cacheKey, async () => {
     const db = useDrizzle()
@@ -33,4 +37,8 @@ export async function listServerBackups(serverId: string): Promise<ServerBackup[
       updatedAt: new Date(row.updatedAt).toISOString(),
     }))
   }, { ttl: SERVER_BACKUPS_CACHE_TTL })
+}
+
+export async function invalidateServerBackupsCache(serverId: string): Promise<void> {
+  await deleteCacheItem(getServerBackupsCacheKey(serverId))
 }

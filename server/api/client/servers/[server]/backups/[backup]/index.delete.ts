@@ -1,7 +1,8 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { getWingsClientForServer } from '~~/server/utils/wings-client'
-import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
+import { getWingsClientForServer, WingsConnectionError } from '~~/server/utils/wings-client'
+import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { invalidateServerBackupsCache } from '~~/server/utils/backups'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -18,18 +19,14 @@ export default defineEventHandler(async (event) => {
   const { server } = await getServerWithAccess(serverId, session)
 
   const db = useDrizzle()
-  const [backup] = db.select()
+  const backup = db.select()
     .from(tables.serverBackups)
-    .where(
-      and(
-        eq(tables.serverBackups.serverId, server.id),
-        eq(tables.serverBackups.uuid, backupUuid)
-      )
-    )
+    .where(eq(tables.serverBackups.uuid, backupUuid))
     .limit(1)
     .all()
+    .at(0)
 
-  if (!backup) {
+  if (!backup || backup.serverId !== server.id) {
     throw createError({
       statusCode: 404,
       message: 'Backup not found',
@@ -45,11 +42,21 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { client } = await getWingsClientForServer(server.uuid)
-    await client.deleteBackup(server.uuid, backupUuid)
+    try {
+      await client.deleteBackup(server.uuid, backupUuid)
+    } catch (error) {
+      if (error instanceof WingsConnectionError && error.message.includes('404')) {
+        console.warn(`Backup ${backupUuid} missing on Wings, removing record locally.`)
+      }
+      else {
+        throw error
+      }
+    }
 
     db.delete(tables.serverBackups)
       .where(eq(tables.serverBackups.id, backup.id))
       .run()
+    await invalidateServerBackupsCache(server.id as string)
 
     return {
       success: true,

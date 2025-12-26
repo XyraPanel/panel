@@ -32,6 +32,10 @@ export class WingsClient {
     return `Bearer ${plainSecret}`
   }
 
+  getAuthHeader(): string {
+    return this.getToken()
+  }
+
   private async request<T>(
     path: string,
     options: RequestInit = {}
@@ -373,7 +377,7 @@ export class WingsClient {
   }
 
   async deleteBackup(serverUuid: string, backupUuid: string): Promise<void> {
-    await this.request(`/api/servers/${serverUuid}/backups/${backupUuid}`, {
+    await this.request(`/api/servers/${serverUuid}/backup/${backupUuid}`, {
       method: 'DELETE',
     })
   }
@@ -381,19 +385,36 @@ export class WingsClient {
   async restoreBackup(
     serverUuid: string,
     backupUuid: string,
-    truncate: boolean = false
+    truncate: boolean = false,
+    adapter: 'wings' | 's3' = 'wings'
   ): Promise<void> {
-    await this.request(
-      `/api/servers/${serverUuid}/backups/${backupUuid}/restore`,
-      {
-        method: 'POST',
-        body: JSON.stringify({ truncate }),
-      }
-    )
+    await this.request(`/api/servers/${serverUuid}/backup/${backupUuid}/restore`, {
+      method: 'POST',
+      body: JSON.stringify({
+        adapter,
+        truncate_directory: truncate,
+      }),
+    })
+  }
+
+  async streamBackupDownload(serverUuid: string, backupUuid: string): Promise<Response> {
+    const downloadUrl = this.getBackupDownloadUrl(serverUuid, backupUuid)
+    const response = await fetch(downloadUrl, {
+      headers: {
+        Authorization: this.getAuthHeader(),
+        Accept: 'application/octet-stream',
+      },
+    })
+
+    if (!response.ok || !response.body) {
+      throw new WingsConnectionError(`Failed to download backup: ${response.status}`)
+    }
+
+    return response
   }
 
   getBackupDownloadUrl(serverUuid: string, backupUuid: string): string {
-    return `${this.baseUrl}/api/servers/${serverUuid}/backups/${backupUuid}/download`
+    return `${this.baseUrl}/api/servers/${serverUuid}/backup/${backupUuid}/download`
   }
 
   async createServer(serverUuid: string, config: Record<string, unknown>): Promise<void> {

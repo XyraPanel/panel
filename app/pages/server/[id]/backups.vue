@@ -34,28 +34,14 @@ function formatBytes(bytes: number): string {
   return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`
 }
 
-function formatDate(dateString: string | null): string {
-  if (!dateString) return t('server.backups.inProgressEllipsis')
-
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  }).format(date)
-}
-
 function getBackupStatus(backup: ServerBackup) {
   if (!backup.completedAt) {
-    return { label: t('server.backups.inProgress'), color: 'warning' as const }
+    return { label: t('server.backups.inProgress'), color: 'warning' as const, variant: 'outline' as const }
   }
   if (backup.isSuccessful) {
-    return { label: t('server.backups.completed'), color: 'primary' as const }
+    return { label: t('server.backups.completed'), color: 'success' as const, variant: 'subtle' as const }
   }
-  return { label: t('server.backups.failed'), color: 'error' as const }
+  return { label: t('server.backups.failed'), color: 'error' as const, variant: 'outline' as const }
 }
 
 function getStorageLabel(disk: string): string {
@@ -97,14 +83,15 @@ async function createBackup() {
   }
 }
 
-async function downloadBackup(backupId: string) {
-  operatingBackupId.value = backupId
+async function downloadBackup(backupUuid: string) {
+  operatingBackupId.value = backupUuid
   try {
-    const response = await $fetch<{ data: { url: string } }>(
-      `/api/client/servers/${serverId.value}/backups/${backupId}/download`,
-    )
+    const downloadUrl = `/api/client/servers/${serverId.value}/backups/${backupUuid}/download`
+    const newTab = window.open(downloadUrl, '_blank')
 
-    window.open(response.data.url, '_blank')
+    if (!newTab) {
+      window.location.href = downloadUrl
+    }
   }
   catch (err) {
     toast.add({
@@ -118,14 +105,14 @@ async function downloadBackup(backupId: string) {
   }
 }
 
-async function restoreBackup(backupId: string) {
+async function restoreBackup(backupUuid: string) {
   if (!confirm(t('server.backups.confirmRestore'))) {
     return
   }
 
-  operatingBackupId.value = backupId
+  operatingBackupId.value = backupUuid
   try {
-    await $fetch(`/api/client/servers/${serverId.value}/backups/${backupId}/restore`, {
+    await $fetch(`/api/client/servers/${serverId.value}/backups/${backupUuid}/restore`, {
       method: 'POST',
     })
 
@@ -147,10 +134,10 @@ async function restoreBackup(backupId: string) {
   }
 }
 
-async function toggleLock(backupId: string) {
-  operatingBackupId.value = backupId
+async function toggleLock(backupUuid: string) {
+  operatingBackupId.value = backupUuid
   try {
-    await $fetch(`/api/client/servers/${serverId.value}/backups/${backupId}/lock`, {
+    await $fetch(`/api/client/servers/${serverId.value}/backups/${backupUuid}/lock`, {
       method: 'POST',
     })
 
@@ -174,14 +161,33 @@ async function toggleLock(backupId: string) {
   }
 }
 
-async function deleteBackup(backupId: string) {
+async function deleteBackup(backupUuid: string) {
+  const targetBackup = backups.value.find(backup => backup.uuid === backupUuid)
+  if (!targetBackup) {
+    toast.add({
+      title: t('common.error'),
+      description: t('server.backups.deleteFailed'),
+      color: 'error',
+    })
+    return
+  }
+
+  if (targetBackup.isLocked) {
+    toast.add({
+      title: t('common.error'),
+      description: t('server.backups.deleteLockedError'),
+      color: 'error',
+    })
+    return
+  }
+
   if (!confirm(t('server.backups.confirmDelete'))) {
     return
   }
 
-  operatingBackupId.value = backupId
+  operatingBackupId.value = targetBackup.uuid
   try {
-    await $fetch(`/api/client/servers/${serverId.value}/backups/${backupId}`, {
+    await $fetch(`/api/client/servers/${serverId.value}/backups/${targetBackup.uuid}`, {
       method: 'DELETE',
     })
 
@@ -220,6 +226,7 @@ async function deleteBackup(backupId: string) {
               <UButton
                 icon="i-lucide-archive"
                 color="primary"
+                variant="subtle"
                 :loading="creating"
                 @click="createBackup"
               >
@@ -272,15 +279,35 @@ async function deleteBackup(backupId: string) {
                   <div class="col-span-4">
                     <div class="flex items-center gap-2">
                       <p class="font-medium">{{ backup.name }}</p>
-                      <UIcon v-if="backup.isLocked" name="i-lucide-lock" class="size-3 text-muted-foreground" />
+                      <UIcon
+                        v-if="backup.isLocked"
+                        name="i-lucide-lock"
+                        class="size-3 text-error"
+                      />
                     </div>
                     <p class="text-xs text-muted-foreground">{{ backup.uuid }}</p>
                   </div>
                   <span class="col-span-2 text-sm text-muted-foreground">{{ formatBytes(backup.bytes) }}</span>
-                  <span class="col-span-3 text-sm text-muted-foreground">{{ formatDate(backup.completedAt || backup.createdAt) }}</span>
+                  <span class="col-span-3 text-sm text-muted-foreground">
+                    <NuxtTime
+                      v-if="backup.completedAt || backup.createdAt"
+                      :datetime="backup.completedAt || backup.createdAt"
+                      month="short"
+                      day="numeric"
+                      year="numeric"
+                      hour="numeric"
+                      minute="2-digit"
+                      format="MMM d, yyyy • h:mm a"
+                    />
+                    <span v-else>{{ t('server.backups.inProgressEllipsis') }}</span>
+                  </span>
                   <span class="col-span-2 text-sm text-muted-foreground">{{ getStorageLabel(backup.disk) }}</span>
                   <div class="col-span-1">
-                    <UBadge :color="getBackupStatus(backup).color" size="xs">
+                    <UBadge
+                      :color="getBackupStatus(backup).color"
+                      :variant="getBackupStatus(backup).variant"
+                      size="xs"
+                    >
                       {{ getBackupStatus(backup).label }}
                     </UBadge>
                   </div>
@@ -289,8 +316,8 @@ async function deleteBackup(backupId: string) {
                       :icon="backup.isLocked ? 'i-lucide-unlock' : 'i-lucide-lock'"
                       size="xs"
                       variant="ghost"
-                      :loading="operatingBackupId === backup.id"
-                      @click="toggleLock(backup.id)"
+                      :loading="operatingBackupId === backup.uuid"
+                      @click="toggleLock(backup.uuid)"
                     >
                       {{ backup.isLocked ? t('server.backups.unlock') : t('server.backups.lock') }}
                     </UButton>
@@ -299,9 +326,9 @@ async function deleteBackup(backupId: string) {
                       size="xs"
                       variant="ghost"
                       color="primary"
-                      :loading="operatingBackupId === backup.id"
+                      :loading="operatingBackupId === backup.uuid"
                       :disabled="!backup.completedAt || !backup.isSuccessful"
-                      @click="downloadBackup(backup.id)"
+                      @click="downloadBackup(backup.uuid)"
                     >
                       {{ t('server.backups.download') }}
                     </UButton>
@@ -310,9 +337,9 @@ async function deleteBackup(backupId: string) {
                       size="xs"
                       variant="ghost"
                       color="warning"
-                      :loading="operatingBackupId === backup.id"
+                      :loading="operatingBackupId === backup.uuid"
                       :disabled="!backup.completedAt || !backup.isSuccessful"
-                      @click="restoreBackup(backup.id)"
+                      @click="restoreBackup(backup.uuid)"
                     >
                       {{ t('server.backups.restore') }}
                     </UButton>
@@ -321,9 +348,9 @@ async function deleteBackup(backupId: string) {
                       size="xs"
                       variant="ghost"
                       color="error"
-                      :loading="operatingBackupId === backup.id"
+                      :loading="operatingBackupId === backup.uuid"
                       :disabled="backup.isLocked"
-                      @click="deleteBackup(backup.id)"
+                      @click="deleteBackup(backup.uuid)"
                     >
                       {{ t('server.backups.delete') }}
                     </UButton>

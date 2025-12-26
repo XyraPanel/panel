@@ -134,9 +134,12 @@ class SimpleQueue {
   }
 
   private async createBackup(data: { serverUuid: string; name?: string; ignored?: string }) {
-    const { getWingsClientForServer } = await import('./wings-client')
-    const { client } = await getWingsClientForServer(data.serverUuid)
-    await client.createBackup(data.serverUuid, data.name, data.ignored)
+    const { backupManager } = await import('./backup-manager')
+    await backupManager.createBackup(data.serverUuid, {
+      name: data.name,
+      ignoredFiles: data.ignored,
+      skipAudit: true,
+    })
   }
 }
 
