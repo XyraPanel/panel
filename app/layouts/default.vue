@@ -8,6 +8,22 @@ const localePath = useLocalePath()
 const runtimeConfig = useRuntimeConfig()
 const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel')
 
+const pageTitle = computed(() => {
+  const title = route.meta.title
+  if (typeof title === 'string' && title.length > 0) {
+    return title
+  }
+  return null
+})
+
+const pageSubtitle = computed(() => {
+  const subtitle = route.meta.subtitle
+  if (typeof subtitle === 'string' && subtitle.length > 0) {
+    return subtitle
+  }
+  return null
+})
+
 const authStore = useAuthStore()
 const isHydrated = ref(false)
 onMounted(() => {
@@ -192,7 +208,13 @@ async function handleLocaleChange(newLocale: string | undefined) {
 
     <UDashboardPanel :key="'dashboard-panel'" :ui="{ body: 'flex flex-1 flex-col p-0' }">
       <template #body>
-        <UDashboardNavbar>
+        <UDashboardNavbar :ui="{ left: 'flex flex-col gap-0.5 text-left py-3', root: 'justify-between py-3' }">
+          <template #left>
+            <div v-if="pageTitle" class="flex flex-col gap-0.5">
+              <h1 class="text-lg font-semibold text-foreground">{{ pageTitle }}</h1>
+              <p v-if="pageSubtitle" class="text-xs text-muted-foreground">{{ pageSubtitle }}</p>
+            </div>
+          </template>
           <template #right>
             <div class="flex items-center gap-2">
               <ULocaleSelect

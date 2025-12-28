@@ -6,6 +6,8 @@ import type { AccountSessionsResponse, UserSessionSummary } from '#shared/types/
 
 definePageMeta({
   auth: true,
+  title: 'Sessions',
+  subtitle: 'Manage your active sessions and connected devices',
 })
 
 const { t } = useI18n()
@@ -146,33 +148,37 @@ async function handleSignOut(token: string) {
 
   updatingSessions.value = true
   try {
-    if (authClient.multiSession && typeof authClient.multiSession.revoke === 'function') {
-      try {
-        const result = await authClient.multiSession.revoke({
-          sessionToken: token,
-        })
+    const client = authClient as Record<string, unknown>
+    if ('multiSession' in client && client.multiSession && typeof client.multiSession === 'object') {
+      const multiSession = client.multiSession as Record<string, unknown>
+      if (typeof multiSession.revoke === 'function') {
+        try {
+          const result = await multiSession.revoke({
+            sessionToken: token,
+          }) as { error?: { message?: string } } | undefined
 
-        if (result?.error) {
-          throw new Error(result.error.message || t('account.sessions.failedToRevokeSession'))
-        }
+          if (result?.error) {
+            throw new Error(result.error.message || t('account.sessions.failedToRevokeSession'))
+          }
 
-        const currentSession = await authClient.getSession()
-        const currentSessionRevoked = !currentSession?.data
+          const currentSession = await authClient.getSession()
+          const currentSessionRevoked = !currentSession?.data
 
-        if (currentSessionRevoked) {
-          await navigateTo('/auth/login')
+          if (currentSessionRevoked) {
+            await navigateTo('/auth/login')
+            return
+          }
+
+          await loadSessions()
+          toast.add({
+            title: t('account.sessions.sessionRevokedTitle'),
+            description: t('account.sessions.sessionRevokedDescription'),
+          })
           return
         }
-
-        await loadSessions()
-        toast.add({
-          title: t('account.sessions.sessionRevokedTitle'),
-          description: t('account.sessions.sessionRevokedDescription'),
-        })
-        return
-      }
-      catch (err) {
-        console.warn('Multi-session client revoke failed, falling back to API:', err)
+        catch (err) {
+          console.warn('Multi-session client revoke failed, falling back to API:', err)
+        }
       }
     }
 
@@ -259,37 +265,21 @@ async function handleSignOutAll(includeCurrent = false) {
 </script>
 
 <template>
-  <UPage>
-    <UContainer>
-      <UPageHeader
-        :title="t('account.sessions.title')"
-        :description="t('account.sessions.manageDevicesDescription')"
+  <div class="space-y-6">
+    <div v-if="sessions.length > 1" class="flex justify-end">
+      <UButton
+        variant="ghost"
+        color="error"
+        icon="i-lucide-log-out"
+        :loading="updatingSessions"
+        :disabled="!hasSessions || updatingSessions"
+        @click="handleSignOutAll(true)"
       >
-        <template #links>
-          <UButton
-            variant="ghost"
-            color="neutral"
-            :loading="updatingSessions"
-            :disabled="!hasSessions || updatingSessions"
-            @click="handleSignOutAll(false)"
-          >
-            {{ t('account.sessions.signOutOthers') }}
-          </UButton>
-          <UButton
-            variant="soft"
-            color="neutral"
-            :loading="updatingSessions"
-            :disabled="!hasSessions || updatingSessions"
-            @click="handleSignOutAll(true)"
-          >
-            {{ t('account.sessions.signOutAll') }}
-          </UButton>
-        </template>
-      </UPageHeader>
-    </UContainer>
+        {{ t('account.sessions.signOutAll') }}
+      </UButton>
+    </div>
 
-    <UPageBody>
-      <UContainer>
+    <div>
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
             <div>
@@ -355,18 +345,18 @@ async function handleSignOutAll(includeCurrent = false) {
                     <div class="flex items-center gap-2 shrink-0">
                       <span class="truncate">
                         {{ t('account.sessions.active') }}
-                        <template v-if="session.lastSeenAt">
+                        <template v-if="session.isCurrent">
+                          <span class="font-medium">{{ t('common.now') }}</span>
+                        </template>
+                        <template v-else-if="session.lastSeenAt">
                           <NuxtTime :datetime="session.lastSeenAt" class="font-medium" />
                         </template>
-                        <span v-else>{{ t('common.unknown') }}</span>
+                        <span v-else class="text-muted-foreground">{{ t('account.sessions.neverUsed') }}</span>
                       </span>
                       <span class="hidden sm:inline">•</span>
                       <span class="truncate">
                         {{ t('account.sessions.expires') }}
-                        <template v-if="session.expiresAtTimestamp">
-                          <NuxtTime :datetime="session.expiresAtTimestamp * 1000" class="font-medium" />
-                        </template>
-                        <span v-else>{{ t('common.unknown') }}</span>
+                        <NuxtTime :datetime="session.expiresAt" class="font-medium" />
                       </span>
                     </div>
                   </div>
@@ -408,7 +398,6 @@ async function handleSignOutAll(includeCurrent = false) {
             </div>
           </div>
         </UCard>
-      </UContainer>
-    </UPageBody>
-  </UPage>
+    </div>
+  </div>
 </template>

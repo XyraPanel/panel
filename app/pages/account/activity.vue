@@ -2,7 +2,11 @@
 import { computed, ref } from 'vue'
 import type { AccountActivityItem, PaginatedAccountActivityResponse } from '#shared/types/account'
 
-definePageMeta({ auth: true })
+definePageMeta({
+  auth: true,
+  title: 'Activity',
+  subtitle: 'View your recent account activity and actions',
+})
 
 const { t } = useI18n()
 
@@ -106,17 +110,7 @@ async function copyJson(entry: typeof entries.value[0]) {
 </script>
 
 <template>
-  <UPage>
-    <UContainer>
-      <UPageHeader :title="t('account.activity.title')">
-        <template #description>
-          {{ t('account.activity.description') }}
-        </template>
-      </UPageHeader>
-    </UContainer>
-
-    <UPageBody>
-      <UContainer>
+  <div>
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
             <div class="flex items-center justify-between">
@@ -229,7 +223,5 @@ async function copyJson(entry: typeof entries.value[0]) {
             </div>
           </template>
         </UCard>
-      </UContainer>
-    </UPageBody>
-  </UPage>
+  </div>
 </template>

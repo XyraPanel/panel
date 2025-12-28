@@ -3,6 +3,8 @@ import { ref, computed, reactive } from 'vue'
 
 definePageMeta({
   auth: true,
+  title: 'SSH Keys',
+  subtitle: 'Manage SSH keys for secure server access',
   layout: 'default',
 })
 
@@ -152,17 +154,7 @@ async function confirmDelete() {
 </script>
 
 <template>
-  <UPage>
-    <UContainer>
-      <UPageHeader :title="t('account.sshKeys.title')" :description="t('account.sshKeys.description')">
-        <template #links>
-          <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
-            {{ t('account.sshKeys.addSSHKey') }}
-          </UButton>
-        </template>
-      </UPageHeader>
-    </UContainer>
-
+  <div>
     <UModal
       v-model:open="showCreateModal"
       :title="t('account.sshKeys.addSSHKey')"
@@ -259,13 +251,17 @@ async function confirmDelete() {
       </template>
     </UModal>
 
-    <UPageBody>
-      <UContainer>
+    <div>
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
-            <div class="space-y-1">
-              <h2 class="text-lg font-semibold">{{ t('account.sshKeys.configuredSSHKeys') }}</h2>
-              <p class="text-sm text-muted-foreground">{{ t('account.sshKeys.configuredSSHKeysDescription') }}</p>
+            <div class="flex items-start justify-between">
+              <div class="space-y-1">
+                <h2 class="text-lg font-semibold">{{ t('account.sshKeys.configuredSSHKeys') }}</h2>
+                <p class="text-sm text-muted-foreground">{{ t('account.sshKeys.configuredSSHKeysDescription') }}</p>
+              </div>
+              <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
+                {{ t('account.sshKeys.addSSHKey') }}
+              </UButton>
             </div>
           </template>
           <UEmpty
@@ -350,8 +346,7 @@ async function confirmDelete() {
             </div>
           </div>
         </UCard>
-      </UContainer>
-    </UPageBody>
-  </UPage>
+    </div>
+  </div>
 </template>
 

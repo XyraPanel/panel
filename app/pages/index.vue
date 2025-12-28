@@ -1,20 +1,12 @@
 <template>
-  <UPage>
-    <UContainer>
-      <UPageHeader
-        :title="welcomeTitle"
-        :description="t('dashboard.description')"
-      />
+  <div class="space-y-8">
+    <UAlert v-if="announcement" color="warning" variant="subtle" icon="i-lucide-info">
+      <template #description>
+        <span class="whitespace-pre-wrap">{{ announcement }}</span>
+      </template>
+    </UAlert>
 
-      <UAlert v-if="announcement" color="warning" variant="subtle" icon="i-lucide-info" class="mt-4">
-        <template #description>
-          <span class="whitespace-pre-wrap">{{ announcement }}</span>
-        </template>
-      </UAlert>
-    </UContainer>
-
-    <UPageBody>
-      <UContainer class="space-y-8">
+    <div class="space-y-8">
         <section>
           <h2 class="sr-only">{{ t('dashboard.keyMetrics') }}</h2>
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
@@ -52,9 +44,8 @@
           </div>
         </section>
 
-      </UContainer>
-    </UPageBody>
-  </UPage>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -235,4 +226,12 @@ const welcomeTitle = computed(() => {
   }
   return t('welcome')
 })
+
+watch(welcomeTitle, (newTitle) => {
+  if (import.meta.client) {
+    const route = useRoute()
+    route.meta.title = newTitle
+    route.meta.subtitle = t('dashboard.description')
+  }
+}, { immediate: true })
 </script>

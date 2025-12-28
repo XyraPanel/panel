@@ -19,8 +19,8 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
     rows = db.select({
       sessionToken: tables.sessions.sessionToken,
       expires: tables.sessions.expires,
-      metadataIp: tables.sessionMetadata.ipAddress,
-      metadataUserAgent: tables.sessionMetadata.userAgent,
+      metadataIp: tables.sessions.ipAddress,
+      metadataUserAgent: tables.sessions.userAgent,
       metadataDevice: tables.sessionMetadata.deviceName,
       metadataBrowser: tables.sessionMetadata.browserName,
       metadataOs: tables.sessionMetadata.osName,
@@ -38,6 +38,8 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
       rows = db.select({
         sessionToken: tables.sessions.sessionToken,
         expires: tables.sessions.expires,
+        metadataIp: tables.sessions.ipAddress,
+        metadataUserAgent: tables.sessions.userAgent,
       })
         .from(tables.sessions)
         .where(eq(tables.sessions.userId, session.user.id))

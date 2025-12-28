@@ -15,3 +15,5 @@ export const authClient = createAuthClient({
     customSessionClient<typeof auth>(),
   ],
 })
+
+export type AuthClient = typeof authClient

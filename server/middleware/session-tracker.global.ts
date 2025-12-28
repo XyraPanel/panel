@@ -14,14 +14,14 @@ export default defineEventHandler(async (event) => {
   if (path.startsWith('/api/auth'))
     return
 
-  const contextAuth = (event.context as { auth?: AuthContext }).auth
-  if (!contextAuth?.session?.user?.id || !contextAuth?.user?.id) {
-    return
-  }
-
   const cookies = parseCookies(event)
   const cookieToken = cookies['better-auth.session_token']
   if (!cookieToken) {
+    return
+  }
+
+  const contextAuth = (event.context as { auth?: AuthContext }).auth
+  if (!contextAuth?.user?.id) {
     return
   }
 

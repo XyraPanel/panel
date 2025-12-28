@@ -7,6 +7,8 @@ import type { ApiKeyResponse } from '#shared/types/api'
 definePageMeta({
   auth: true,
   layout: 'default',
+  title: 'API Keys',
+  subtitle: 'Manage existing keys or create new ones for API access',
 })
 
 const { t } = useI18n()
@@ -290,17 +292,7 @@ async function copyToken() {
 </script>
 
 <template>
-  <UPage>
-    <UContainer>
-      <UPageHeader :title="t('account.apiKeys.title')" :description="t('account.apiKeys.description')">
-        <template #links>
-          <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
-            {{ t('account.apiKeys.createKey') }}
-          </UButton>
-        </template>
-      </UPageHeader>
-    </UContainer>
-
+  <div>
     <UModal
       v-model:open="showCreateModal"
       :title="newKeyToken ? t('account.apiKeys.apiKeyCreated') : t('account.apiKeys.createKey')"
@@ -469,13 +461,17 @@ async function copyToken() {
       </template>
     </UModal>
 
-    <UPageBody>
-      <UContainer>
+    <div>
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
-            <div class="space-y-1">
-              <h2 class="text-lg font-semibold">{{ t('account.apiKeys.activeAPIKeys') }}</h2>
-              <p class="text-sm text-muted-foreground">{{ t('account.apiKeys.manageExistingKeys') }}</p>
+            <div class="flex items-start justify-between">
+              <div class="space-y-1">
+                <h2 class="text-lg font-semibold">{{ t('account.apiKeys.activeAPIKeys') }}</h2>
+                <p class="text-sm text-muted-foreground">{{ t('account.apiKeys.manageExistingKeys') }}</p>
+              </div>
+              <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
+                {{ t('account.apiKeys.createKey') }}
+              </UButton>
             </div>
           </template>
           <UAlert v-if="loadError" color="error" icon="i-lucide-alert-triangle" class="mb-4">
@@ -577,8 +573,7 @@ async function copyToken() {
             </div>
           </div>
         </UCard>
-      </UContainer>
-    </UPageBody>
-  </UPage>
+    </div>
+  </div>
 </template>
 

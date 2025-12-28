@@ -7,6 +7,8 @@ import type { AccountProfileResponse, SanitizedUser } from '#shared/types/auth'
 
 definePageMeta({
   auth: true,
+  title: 'Profile',
+  subtitle: 'Manage your account profile information',
 })
 
 const { t } = useI18n()
@@ -148,16 +150,8 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
 </script>
 
 <template>
-  <UPage>
-    <UContainer>
-      <UPageHeader
-        :title="t('account.profile.title')"
-        :description="t('account.profile.description')"
-      />
-    </UContainer>
-
-    <UPageBody>
-      <UContainer>
+  <div>
+    <div>
         <UCard :ui="{ body: 'space-y-4' }">
           <template #header>
             <div>
@@ -200,8 +194,7 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
             </UForm>
           </template>
         </UCard>
-      </UContainer>
-    </UPageBody>
-  </UPage>
+    </div>
+  </div>
 </template>
 

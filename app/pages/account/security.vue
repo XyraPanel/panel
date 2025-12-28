@@ -9,6 +9,8 @@ import { authClient } from '~/utils/auth-client'
 
 definePageMeta({
   auth: true,
+  title: 'Security',
+  subtitle: 'Manage your account security settings and authentication',
 })
 
 const { t } = useI18n()
@@ -58,7 +60,6 @@ async function handlePasswordSubmit(event: FormSubmitEvent<PasswordFormSchema>) 
   try {
     const payload = event.data
 
-    // @ts-expect-error - Nuxt typed routes cause deep type
     const response = await $fetch<PasswordUpdateResponse>('/api/account/password', {
       method: 'PUT',
       body: payload,
@@ -281,16 +282,8 @@ async function disableTotp() {
 </script>
 
 <template>
-  <UPage>
-    <UContainer>
-      <UPageHeader
-        :title="t('account.security.title')"
-        :description="t('account.security.description')"
-      />
-    </UContainer>
-
-    <UPageBody>
-      <UContainer>
+  <div>
+    <div>
         <div class="space-y-6">
           <UCard :ui="{ body: 'space-y-4' }">
             <template #header>
@@ -505,7 +498,6 @@ async function disableTotp() {
             </template>
           </UCard>
         </div>
-      </UContainer>
-    </UPageBody>
-  </UPage>
+    </div>
+  </div>
 </template>

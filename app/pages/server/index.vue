@@ -7,7 +7,14 @@ const scopeSelection = ref<'own' | 'all'>('own')
 
 definePageMeta({
   auth: true,
+  title: 'Servers',
+  subtitle: 'Manage your game servers and view their status',
 })
+
+function cleanedDescription(description?: string | null) {
+  const trimmed = description?.trim() ?? ''
+  return trimmed.length > 0 ? trimmed : null
+}
 
 const { t } = useI18n()
 const { data: me } = await useFetch<{ data: { role: string } }>('/api/me', {
@@ -43,8 +50,6 @@ const {
 })
 
 const servers = computed(() => serversResponse.value?.data ?? [])
-const generatedAt = computed(() => serversResponse.value?.generatedAt ?? null)
-const generatedAtDate = computed(() => (generatedAt.value ? new Date(generatedAt.value) : null))
 const error = computed(() => {
   if (!fetchError.value) return null
   return fetchError.value instanceof Error ? fetchError.value.message : t('server.list.title')
@@ -122,50 +127,33 @@ const scopeToggleText = computed(() => {
 </script>
 
 <template>
-  <UPage>
-    <UContainer>
-      <UPageHeader :title="t('server.list.title')">
-        <template #description>
-          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-            <p class="text-sm text-muted-foreground">
-              {{ t('server.list.description', { time: generatedAtDate ? '' : t('server.list.recently') }) }}
-              <NuxtTime
-                v-if="generatedAtDate"
-                :datetime="generatedAtDate"
-                relative
-                class="font-medium"
-              />
-              <span v-else>{{ t('server.list.recently') }}</span>
-            </p>
-            <USwitch
-              v-if="isAdmin"
-              v-model="showAll"
-              size="sm"
-              color="primary"
-              checked-icon="i-lucide-users"
-              unchecked-icon="i-lucide-user"
-              :disabled="loading"
-              :label="scopeToggleText"
-              class="w-full sm:w-auto lg:min-w-[220px]"
-            />
-          </div>
-        </template>
-        <template #actions>
-          <UInput
-            v-model="search"
-            icon="i-lucide-search"
-            :placeholder="t('server.list.searchServers')"
-            trailing-icon="i-lucide-x"
-            :trailing="!!search"
-            class="w-full sm:w-64"
-            @trailing-click="search = ''"
-          />
-        </template>
-      </UPageHeader>
-    </UContainer>
+  <div class="space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-4">
+        <USwitch
+          v-if="isAdmin"
+          v-model="showAll"
+          size="sm"
+          color="primary"
+          checked-icon="i-lucide-users"
+          unchecked-icon="i-lucide-user"
+          :disabled="loading"
+          :label="scopeToggleText"
+          class="w-full sm:w-auto lg:min-w-[220px]"
+        />
+      </div>
+      <UInput
+        v-model="search"
+        icon="i-lucide-search"
+        :placeholder="t('server.list.searchServers')"
+        trailing-icon="i-lucide-x"
+        :trailing="!!search"
+        class="w-full sm:w-64"
+        @trailing-click="search = ''"
+      />
+    </div>
 
-    <UPageBody>
-      <UContainer>
+    <div>
         <UCard :ui="{ body: 'space-y-4' }">
           <template #header>
             <div>
@@ -214,8 +202,14 @@ const scopeToggleText = computed(() => {
                       <NuxtLink :to="`/server/${server.uuid}/console`" class="text-base font-semibold text-foreground hover:text-primary">
                         {{ server.name }}
                       </NuxtLink>
-                      <UBadge size="xs" color="neutral">{{ server.identifier }}</UBadge>
+                      <UBadge size="xs" color="neutral" variant="soft">{{ server.identifier }}</UBadge>
                       <UBadge size="xs" color="neutral" variant="soft">{{ server.nodeName }}</UBadge>
+                      <UBadge :color="statusBadge(server.status, server.suspended).color" size="xs" variant="soft">
+                        {{ statusBadge(server.status, server.suspended).label }}
+                      </UBadge>
+                      <UBadge v-if="server.isTransferring" color="warning" size="xs" variant="soft">
+                        {{ t('common.transferring') }}
+                      </UBadge>
                     </div>
                     <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground">
                       <span class="inline-flex items-center gap-1">
@@ -226,34 +220,28 @@ const scopeToggleText = computed(() => {
                         </span>
                       </span>
                     </div>
-                    <p class="text-sm text-muted-foreground line-clamp-1">
-                      {{ server.description?.trim() || '\u00A0' }}
+                    <p v-if="cleanedDescription(server.description)" class="text-sm text-muted-foreground line-clamp-1">
+                      {{ cleanedDescription(server.description) }}
                     </p>
                   </div>
                 </div>
 
                 <div class="flex flex-1 flex-wrap items-center justify-start gap-2 text-[11px] text-muted-foreground md:flex-none md:justify-end">
-                  <UBadge :color="statusBadge(server.status, server.suspended).color" size="xs" variant="soft">
-                    {{ statusBadge(server.status, server.suspended).label }}
-                  </UBadge>
-                  <UBadge v-if="server.isTransferring" color="warning" size="xs" variant="soft">
-                    {{ t('common.transferring') }}
-                  </UBadge>
-                  <div class="flex flex-wrap items-center gap-2 text-xs md:text-sm font-medium text-muted-foreground">
-                    <div class="flex items-center gap-1 rounded-xl border border-default/60 bg-muted/20 px-2.5 py-1.5">
-                      <UIcon name="i-lucide-gauge" class="size-4 text-foreground/70" />
-                      <span class="uppercase tracking-wide">{{ t('server.list.cpuLimit') }}</span>
-                      <span class="text-foreground">{{ formatLimit(server.limits, 'cpu') }}</span>
+                  <div class="flex flex-wrap items-center gap-3 text-xs md:text-sm text-muted-foreground">
+                    <div class="inline-flex items-center gap-1">
+                      <UIcon name="i-lucide-gauge" class="size-4 text-foreground/60" />
+                      <span class="text-foreground/80">{{ t('server.list.cpuLimit') }}:</span>
+                      <span class="font-mono text-foreground">{{ formatLimit(server.limits, 'cpu') }}</span>
                     </div>
-                    <div class="flex items-center gap-1 rounded-xl border border-default/60 bg-muted/20 px-2.5 py-1.5">
-                      <UIcon name="i-lucide-memory-stick" class="size-4 text-foreground/70" />
-                      <span class="uppercase tracking-wide">{{ t('server.list.memoryLimit') }}</span>
-                      <span class="text-foreground">{{ formatLimit(server.limits, 'memory') }}</span>
+                    <div class="inline-flex items-center gap-1">
+                      <UIcon name="i-lucide-memory-stick" class="size-4 text-foreground/60" />
+                      <span class="text-foreground/80">{{ t('server.list.memoryLimit') }}:</span>
+                      <span class="font-mono text-foreground">{{ formatLimit(server.limits, 'memory') }}</span>
                     </div>
-                    <div class="flex items-center gap-1 rounded-xl border border-default/60 bg-muted/20 px-2.5 py-1.5">
-                      <UIcon name="i-lucide-hard-drive" class="size-4 text-foreground/70" />
-                      <span class="uppercase tracking-wide">{{ t('server.list.diskLimit') }}</span>
-                      <span class="text-foreground">{{ formatLimit(server.limits, 'disk') }}</span>
+                    <div class="inline-flex items-center gap-1">
+                      <UIcon name="i-lucide-hard-drive" class="size-4 text-foreground/60" />
+                      <span class="text-foreground/80">{{ t('server.list.diskLimit') }}:</span>
+                      <span class="font-mono text-foreground">{{ formatLimit(server.limits, 'disk') }}</span>
                     </div>
                   </div>
                 </div>
@@ -261,7 +249,6 @@ const scopeToggleText = computed(() => {
             </div>
           </div>
         </UCard>
-      </UContainer>
-    </UPageBody>
-  </UPage>
+    </div>
+  </div>
 </template>
