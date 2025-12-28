@@ -61,8 +61,8 @@ const { t } = useI18n()
       {{ props.directoryError.message }}
     </UAlert>
 
-    <div class="rounded-md border border-default">
-      <div class="grid grid-cols-[auto_minmax(0,1.5fr)_110px_140px_64px] items-center gap-3 border-b border-default bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <div class="flex flex-col rounded-md border border-default h-full">
+      <div class="grid grid-cols-[auto_minmax(0,1.5fr)_110px_140px_64px] items-center gap-3 border-b border-default bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground flex-shrink-0">
         <UCheckbox
           :model-value="props.allSelected"
           :indeterminate="props.indeterminateSelection"
@@ -76,7 +76,7 @@ const { t } = useI18n()
         <span class="text-right">{{ t('common.actions') }}</span>
       </div>
 
-      <div class="max-h-112 overflow-y-auto">
+      <div class="overflow-y-auto flex-1">
         <div v-if="props.directoryPending" class="space-y-2 p-3 text-xs text-muted-foreground">
           <div v-for="index in 5" :key="index" class="h-5 animate-pulse rounded bg-muted/60" />
         </div>
@@ -117,8 +117,12 @@ const { t } = useI18n()
             <span class="truncate text-right text-xs text-muted-foreground">{{ entry.modified }}</span>
 
             <UDropdownMenu
-              v-if="entry.type === 'file'"
-              :items="props.availableFileActions(entry).map(action => ({ label: action.label, icon: action.icon, click: action.onClick }))"
+              :items="props.availableFileActions(entry).map(action => ({ 
+                label: action.label, 
+                icon: action.icon, 
+                onSelect: action.onClick,
+                color: action.label.includes('Delete') ? 'error' : undefined 
+              }))"
             >
               <UButton icon="i-lucide-ellipsis-vertical" variant="ghost" size="xs" color="neutral" />
             </UDropdownMenu>

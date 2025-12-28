@@ -44,11 +44,9 @@ function handleSubmit() {
             placeholder="https://example.com/file.zip"
             :disabled="loading"
             autofocus
+            class="w-full"
             @update:model-value="updateValue"
           />
-        </UFormField>
-        <UFormField :label="t('server.files.destinationDirectory')" :help="t('server.files.destinationDirectoryHelp')">
-          <UInput :value="currentDirectoryLabel" disabled />
         </UFormField>
       </UForm>
     </template>

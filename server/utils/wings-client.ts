@@ -257,7 +257,7 @@ export class WingsClient {
   ): Promise<void> {
     await this.request(`/api/servers/${serverUuid}/files/create-directory`, {
       method: 'POST',
-      body: JSON.stringify({ root, name }),
+      body: JSON.stringify({ path: root, name }),
     })
   }
 

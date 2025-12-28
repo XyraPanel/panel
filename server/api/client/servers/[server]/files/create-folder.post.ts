@@ -1,8 +1,14 @@
+import { createError, readBody, type H3Event } from 'h3'
 import { requirePermission } from '~~/server/utils/permission-middleware'
 import { getWingsClientForServer } from '~~/server/utils/wings-client'
 import { recordServerActivity } from '~~/server/utils/server-activity'
 
-export default defineEventHandler(async (event) => {
+interface CreateDirectoryBody {
+  root?: string
+  name?: string
+}
+
+export default defineEventHandler(async (event: H3Event) => {
   const serverId = getRouterParam(event, 'server')
 
   if (!serverId) {
@@ -12,39 +18,47 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const body = await readBody(event)
-  const { root, name } = body
+  const { userId } = await requirePermission(event, 'file.create', serverId)
+
+  const body = await readBody<CreateDirectoryBody>(event)
+  const name = body.name?.trim()
+  const root = typeof body.root === 'string' && body.root.length > 0 ? body.root : '/'
 
   if (!name) {
     throw createError({
-      statusCode: 400,
-      message: 'Folder name is required',
+      statusCode: 422,
+      statusMessage: 'Unprocessable Entity',
+      message: 'Directory name is required',
     })
   }
 
-  const { userId } = await requirePermission(event, 'server.files.write', serverId)
-
   try {
     const { client, server } = await getWingsClientForServer(serverId)
-    await client.createDirectory(server.uuid as string, root || '/', name)
+
+    await client.createDirectory(server.uuid as string, root, name)
 
     await recordServerActivity({
       event,
       actorId: userId,
-      action: 'server.file.create_folder',
+      action: 'server.directory.create',
       server: { id: server.id as string, uuid: server.uuid as string },
-      metadata: { root: root || '/', name },
+      metadata: { directory: root, name },
     })
 
     return {
       success: true,
-      message: 'Folder created successfully',
+      data: {
+        name,
+        root,
+      },
     }
-  } catch (error) {
-    console.error('Failed to create folder on Wings:', error)
+  }
+  catch (error) {
     throw createError({
       statusCode: 500,
-      message: 'Failed to create folder',
+      statusMessage: 'Wings API Error',
+      message: error instanceof Error ? error.message : 'Failed to create directory',
+      cause: error,
     })
   }
 })

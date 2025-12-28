@@ -591,7 +591,13 @@
       "saveChanges": "Save changes",
       "loadingFile": "Loading file…",
       "selectFileToEditPlaceholder": "Open a file to preview and edit its contents.",
-      "backToFiles": "Back to files"
+      "backToFiles": "Back to files",
+      "newFilePlaceholder": "Enter filename",
+      "createFile": "Create File",
+      "newFolderPlaceholder": "Enter folder name",
+      "createFolder": "Create Folder",
+      "deleteSelectedItemsDescription": "The following items will be permanently deleted:",
+      "deleteSelected": "Delete Selected"
     },
     "databases": {
       "title": "Databases",

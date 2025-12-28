@@ -831,6 +831,7 @@ export interface ServerFileListItem {
   size: string
   modified: string
   path: string
+  mode?: string
 }
 
 export interface ServerFileEntry {

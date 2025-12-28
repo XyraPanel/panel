@@ -58,6 +58,7 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
       size: entry.isDirectory ? t('common.na') : formatBytes(entry.size),
       modified: formatDate(entry.modified),
       path: entry.path,
+      mode: entry.mode,
     }))
 
     return files.sort((a, b) => {
@@ -232,7 +233,7 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
           content: '',
         },
       })
-      await fetchDirectory()
+      await fetchDirectory(currentDirectory.value, { force: true })
       toast.add({ title: t('common.success'), description: t('server.files.title') })
       closeNewFileModal()
     }
@@ -264,14 +265,14 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
 
     try {
       newFolderModal.loading = true
-      await requestFetch(`${clientApiBase.value}/files/create-directory`, {
+      await requestFetch(`${clientApiBase.value}/files/create-folder`, {
         method: 'POST',
         body: {
-          root: normalizeDirectoryPath(currentDirectory.value),
+          root: currentDirectory.value,
           name,
         },
       })
-      await fetchDirectory()
+      await fetchDirectory(currentDirectory.value, { force: true })
       toast.add({ title: t('common.success'), description: t('server.files.title') })
       closeNewFolderModal()
     }
@@ -320,7 +321,7 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
       toast.add({ title: t('common.success'), description: t('server.files.title') })
       if (selectedFile.value?.path === renameModal.file.path)
         selectedFile.value = null
-      await fetchDirectory()
+      await fetchDirectory(currentDirectory.value, { force: true })
       closeRenameModal()
     }
     catch (error) {
@@ -358,7 +359,7 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
       toast.add({ title: t('common.success'), description: t('server.files.title') })
       if (selectedFile.value?.path === deleteModal.file.path)
         selectedFile.value = null
-      await fetchDirectory()
+      await fetchDirectory(currentDirectory.value, { force: true })
       closeDeleteModal()
     }
     catch (error) {
@@ -402,7 +403,7 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
         },
       })
       toast.add({ title: t('common.success'), description: t('server.files.title') })
-      await fetchDirectory()
+      await fetchDirectory(currentDirectory.value, { force: true })
       closeChmodModal()
     }
     catch (error) {
@@ -694,7 +695,8 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
         body: formData,
       })
       toast.add({ title: t('common.success'), description: t('server.files.title') })
-      await fetchDirectory()
+      await new Promise(resolve => setTimeout(resolve, 500))
+      await fetchDirectory(currentDirectory.value, { force: true })
     }
     catch (error) {
       toast.add({ color: 'error', title: t('common.error'), description: error instanceof Error ? error.message : t('server.files.failedToLoad') })

@@ -136,8 +136,9 @@ function availableFileActions(file: ServerFileListItem | null) {
 
   const actions = [] as Array<{ label: string; icon: string; onClick: () => void }>
 
+  actions.push({ label: t('server.files.rename'), icon: 'i-lucide-pencil', onClick: () => openRenameModal(file) })
+
   if (file.type === 'file') {
-    actions.push({ label: t('server.files.rename'), icon: 'i-lucide-pencil', onClick: () => openRenameModal(file) })
     actions.push({ label: t('server.files.download'), icon: 'i-lucide-download', onClick: () => handleDownload(file) })
     actions.push({ label: t('server.files.permissions'), icon: 'i-lucide-shield', onClick: () => openChmodModal(file) })
   }
@@ -203,17 +204,11 @@ const editorLanguageLabel = computed(() => languageInfo.value.label)
 
 watch(selectedFile, async (file, previous) => {
   if (isSavingFile.value || fileSaving.value) {
-    console.log('[Files Watch] Save in progress, skipping reload')
     return
   }
   
   if (file && file.path === previous?.path && file.type === previous?.type) {
-    console.log('[Files Watch] File path unchanged, skipping reload:', file.path)
     return
-  }
-  
-  if (previous?.path && dirtyFiles.has(previous.path)) {
-    console.log('[Files Watch] Previous file has unsaved changes, skipping reload to preserve edits')
   }
   
   if (currentFileRequest) {
@@ -232,11 +227,8 @@ watch(selectedFile, async (file, previous) => {
   }
   
   if (file.path === previous?.path && dirtyFiles.has(file.path) && editorValue.value) {
-    console.log('[Files Watch] File has unsaved changes, skipping reload to preserve edits:', file.path)
     return
   }
-  
-  console.log('[Files Watch] Loading file content:', file.path)
 
   const abortController = new AbortController()
   currentFileRequest = abortController
@@ -331,7 +323,6 @@ watch(editorValue, (value, previousValue) => {
   if (file?.type === 'file') {
     if (value !== undefined && value !== previousValue) {
       dirtyFiles.add(file.path)
-      console.log('[Files Watch] Editor value changed, marking as dirty:', file.path)
     }
   }
 }, { flush: 'post' }) 
@@ -374,38 +365,20 @@ async function saveEditor(event?: Event) {
     event.stopPropagation()
   }
   
-  console.log('[Files Save] saveEditor() called!', {
-    hasSelectedFile: !!selectedFile.value,
-    fileType: selectedFile.value?.type,
-    filePath: selectedFile.value?.path,
-    editorValueLength: editorValue.value?.length,
-    fileSaving: fileSaving.value,
-    isEditorDirty: isEditorDirty.value,
-  })
-  
   const file = selectedFile.value
   if (!file || file.type !== 'file') {
-    console.warn('[Files Save] No file selected or not a file', { file, type: file?.type })
     return
   }
   
   if (!isEditorDirty.value) {
-    console.warn('[Files Save] No changes to save')
     return
   }
   
   if (fileSaving.value) {
-    console.log('[Files Save] Save already in progress')
     return
   }
 
   const content = editorValue.value || ''
-  console.log('[Files Save] Starting save...', { 
-    filePath: file.path, 
-    contentLength: content.length,
-    serverId: serverId.value,
-    url: `${clientApiBase.value}/files/write`,
-  })
 
   try {
     fileSaving.value = true
@@ -417,73 +390,19 @@ async function saveEditor(event?: Event) {
       content: content,
     }
     
-    console.log('[Files Save] Sending POST request:', { 
-      url, 
-      body: { file: body.file, contentLength: body.content.length },
+    const response = await $fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
+      body,
     })
     
-    console.log('[Files Save] About to call $fetch...')
-    console.log('[Files Save] Full request details:', {
-      url,
-      method: 'POST',
-      bodyKeys: Object.keys(body),
-      bodyFile: body.file,
-      bodyContentPreview: body.content?.substring(0, 100),
-      bodyContentLength: body.content?.length,
-    })
-    
-    let response
-    try {
-      console.log('[Files Save] Calling $fetch now...')
-      const startTime = Date.now()
-      
-      console.log('[Files Save] Network request starting:', {
-        url: new URL(url, window.location.origin).href,
-        method: 'POST',
-        bodySize: JSON.stringify(body).length,
-      })
-      
-      response = await $fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body,
-      })
-      const duration = Date.now() - startTime
-      console.log('[Files Save] $fetch completed successfully in', duration, 'ms')
-      
-      if (typeof response === 'string' && response.includes('<!DOCTYPE html>')) {
-        console.error('[Files Save] CRITICAL: Received HTML instead of JSON! Route not matching!')
-        console.error('[Files Save] This means the route handler is NOT being called by Nitro')
-        console.error('[Files Save] Response preview:', response.substring(0, 500))
-        throw new Error('Route not found - received HTML instead of JSON. The API endpoint may not be registered. Please restart the dev server.')
-      }
-      
-      console.log('[Files Save] Response type:', typeof response)
-      console.log('[Files Save] Response:', response)
-    } catch (err) {
-      console.error('[Files Save] $fetch error:', {
-        error: err,
-        errorType: typeof err,
-        errorMessage: err instanceof Error ? err.message : String(err),
-        errorStack: err instanceof Error ? err.stack : undefined,
-        errorName: err instanceof Error ? err.name : undefined,
-        url,
-        bodyKeys: Object.keys(body),
-        bodyFile: body.file,
-        bodyContentLength: body.content?.length,
-      })
-      throw err
+    if (typeof response === 'string' && response.includes('<!DOCTYPE html>')) {
+      throw new Error('Route not found - received HTML instead of JSON. The API endpoint may not be registered. Please restart the dev server.')
     }
-
-    console.log('[Files Save] Success! Response:', response)
+    
     dirtyFiles.delete(file.path)
     
     toast.add({
@@ -491,19 +410,9 @@ async function saveEditor(event?: Event) {
       description: t('server.files.title'),
     })
     
-    // Don't reload the file - the content is already what we saved
-    // Only reload if we need to verify it was saved correctly
-    // (which we can do manually if needed)
+    selectedFile.value = null
   }
   catch (error) {
-    console.error('[Files Save] Error:', {
-      error,
-      errorType: typeof error,
-      errorMessage: error instanceof Error ? error.message : String(error),
-      errorKeys: error && typeof error === 'object' ? Object.keys(error) : [],
-      errorString: String(error),
-    })
-    
     let errorMessage = 'Unable to save file contents.'
     if (error && typeof error === 'object') {
       if ('data' in error && error.data) {
@@ -577,50 +486,44 @@ const isEditorDirty = computed(() => {
           </UAlert>
         </div>
 
-        <UCard>
-          <template #header>
-            <div class="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <h2 class="text-lg font-semibold">{{ t('server.files.title') }}</h2>
-                <p class="text-xs text-muted-foreground">{{ t('server.files.description') }}</p>
-                <div
-                  v-if="currentDirectoryLabel !== '/' || breadcrumbs.length"
-                  class="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
-                >
-                  <span class="font-mono text-sm text-foreground">{{ currentDirectoryLabel }}</span>
-                  <span v-if="breadcrumbs.length" class="text-muted-foreground/70">/</span>
-                  <div v-if="breadcrumbs.length" class="flex flex-wrap items-center gap-1">
-                    <span
-                      v-for="crumb in breadcrumbs"
-                      :key="crumb.path"
-                      class="rounded border border-default/60 px-2 py-0.5 text-[11px] uppercase tracking-wide text-muted-foreground"
-                    >
-                      {{ crumb.label }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <ServerFilesActionToolbar
-                :actions="fileActions"
-                :show-loading-badge="directoryPending"
+        <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+          <div
+            v-if="currentDirectoryLabel !== '/' || breadcrumbs.length"
+            class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
+          >
+            <span class="font-mono text-sm text-foreground">{{ currentDirectoryLabel }}</span>
+            <span v-if="breadcrumbs.length" class="text-muted-foreground/70">/</span>
+            <div v-if="breadcrumbs.length" class="flex flex-wrap items-center gap-1">
+              <span
+                v-for="crumb in breadcrumbs"
+                :key="crumb.path"
+                class="rounded border border-default/60 px-2 py-0.5 text-[11px] uppercase tracking-wide text-muted-foreground"
               >
-                <input
-                  ref="fileUploadInput"
-                  type="file"
-                  class="hidden"
-                  @change="handleFileUpload"
-                >
-                <template #loadingLabel>
-                  {{ t('server.files.loading') }}
-                </template>
-              </ServerFilesActionToolbar>
+                {{ crumb.label }}
+              </span>
             </div>
-          </template>
+          </div>
 
-          <div class="flex flex-col gap-6">
+          <ServerFilesActionToolbar
+            :actions="fileActions"
+            :show-loading-badge="directoryPending"
+          >
+            <input
+              ref="fileUploadInput"
+              type="file"
+              class="hidden"
+              @change="handleFileUpload"
+            >
+            <template #loadingLabel>
+              {{ t('server.files.loading') }}
+            </template>
+          </ServerFilesActionToolbar>
+        </div>
+
+        <div class="flex flex-col gap-6 min-h-[calc(100vh-300px)]">
             <ServerFilesDirectoryView
               v-if="!selectedFile || selectedFile.type !== 'file'"
+              class="flex-1 overflow-hidden"
               :current-entries="currentEntries"
               :directory-pending="directoryPending"
               :directory-error="directoryError"
@@ -731,7 +634,6 @@ const isEditorDirty = computed(() => {
               </div>
             </UCard>
           </div>
-        </UCard>
         </section>
       </UContainer>
     </UPageBody>
@@ -808,10 +710,13 @@ const isEditorDirty = computed(() => {
     </template>
   </UModal>
 
-  <UModal v-model:open="chmodModal.open" :title="t('server.files.title')" :ui="{ footer: 'justify-end gap-2' }">
+  <UModal v-model:open="chmodModal.open" :title="`${t('server.files.permissions')} - ${chmodModal.file?.name}`" :ui="{ footer: 'justify-end gap-2' }">
     <template #body>
       <UForm class="space-y-4" @submit.prevent="submitChmod">
-        <UFormField :label="t('server.files.title')" name="fileMode" :help="t('server.files.title')" required>
+        <div v-if="chmodModal.file" class="rounded-md border border-default/60 bg-muted/10 p-3 text-sm">
+          <p class="text-muted-foreground">{{ t('server.files.permissions') }}: <strong>{{ chmodModal.file.mode }}</strong></p>
+        </div>
+        <UFormField :label="t('server.files.permissions')" name="fileMode" :help="t('server.files.permissions')" required>
           <UInput v-model="chmodModal.value" placeholder="755" autofocus />
         </UFormField>
         <div class="flex justify-end gap-2">
