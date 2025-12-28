@@ -431,6 +431,18 @@ export interface SecuritySettings {
   queueRetryLimit: number
 }
 
+export interface PanelInformation {
+  panelVersion: string
+  latestPanelVersion: string | null
+  isPanelUpToDate: boolean | null
+  documentationUrl?: string | null
+  supportUrl?: string | null
+  donationsUrl?: string | null
+  repositoryUrl?: string | null
+  releaseNotesUrl?: string | null
+  lastCheckedAt?: string | null
+}
+
 
 export interface AdminWingsNodeAllocationSummary {
   id: string

@@ -21,6 +21,8 @@ interface SettingsSection {
   order: number
 }
 
+const PanelInfoCard = defineAsyncComponent(() => import('~/components/Admin/Settings/PanelInfoCard.vue'))
+
 const baseSections = computed<SettingsSection[]>(() => [
   {
     id: 'general',
@@ -64,7 +66,9 @@ const openSections = ref<Record<string, boolean>>({
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
+      <UContainer class="space-y-6">
+        <PanelInfoCard />
+
         <UCard v-if="availableSections.length > 0" :ui="{ body: 'p-0 divide-y divide-default' }">
           <div
             v-for="section in availableSections"
