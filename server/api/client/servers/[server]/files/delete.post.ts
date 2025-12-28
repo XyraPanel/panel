@@ -40,8 +40,7 @@ export default defineEventHandler(async (event) => {
       success: true,
       message: 'Files deleted successfully',
     }
-  } catch (error) {
-    console.error('Failed to delete files on Wings:', error)
+  } catch {
     throw createError({
       statusCode: 500,
       message: 'Failed to delete files',

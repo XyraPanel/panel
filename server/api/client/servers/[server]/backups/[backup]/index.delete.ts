@@ -53,16 +53,13 @@ export default defineEventHandler(async (event) => {
       await client.deleteBackup(server.uuid, backupUuid)
     } catch (error) {
       if (error instanceof WingsConnectionError && error.message.includes('404')) {
-        console.warn(`Backup ${backupUuid} missing on Wings, removing record locally.`)
-      }
-      else {
+        // Backup missing on Wings, continue with local deletion
+      } else {
         throw error
       }
     }
 
-    const now = new Date()
-    db.update(tables.serverBackups)
-      .set({ completedAt: now })
+    db.delete(tables.serverBackups)
       .where(eq(tables.serverBackups.uuid, backupUuid))
       .run()
 
@@ -84,8 +81,7 @@ export default defineEventHandler(async (event) => {
       success: true,
       message: 'Backup deleted successfully',
     }
-  } catch (error) {
-    console.error('Failed to delete backup:', error)
+  } catch {
     throw createError({
       statusCode: 500,
       message: 'Failed to delete backup',

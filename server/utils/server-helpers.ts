@@ -1,11 +1,13 @@
 import { useDrizzle, tables, eq, or } from '~~/server/utils/drizzle'
 import { buildCacheKey, withCache } from '~~/server/utils/cache'
 import type { getServerSession } from '~~/server/utils/session'
+import { getSessionUser } from '~~/server/utils/session'
 
 const NODE_CACHE_TTL = 30
 
 export async function getServerWithAccess(identifier: string, session: Awaited<ReturnType<typeof getServerSession>> | null) {
-  if (!session?.user?.email) {
+  const sessionUser = getSessionUser(session)
+  if (!sessionUser?.id) {
     throw createError({
       statusCode: 401,
       message: 'Unauthorized',
@@ -16,7 +18,7 @@ export async function getServerWithAccess(identifier: string, session: Awaited<R
 
   const [user] = db.select()
     .from(tables.users)
-    .where(eq(tables.users.email, session.user.email))
+    .where(eq(tables.users.id, sessionUser.id))
     .limit(1)
     .all()
 

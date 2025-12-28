@@ -54,15 +54,9 @@ export default defineEventHandler(async (event) => {
     try {
       await client.getFileContents(server.uuid as string, file)
       hadExistingFile = true
-      
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-')
-      const backupPath = `${file}.backup-${timestamp}`
       await client.copyFile(server.uuid as string, file)
-      await client.renameFile(server.uuid as string, file.substring(0, file.lastIndexOf('/')) || '/', [
-        { from: file.substring(file.lastIndexOf('/') + 1), to: backupPath.substring(backupPath.lastIndexOf('/') + 1) }
-      ])
     } catch {
-      // Backup failed, continue with write operation
+      // Backup creation failed, continue with write operation
     }
     
     await client.writeFileContents(server.uuid as string, file, content)
@@ -90,8 +84,6 @@ export default defineEventHandler(async (event) => {
       },
     }
   } catch (error) {
-    console.error('Failed to write file to Wings:', error)
-    
     if (error instanceof WingsAuthError) {
       throw createError({
         statusCode: 403,

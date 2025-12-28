@@ -16,11 +16,12 @@ const {
   pending,
   error,
   refresh: refreshBackups,
-} = await useAsyncData(
+} = useAsyncData(
   `server-${serverId.value}-backups`,
   () => $fetch<{ data: ServerBackup[] }>(`/api/client/servers/${serverId.value}/backups`),
   {
     watch: [serverId],
+    server: false,
   },
 )
 
@@ -86,12 +87,26 @@ async function createBackup() {
 async function downloadBackup(backupUuid: string) {
   operatingBackupId.value = backupUuid
   try {
-    const downloadUrl = `/api/client/servers/${serverId.value}/backups/${backupUuid}/download`
-    const newTab = window.open(downloadUrl, '_blank')
-
-    if (!newTab) {
-      window.location.href = downloadUrl
+    const response = await fetch(`/api/client/servers/${serverId.value}/backups/${backupUuid}/download`)
+    if (!response.ok) {
+      throw new Error('Failed to download backup')
     }
+
+    const blob = await response.blob()
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `backup-${backupUuid}.tar.gz`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    toast.add({
+      title: t('common.success'),
+      description: t('server.backups.downloadStarted'),
+      color: 'success',
+    })
   }
   catch (err) {
     toast.add({
@@ -191,13 +206,18 @@ async function deleteBackup(backupUuid: string) {
       method: 'DELETE',
     })
 
+    if (backupsData.value?.data) {
+      const index = backupsData.value.data.findIndex(b => b.uuid === targetBackup.uuid)
+      if (index !== -1) {
+        backupsData.value.data.splice(index, 1)
+      }
+    }
+
     toast.add({
       title: t('common.success'),
       description: t('server.backups.backupDeletedDescription'),
       color: 'success',
     })
-
-    await refreshBackups()
   }
   catch (err) {
     toast.add({
@@ -245,8 +265,34 @@ async function deleteBackup(backupUuid: string) {
               </div>
             </div>
 
-            <div v-else-if="pending" class="flex items-center justify-center py-12">
-              <UIcon name="i-lucide-loader-2" class="size-6 animate-spin text-muted-foreground" />
+            <div v-else-if="pending || !backupsData" class="overflow-hidden rounded-lg border border-default">
+              <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                <span class="col-span-4">{{ t('server.backups.backup') }}</span>
+                <span class="col-span-2">{{ t('server.backups.size') }}</span>
+                <span class="col-span-3">{{ t('server.backups.created') }}</span>
+                <span class="col-span-2">{{ t('server.backups.storage') }}</span>
+                <span class="col-span-1 text-right">{{ t('server.backups.status') }}</span>
+              </div>
+              <div class="divide-y divide-default">
+                <div v-for="i in 3" :key="`skeleton-${i}`" class="grid grid-cols-12 items-center gap-2 px-4 py-3">
+                  <div class="col-span-4 space-y-2">
+                    <USkeleton class="h-4 w-32" />
+                    <USkeleton class="h-3 w-48" />
+                  </div>
+                  <div class="col-span-2">
+                    <USkeleton class="h-4 w-16" />
+                  </div>
+                  <div class="col-span-3">
+                    <USkeleton class="h-4 w-40" />
+                  </div>
+                  <div class="col-span-2">
+                    <USkeleton class="h-4 w-20" />
+                  </div>
+                  <div class="col-span-1">
+                    <USkeleton class="h-5 w-16" />
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div v-else-if="backups.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">

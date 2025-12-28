@@ -18,7 +18,7 @@ export default defineEventHandler(async (event) => {
 
   await requireServerPermission(event, {
     serverId: server.id,
-    requiredPermissions: ['server.backup.download'],
+    requiredPermissions: ['backup.read'],
   })
 
   const backups = await listServerBackups(server.id)
