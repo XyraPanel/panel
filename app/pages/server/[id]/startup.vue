@@ -155,7 +155,7 @@ async function updateDockerImage() {
     
     const response = await $fetch(`/api/client/servers/${serverId.value}/settings/docker-image`, {
       method: 'PUT',
-      body: { dockerImage: selectedDockerImage.value },
+      body: { docker_image: selectedDockerImage.value },
     })
     
     console.log('[Client Startup] PUT request successful:', response)

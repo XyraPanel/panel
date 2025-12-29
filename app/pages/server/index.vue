@@ -202,12 +202,12 @@ const scopeToggleText = computed(() => {
                       <NuxtLink :to="`/server/${server.uuid}/console`" class="text-base font-semibold text-foreground hover:text-primary">
                         {{ server.name }}
                       </NuxtLink>
-                      <UBadge size="xs" color="neutral" variant="soft">{{ server.identifier }}</UBadge>
-                      <UBadge size="xs" color="neutral" variant="soft">{{ server.nodeName }}</UBadge>
-                      <UBadge :color="statusBadge(server.status, server.suspended).color" size="xs" variant="soft">
+                      <UBadge size="sm" color="neutral" variant="soft">{{ server.identifier }}</UBadge>
+                      <UBadge size="sm" color="neutral" variant="soft">{{ server.nodeName }}</UBadge>
+                      <UBadge :color="statusBadge(server.status, server.suspended).color" size="sm" variant="soft">
                         {{ statusBadge(server.status, server.suspended).label }}
                       </UBadge>
-                      <UBadge v-if="server.isTransferring" color="warning" size="xs" variant="soft">
+                      <UBadge v-if="server.isTransferring" color="warning" size="sm" variant="soft">
                         {{ t('common.transferring') }}
                       </UBadge>
                     </div>

@@ -77,7 +77,7 @@ fetchDashboard()
             </template>
           </div>
 
-          <div class="grid gap-4 xl:grid-cols-2">
+          <div class="grid gap-4 xl:grid-cols-2 items-start">
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
                 <div class="flex items-center justify-between">
@@ -102,8 +102,11 @@ fetchDashboard()
                     <div>
                       <div class="flex items-center gap-2">
                         <h3 class="text-sm font-semibold">{{ node.name }}</h3>
-                        <UBadge size="xs"
-                          :color="node.status === 'online' ? 'primary' : node.status === 'maintenance' ? 'warning' : 'warning'">
+                        <UBadge
+                          size="sm"
+                          variant="subtle"
+                          :color="node.status === 'online' ? 'success' : node.status === 'maintenance' ? 'warning' : 'warning'"
+                        >
                           {{ node.status === 'online' ? t('admin.dashboard.online') : node.status === 'maintenance' ? t('admin.dashboard.maintenance') : t('admin.dashboard.unknown') }}
                         </UBadge>
                       </div>
