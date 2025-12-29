@@ -26,6 +26,7 @@
     "filter": "Filter",
     "apply": "Anwenden",
     "actions": "Aktionen",
+    "refresh": "Refresh",
     "status": "Status",
     "perPage": "{count} per page",
     "name": "Name",
@@ -356,6 +357,7 @@
       "failedToRevokeSessions": "Failed to revoke sessions",
       "unableToRevokeSessions": "Unable to revoke sessions.",
       "revokedSessionsSingular": "Revoked {count} session.",
+      "neverUsed": "Never used",
       "revokedSessionsPlural": "Revoked {count} sessions.",
       "noSessionsRevoked": "No sessions were revoked."
     },
@@ -402,7 +404,9 @@
       "noActivityDescription": "Your account activity will appear here",
       "auditLogEntry": "Audit Log Entry",
       "copyJSON": "Copy JSON",
-      "failedToLoad": "Failed to load account activity."
+      "failedToLoad": "Failed to load account activity.",
+      "showingEvents": "Showing {count} events",
+      "total": "Total"
     }
   },
   "server": {
@@ -591,7 +595,13 @@
       "saveChanges": "Save changes",
       "loadingFile": "Loading file…",
       "selectFileToEditPlaceholder": "Open a file to preview and edit its contents.",
-      "backToFiles": "Back to files"
+      "backToFiles": "Back to files",
+      "newFilePlaceholder": "Enter filename",
+      "createFile": "Create File",
+      "newFolderPlaceholder": "Enter folder name",
+      "createFolder": "Create Folder",
+      "deleteSelectedItemsDescription": "The following items will be permanently deleted:",
+      "deleteSelected": "Delete Selected"
     },
     "databases": {
       "title": "Databases",
@@ -1578,6 +1588,24 @@
         "testEmailSent": "Test email sent",
         "testEmailSentDescription": "Check your inbox for the test email",
         "testEmailFailed": "Failed to send test email"
+      },
+      "panelInfo": {
+        "title": "Panel Information",
+        "description": "Version details and resources for this XyraPanel deployment.",
+        "panelVersion": "Panel version",
+        "latestPanelVersion": "Latest panel release",
+        "versionUnavailable": "Not available",
+        "statusUnknown": "Status unknown",
+        "upToDate": "Up to date",
+        "updateAvailable": "Update available ({version})",
+        "releaseNotes": "Release notes",
+        "documentation": "Documentation",
+        "support": "Community & support",
+        "github": "GitHub",
+        "donate": "Sponsor development",
+        "failedToLoad": "Failed to load panel information",
+        "lastChecked": "Last checked:",
+        "statusLabelUnknown": "Status unknown"
       }
     },
     "activity": {
