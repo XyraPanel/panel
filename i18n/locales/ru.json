@@ -395,7 +395,7 @@
       "failedToDeleteKey": "Failed to delete SSH key"
     },
     "activity": {
-      "title": "Account activity",
+      "title": "Activity",
       "description": "Personal actions you've taken across XyraPanel. Use this log to verify recent changes and sign-ins.",
       "descriptionWithTime": "Personal actions you've taken across XyraPanel. Use this log to verify recent changes and sign-ins.",
       "recently": "recently",
@@ -909,7 +909,7 @@
       "unknownServers": "Unknown servers",
       "maintenanceMode": "Maintenance mode",
       "lastSeen": "Last seen",
-      "openIncidents": "Open incidents",
+      "openIncidents": "Recent activity",
       "viewAll": "View all",
       "noIncidents": "No recent audit events logged.",
       "noTarget": "No target recorded",
