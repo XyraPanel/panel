@@ -140,12 +140,10 @@ export default defineNuxtConfig({
 
   security: isDev
     ? {
-      strict: false,
       headers: {
         contentSecurityPolicy: false,
         crossOriginEmbedderPolicy: 'unsafe-none',
         crossOriginOpenerPolicy: 'unsafe-none',
-        crossOriginResourcePolicy: 'same-origin',
         originAgentCluster: false,
       },
       corsHandler: {
@@ -160,14 +158,8 @@ export default defineNuxtConfig({
         throwError: true,
       },
       rateLimiter: false,
-      csrf: false,
-      nonce: true,
-      hidePoweredBy: true,
-      removeLoggers: true,
-      basicAuth: false,
     }
     : {
-      strict: false,
       headers: {
         contentSecurityPolicy: {
           'default-src': ["'self'"],
@@ -191,7 +183,6 @@ export default defineNuxtConfig({
           includeSubdomains: true,
           preload: true,
         },
-        xContentTypeOptions: 'nosniff',
         xFrameOptions: 'DENY',
         xXSSProtection: '1; mode=block',
         referrerPolicy: 'strict-origin-when-cross-origin',
@@ -215,11 +206,6 @@ export default defineNuxtConfig({
           name: 'lruCache',
         },
       },
-      csrf: false, // Handled by BetterAuth
-      nonce: true,
-      hidePoweredBy: true,
-      removeLoggers: true,
-      basicAuth: false,
     },
 
   app: {
