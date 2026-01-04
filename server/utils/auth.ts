@@ -20,6 +20,53 @@ const ADMIN_PANEL_PERMISSIONS = [
   'admin.settings.read',
 ]
 
+interface CaptchaConfig {
+  provider: 'cloudflare-turnstile' | 'google-recaptcha' | 'hcaptcha'
+  secretKey: string
+  minScore?: number
+  siteKey?: string
+}
+
+function getCaptchaConfig(provider: string, runtimeConfig: ReturnType<typeof useRuntimeConfig>): CaptchaConfig | null {
+  const normalizedProvider = provider.toLowerCase()
+  
+  switch (normalizedProvider) {
+    case 'turnstile':
+    case 'cloudflare-turnstile':
+      if (runtimeConfig.turnstile?.secretKey) {
+        return {
+          provider: 'cloudflare-turnstile',
+          secretKey: runtimeConfig.turnstile.secretKey,
+        }
+      }
+      return null
+      
+    case 'recaptcha':
+    case 'google-recaptcha':
+      if (runtimeConfig.recaptcha?.secretKey) {
+        return {
+          provider: 'google-recaptcha',
+          secretKey: runtimeConfig.recaptcha.secretKey,
+          minScore: runtimeConfig.recaptcha?.minScore || 0.5,
+        }
+      }
+      return null
+      
+    case 'hcaptcha':
+      if (runtimeConfig.hcaptcha?.secretKey) {
+        return {
+          provider: 'hcaptcha',
+          secretKey: runtimeConfig.hcaptcha.secretKey,
+          siteKey: runtimeConfig.hcaptcha?.siteKey,
+        }
+      }
+      return null
+      
+    default:
+      return null
+  }
+}
+
 async function getUserPermissionsAndRole(userId: string) {
   const db = useDrizzle()
   const dbUser = db
@@ -64,6 +111,8 @@ function createAuth() {
     || undefined
   
   const secret = runtimeConfig.authSecret || undefined
+  const captchaProvider = (process.env.CAPTCHA_PROVIDER || 'turnstile').toLowerCase()
+  const captchaConfig = getCaptchaConfig(captchaProvider, runtimeConfig)
   
   if (isProduction) {
     if (!secret) {
@@ -357,9 +406,11 @@ function createAuth() {
     },
     hooks: undefined,
     plugins: [
-      ...(runtimeConfig.turnstile.secretKey ? [captcha({
-        provider: 'cloudflare-turnstile',
-        secretKey: runtimeConfig.turnstile.secretKey,
+      ...(captchaConfig ? [captcha({
+        provider: captchaConfig.provider,
+        secretKey: captchaConfig.secretKey,
+        ...(captchaConfig.minScore && { minScore: captchaConfig.minScore }),
+        ...(captchaConfig.siteKey && { siteKey: captchaConfig.siteKey }),
       })] : []),
       username({
         minUsernameLength: 3,

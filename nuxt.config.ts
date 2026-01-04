@@ -158,6 +158,14 @@ export default defineNuxtConfig({
     turnstile: {
       secretKey: process.env.NUXT_TURNSTILE_SECRET_KEY || '',
     },
+    recaptcha: {
+      secretKey: process.env.NUXT_RECAPTCHA_SECRET_KEY || '',
+      minScore: process.env.NUXT_RECAPTCHA_MIN_SCORE ? Number.parseFloat(process.env.NUXT_RECAPTCHA_MIN_SCORE) : 0.5,
+    },
+    hcaptcha: {
+      secretKey: process.env.NUXT_HCAPTCHA_SECRET_KEY || '',
+      siteKey: process.env.NUXT_HCAPTCHA_SITE_KEY || '',
+    },
     debug: process.env.DEBUG === 'true',
     public: {
       appName: process.env.APP_NAME || 'XyraPanel',
