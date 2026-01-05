@@ -100,8 +100,8 @@ importers:
         specifier: 1.0.0-alpha.5
         version: 1.0.0-alpha.5(better-sqlite3@12.5.0)(drizzle-orm@0.45.1(@types/better-sqlite3@7.6.13)(better-sqlite3@12.5.0)(kysely@0.28.9))(magicast@0.5.1)(vite@7.3.0(@types/node@25.0.3)(jiti@2.6.1)(lightningcss@1.30.2)(terser@5.44.1)(tsx@4.21.0)(yaml@2.8.2))(vue@3.5.26(typescript@5.9.3))
       '@nuxt/test-utils':
-        specifier: 3.21.0
-        version: 3.21.0(@vitest/ui@4.0.16)(@vue/test-utils@2.4.6)(magicast@0.5.1)(typescript@5.9.3)(vitest@4.0.16)
+        specifier: 3.22.0
+        version: 3.22.0(@vitest/ui@4.0.16)(@vue/test-utils@2.4.6)(magicast@0.5.1)(typescript@5.9.3)(vitest@4.0.16)
       '@types/better-sqlite3':
         specifier: ^7.6.13
         version: 7.6.13
@@ -1867,8 +1867,8 @@ packages:
     engines: {node: '>=18.12.0'}
     hasBin: true
 
-  '@nuxt/test-utils@3.21.0':
-    resolution: {integrity: sha512-A6XExfgHq88+XuXAU4MMr5QBHS2mWA5qRVSvsMPP2U+YSsnk+Vt7P7dxbvJPE4+n6LHbC1IM0QjTVteo+VCxOA==}
+  '@nuxt/test-utils@3.22.0':
+    resolution: {integrity: sha512-Qo2+FKrslfOp5S0z7hrajPATIVRLokMhlVTIuhOgnowE7WdgMdLGTkDQim+p8e6COw3loLabisLG85THdLp3vQ==}
     engines: {node: ^20.0.0 || ^22.0.0 || >=24.0.0}
     peerDependencies:
       '@cucumber/cucumber': ^10.3.1 || >=11.0.0
@@ -6127,8 +6127,8 @@ packages:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
 
-  lib0@0.2.116:
-    resolution: {integrity: sha512-4zsosjzmt33rx5XjmFVYUAeLNh+BTeDTiwGdLt4muxiir2btsc60Nal0EvkvDRizg+pnlK1q+BtYi7M+d4eStw==}
+  lib0@0.2.117:
+    resolution: {integrity: sha512-DeXj9X5xDCjgKLU/7RR+/HQEVzuuEUiwldwOGsHK/sfAfELGWEyTcf0x+uOvCvK3O2zPmZePXWL85vtia6GyZw==}
     engines: {node: '>=16'}
     hasBin: true
 
@@ -8242,6 +8242,7 @@ packages:
   vue-i18n@11.2.7:
     resolution: {integrity: sha512-LPv8bAY5OA0UvFEXl4vBQOBqJzRrlExy92tWgRuwW7tbykHf7CH71G2Y4TM2OwGcIS4+hyqKHS2EVBqaYwPY9Q==}
     engines: {node: '>= 16'}
+    deprecated: This version is NOT deprecated. Previous deprecation was a mistake.
     peerDependencies:
       vue: ^3.0.0
 
@@ -10832,7 +10833,7 @@ snapshots:
     transitivePeerDependencies:
       - magicast
 
-  '@nuxt/test-utils@3.21.0(@vitest/ui@4.0.16)(@vue/test-utils@2.4.6)(magicast@0.5.1)(typescript@5.9.3)(vitest@4.0.16)':
+  '@nuxt/test-utils@3.22.0(@vitest/ui@4.0.16)(@vue/test-utils@2.4.6)(magicast@0.5.1)(typescript@5.9.3)(vitest@4.0.16)':
     dependencies:
       '@nuxt/kit': 3.20.2(magicast@0.5.1)
       c12: 3.3.3(magicast@0.5.1)
@@ -12336,7 +12337,7 @@ snapshots:
 
   '@tiptap/y-tiptap@3.0.1(prosemirror-model@1.25.4)(prosemirror-state@1.4.4)(prosemirror-view@1.41.4)(y-protocols@1.0.7(yjs@13.6.28))(yjs@13.6.28)':
     dependencies:
-      lib0: 0.2.116
+      lib0: 0.2.117
       prosemirror-model: 1.25.4
       prosemirror-state: 1.4.4
       prosemirror-view: 1.41.4
@@ -15305,7 +15306,7 @@ snapshots:
       prelude-ls: 1.2.1
       type-check: 0.4.0
 
-  lib0@0.2.116:
+  lib0@0.2.117:
     dependencies:
       isomorphic.js: 0.2.5
 
@@ -17820,7 +17821,7 @@ snapshots:
 
   vitest-environment-nuxt@1.0.1(@vitest/ui@4.0.16)(@vue/test-utils@2.4.6)(magicast@0.5.1)(typescript@5.9.3)(vitest@4.0.16):
     dependencies:
-      '@nuxt/test-utils': 3.21.0(@vitest/ui@4.0.16)(@vue/test-utils@2.4.6)(magicast@0.5.1)(typescript@5.9.3)(vitest@4.0.16)
+      '@nuxt/test-utils': 3.22.0(@vitest/ui@4.0.16)(@vue/test-utils@2.4.6)(magicast@0.5.1)(typescript@5.9.3)(vitest@4.0.16)
     transitivePeerDependencies:
       - '@cucumber/cucumber'
       - '@jest/globals'
@@ -18173,7 +18174,7 @@ snapshots:
 
   y-protocols@1.0.7(yjs@13.6.28):
     dependencies:
-      lib0: 0.2.116
+      lib0: 0.2.117
       yjs: 13.6.28
 
   y18n@5.0.8: {}
@@ -18205,7 +18206,7 @@ snapshots:
 
   yjs@13.6.28:
     dependencies:
-      lib0: 0.2.116
+      lib0: 0.2.117
 
   yocto-queue@0.1.0: {}
 
