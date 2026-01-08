@@ -1599,6 +1599,7 @@
         "upToDate": "Up to date",
         "updateAvailable": "Update available ({version})",
         "releaseNotes": "Release notes",
+        "releaseNotesUnavailable": "Release notes are not available",
         "documentation": "Documentation",
         "support": "Community & support",
         "github": "GitHub",
