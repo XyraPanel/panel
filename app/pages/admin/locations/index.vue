@@ -19,8 +19,16 @@ const { data: locationsData, pending, error, refresh } = await useAsyncData(
 const locations = computed(() => locationsData.value?.data ?? [])
 
 const showCreateModal = ref(false)
+const showDeleteModal = ref(false)
 const editingLocation = ref<LocationWithNodeCount | null>(null)
+const locationToDelete = ref<LocationWithNodeCount | null>(null)
 const isSubmitting = ref(false)
+const isDeleting = ref(false)
+
+const resetDeleteModal = () => {
+  showDeleteModal.value = false
+  locationToDelete.value = null
+}
 
 const form = ref<CreateLocationPayload>({
   short: '',
@@ -88,16 +96,16 @@ async function handleSubmit() {
   }
 }
 
-async function handleDelete(location: LocationWithNodeCount) {
-  if (!confirm(t('admin.locations.confirmDelete', { short: location.short }))) {
-    return
-  }
+async function handleDelete() {
+  if (!locationToDelete.value) return
 
+  isDeleting.value = true
   try {
-    await $fetch(`/api/admin/locations/${location.id}`, {
+    await $fetch(`/api/admin/locations/${locationToDelete.value.id}`, {
       method: 'DELETE',
     })
     toast.add({ title: t('admin.locations.locationDeleted'), color: 'success' })
+    resetDeleteModal()
     await refresh()
   } catch (err) {
     toast.add({
@@ -105,6 +113,8 @@ async function handleDelete(location: LocationWithNodeCount) {
       description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     })
+  } finally {
+    isDeleting.value = false
   }
 }
 </script>
@@ -157,7 +167,7 @@ async function handleDelete(location: LocationWithNodeCount) {
                 <div class="flex items-center gap-2">
                   <UButton icon="i-lucide-pencil" size="xs" variant="ghost" @click="openEditModal(location)" />
                   <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                    :disabled="location.nodeCount > 0" @click="handleDelete(location)" />
+                    :disabled="location.nodeCount > 0" @click="locationToDelete = location; showDeleteModal = true" />
                 </div>
               </div>
             </div>
@@ -196,6 +206,33 @@ async function handleDelete(location: LocationWithNodeCount) {
             {{ editingLocation ? t('common.update') : t('common.create') }}
           </UButton>
         </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showDeleteModal"
+      :title="t('admin.locations.deleteLocation')"
+      :description="t('admin.locations.confirmDeleteDescription')"
+      :ui="{ footer: 'justify-end gap-2' }"
+    >
+      <template #body>
+        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+          <template #title>{{ t('common.warning') }}</template>
+          <template #description>{{ t('admin.locations.deleteLocationWarning') }}</template>
+        </UAlert>
+        <div v-if="locationToDelete" class="rounded-md bg-muted p-3 text-sm">
+          <p class="font-medium">{{ t('admin.locations.shortCode') }}: <code class="font-mono">{{ locationToDelete.short }}</code></p>
+          <p v-if="locationToDelete.long" class="text-muted-foreground mt-2">{{ locationToDelete.long }}</p>
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
+          {{ t('admin.locations.deleteLocation') }}
+        </UButton>
       </template>
     </UModal>
   </UPage>

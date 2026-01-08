@@ -37,7 +37,15 @@ const eggOptions = computed(() => (eggsData.value?.data ?? []).map(egg => ({
 })))
 
 const showCreateModal = ref(false)
+const showDeleteModal = ref(false)
 const isSubmitting = ref(false)
+const isDeleting = ref(false)
+const mountToDelete = ref<MountWithRelations | null>(null)
+
+const resetDeleteModal = () => {
+  showDeleteModal.value = false
+  mountToDelete.value = null
+}
 
 const form = ref<CreateMountPayload>({
   name: '',
@@ -96,16 +104,16 @@ async function handleSubmit() {
   }
 }
 
-async function handleDelete(mount: MountWithRelations) {
-  if (!confirm(t('admin.mounts.confirmDelete', { name: mount.name }))) {
-    return
-  }
+async function handleDelete() {
+  if (!mountToDelete.value) return
 
+  isDeleting.value = true
   try {
-    await $fetch(`/api/admin/mounts/${mount.id}`, {
+    await $fetch(`/api/admin/mounts/${mountToDelete.value.id}`, {
       method: 'DELETE',
     })
     toast.add({ title: t('admin.mounts.mountDeleted'), color: 'success' })
+    resetDeleteModal()
     await refresh()
   } catch (err) {
     toast.add({
@@ -113,6 +121,8 @@ async function handleDelete(mount: MountWithRelations) {
       description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     })
+  } finally {
+    isDeleting.value = false
   }
 }
 </script>
@@ -176,7 +186,7 @@ async function handleDelete(mount: MountWithRelations) {
 
                 <div class="flex items-center gap-2">
                   <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                    @click="handleDelete(mount)" />
+                    @click="mountToDelete = mount; showDeleteModal = true" />
                 </div>
               </div>
             </div>
@@ -247,6 +257,33 @@ async function handleDelete(mount: MountWithRelations) {
             {{ t('admin.mounts.createMount') }}
           </UButton>
         </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showDeleteModal"
+      :title="t('admin.mounts.deleteMount')"
+      :description="t('admin.mounts.confirmDeleteDescription')"
+      :ui="{ footer: 'justify-end gap-2' }"
+    >
+      <template #body>
+        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+          <template #title>{{ t('common.warning') }}</template>
+          <template #description>{{ t('admin.mounts.deleteMountWarning') }}</template>
+        </UAlert>
+        <div v-if="mountToDelete" class="rounded-md bg-muted p-3 text-sm">
+          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ mountToDelete.name }}</span></p>
+          <p class="text-muted-foreground mt-2">{{ mountToDelete.source }} → {{ mountToDelete.target }}</p>
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
+          {{ t('admin.mounts.deleteMount') }}
+        </UButton>
       </template>
     </UModal>
   </UPage>

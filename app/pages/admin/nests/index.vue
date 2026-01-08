@@ -20,7 +20,15 @@ const { data: nestsData, pending, error, refresh } = await useAsyncData(
 const nests = computed(() => nestsData.value?.data ?? [])
 
 const showCreateModal = ref(false)
+const showDeleteModal = ref(false)
 const isSubmitting = ref(false)
+const isDeleting = ref(false)
+const nestToDelete = ref<NestWithEggCount | null>(null)
+
+const resetDeleteModal = () => {
+  showDeleteModal.value = false
+  nestToDelete.value = null
+}
 
 const form = ref<CreateNestPayload>({
   author: 'support@example.com',
@@ -69,16 +77,16 @@ async function handleSubmit() {
   }
 }
 
-async function handleDelete(nest: NestWithEggCount) {
-  if (!confirm(t('admin.nests.confirmDelete', { name: nest.name }))) {
-    return
-  }
+async function handleDelete() {
+  if (!nestToDelete.value) return
 
+  isDeleting.value = true
   try {
-    await $fetch(`/api/admin/nests/${nest.id}`, {
+    await $fetch(`/api/admin/nests/${nestToDelete.value.id}`, {
       method: 'DELETE',
     })
     toast.add({ title: t('admin.nests.nestDeleted'), color: 'success' })
+    resetDeleteModal()
     await refresh()
   } catch (err) {
     toast.add({
@@ -86,6 +94,8 @@ async function handleDelete(nest: NestWithEggCount) {
       description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     })
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -148,7 +158,7 @@ function viewNest(nest: NestWithEggCount) {
                 <div class="flex items-center gap-2" @click.stop>
                   <UButton icon="i-lucide-arrow-right" size="xs" variant="ghost" @click="viewNest(nest)" />
                   <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                    :disabled="nest.eggCount > 0" @click="handleDelete(nest)" />
+                    :disabled="nest.eggCount > 0" @click="nestToDelete = nest; showDeleteModal = true" />
                 </div>
               </div>
             </div>
@@ -191,6 +201,33 @@ function viewNest(nest: NestWithEggCount) {
             {{ t('admin.nests.createNest') }}
           </UButton>
         </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showDeleteModal"
+      :title="t('admin.nests.deleteNest')"
+      :description="t('admin.nests.confirmDeleteDescription')"
+      :ui="{ footer: 'justify-end gap-2' }"
+    >
+      <template #body>
+        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+          <template #title>{{ t('common.warning') }}</template>
+          <template #description>{{ t('admin.nests.deleteNestWarning') }}</template>
+        </UAlert>
+        <div v-if="nestToDelete" class="rounded-md bg-muted p-3 text-sm">
+          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ nestToDelete.name }}</span></p>
+          <p class="text-muted-foreground mt-2">{{ t('admin.nests.author') }}: {{ nestToDelete.author }}</p>
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
+          {{ t('admin.nests.deleteNest') }}
+        </UButton>
       </template>
     </UModal>
   </UPage>

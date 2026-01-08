@@ -12,8 +12,16 @@ const { t } = useI18n()
 const toast = useToast()
 const showCreateModal = ref(false)
 const showKeyModal = ref(false)
+const showDeleteModal = ref(false)
 const createdKey = ref<ApiKeyWithToken | null>(null)
+const keyToDelete = ref<ApiKey | null>(null)
 const isSubmitting = ref(false)
+const isDeleting = ref(false)
+
+const resetDeleteModal = () => {
+  showDeleteModal.value = false
+  keyToDelete.value = null
+}
 
 const { data, refresh } = await useAsyncData(
   'admin-api-keys',
@@ -107,13 +115,12 @@ async function handleCreate() {
   }
 }
 
-async function handleDelete(key: ApiKey) {
-  if (!confirm(t('admin.api.confirmDelete', { memo: key.memo || key.identifier }))) {
-    return
-  }
+async function handleDelete() {
+  if (!keyToDelete.value) return
 
+  isDeleting.value = true
   try {
-    await $fetch(`/api/admin/api-keys/${key.id}`, {
+    await $fetch(`/api/admin/api-keys/${keyToDelete.value.id}`, {
       method: 'DELETE',
     })
 
@@ -123,6 +130,7 @@ async function handleDelete(key: ApiKey) {
       color: 'success',
     })
 
+    resetDeleteModal()
     await refresh()
   }
   catch (error) {
@@ -132,6 +140,8 @@ async function handleDelete(key: ApiKey) {
       description: err.data?.message || t('admin.api.deleteFailed'),
       color: 'error',
     })
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -192,7 +202,7 @@ function copyToClipboard(text: string) {
                   </div>
                 </div>
 
-                <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="sm" @click="handleDelete(key)">
+                <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="sm" @click="keyToDelete = key; showDeleteModal = true">
                   {{ t('admin.api.revoke') }}
                 </UButton>
               </div>
@@ -314,6 +324,33 @@ function copyToClipboard(text: string) {
             {{ t('admin.api.iveSavedTheKey') }}
           </UButton>
         </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showDeleteModal"
+      :title="t('admin.api.deleteApiKey')"
+      :description="t('admin.api.confirmDeleteDescription')"
+      :ui="{ footer: 'justify-end gap-2' }"
+    >
+      <template #body>
+        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+          <template #title>{{ t('common.warning') }}</template>
+          <template #description>{{ t('admin.api.deleteKeyWarning') }}</template>
+        </UAlert>
+        <div v-if="keyToDelete" class="rounded-md bg-muted p-3 text-sm">
+          <p class="font-medium">{{ t('admin.api.identifier') }}: <code class="font-mono">{{ keyToDelete.identifier }}</code></p>
+          <p v-if="keyToDelete.memo" class="text-muted-foreground mt-2">{{ keyToDelete.memo }}</p>
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
+          {{ t('admin.api.deleteApiKey') }}
+        </UButton>
       </template>
     </UModal>
   </UPage>

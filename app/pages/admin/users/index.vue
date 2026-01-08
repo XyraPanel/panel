@@ -132,8 +132,16 @@ const errorMessage = computed(() => {
 })
 
 const showUserModal = ref(false)
+const showDeleteModal = ref(false)
 const editingUser = ref<AdminUserResponse | null>(null)
+const userToDelete = ref<AdminUserResponse | null>(null)
 const isSubmitting = ref(false)
+const isDeleting = ref(false)
+
+const resetDeleteModal = () => {
+  showDeleteModal.value = false
+  userToDelete.value = null
+}
 
 const userForm = ref({
   username: '',
@@ -214,16 +222,16 @@ async function handleSubmit() {
   }
 }
 
-async function handleDelete(user: AdminUserResponse) {
-  if (!confirm(t('common.delete'))) {
-    return
-  }
+async function handleDelete() {
+  if (!userToDelete.value) return
 
+  isDeleting.value = true
   try {
-    await $fetch(`/api/admin/users/${user.id}`, {
+    await $fetch(`/api/admin/users/${userToDelete.value.id}`, {
       method: 'DELETE',
     })
     toast.add({ title: t('common.success'), description: t('common.success'), color: 'success' })
+    resetDeleteModal()
     await refreshUsers()
   } catch (err) {
     toast.add({
@@ -231,6 +239,8 @@ async function handleDelete(user: AdminUserResponse) {
       description: err instanceof Error ? err.message : t('common.error'),
       color: 'error',
     })
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -355,7 +365,7 @@ function formatDate(value: string) {
                       size="xs"
                       variant="ghost"
                       color="error"
-                      @click="handleDelete(row.original)"
+                      @click="userToDelete = row.original; showDeleteModal = true"
                     />
                   </div>
                 </template>
@@ -445,6 +455,33 @@ function formatDate(value: string) {
           }"
           @update:open="showSearchModal = $event"
         />
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showDeleteModal"
+      :title="t('admin.users.deleteUser')"
+      :description="t('admin.users.confirmDeleteDescription')"
+      :ui="{ footer: 'justify-end gap-2' }"
+    >
+      <template #body>
+        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+          <template #title>{{ t('common.warning') }}</template>
+          <template #description>{{ t('admin.users.deleteUserWarning') }}</template>
+        </UAlert>
+        <div v-if="userToDelete" class="rounded-md bg-muted p-3 text-sm">
+          <p class="font-medium">{{ t('auth.username') }}: <span class="text-foreground">{{ userToDelete.username }}</span></p>
+          <p class="text-muted-foreground mt-2">{{ t('auth.email') }}: {{ userToDelete.email }}</p>
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
+          {{ t('admin.users.deleteUser') }}
+        </UButton>
       </template>
     </UModal>
   </UPage>

@@ -19,7 +19,15 @@ const { data: hostsData, pending, error, refresh } = await useAsyncData(
 const hosts = computed(() => hostsData.value?.data ?? [])
 
 const showCreateModal = ref(false)
+const showDeleteModal = ref(false)
 const isSubmitting = ref(false)
+const isDeleting = ref(false)
+const hostToDelete = ref<DatabaseHostWithStats | null>(null)
+
+const resetDeleteModal = () => {
+  showDeleteModal.value = false
+  hostToDelete.value = null
+}
 
 const form = ref<CreateDatabaseHostPayload>({
   name: '',
@@ -76,16 +84,16 @@ async function handleSubmit() {
   }
 }
 
-async function handleDelete(host: DatabaseHostWithStats) {
-  if (!confirm(t('admin.databaseHosts.confirmDelete', { name: host.name }))) {
-    return
-  }
+async function handleDelete() {
+  if (!hostToDelete.value) return
 
+  isDeleting.value = true
   try {
-    await $fetch(`/api/admin/database-hosts/${host.id}`, {
+    await $fetch(`/api/admin/database-hosts/${hostToDelete.value.id}`, {
       method: 'DELETE',
     })
     toast.add({ title: t('admin.databaseHosts.databaseHostDeleted'), color: 'success' })
+    resetDeleteModal()
     await refresh()
   } catch (err) {
     toast.add({
@@ -93,6 +101,8 @@ async function handleDelete(host: DatabaseHostWithStats) {
       description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     })
+  } finally {
+    isDeleting.value = false
   }
 }
 </script>
@@ -151,7 +161,7 @@ async function handleDelete(host: DatabaseHostWithStats) {
 
                 <div class="flex items-center gap-2">
                   <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                    :disabled="host.databaseCount > 0" @click="handleDelete(host)" />
+                    :disabled="host.databaseCount > 0" @click="hostToDelete = host; showDeleteModal = true" />
                 </div>
               </div>
             </div>
@@ -218,6 +228,33 @@ async function handleDelete(host: DatabaseHostWithStats) {
             {{ t('admin.databaseHosts.addHost') }}
           </UButton>
         </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showDeleteModal"
+      :title="t('admin.databaseHosts.deleteDatabaseHost')"
+      :description="t('admin.databaseHosts.confirmDeleteDescription')"
+      :ui="{ footer: 'justify-end gap-2' }"
+    >
+      <template #body>
+        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+          <template #title>{{ t('common.warning') }}</template>
+          <template #description>{{ t('admin.databaseHosts.deleteHostWarning') }}</template>
+        </UAlert>
+        <div v-if="hostToDelete" class="rounded-md bg-muted p-3 text-sm">
+          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ hostToDelete.name }}</span></p>
+          <p class="text-muted-foreground mt-2">{{ hostToDelete.hostname }}:{{ hostToDelete.port }}</p>
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
+          {{ t('admin.databaseHosts.deleteDatabaseHost') }}
+        </UButton>
       </template>
     </UModal>
   </UPage>

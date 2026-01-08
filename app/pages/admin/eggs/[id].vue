@@ -22,9 +22,17 @@ const { data: eggData, pending, error, refresh } = await useAsyncData(
 const egg = computed(() => eggData.value?.data)
 
 const showVariableModal = ref(false)
+const showDeleteVariableModal = ref(false)
 const editingVariable = ref<EggVariable | null>(null)
+const variableToDelete = ref<EggVariable | null>(null)
 const isSubmitting = ref(false)
 const isSavingConfig = ref(false)
+const isDeletingVariable = ref(false)
+
+const resetDeleteVariableModal = () => {
+  showDeleteVariableModal.value = false
+  variableToDelete.value = null
+}
 
 const configForm = reactive({
   dockerImage: '',
@@ -154,16 +162,16 @@ async function handleSaveConfig() {
   }
 }
 
-async function handleDeleteVariable(variable: EggVariable) {
-  if (!confirm(t('admin.eggs.confirmDeleteVariable', { name: variable.name }))) {
-    return
-  }
+async function handleDeleteVariable() {
+  if (!variableToDelete.value) return
 
+  isDeletingVariable.value = true
   try {
-    await $fetch(`/api/admin/eggs/${eggId.value}/variables/${variable.id}`, {
+    await $fetch(`/api/admin/eggs/${eggId.value}/variables/${variableToDelete.value.id}`, {
       method: 'DELETE',
     })
     toast.add({ title: t('admin.eggs.variableDeleted'), color: 'success' })
+    resetDeleteVariableModal()
     await refresh()
   } catch (err) {
     toast.add({
@@ -171,6 +179,8 @@ async function handleDeleteVariable(variable: EggVariable) {
       description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     })
+  } finally {
+    isDeletingVariable.value = false
   }
 }
 
@@ -341,7 +351,7 @@ async function handleExportEgg() {
                       <UButton icon="i-lucide-pencil" size="xs" variant="ghost"
                         @click="openEditVariableModal(variable)" />
                       <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                        @click="handleDeleteVariable(variable)" />
+                        @click="variableToDelete = variable; showDeleteVariableModal = true" />
                     </div>
                   </div>
                 </div>
@@ -437,6 +447,33 @@ async function handleExportEgg() {
             {{ editingVariable ? t('common.update') : t('common.create') }}
           </UButton>
         </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showDeleteVariableModal"
+      :title="t('admin.eggs.deleteVariable')"
+      :description="t('admin.eggs.confirmDeleteVariableDescription')"
+      :ui="{ footer: 'justify-end gap-2' }"
+    >
+      <template #body>
+        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+          <template #title>{{ t('common.warning') }}</template>
+          <template #description>{{ t('admin.eggs.deleteVariableWarning') }}</template>
+        </UAlert>
+        <div v-if="variableToDelete" class="rounded-md bg-muted p-3 text-sm">
+          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ variableToDelete.name }}</span></p>
+          <p class="text-muted-foreground mt-2">{{ t('admin.eggs.environmentVariable') }}: <code class="font-mono">{{ variableToDelete.envVariable }}</code></p>
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton variant="ghost" :disabled="isDeletingVariable" @click="resetDeleteVariableModal">
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeletingVariable" @click="handleDeleteVariable">
+          {{ t('admin.eggs.deleteVariable') }}
+        </UButton>
       </template>
     </UModal>
   </UPage>

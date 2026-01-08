@@ -15,9 +15,17 @@ const requestURL = useRequestURL()
 const panelOrigin = computed(() => requestURL.origin)
 
 const showCreate = ref(false)
+const showDeleteModal = ref(false)
 const isSubmitting = ref(false)
 const issuingFor = ref<string | null>(null)
 const loadingConfigFor = ref<string | null>(null)
+const nodeToDelete = ref<WingsNodeSummary | null>(null)
+const isDeleting = ref(false)
+
+const resetDeleteModal = () => {
+  showDeleteModal.value = false
+  nodeToDelete.value = null
+}
 
 const tokenModal = reactive({
   visible: false,
@@ -91,17 +99,19 @@ async function handleCreateNode() {
   }
 }
 
-async function handleDeleteNode(id: string) {
-  if (!confirm(t('admin.nodes.confirmRemoveNode'))) {
-    return
-  }
+async function handleDeleteNode() {
+  if (!nodeToDelete.value) return
 
+  isDeleting.value = true
   try {
-    await $fetch(`/api/wings/nodes/${id}`, { method: 'DELETE' })
+    await $fetch(`/api/wings/nodes/${nodeToDelete.value.id}`, { method: 'DELETE' })
     toast.add({ title: t('admin.nodes.nodeRemoved'), color: 'primary' })
+    resetDeleteModal()
   } catch (err) {
     const message = err instanceof Error ? err.message : t('admin.nodes.unableToRemoveNode')
     toast.add({ title: t('admin.nodes.failedToRemoveNode'), description: message, color: 'error' })
+  } finally {
+    isDeleting.value = false
   }
 }
 
@@ -311,7 +321,7 @@ watch(
                         <UButton icon="i-lucide-terminal" size="xs" color="primary" variant="ghost"
                           :loading="issuingFor === node.id" @click="handleIssueToken(node)" />
                         <UButton icon="i-lucide-trash" size="xs" color="error" variant="ghost"
-                          @click="handleDeleteNode(node.id)" />
+                          @click="nodeToDelete = node; showDeleteModal = true" />
                       </div>
                     </div>
                   </div>
@@ -418,6 +428,34 @@ watch(
         <div class="flex items-center gap-2">
           <UButton variant="ghost" @click="systemModal.visible = false">{{ t('common.close') }}</UButton>
         </div>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showDeleteModal"
+      :title="t('admin.nodes.deleteNode')"
+      :description="t('admin.nodes.confirmDeleteNodeDescription')"
+      :ui="{ footer: 'justify-end gap-2' }"
+    >
+      <template #body>
+        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+          <template #title>{{ t('common.warning') }}</template>
+          <template #description>{{ t('admin.nodes.deleteNodeWarning') }}</template>
+        </UAlert>
+        <div v-if="nodeToDelete" class="rounded-md bg-muted p-3 text-sm">
+          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ nodeToDelete.name }}</span></p>
+          <p class="text-muted-foreground mt-2">{{ t('admin.nodes.id') }}: <code class="font-mono">{{ nodeToDelete.id }}</code></p>
+          <p v-if="nodeToDelete.description" class="text-muted-foreground mt-2">{{ nodeToDelete.description }}</p>
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDeleteNode">
+          {{ t('admin.nodes.deleteNode') }}
+        </UButton>
       </template>
     </UModal>
   </div>
