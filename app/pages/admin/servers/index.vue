@@ -64,7 +64,7 @@ function confirmDelete(server: AdminServerRow) {
   deleteConfirmOpen.value = true
 }
 
-async function deleteServer(close?: () => void) {
+async function deleteServer(close?: () => void, force: boolean = false) {
   const server = serverToDelete.value
   if (!server || isDeleting.value[server.id]) {
     return
@@ -78,7 +78,8 @@ async function deleteServer(close?: () => void) {
   }
 
   try {
-    await $fetch(`/api/admin/servers/${server.id}`, {
+    const url = force ? `/api/admin/servers/${server.id}?force=true` : `/api/admin/servers/${server.id}`
+    await $fetch(url, {
       method: 'DELETE',
     })
 
@@ -90,12 +91,27 @@ async function deleteServer(close?: () => void) {
 
     await refreshServers()
   } catch (error) {
-    const message = error instanceof Error ? error.message : t('admin.servers.delete.failedToDeleteServer')
-    toast.add({
-      title: t('admin.servers.delete.deleteFailed'),
-      description: message,
-      color: 'error',
-    })
+    const err = error as { status?: number; statusCode?: number; data?: { message?: string } }
+    const status = err.status || err.statusCode
+    const message = err.data?.message || (error instanceof Error ? error.message : t('admin.servers.delete.failedToDeleteServer'))
+ 
+    if (status === 409 && !force) {
+      toast.add({
+        title: t('admin.servers.delete.deleteFailed'),
+        description: message,
+        color: 'warning',
+        actions: [{
+          label: 'Force Delete',
+          onClick: () => deleteServer(close, true),
+        }],
+      })
+    } else {
+      toast.add({
+        title: t('admin.servers.delete.deleteFailed'),
+        description: message,
+        color: 'error',
+      })
+    }
   } finally {
     isDeleting.value[server.id] = false
     serverToDelete.value = null

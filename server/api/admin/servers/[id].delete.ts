@@ -48,14 +48,14 @@ export default defineEventHandler(async (event) => {
         console.log(`Server ${server.uuid} does not exist on Wings, continuing with database deletion`)
       } else {
         console.error('Failed to delete server from Wings:', error)
-        if (!force) {
-          throw createError({
-            statusCode: 500,
-            message: 'Failed to delete server from node. Use force=true to delete anyway.',
-          })
-        }
+        throw createError({
+          statusCode: 409,
+          message: 'Failed to delete server from Wings node. The node may be offline or unreachable. Use force=true to delete from panel anyway.',
+        })
       }
     }
+  } else if (force && server.nodeId) {
+    console.log(`Force deleting server ${server.uuid} from panel (skipping Wings node)`)
   }
 
   db.update(tables.servers)

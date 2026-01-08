@@ -191,21 +191,24 @@ async function handleTransfer(event: FormSubmitEvent<TransferFormSchema>) {
   }
 }
 
-async function handleDelete() {
+async function handleDelete(force: boolean = false) {
   if (deleteSubmitting.value)
     return
 
-  if (!confirm(t('admin.servers.manage.confirmDelete'))) {
-    return
-  }
+  if (!force) {
+    if (!confirm(t('admin.servers.manage.confirmDelete'))) {
+      return
+    }
 
-  if (!confirm(t('admin.servers.manage.confirmDeleteFinal'))) {
-    return
+    if (!confirm(t('admin.servers.manage.confirmDeleteFinal'))) {
+      return
+    }
   }
 
   deleteSubmitting.value = true
   try {
-    await $fetch(`/api/admin/servers/${props.server.id}`, {
+    const url = force ? `/api/admin/servers/${props.server.id}?force=true` : `/api/admin/servers/${props.server.id}`
+    await $fetch(url, {
       method: 'DELETE',
     })
 
@@ -218,12 +221,27 @@ async function handleDelete() {
     router.push('/admin/servers')
   }
   catch (error) {
-    const err = error as { data?: { message?: string } }
-    toast.add({
-      title: t('common.error'),
-      description: err.data?.message || t('admin.servers.manage.failedToDeleteServer'),
-      color: 'error',
-    })
+    const err = error as { status?: number; statusCode?: number; data?: { message?: string } }
+    const status = err.status || err.statusCode
+    const message = err.data?.message || t('admin.servers.manage.failedToDeleteServer')
+    
+    if (status === 409 && !force) {
+      toast.add({
+        title: t('admin.servers.manage.deleteFailed'),
+        description: message,
+        color: 'warning',
+        actions: [{
+          label: 'Force Delete',
+          onClick: () => handleDelete(true),
+        }],
+      })
+    } else {
+      toast.add({
+        title: t('common.error'),
+        description: message,
+        color: 'error',
+      })
+    }
   }
   finally {
     deleteSubmitting.value = false
@@ -325,7 +343,7 @@ async function handleDelete() {
           color="error"
           :loading="deleteSubmitting"
           :disabled="deleteSubmitting"
-          @click="handleDelete"
+          @click="() => handleDelete()"
         >
           {{ t('common.delete') }}
         </UButton>
