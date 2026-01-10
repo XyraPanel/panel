@@ -48,6 +48,7 @@ export default defineEventHandler(async (event) => {
     data: <NetworkData>{
       primary,
       allocations: additional,
+      allocation_limit: server.allocationLimit ?? null,
     },
   }
 })

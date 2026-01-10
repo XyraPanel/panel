@@ -23,6 +23,13 @@ export default defineEventHandler(async (event) => {
     requiredPermissions: ['allocation.create'],
   })
 
+  if (!server.allocationLimit) {
+    throw createError({
+      statusCode: 400,
+      message: 'Server does not have an allocation limit set',
+    })
+  }
+
   const db = useDrizzle()
   const currentAllocations = db
     .select()
@@ -30,7 +37,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(tables.serverAllocations.serverId, server.id))
     .all()
 
-  if (server.allocationLimit && currentAllocations.length >= server.allocationLimit) {
+  if (currentAllocations.length >= server.allocationLimit) {
     throw createError({
       statusCode: 400,
       message: 'Server has reached its allocation limit',
@@ -44,22 +51,31 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const availableAllocation = db
+  const primaryAllocation = currentAllocations.find(a => a.isPrimary)
+  if (!primaryAllocation) {
+    throw createError({
+      statusCode: 400,
+      message: 'Server has no primary allocation',
+    })
+  }
+
+  const allocation = db
     .select()
     .from(tables.serverAllocations)
     .where(
       and(
-        eq(tables.serverAllocations.nodeId, server.nodeId),
+        eq(tables.serverAllocations.nodeId, server.nodeId!),
+        eq(tables.serverAllocations.ip, primaryAllocation.ip),
         isNull(tables.serverAllocations.serverId)
       )
     )
     .limit(1)
     .get()
 
-  if (!availableAllocation) {
+  if (!allocation) {
     throw createError({
-      statusCode: 404,
-      message: 'No available allocations found on this node',
+      statusCode: 400,
+      message: 'No available allocations on this node. Please contact an administrator to add more ports.',
     })
   }
 
@@ -68,14 +84,21 @@ export default defineEventHandler(async (event) => {
       serverId: server.id,
       updatedAt: new Date(),
     })
-    .where(eq(tables.serverAllocations.id, availableAllocation.id))
+    .where(eq(tables.serverAllocations.id, allocation.id))
     .run()
 
   const updated = db
     .select()
     .from(tables.serverAllocations)
-    .where(eq(tables.serverAllocations.id, availableAllocation.id))
+    .where(eq(tables.serverAllocations.id, allocation.id))
     .get()
+
+  if (!updated) {
+    throw createError({
+      statusCode: 500,
+      message: 'Failed to retrieve updated allocation',
+    })
+  }
 
   await recordAuditEventFromRequest(event, {
     actor: session?.user?.email || session?.user?.id || 'unknown',

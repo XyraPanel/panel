@@ -59,6 +59,19 @@ export default defineEventHandler(async (event) => {
     .where(eq(tables.serverAllocations.serverId, server.id))
     .all()
 
+  const databases = db
+    .select()
+    .from(tables.serverDatabases)
+    .where(eq(tables.serverDatabases.serverId, server.id))
+    .all()
+
+  const mounts = db
+    .select()
+    .from(tables.mounts)
+    .innerJoin(tables.mountServer, eq(tables.mounts.id, tables.mountServer.mountId))
+    .where(eq(tables.mountServer.serverId, server.id))
+    .all()
+
   return {
     data: {
       id: server.id,
@@ -77,9 +90,9 @@ export default defineEventHandler(async (event) => {
       eggId: server.eggId,
       startup: server.startup,
       image: server.dockerImage || server.image,
-      allocationLimit: limits?.allocationLimit ?? null,
-      databaseLimit: limits?.databaseLimit ?? null,
-      backupLimit: limits?.backupLimit ?? 0,
+      allocationLimit: server.allocationLimit ?? null,
+      databaseLimit: server.databaseLimit ?? null,
+      backupLimit: server.backupLimit ?? 0,
       installedAt: server.installedAt,
       createdAt: server.createdAt,
       updatedAt: server.updatedAt,
@@ -124,6 +137,8 @@ export default defineEventHandler(async (event) => {
         threads: limits.threads,
         oomDisabled: limits.oomDisabled,
       } : null,
+      databases: databases,
+      mounts: mounts.map(m => m.mounts),
     },
   }
 })

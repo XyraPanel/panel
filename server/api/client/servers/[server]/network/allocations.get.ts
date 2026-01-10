@@ -22,16 +22,28 @@ export default defineEventHandler(async (event) => {
   })
 
   const allocations = await listServerAllocations(server.id)
+  const primaryAllocation = allocations.find(a => a.isPrimary)
+  const additionalAllocations = allocations.filter(a => !a.isPrimary)
 
   return {
-    data: allocations.map(alloc => ({
-      id: alloc.id,
-      ip: alloc.ip,
-      port: alloc.port,
-      ip_alias: alloc.ipAlias,
-      is_primary: alloc.isPrimary,
-      notes: alloc.notes,
-      assigned: true,
-    })),
+    data: {
+      primary: primaryAllocation ? {
+        id: primaryAllocation.id,
+        ip: primaryAllocation.ip,
+        port: primaryAllocation.port,
+        ipAlias: primaryAllocation.ipAlias,
+        isPrimary: primaryAllocation.isPrimary,
+        notes: primaryAllocation.notes,
+      } : null,
+      allocations: additionalAllocations.map(alloc => ({
+        id: alloc.id,
+        ip: alloc.ip,
+        port: alloc.port,
+        ipAlias: alloc.ipAlias,
+        isPrimary: alloc.isPrimary,
+        notes: alloc.notes,
+      })),
+      allocation_limit: server.allocationLimit,
+    },
   }
 })

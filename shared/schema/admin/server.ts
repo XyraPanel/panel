@@ -33,9 +33,9 @@ export const serverBuildSchema = z.object({
     .optional(),
   threads: threadsSchema.optional(),
   oomDisabled: z.boolean().optional(),
-  databaseLimit: z.number().int().min(0).optional(),
-  allocationLimit: z.number().int().min(0).optional(),
-  backupLimit: z.number().int().min(0).optional(),
+  databaseLimit: z.number().int().min(0).nullable().optional(),
+  allocationLimit: z.number().int().min(0).nullable().optional(),
+  backupLimit: z.number().int().min(0).nullable().optional(),
 })
 
 export const serverBuildFormSchema = serverBuildSchema.required({

@@ -1,160 +1,130 @@
-import { createError, assertMethod, getRequestIP, getRequestHost, readRawBody, type H3Event } from 'h3'
+import { createError, assertMethod } from 'h3'
 import { requireAdmin } from '~~/server/utils/security'
 import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
 import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import type { UpdateAdminServerPayload } from '#shared/types/admin'
 import { requireRouteParam } from '~~/server/utils/http/params'
 import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-
-const MAX_BODY_SIZE = 16 * 1024
-
-function validateUpdatePayload(payload: unknown): payload is UpdateAdminServerPayload {
-  if (!payload || typeof payload !== 'object') {
-    return false
-  }
-
-  const allowedKeys = ['name', 'description', 'ownerId', 'externalId']
-  const entries = Object.entries(payload as Record<string, unknown>)
-
-  if (entries.length === 0) {
-    return false
-  }
-
-  return entries.every(([key, value]) => {
-    if (!allowedKeys.includes(key)) {
-      return false
-    }
-
-    if (value === undefined) {
-      return true
-    }
-
-    if (key === 'ownerId' || key === 'externalId' || key === 'name') {
-      return typeof value === 'string' && value.trim().length > 0
-    }
-
-    if (key === 'description') {
-      return typeof value === 'string'
-    }
-
-    return false
-  })
-}
-
-async function readUpdatePayload(event: H3Event): Promise<UpdateAdminServerPayload> {
-  const raw = await readRawBody(event, 'utf8')
-
-  if (raw && raw.length > MAX_BODY_SIZE) {
-    throw createError({ statusCode: 413, message: 'Payload too large' })
-  }
-
-  let parsed: unknown
-  try {
-    parsed = raw && raw.length > 0 ? JSON.parse(raw) : {}
-  } catch (error) {
-    throw createError({ statusCode: 400, message: 'Invalid JSON body', cause: error })
-  }
-
-  if (!validateUpdatePayload(parsed)) {
-    throw createError({ statusCode: 400, message: 'Invalid update payload' })
-  }
-
-  return parsed
-}
+import { serverBuildSchema } from '#shared/schema/admin/server'
 
 export default defineEventHandler(async (event) => {
-  // The more specific [id]/build.patch.ts should handle those
-  const path = event.path || event.node.req.url?.split('?')[0] || ''
-  const normalizedPath = path.replace(/\/+$/, '')
-  
-  if (normalizedPath.endsWith('/build') || normalizedPath.includes('/build/')) {
-    console.log('[ID Patch] [id].patch.ts matched a /build request! This should not happen!', {
-      method: event.method,
-      path: normalizedPath,
-      url: event.node.req.url,
-    })
-    console.log('[ID Patch] This means [id]/build.patch.ts route is NOT matching - route registration issue!')
-    throw createError({
-      statusCode: 404,
-      message: 'Route not found - build.patch.ts should handle this',
-    })
-  }
-  
   assertMethod(event, 'PATCH')
 
   const session = await requireAdmin(event)
-
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.SERVERS, ADMIN_ACL_PERMISSIONS.WRITE)
 
   const serverId = await requireRouteParam(event, 'id', 'Server ID required')
-
-  const body = await readUpdatePayload(event)
-
+  const body = await readBody(event)
   const db = useDrizzle()
 
-  const server = db
-    .select()
-    .from(tables.servers)
-    .where(eq(tables.servers.id, serverId))
-    .get()
+  const { findServerByIdentifier, invalidateServerCaches } = await import('~~/server/utils/serversStore')
+  const server = await findServerByIdentifier(serverId)
 
   if (!server) {
     throw createError({ statusCode: 404, message: 'Server not found' })
   }
 
-  const updates: UpdateAdminServerPayload & { updatedAt: Date } = {
-    updatedAt: new Date(),
+  const validatedBody = serverBuildSchema.parse(body)
+  const { cpu, memory, swap, disk, io, threads, oomDisabled, databaseLimit, allocationLimit, backupLimit } = validatedBody
+
+  const [existingLimits] = db.select()
+    .from(tables.serverLimits)
+    .where(eq(tables.serverLimits.serverId, serverId))
+    .limit(1)
+    .all()
+
+  const updateData = {
+    cpu: typeof cpu === 'number' ? cpu : (existingLimits?.cpu ?? 0),
+    memory: typeof memory === 'number' ? memory : (existingLimits?.memory ?? 0),
+    swap: typeof swap === 'number' ? swap : (existingLimits?.swap ?? 0),
+    disk: typeof disk === 'number' ? disk : (existingLimits?.disk ?? 0),
+    io: typeof io === 'number' ? io : (existingLimits?.io ?? 500),
+    threads: threads !== undefined ? threads : (existingLimits?.threads ?? null),
+    databaseLimit: databaseLimit !== undefined ? databaseLimit : (existingLimits?.databaseLimit ?? null),
+    allocationLimit: allocationLimit !== undefined ? allocationLimit : (existingLimits?.allocationLimit ?? null),
+    backupLimit: backupLimit !== undefined ? backupLimit : (existingLimits?.backupLimit ?? null),
+    updatedAt: new Date() as Date,
   }
 
-  if (body.name) updates.name = body.name
-  if (body.description !== undefined) updates.description = body.description
-  if (body.ownerId) updates.ownerId = body.ownerId
-  if (body.externalId !== undefined) updates.externalId = body.externalId
-
-  db.update(tables.servers)
-    .set(updates)
-    .where(eq(tables.servers.id, serverId))
-    .run()
-
-  const updated = db
-    .select()
-    .from(tables.servers)
-    .where(eq(tables.servers.id, serverId))
-    .get()
-
-  if (!updated) {
-    throw createError({ statusCode: 500, message: 'Server update failed' })
+  if (existingLimits) {
+    db.update(tables.serverLimits)
+      .set(updateData)
+      .where(eq(tables.serverLimits.serverId, serverId))
+      .run()
+  } else {
+    const now = new Date()
+    db.insert(tables.serverLimits)
+      .values({
+        serverId,
+        cpu: cpu ?? 0,
+        memory: memory ?? 0,
+        swap: swap ?? 0,
+        disk: disk ?? 0,
+        io: io ?? 500,
+        threads: threads ?? null,
+        databaseLimit: databaseLimit ?? null,
+        allocationLimit: allocationLimit ?? null,
+        backupLimit: backupLimit ?? null,
+        memoryOverallocate: null,
+        diskOverallocate: null,
+        oomDisabled: server.oomDisabled ?? true,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .run()
   }
 
-  const { invalidateServerCaches } = await import('~~/server/utils/serversStore')
+  const serverUpdates: Record<string, unknown> = {}
+  if (oomDisabled !== undefined) serverUpdates.oomDisabled = Boolean(oomDisabled)
+  if (allocationLimit !== undefined) serverUpdates.allocationLimit = allocationLimit
+  if (databaseLimit !== undefined) serverUpdates.databaseLimit = databaseLimit
+  if (backupLimit !== undefined) serverUpdates.backupLimit = backupLimit
+
+  if (Object.keys(serverUpdates).length > 0) {
+    db.update(tables.servers)
+      .set(serverUpdates)
+      .where(eq(tables.servers.id, serverId))
+      .run()
+  }
+
   await invalidateServerCaches({
-    id: updated.id,
-    uuid: updated.uuid,
-    identifier: updated.identifier,
+    id: server.id,
+    uuid: server.uuid,
+    identifier: server.identifier,
   })
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
     actorType: 'user',
-    action: 'admin.server.updated',
+    action: 'admin.server.build.updated',
     targetType: 'server',
     targetId: serverId,
     metadata: {
-      serverName: updated.name,
-      serverUuid: updated.uuid,
+      serverUuid: server.uuid,
       updatedFields: Object.keys(body),
     },
   })
 
-  console.info('[admin][servers:update]', {
-    serverId,
-    actor: session?.user?.email,
-    ip: getRequestIP(event),
-    host: getRequestHost(event, { xForwardedHost: true }),
-  })
+  const { getWingsClientForServer } = await import('~~/server/utils/wings-client')
+  const result = await getWingsClientForServer(server.uuid)
+  const { client } = result
+  
+  try {
+    await client.syncServer(server.uuid)
+  } catch (syncError) {
+    throw createError({
+      statusCode: 500,
+      message: `Database updated successfully, but failed to sync with Wings: ${syncError instanceof Error ? syncError.message : String(syncError)}. The changes will be applied on next server restart.`,
+      data: {
+        databaseUpdated: true,
+        wingsSyncFailed: true,
+        error: syncError instanceof Error ? syncError.message : String(syncError),
+      },
+    })
+  }
 
   return {
-    data: updated,
+    success: true,
+    message: 'Build configuration updated successfully',
   }
 })

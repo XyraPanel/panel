@@ -26,8 +26,8 @@ const {
   `server-startup-${props.server.id}`,
   async () => {
     try {
-      const response = await $fetch<{ data: StartupResponse }>(`/api/admin/servers/${props.server.id}/startup`)
-      return response?.data ?? null
+      const response = await $fetch<{ data: { startup?: StartupResponse } }>(`/api/admin/servers/${props.server.id}`)
+      return response?.data?.startup ?? null
     }
     catch (error) {
       console.error('Failed to load startup configuration', error)

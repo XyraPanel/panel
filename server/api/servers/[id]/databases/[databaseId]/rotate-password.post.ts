@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { createError } from 'h3'
 import { eq, and } from 'drizzle-orm'
 import { getServerSession } from '~~/server/utils/session'
@@ -52,7 +53,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Database not found' })
   }
 
-  const newPassword = crypto.randomUUID().replace(/-/g, '')
+  const newPassword = randomUUID().replace(/-/g, '')
 
   try {
     await db

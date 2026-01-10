@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { createError } from 'h3'
 import { getServerSession } from '~~/server/utils/session'
 import { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
@@ -50,10 +51,10 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, statusMessage: 'No database host available' })
   }
 
-  const databaseId = crypto.randomUUID()
+  const databaseId = randomUUID()
   const dbName = `s${server.id.substring(0, 8)}_${body.name}`.replace(/[^a-zA-Z0-9_]/g, '_')
   const dbUsername = `u${server.id.substring(0, 8)}_${body.name}`.substring(0, 16).replace(/[^a-zA-Z0-9_]/g, '_')
-  const dbPassword = crypto.randomUUID().replace(/-/g, '')
+  const dbPassword = randomUUID().replace(/-/g, '')
 
   try {
 

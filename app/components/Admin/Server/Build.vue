@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const toast = useToast()
 const isSubmitting = ref(false)
+const skipNextUpdate = ref(false)
 const requestFetch = useRequestFetch()
 
 const {
@@ -21,12 +22,31 @@ const {
   `server-limits-${props.server.id}`,
   async () => {
     try {
-      const result = await requestFetch(`/api/admin/servers/${props.server.id}/limits`) as unknown
+      const result = await requestFetch(`/api/admin/servers/${props.server.id}`) as unknown
       if (result && typeof result === 'object' && 'data' in result) {
-        const payload = result as { data?: ServerLimits | null }
-        return payload.data ?? null
+        const payload = result as { data?: { 
+          limits?: ServerLimits | null
+          allocationLimit?: number | null
+          databaseLimit?: number | null
+          backupLimit?: number | null
+        } | null }
+        const serverData = payload.data
+        if (!serverData) return null
+        
+        return {
+          cpu: serverData.limits?.cpu ?? 0,
+          memory: serverData.limits?.memory ?? 0,
+          disk: serverData.limits?.disk ?? 0,
+          swap: serverData.limits?.swap ?? 0,
+          io: serverData.limits?.io ?? 500,
+          threads: serverData.limits?.threads ?? null,
+          oomDisabled: serverData.limits?.oomDisabled ?? true,
+          allocationLimit: serverData.allocationLimit ?? null,
+          databaseLimit: serverData.databaseLimit ?? null,
+          backupLimit: serverData.backupLimit ?? null,
+        } as ServerLimits
       }
-      console.warn('[Build Form] Unexpected limits response shape:', result)
+      console.warn('[Build Form] Unexpected server response shape:', result)
       return null
     }
     catch (error) {
@@ -47,6 +67,10 @@ const schema = serverBuildFormSchema.extend({
   swap: z.coerce.number().min(-1, 'Swap must be -1 or greater'),
   disk: z.coerce.number().min(0, 'Disk limit cannot be negative'),
   io: z.coerce.number().min(10, 'Block I/O must be at least 10').max(1000, 'Block I/O cannot exceed 1000'),
+  oomDisabled: z.boolean().optional(),
+  databaseLimit: z.coerce.number().min(0, 'Database limit cannot be negative').nullable().optional(),
+  allocationLimit: z.coerce.number().min(0, 'Allocation limit cannot be negative').nullable().optional(),
+  backupLimit: z.coerce.number().min(0, 'Backup limit cannot be negative').nullable().optional(),
 })
 
 type FormSchema = z.infer<typeof schema>
@@ -59,12 +83,21 @@ function createFormState(payload: ServerLimits | null): FormSchema {
     swap: Number(payload?.swap ?? 0),
     disk: Number(payload?.disk ?? 0),
     io: Number(payload?.io ?? 500),
+    oomDisabled: payload?.oomDisabled ?? true,
+    databaseLimit: payload?.databaseLimit ?? null,
+    allocationLimit: payload?.allocationLimit ?? null,
+    backupLimit: payload?.backupLimit ?? null,
   }
 }
 
 const form = reactive<FormSchema>(createFormState(limits.value))
 
 watch(limits, (value) => {
+  if (skipNextUpdate.value) {
+    skipNextUpdate.value = false
+    return
+  }
+  
   if (value) {
     const newState = createFormState(value)
     console.log('[Build Form] Limits updated, refreshing form:', {
@@ -96,24 +129,29 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       disk: event.data.disk ?? 0,
       io: event.data.io ?? 500,
       threads: event.data.threads ?? null,
+      oomDisabled: event.data.oomDisabled ?? true,
+      databaseLimit: event.data.databaseLimit ?? null,
+      allocationLimit: event.data.allocationLimit ?? null,
+      backupLimit: event.data.backupLimit ?? null,
     }
 
     console.log('[Build Form] Sending update:', { 
       serverId: props.server.id,
       serverUuid: props.server.uuid,
       payload,
-      url: `/api/admin/servers/${props.server.id}/build`,
+      url: `/api/admin/servers/${props.server.id}`,
     })
 
     let response: unknown
     try {
-      response = await requestFetch(`/api/admin/servers/${props.server.id}/build`, {
-        method: 'patch',
+      response = await $fetch(`/api/admin/servers/${props.server.id}`, {
+        method: 'PATCH',
         body: payload,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
+        baseURL: window.location.origin,
       }) as unknown
 
       console.log('[Build Form] Update response:', response)
@@ -156,6 +194,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
     }
 
     console.log('[Build Form] Refreshing limits from server...')
+    skipNextUpdate.value = true
     await refreshLimits()
     console.log('[Build Form] Limits refreshed:', limitsData.value)
 
@@ -243,6 +282,46 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
         <UInput v-model.number="form.io" type="number" min="10" max="1000" placeholder="500" class="w-full" />
         <template #help>
           I/O performance (10-1000). Higher = better performance.
+        </template>
+      </UFormField>
+
+      <UFormField label="OOM Killer" name="oomDisabled">
+        <USwitch
+          v-model="form.oomDisabled"
+          :label="`${form.oomDisabled ? 'Disabled' : 'Enabled'}`"
+          description="Enabling OOM killer may cause server processes to exit unexpectedly."
+          checked-icon="i-lucide-check"
+          unchecked-icon="i-lucide-x"
+        />
+      </UFormField>
+    </div>
+
+    <UAlert icon="i-lucide-info" variant="subtle" class="mt-6">
+      <template #title>Application Feature Limits</template>
+      <template #description>
+        Configure limits for databases, allocations, and backups that users can create for this server.
+      </template>
+    </UAlert>
+
+    <div class="grid gap-4 md:grid-cols-3">
+      <UFormField label="Database Limit" name="databaseLimit">
+        <UInput v-model.number="form.databaseLimit" type="number" placeholder="0" class="w-full" />
+        <template #help>
+          Maximum databases users can create. Leave empty for unlimited.
+        </template>
+      </UFormField>
+
+      <UFormField label="Allocation Limit" name="allocationLimit">
+        <UInput v-model.number="form.allocationLimit" type="number" placeholder="0" class="w-full" />
+        <template #help>
+          Maximum ports users can create. Leave empty for unlimited.
+        </template>
+      </UFormField>
+
+      <UFormField label="Backup Limit" name="backupLimit">
+        <UInput v-model.number="form.backupLimit" type="number" placeholder="0" class="w-full" />
+        <template #help>
+          Maximum backups that can be created. Leave empty for unlimited.
         </template>
       </UFormField>
     </div>

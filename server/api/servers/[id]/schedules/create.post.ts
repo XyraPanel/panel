@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { createError } from 'h3'
 import { getServerSession } from '~~/server/utils/session'
 import { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
@@ -42,7 +43,7 @@ export default defineEventHandler(async (event): Promise<ServerScheduleResponse>
   }
 
   const db = useDrizzle()
-  const scheduleId = crypto.randomUUID()
+  const scheduleId = randomUUID()
 
   try {
     await db.insert(tables.serverSchedules).values({

@@ -59,6 +59,9 @@ export interface ServerLimits {
   io: number | null
   threads: string | null
   oomDisabled: boolean
+  databaseLimit: number | null
+  allocationLimit: number | null
+  backupLimit: number | null
 }
 
 export interface ServerResponse {
@@ -520,6 +523,7 @@ export interface ServerAllocation {
 export interface NetworkData {
   primary: ServerAllocation | null
   allocations: ServerAllocation[]
+  allocation_limit: number | null
 }
 
 export interface CreateServerAllocationPayload {

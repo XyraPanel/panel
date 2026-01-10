@@ -14,7 +14,16 @@ const isSubmitting = ref(false)
 
 const { data: databasesData, refresh, pending: databasesPending } = await useAsyncData<AdminServerDatabaseListResponse>(
   `server-databases-${props.serverId}`,
-  () => $fetch<AdminServerDatabaseListResponse>(`/api/admin/servers/${props.serverId}/databases`),
+  async () => {
+    try {
+      const response = await $fetch<{ data: { databases?: AdminServerDatabase[] } }>(`/api/admin/servers/${props.serverId}`)
+      return { data: response?.data?.databases ?? [] } as AdminServerDatabaseListResponse
+    }
+    catch (error) {
+      console.error('Failed to load server databases', error)
+      return { data: [] } as AdminServerDatabaseListResponse
+    }
+  },
 )
 const databases = computed<AdminServerDatabase[]>(() => databasesData.value?.data ?? [])
 
@@ -74,7 +83,7 @@ async function handleDelete(databaseId: string, databaseName: string) {
 
   try {
     await $fetch(`/api/admin/servers/${props.serverId}/databases/${databaseId}`, {
-      method: 'DELETE',
+      method: 'delete',
     })
 
     toast.add({

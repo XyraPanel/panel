@@ -276,39 +276,44 @@ export default defineNuxtConfig({
         handler: './server/api/admin/servers/[id]/build.patch.ts',
       },
       {
-        route: '/api/admin/servers/:id/limits',
-        method: 'get',
-        handler: './server/api/admin/servers/[id]/limits.get.ts',
-      },
-      {
-        route: '/api/admin/servers/:id/startup',
-        method: 'get',
-        handler: './server/api/admin/servers/[id]/startup.get.ts',
-      },
-      {
         route: '/api/admin/servers/:id/startup',
         method: 'patch',
         handler: './server/api/admin/servers/[id]/startup.patch.ts',
       },
-      // CRITICAL: The files/write route MUST match exactly
-      // The route file is at: server/api/servers/[id]/files/write.post.ts
-      // This should auto-scan to: /api/servers/:id/files/write (POST)
-      // But we explicitly register it to ensure it matches
       {
-        route: '/api/servers/:id/files/write',
+        route: '/api/admin/servers/:id/actions',
         method: 'post',
-        handler: './server/api/servers/[id]/files/write.post.ts',
-        lazy: true,
+        handler: './server/api/admin/servers/[id]/actions.post.ts',
       },
       {
-        route: '/api/servers/:id',
-        method: 'get',
-        handler: './server/api/servers/[id]/index.get.ts',
+        route: '/api/admin/servers/:id/power',
+        method: 'post',
+        handler: './server/api/admin/servers/[id]/power.post.ts',
       },
       {
-        route: '/api/servers/:id/files',
-        method: 'get',
-        handler: './server/api/servers/[id]/files.get.ts',
+        route: '/api/admin/servers/:id/suspend',
+        method: 'post',
+        handler: './server/api/admin/servers/[id]/suspend.post.ts',
+      },
+      {
+        route: '/api/admin/servers/:id/unsuspend',
+        method: 'post',
+        handler: './server/api/admin/servers/[id]/unsuspend.post.ts',
+      },
+      {
+        route: '/api/admin/servers/:id/reinstall',
+        method: 'post',
+        handler: './server/api/admin/servers/[id]/reinstall.post.ts',
+      },
+      {
+        route: '/api/admin/servers/:id/sync',
+        method: 'post',
+        handler: './server/api/admin/servers/[id]/sync.post.ts',
+      },
+      {
+        route: '/api/admin/servers/:id/delete-from-wings',
+        method: 'post',
+        handler: './server/api/admin/servers/[id]/delete-from-wings.post.ts',
       },
     ],
     scheduledTasks: {

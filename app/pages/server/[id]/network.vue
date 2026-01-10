@@ -3,6 +3,7 @@ import type { ServerAllocation, NetworkData } from '#shared/types/server'
 
 const route = useRoute()
 const { t } = useI18n()
+const toast = useToast()
 
 definePageMeta({
   auth: true,
@@ -11,7 +12,7 @@ definePageMeta({
 
 const serverId = computed(() => route.params.id as string)
 
-const { data: networkData, pending, error } = await useAsyncData(
+const { data: networkData, pending, error, refresh } = await useAsyncData(
   `server-${serverId.value}-network`,
   () => $fetch<{ data: NetworkData }>(`/api/client/servers/${serverId.value}/network`),
   {
@@ -21,9 +22,41 @@ const { data: networkData, pending, error } = await useAsyncData(
 
 const primaryAllocation = computed(() => networkData.value?.data.primary)
 const additionalAllocations = computed(() => networkData.value?.data.allocations || [])
+const allocationLimit = computed(() => networkData.value?.data.allocation_limit)
+const canCreateAllocation = computed(() => {
+  if (!allocationLimit.value) return false
+  const totalAllocations = (additionalAllocations.value?.length || 0) + (primaryAllocation.value ? 1 : 0)
+  return totalAllocations < allocationLimit.value
+})
+
+const isCreatingAllocation = ref(false)
 
 function formatIp(allocation: ServerAllocation): string {
   return allocation.ipAlias || allocation.ip
+}
+
+async function createAllocation() {
+  isCreatingAllocation.value = true
+  try {
+    await $fetch(`/api/client/servers/${serverId.value}/network/allocations`, {
+      method: 'POST',
+    })
+    toast.add({
+      title: t('server.network.allocationCreated'),
+      description: t('server.network.allocationCreatedDescription'),
+      color: 'success',
+    })
+    await refresh()
+  } catch (err) {
+    const error = err as { data?: { message?: string } }
+    toast.add({
+      title: t('common.error'),
+      description: error.data?.message || t('server.network.failedToCreateAllocation'),
+      color: 'error',
+    })
+  } finally {
+    isCreatingAllocation.value = false
+  }
 }
 </script>
 
@@ -105,13 +138,23 @@ function formatIp(allocation: ServerAllocation): string {
               <template #header>
                 <div class="flex items-center justify-between">
                   <h2 class="text-lg font-semibold">{{ t('server.network.additionalAllocations') }}</h2>
+                  <UButton
+                    v-if="canCreateAllocation"
+                    :loading="isCreatingAllocation"
+                    size="sm"
+                    @click="createAllocation"
+                  >
+                    <UIcon name="i-lucide-plus" class="size-4" />
+                    {{ t('server.network.createAllocation') }}
+                  </UButton>
                 </div>
               </template>
 
               <div v-if="additionalAllocations.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
                 <UIcon name="i-lucide-network" class="mx-auto size-12 text-muted-foreground/50" />
                 <p class="mt-3 text-sm font-medium">{{ t('server.network.noAdditionalAllocations') }}</p>
-                <p class="mt-1 text-xs text-muted-foreground">{{ t('server.network.requestAdditionalPorts') }}</p>
+                <p v-if="!canCreateAllocation && allocationLimit" class="mt-1 text-xs text-muted-foreground">{{ t('server.network.allocationLimitReached') }}</p>
+                <p v-else-if="!allocationLimit" class="mt-1 text-xs text-muted-foreground">{{ t('server.network.requestAdditionalPorts') }}</p>
               </div>
 
               <div v-else class="overflow-hidden rounded-lg border border-default">

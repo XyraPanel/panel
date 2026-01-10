@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import type { QueueJob } from '#shared/types/queue'
 
 class SimpleQueue {
@@ -5,7 +6,7 @@ class SimpleQueue {
   private processing = false
 
   async add(type: string, data: Record<string, unknown>): Promise<string> {
-    const jobId = crypto.randomUUID()
+    const jobId = randomUUID()
     const job: QueueJob = {
       id: jobId,
       type,

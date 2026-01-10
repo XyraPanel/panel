@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto'
 import { createError } from 'h3'
 import { getServerSession } from '~~/server/utils/session'
 import { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
@@ -37,14 +38,15 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { client } = await getWingsClientForServer(server.uuid)
-    const result = await client.createBackup(server.uuid)
+    const backupUuid = randomUUID()
+    await client.createBackup(server.uuid, backupUuid)
 
     const db = useDrizzle()
-    const backupId = crypto.randomUUID()
+    const backupId = randomUUID()
     await db.insert(tables.serverBackups).values({
       id: backupId,
       serverId: server.id,
-      uuid: result.uuid,
+      uuid: backupUuid,
       name: `Backup ${new Date().toISOString()}`,
       ignoredFiles: JSON.stringify([]),
       disk: 'wings',
@@ -60,7 +62,7 @@ export default defineEventHandler(async (event) => {
     return {
       success: true,
       data: {
-        uuid: result.uuid,
+        uuid: backupUuid,
         id: backupId,
       },
     }

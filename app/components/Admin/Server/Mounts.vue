@@ -18,9 +18,14 @@ const {
   refresh,
   error: mountsError,
 } = await useAsyncData(`server-mounts-${props.serverId}`, async () => {
-  const url = `/api/admin/servers/${props.serverId}/mounts`
-  // @ts-expect-error - Nuxt typed routes cause deep type
-  return await $fetch(url) as { data: Mount[] }
+  try {
+    const response = await $fetch<{ data: { mounts?: Mount[] } }>(`/api/admin/servers/${props.serverId}`)
+    return { data: response?.data?.mounts ?? [] } as { data: Mount[] }
+  }
+  catch (error) {
+    console.error('Failed to load server mounts', error)
+    return { data: [] } as { data: Mount[] }
+  }
 })
 const serverMounts = computed(() => mountsResponse.value?.data ?? [])
 
