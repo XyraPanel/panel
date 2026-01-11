@@ -727,6 +727,7 @@
       "noEnvironmentVariablesDescription": "Environment variables will appear here when configured by an administrator.",
       "environmentVariablesInfo": "Changes take effect after reinstalling the server.",
       "variableValue": "Value",
+      "noValue": "No value set",
       "noChanges": "No Changes",
       "noChangesDescription": "Docker image is already set to this value",
       "invalidImage": "Invalid Image",
@@ -1233,7 +1234,17 @@
         "nodeLabel": "Node",
         "memoryLabel": "Memory",
         "diskLabel": "Disk",
-        "cpuLabel": "CPU"
+        "cpuLabel": "CPU",
+        "featureLimits": "Feature Limits",
+        "databaseLimit": "Database limit",
+        "databaseLimitPlaceholder": "0",
+        "databaseLimitHelp": "Maximum number of databases this server can create. Leave empty for unlimited.",
+        "allocationLimit": "Allocation limit",
+        "allocationLimitPlaceholder": "0",
+        "allocationLimitHelp": "Maximum number of additional allocations this server can use. Leave empty for unlimited.",
+        "backupLimit": "Backup limit",
+        "backupLimitPlaceholder": "3",
+        "backupLimitHelp": "Maximum number of backups this server can create. Default is 3."
       }
     },
     "nodes": {

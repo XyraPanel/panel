@@ -37,6 +37,9 @@ const form = ref<Partial<CreateServerPayload>>({
   skipScripts: false,
   startOnCompletion: true,
   oomDisabled: false,
+  databases: undefined,
+  allocations: undefined,
+  backups: 3,
 })
 
 const { data: nestsData } = await useAsyncData(
@@ -462,6 +465,32 @@ const stepTitles = [
                 {{ t('admin.servers.create.oomKillerHelp') }}
               </template>
             </UFormField>
+
+            <div class="pt-4 border-t border-default">
+              <h3 class="text-sm font-semibold mb-3">{{ t('admin.servers.create.featureLimits') }}</h3>
+              <div class="grid grid-cols-3 gap-4">
+                <UFormField :label="t('admin.servers.create.databaseLimit')" name="databases">
+                  <UInput v-model.number="form.databases" type="number" :placeholder="t('admin.servers.create.databaseLimitPlaceholder')" class="w-full" />
+                  <template #help>
+                    {{ t('admin.servers.create.databaseLimitHelp') }}
+                  </template>
+                </UFormField>
+
+                <UFormField :label="t('admin.servers.create.allocationLimit')" name="allocations">
+                  <UInput v-model.number="form.allocations" type="number" :placeholder="t('admin.servers.create.allocationLimitPlaceholder')" class="w-full" />
+                  <template #help>
+                    {{ t('admin.servers.create.allocationLimitHelp') }}
+                  </template>
+                </UFormField>
+
+                <UFormField :label="t('admin.servers.create.backupLimit')" name="backups">
+                  <UInput v-model.number="form.backups" type="number" :placeholder="t('admin.servers.create.backupLimitPlaceholder')" class="w-full" />
+                  <template #help>
+                    {{ t('admin.servers.create.backupLimitHelp') }}
+                  </template>
+                </UFormField>
+              </div>
+            </div>
           </div>
 
           <div v-if="currentStep === 5" class="space-y-4">

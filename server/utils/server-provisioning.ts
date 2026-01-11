@@ -235,7 +235,7 @@ export async function buildWingsServerConfig(
     },
     feature_limits: {
       databases: context.limits.databaseLimit ?? 0,
-      backups: context.limits.backupLimit ?? 0,
+      backups: context.limits.backupLimit ?? 3,
       allocations: context.limits.allocationLimit ?? 0,
     },
     crash_detection_enabled: true,

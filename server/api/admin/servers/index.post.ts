@@ -106,7 +106,7 @@ export default defineEventHandler(async (event) => {
     oomDisabled: body.oomDisabled ?? true,
     databaseLimit: body.databases ?? null,
     allocationLimit: body.allocations ?? null,
-    backupLimit: body.backups ?? null,
+    backupLimit: body.backups ?? 3,
     createdAt: now,
     updatedAt: now,
   }

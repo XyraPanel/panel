@@ -103,7 +103,7 @@ export default defineEventHandler(async (event) => {
       memory_limit: limits?.memory || 512,
       swap: limits?.swap || 0,
       io_weight: limits?.io || 500,
-      cpu_limit: limits?.cpu || 0,
+      cpu_limit: limits?.cpu || 100,
       threads: limits?.threads || '',
       disk_space: limits?.disk || 1024,
       oom_disabled: limits?.oomDisabled ?? true,

@@ -99,7 +99,7 @@ export default defineEventHandler(async (event) => {
       feature_limits: {
         databases: server.databaseLimit || 0,
         allocations: server.allocationLimit || 0,
-        backups: server.backupLimit || 0,
+        backups: server.backupLimit || 3,
       },
       status: server.status,
       is_suspended: server.suspended,

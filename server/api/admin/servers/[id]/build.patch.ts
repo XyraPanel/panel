@@ -44,15 +44,15 @@ export default defineEventHandler(async (event) => {
     .all()
 
   const updateData = {
-    cpu: typeof cpu === 'number' ? cpu : (existingLimits?.cpu ?? 0),
-    memory: typeof memory === 'number' ? memory : (existingLimits?.memory ?? 0),
+    cpu: typeof cpu === 'number' ? cpu : (existingLimits?.cpu ?? 100),
+    memory: typeof memory === 'number' ? memory : (existingLimits?.memory ?? 512),
     swap: typeof swap === 'number' ? swap : (existingLimits?.swap ?? 0),
-    disk: typeof disk === 'number' ? disk : (existingLimits?.disk ?? 0),
+    disk: typeof disk === 'number' ? disk : (existingLimits?.disk ?? 1024),
     io: typeof io === 'number' ? io : (existingLimits?.io ?? 500),
     threads: threads !== undefined ? threads : (existingLimits?.threads ?? null),
     databaseLimit: databaseLimit !== undefined ? databaseLimit : (existingLimits?.databaseLimit ?? null),
     allocationLimit: allocationLimit !== undefined ? allocationLimit : (existingLimits?.allocationLimit ?? null),
-    backupLimit: backupLimit !== undefined ? backupLimit : (existingLimits?.backupLimit ?? null),
+    backupLimit: backupLimit !== undefined ? backupLimit : (existingLimits?.backupLimit ?? 3),
     updatedAt: new Date() as Date,
   }
 
@@ -72,15 +72,15 @@ export default defineEventHandler(async (event) => {
     db.insert(tables.serverLimits)
       .values({
         serverId,
-        cpu: cpu ?? 0,
-        memory: memory ?? 0,
+        cpu: cpu ?? 100,
+        memory: memory ?? 512,
         swap: swap ?? 0,
-        disk: disk ?? 0,
+        disk: disk ?? 1024,
         io: io ?? 500,
         threads: threads ?? null,
         databaseLimit: databaseLimit ?? null,
         allocationLimit: allocationLimit ?? null,
-        backupLimit: backupLimit ?? null,
+        backupLimit: backupLimit ?? 3,
         memoryOverallocate: null,
         diskOverallocate: null,
         oomDisabled: server.oomDisabled ?? true,

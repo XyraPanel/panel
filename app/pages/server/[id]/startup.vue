@@ -332,8 +332,8 @@ async function updateDockerImage() {
                           />
                         </template>
                         <template v-else>
-                          <code class="mt-1 block rounded border border-default bg-muted/40 px-3 py-2 text-sm font-mono text-foreground break-all">
-                            {{ variableValues[variable.key] }}
+                          <code class="mt-1 block rounded border border-default bg-muted/40 px-3 py-2 text-sm font-mono break-all" :class="variableValues[variable.key] ? 'text-foreground' : 'text-muted-foreground italic'">
+                            {{ variableValues[variable.key] || t('server.startup.noValue') }}
                           </code>
                         </template>
                       </div>

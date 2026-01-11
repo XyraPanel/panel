@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
       image: server.dockerImage || server.image,
       allocationLimit: server.allocationLimit ?? null,
       databaseLimit: server.databaseLimit ?? null,
-      backupLimit: server.backupLimit ?? 0,
+      backupLimit: server.backupLimit ?? 3,
       installedAt: server.installedAt,
       createdAt: server.createdAt,
       updatedAt: server.updatedAt,
