@@ -52,6 +52,10 @@ function getStorageLabel(disk: string): string {
 const creating = ref(false)
 const operatingBackupId = ref<string | null>(null)
 const toast = useToast()
+const showDeleteModal = ref(false)
+const showRestoreModal = ref(false)
+const backupToDelete = ref<ServerBackup | null>(null)
+const backupToRestore = ref<ServerBackup | null>(null)
 
 async function createBackup() {
   creating.value = true
@@ -87,20 +91,9 @@ async function createBackup() {
 async function downloadBackup(backupUuid: string) {
   operatingBackupId.value = backupUuid
   try {
-    const response = await fetch(`/api/client/servers/${serverId.value}/backups/${backupUuid}/download`)
-    if (!response.ok) {
-      throw new Error('Failed to download backup')
-    }
-
-    const blob = await response.blob()
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `backup-${backupUuid}.tar.gz`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    const response = await $fetch<{ attributes: { url: string } }>(`/api/client/servers/${serverId.value}/backups/${backupUuid}/download`)
+    
+    await navigateTo(response.attributes.url, { external: true, open: { target: '_blank' } })
 
     toast.add({
       title: t('common.success'),
@@ -120,11 +113,20 @@ async function downloadBackup(backupUuid: string) {
   }
 }
 
-async function restoreBackup(backupUuid: string) {
-  if (!confirm(t('server.backups.confirmRestore'))) {
-    return
-  }
+function openRestoreModal(backup: ServerBackup) {
+  backupToRestore.value = backup
+  showRestoreModal.value = true
+}
 
+function closeRestoreModal() {
+  showRestoreModal.value = false
+  backupToRestore.value = null
+}
+
+async function confirmRestore() {
+  if (!backupToRestore.value) return
+
+  const backupUuid = backupToRestore.value.uuid
   operatingBackupId.value = backupUuid
   try {
     await $fetch(`/api/client/servers/${serverId.value}/backups/${backupUuid}/restore`, {
@@ -136,6 +138,7 @@ async function restoreBackup(backupUuid: string) {
       description: t('server.backups.restoreStartedDescription'),
       color: 'success',
     })
+    closeRestoreModal()
   }
   catch (err) {
     toast.add({
@@ -176,18 +179,8 @@ async function toggleLock(backupUuid: string) {
   }
 }
 
-async function deleteBackup(backupUuid: string) {
-  const targetBackup = backups.value.find(backup => backup.uuid === backupUuid)
-  if (!targetBackup) {
-    toast.add({
-      title: t('common.error'),
-      description: t('server.backups.deleteFailed'),
-      color: 'error',
-    })
-    return
-  }
-
-  if (targetBackup.isLocked) {
+function openDeleteModal(backup: ServerBackup) {
+  if (backup.isLocked) {
     toast.add({
       title: t('common.error'),
       description: t('server.backups.deleteLockedError'),
@@ -195,11 +188,19 @@ async function deleteBackup(backupUuid: string) {
     })
     return
   }
+  backupToDelete.value = backup
+  showDeleteModal.value = true
+}
 
-  if (!confirm(t('server.backups.confirmDelete'))) {
-    return
-  }
+function closeDeleteModal() {
+  showDeleteModal.value = false
+  backupToDelete.value = null
+}
 
+async function confirmDelete() {
+  if (!backupToDelete.value) return
+
+  const targetBackup = backupToDelete.value
   operatingBackupId.value = targetBackup.uuid
   try {
     await $fetch(`/api/client/servers/${serverId.value}/backups/${targetBackup.uuid}`, {
@@ -218,6 +219,7 @@ async function deleteBackup(backupUuid: string) {
       description: t('server.backups.backupDeletedDescription'),
       color: 'success',
     })
+    closeDeleteModal()
   }
   catch (err) {
     toast.add({
@@ -378,7 +380,7 @@ async function deleteBackup(backupUuid: string) {
                       color="warning"
                       :loading="operatingBackupId === backup.uuid"
                       :disabled="!backup.completedAt || !backup.isSuccessful"
-                      @click="restoreBackup(backup.uuid)"
+                      @click="openRestoreModal(backup)"
                     >
                       {{ t('server.backups.restore') }}
                     </UButton>
@@ -389,7 +391,7 @@ async function deleteBackup(backupUuid: string) {
                       color="error"
                       :loading="operatingBackupId === backup.uuid"
                       :disabled="backup.isLocked"
-                      @click="deleteBackup(backup.uuid)"
+                      @click="openDeleteModal(backup)"
                     >
                       {{ t('server.backups.delete') }}
                     </UButton>
@@ -401,5 +403,89 @@ async function deleteBackup(backupUuid: string) {
         </section>
       </UContainer>
     </UPageBody>
+
+    <UModal
+      v-model:open="showDeleteModal"
+      :title="t('server.backups.delete')"
+      :description="t('server.backups.confirmDeleteDescription')"
+      :ui="{ footer: 'justify-end gap-2' }"
+    >
+      <template #body>
+        <div class="space-y-4">
+          <UAlert color="error" icon="i-lucide-alert-triangle">
+            <template #title>{{ t('common.warning') }}</template>
+            <template #description>
+              {{ t('server.backups.confirmDeleteWarning') }}
+            </template>
+          </UAlert>
+          <div v-if="backupToDelete" class="rounded-md bg-muted p-3 space-y-2">
+            <p class="text-sm font-medium">{{ backupToDelete.name }}</p>
+            <p class="text-xs text-muted-foreground">{{ backupToDelete.uuid }}</p>
+            <p class="text-xs text-muted-foreground">{{ t('server.backups.size') }}: {{ formatBytes(backupToDelete.bytes) }}</p>
+          </div>
+        </div>
+      </template>
+
+      <template #footer="{ close }">
+        <UButton
+          variant="ghost"
+          color="neutral"
+          :disabled="operatingBackupId !== null"
+          @click="() => { closeDeleteModal(); close() }"
+        >
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton
+          color="error"
+          :loading="operatingBackupId !== null"
+          :disabled="operatingBackupId !== null"
+          @click="confirmDelete"
+        >
+          {{ t('server.backups.delete') }}
+        </UButton>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showRestoreModal"
+      :title="t('server.backups.restore')"
+      :description="t('server.backups.confirmRestoreDescription')"
+      :ui="{ footer: 'justify-end gap-2' }"
+    >
+      <template #body>
+        <div class="space-y-4">
+          <UAlert color="warning" icon="i-lucide-alert-triangle">
+            <template #title>{{ t('common.warning') }}</template>
+            <template #description>
+              {{ t('server.backups.confirmRestoreWarning') }}
+            </template>
+          </UAlert>
+          <div v-if="backupToRestore" class="rounded-md bg-muted p-3 space-y-2">
+            <p class="text-sm font-medium">{{ backupToRestore.name }}</p>
+            <p class="text-xs text-muted-foreground">{{ backupToRestore.uuid }}</p>
+            <p class="text-xs text-muted-foreground">{{ t('server.backups.size') }}: {{ formatBytes(backupToRestore.bytes) }}</p>
+          </div>
+        </div>
+      </template>
+
+      <template #footer="{ close }">
+        <UButton
+          variant="ghost"
+          color="neutral"
+          :disabled="operatingBackupId !== null"
+          @click="() => { closeRestoreModal(); close() }"
+        >
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton
+          color="warning"
+          :loading="operatingBackupId !== null"
+          :disabled="operatingBackupId !== null"
+          @click="confirmRestore"
+        >
+          {{ t('server.backups.restore') }}
+        </UButton>
+      </template>
+    </UModal>
   </UPage>
 </template>

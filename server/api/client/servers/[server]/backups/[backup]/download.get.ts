@@ -1,8 +1,9 @@
 import { getServerSession } from '~~/server/utils/session'
 import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { getWingsClientForServer } from '~~/server/utils/wings-client'
 import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
 import { requireServerPermission } from '~~/server/utils/permission-middleware'
+import { decryptToken } from '~~/server/utils/wings/encryption'
+import { generateBackupDownloadToken } from '../../../../../../../server/utils/wings-tokens'
 
 export default defineEventHandler(async (event) => {
   const session = await getServerSession(event)
@@ -28,8 +29,7 @@ export default defineEventHandler(async (event) => {
     .from(tables.serverBackups)
     .where(eq(tables.serverBackups.uuid, backupUuid))
     .limit(1)
-    .all()
-    .at(0)
+    .all()[0]
 
   if (!backup || backup.serverId !== server.id) {
     throw createError({
@@ -38,27 +38,45 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const { client } = await getWingsClientForServer(server.uuid)
-  const response = await client.streamBackupDownload(server.uuid, backupUuid)
-
-  const body = response.body
-  if (!body) {
+  if (!server.nodeId) {
     throw createError({
       statusCode: 500,
-      message: 'Failed to download backup',
+      message: 'Server is not assigned to a Wings node',
     })
   }
 
-  const contentType = response.headers.get('content-type') ?? 'application/octet-stream'
-  const contentLength = response.headers.get('content-length')
-  const fallbackName = `${backup.name || backup.uuid}.tar.gz`
-  const contentDisposition = response.headers.get('content-disposition') ?? `attachment; filename="${fallbackName}"`
-
-  event.node.res.setHeader('Content-Type', contentType)
-  event.node.res.setHeader('Content-Disposition', contentDisposition)
-  if (contentLength) {
-    event.node.res.setHeader('Content-Length', contentLength)
+  const node = db.select()
+    .from(tables.wingsNodes)
+    .where(eq(tables.wingsNodes.id, server.nodeId))
+    .limit(1)
+    .get()
+  
+  if (!node) {
+    throw createError({
+      statusCode: 500,
+      message: 'Wings node not found',
+    })
   }
-
-  return body
+  
+  const tokenSecret = decryptToken(node.tokenSecret)
+  
+  if (!server.uuid) {
+    throw createError({
+      statusCode: 500,
+      message: 'Server UUID is missing',
+    })
+  }
+  
+  const downloadToken = await generateBackupDownloadToken({
+    serverUuid: server.uuid,
+    backupUuid,
+  }, tokenSecret)
+  
+  const downloadUrl = `${node.scheme}://${node.fqdn}:${node.daemonListen}/download/backup?token=${downloadToken}`
+  
+  return {
+    attributes: {
+      url: downloadUrl,
+    },
+  }
 })

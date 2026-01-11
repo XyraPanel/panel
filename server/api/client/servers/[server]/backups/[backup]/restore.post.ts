@@ -44,6 +44,31 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { client } = await getWingsClientForServer(serverId)
+    
+    const serverDetails = await client.getServerDetails(server.uuid)
+    const wasRunning = serverDetails.state === 'running'
+    
+    if (wasRunning) {
+      console.log(`[Backup Restore] Stopping server ${server.uuid} before restore`)
+      await client.sendPowerAction(server.uuid, 'stop')
+      
+      const maxWaitTime = 30000 // 30 seconds
+      const startTime = Date.now()
+      let stopped = false
+      
+      while (!stopped && (Date.now() - startTime) < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        const details = await client.getServerDetails(server.uuid)
+        if (details.state === 'offline') {
+          stopped = true
+        }
+      }
+      
+      if (!stopped) {
+        console.warn(`[Backup Restore] Server ${server.uuid} did not stop within timeout, proceeding with restore anyway`)
+      }
+    }
+    
     await client.restoreBackup(server.uuid, backup.uuid, truncate)
 
     await recordAuditEventFromRequest(event, {
@@ -56,12 +81,14 @@ export default defineEventHandler(async (event) => {
         serverId: server.id,
         backupName: backup?.name,
         truncate,
+        wasRunning,
       },
     })
 
     return {
       success: true,
       message: 'Backup restore initiated',
+      wasRunning,
     }
   } catch (error) {
     console.error('Failed to restore backup on Wings:', error)
