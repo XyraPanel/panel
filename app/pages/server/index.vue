@@ -194,7 +194,7 @@ const scopeToggleText = computed(() => {
                   </div>
                   <div class="space-y-1">
                     <div class="flex flex-wrap items-center gap-2">
-                      <NuxtLink :to="`/server/${server.uuid}/console`" class="text-base font-semibold text-foreground hover:text-primary">
+                      <NuxtLink :to="`/server/${server.identifier}/console`" class="text-base font-semibold text-foreground hover:text-primary">
                         {{ server.name }}
                       </NuxtLink>
                       <UBadge size="sm" color="neutral" variant="soft">{{ server.identifier }}</UBadge>

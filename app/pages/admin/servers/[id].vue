@@ -111,9 +111,14 @@ function formatDate(date: string | Date | null) {
                 <p class="text-xs text-muted-foreground">{{ server.identifier }}</p>
               </div>
               <div class="flex flex-wrap gap-2">
-                <UButton icon="i-lucide-play" color="primary" variant="soft">{{ t('server.power.start') }}</UButton>
-                <UButton icon="i-lucide-refresh-ccw" color="primary" variant="soft">{{ t('server.power.restart') }}</UButton>
-                <UButton icon="i-lucide-square" color="error" variant="soft">{{ t('server.power.stop') }}</UButton>
+                <UButton 
+                  icon="i-lucide-external-link" 
+                  size="xs"
+                  variant="ghost"
+                  :to="`/server/${server.identifier}`"
+                >
+                  {{ t('admin.servers.viewServer') }}
+                </UButton>
               </div>
             </header>
 
