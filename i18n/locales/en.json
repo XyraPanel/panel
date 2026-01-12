@@ -1078,6 +1078,7 @@
       "createServer": "Create Server",
       "uuid": "UUID",
       "viewDetails": "View details",
+      "viewServer": "View Server",
       "serverActions": "Server actions",
       "actionsDropdown": "Actions menu",
       "tabs": {
