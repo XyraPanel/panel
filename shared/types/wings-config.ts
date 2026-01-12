@@ -1,4 +1,4 @@
-import type { WingsAllocation } from './allocation'
+import type { WingsAllocation } from './server'
 import type { WingsEggConfiguration } from './nest'
 
 export interface WingsServerConfiguration {

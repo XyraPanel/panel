@@ -1,4 +1,4 @@
-import type { SftpAuthRequest, SftpAuthResponse } from './api-responses'
+import type { SftpAuthRequest, SftpAuthResponse } from './api'
 
 export type StopType = 'command' | 'signal' | 'stop'
 

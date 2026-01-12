@@ -1,4 +1,4 @@
-import type { ServerState } from './server-console'
+import type { ServerState } from './server'
 
 export interface ServerEventDetails {
   event: string
