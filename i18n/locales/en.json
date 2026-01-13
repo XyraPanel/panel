@@ -68,7 +68,9 @@
     "tb": "TB",
     "na": "N/A",
     "readOnly": "Read-only",
-    "userEditable": "User editable"
+    "userEditable": "User editable",
+    "newest": "Newest",
+    "oldest": "Oldest"
   },
   "units": {
     "bytes": "bytes",

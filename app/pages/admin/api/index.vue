@@ -32,6 +32,22 @@ const { data, refresh } = await useAsyncData(
 )
 
 const apiKeys = computed(() => (data.value as unknown as { data: ApiKey[] } | null)?.data ?? [])
+const sortOrder = ref<'newest' | 'oldest'>('newest')
+
+const sortOptions = [
+  { label: t('common.newest'), value: 'newest' },
+  { label: t('common.oldest'), value: 'oldest' },
+]
+
+const sortedApiKeys = computed(() => {
+  const sorted = [...apiKeys.value]
+  if (sortOrder.value === 'newest') {
+    sorted.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  } else {
+    sorted.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+  }
+  return sorted
+})
 
 const form = reactive({
   memo: '',
@@ -163,7 +179,15 @@ function copyToClipboard(text: string) {
         <section class="space-y-6">
           <UCard>
             <template #header>
-              <div class="flex justify-end">
+              <div class="flex items-center justify-between">
+                <div v-if="apiKeys.length > 0" class="flex-1">
+                  <USelect
+                    v-model="sortOrder"
+                    :items="sortOptions"
+                    value-key="value"
+                    class="w-40"
+                  />
+                </div>
                 <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="showCreateModal = true">
                   {{ t('admin.api.createApiKey') }}
                 </UButton>
@@ -174,7 +198,7 @@ function copyToClipboard(text: string) {
               :description="t('admin.api.apiKeysDescription')" />
 
             <div v-else class="divide-y divide-default">
-              <div v-for="key in apiKeys" :key="key.id" class="flex items-center justify-between gap-4 py-4">
+              <div v-for="key in sortedApiKeys" :key="key.id" class="flex items-center justify-between gap-4 py-4">
                 <div class="flex-1 space-y-1">
                   <div class="flex items-center gap-2">
                     <code class="text-sm font-mono">{{ key.identifier }}</code>

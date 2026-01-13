@@ -62,7 +62,23 @@ const displayError = computed(() => {
 })
 
 const expandedEntries = ref<Set<string>>(new Set())
+const sortOrder = ref<'newest' | 'oldest'>('newest')
 const toast = useToast()
+
+const sortOptions = [
+  { label: t('common.newest'), value: 'newest' },
+  { label: t('common.oldest'), value: 'oldest' },
+]
+
+const sortedEntries = computed(() => {
+  const sorted = [...entries.value]
+  if (sortOrder.value === 'newest') {
+    sorted.sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+  } else {
+    sorted.sort((a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime())
+  }
+  return sorted
+})
 
 function toggleEntry(id: string) {
   if (expandedEntries.value.has(id)) expandedEntries.value.delete(id)
@@ -117,10 +133,17 @@ async function copyJson(entry: typeof entries.value[0]) {
 <template>
   <div>
         <UCard :ui="{ body: 'space-y-3' }">
-          <div v-if="pagination" class="flex justify-end">
+          <div v-if="pagination" class="flex items-center justify-between">
             <UBadge color="neutral" variant="soft" size="xs">
               {{ pagination.total }} {{ t('account.activity.total') }}
             </UBadge>
+            <USelect
+              v-if="entries.length > 0"
+              v-model="sortOrder"
+              :items="sortOptions"
+              value-key="value"
+              class="w-40"
+            />
           </div>
 
           <template v-if="pending">
@@ -146,7 +169,7 @@ async function copyJson(entry: typeof entries.value[0]) {
           <template v-else>
             <div class="space-y-3">
               <div
-                v-for="entry in entries"
+                v-for="entry in sortedEntries"
                 :key="entry.id"
                 class="rounded-lg border border-default overflow-hidden"
               >

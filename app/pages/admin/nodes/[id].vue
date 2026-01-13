@@ -37,7 +37,7 @@ const transferForm = reactive({
 })
 const createAllocationForm = reactive({
   ip: '',
-  ports: '',
+  ports: [] as string[],
   ipAlias: '',
 })
 const isCreatingAllocations = ref(false)
@@ -479,33 +479,35 @@ async function handleTransferServers() {
   }
 }
 
-function parsePorts(input: string): number[] {
-  const normalized = input.replace(/\s+/g, '')
-  if (normalized.includes('-')) {
-    const [startRaw, endRaw] = normalized.split('-', 2)
-    const start = Number.parseInt(startRaw!, 10)
-    const end = Number.parseInt(endRaw!, 10)
-    if (!Number.isFinite(start) || !Number.isFinite(end) || start < 1024 || end > 65535 || start > end) {
-      throw new Error(t('admin.nodes.portRangeInvalid'))
-    }
-    const ports: number[] = []
-    for (let port = start; port <= end; port++) {
+function parsePorts(portTags: string[]): number[] {
+  const ports: number[] = []
+
+  for (const tag of portTags) {
+    const segment = tag.trim()
+    if (!segment) continue
+
+    if (segment.includes('-')) {
+      const [startRaw, endRaw] = segment.split('-', 2)
+      const start = Number.parseInt(startRaw!, 10)
+      const end = Number.parseInt(endRaw!, 10)
+      if (!Number.isFinite(start) || !Number.isFinite(end) || start < 1024 || end > 65535 || start > end) {
+        throw new Error(t('admin.nodes.portRangeInvalid'))
+      }
+      for (let port = start; port <= end; port++) {
+        ports.push(port)
+      }
+    } else {
+      const port = Number.parseInt(segment, 10)
+      if (!Number.isFinite(port) || port < 1024 || port > 65535) {
+        throw new Error(t('admin.nodes.portsMustBeInRange'))
+      }
       ports.push(port)
     }
-    if (ports.length > 1000) {
-      throw new Error(t('admin.nodes.portRangeExceeded'))
-    }
-    return ports
   }
 
-  const segments = normalized.split(',')
-  const ports = segments.map(segment => {
-    const port = Number.parseInt(segment, 10)
-    if (!Number.isFinite(port) || port < 1024 || port > 65535) {
-      throw new Error(t('admin.nodes.portsMustBeInRange'))
-    }
-    return port
-  })
+  if (ports.length > 1000) {
+    throw new Error(t('admin.nodes.portRangeExceeded'))
+  }
 
   return ports
 }
@@ -953,10 +955,13 @@ async function handleCreateAllocations() {
           </UFormField>
 
           <UFormField :label="t('admin.nodes.allocations.ports')" name="ports" required>
-            <UInput 
+            <UInputTags 
               v-model="createAllocationForm.ports" 
               :placeholder="t('admin.nodes.portsPlaceholder')"
               :disabled="isCreatingAllocations"
+              icon="i-lucide-network"
+              :add-on-paste="true"
+              :add-on-blur="true"
             />
             <template #help>
               {{ t('admin.nodes.portsHelp') }}

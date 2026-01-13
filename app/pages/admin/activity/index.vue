@@ -39,7 +39,23 @@ const error = computed(() => {
 })
 
 const expandedEntries = ref<Set<string>>(new Set())
+const sortOrder = ref<'newest' | 'oldest'>('newest')
 const toast = useToast()
+
+const sortOptions = [
+  { label: t('common.newest'), value: 'newest' },
+  { label: t('common.oldest'), value: 'oldest' },
+]
+
+const sortedActivities = computed(() => {
+  const sorted = [...activities.value]
+  if (sortOrder.value === 'newest') {
+    sorted.sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+  } else {
+    sorted.sort((a, b) => new Date(a.occurredAt).getTime() - new Date(b.occurredAt).getTime())
+  }
+  return sorted
+})
 
 function toggleEntry(id: string) {
   if (expandedEntries.value.has(id)) {
@@ -165,9 +181,19 @@ function exportCsv() {
           <UCard :ui="{ body: 'space-y-3' }">
             <template #header>
               <div class="flex items-center justify-between">
-                <p v-if="pagination" class="text-xs text-muted-foreground">
-                  {{ t('admin.activity.showingEvents', { count: activities.length, total: pagination.total }) }}
-                </p>
+                <div class="flex items-center gap-4">
+                  <p v-if="pagination" class="text-xs text-muted-foreground">
+                    {{ t('admin.activity.showingEvents', { count: activities.length, total: pagination.total }) }}
+                  </p>
+                  <div v-if="activities.length > 0" class="flex-1">
+                    <USelect
+                      v-model="sortOrder"
+                      :items="sortOptions"
+                      value-key="value"
+                      class="w-40"
+                    />
+                  </div>
+                </div>
                 <div class="flex items-center gap-2">
                   <UBadge v-if="pending" color="primary" variant="soft">{{ t('common.loading') }}</UBadge>
                   <UButton
@@ -203,7 +229,7 @@ function exportCsv() {
             <template v-else>
               <div class="space-y-3">
                 <div
-                  v-for="entry in activities"
+                  v-for="entry in sortedActivities"
                   :key="entry.id"
                   class="rounded-lg border border-default overflow-hidden"
                 >

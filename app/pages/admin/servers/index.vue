@@ -65,6 +65,22 @@ const {
 
 const servers = computed(() => serversResponse.value?.data ?? [])
 const serversPagination = computed(() => (serversResponse.value?.meta?.pagination as { total: number; count: number; per_page: number; current_page: number; total_pages: number } | undefined))
+const sortOrder = ref<'newest' | 'oldest'>('newest')
+
+const sortOptions = [
+  { label: t('common.newest'), value: 'newest' },
+  { label: t('common.oldest'), value: 'oldest' },
+]
+
+const sortedServers = computed(() => {
+  const sorted = [...servers.value]
+  if (sortOrder.value === 'newest') {
+    sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  } else {
+    sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  }
+  return sorted
+})
 
 const isDeleting = ref<Record<string, boolean>>({})
 const deleteConfirmOpen = ref(false)
@@ -272,7 +288,15 @@ const table = useTemplateRef('table')
           <section class="space-y-6">
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
-                <div class="flex justify-end">
+                <div class="flex items-center justify-between">
+                  <div v-if="servers.length > 0" class="flex-1">
+                    <USelect
+                      v-model="sortOrder"
+                      :items="sortOptions"
+                      value-key="value"
+                      class="w-40"
+                    />
+                  </div>
                   <UButton icon="i-lucide-plus" color="primary" variant="subtle" to="/admin/servers/create">
                     {{ t('admin.servers.createServer') }}
                   </UButton>
@@ -281,7 +305,7 @@ const table = useTemplateRef('table')
 
               <UTable
                 ref="table"
-                :data="servers"
+                :data="sortedServers"
                 :columns="columns"
                 :loading="serversPending"
                 class="flex-1"

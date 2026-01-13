@@ -16,6 +16,7 @@ const sessions = ref<UserSessionSummary[]>([])
 const sessionsError = ref<string | null>(null)
 const currentSessionToken = ref<string | null>(null)
 const updatingSessions = ref(false)
+const sortOrder = ref<'newest' | 'oldest'>('newest')
 
 const { data: generalSettings } = await useFetch<{ paginationLimit: number }>('/api/admin/settings/general', {
   key: 'admin-settings-general',
@@ -47,6 +48,21 @@ const {
 })
 
 const sessionsPagination = computed(() => (sessionsResponse.value as { pagination?: { page: number; perPage: number; total: number; totalPages: number } } | null)?.pagination)
+
+const sortOptions = [
+  { label: t('common.newest'), value: 'newest' },
+  { label: t('common.oldest'), value: 'oldest' },
+]
+
+const sortedSessions = computed(() => {
+  const sorted = [...sessions.value]
+  if (sortOrder.value === 'newest') {
+    sorted.sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime())
+  } else {
+    sorted.sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime())
+  }
+  return sorted
+})
 
 watch(sessionsResponse, (response) => {
   if (!response)
@@ -293,6 +309,14 @@ async function handleSignOutAll(includeCurrent = false) {
 
     <div>
         <UCard :ui="{ body: 'space-y-3' }">
+          <div v-if="hasSessions && !sessionsPending" class="flex items-center justify-end mb-2">
+            <USelect
+              v-model="sortOrder"
+              :items="sortOptions"
+              value-key="value"
+              class="w-40"
+            />
+          </div>
 
           <div v-if="sessionsPending" class="space-y-3">
             <USkeleton v-for="i in 3" :key="`session-skeleton-${i}`" class="h-16 w-full rounded-lg" />
@@ -307,7 +331,7 @@ async function handleSignOutAll(includeCurrent = false) {
           />
           <div v-else class="space-y-3">
             <div
-              v-for="session in sessions"
+              v-for="session in sortedSessions"
               :key="session.token"
               class="rounded-lg border border-default overflow-hidden"
             >

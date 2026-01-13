@@ -425,14 +425,15 @@ async function disableTotp() {
 
                 <div class="space-y-3">
                   <UFormField :label="t('account.security.twoFactor.authenticatorCode')" name="verificationCode" required>
-                    <UInput
-                      v-model="verificationCode"
-                      :placeholder="t('account.security.twoFactor.enter6DigitCode')"
-                      inputmode="numeric"
-                      maxlength="6"
-                      icon="i-lucide-smartphone"
-                      class="w-full"
+                    <UPinInput
+                      :key="verificationCode"
+                      :default-value="verificationCode.split('').map(Number)"
+                      type="number"
+                      :length="6"
+                      otp
                       :disabled="verifyingToken"
+                      placeholder="○"
+                      @complete="verificationCode = $event.join('')"
                     />
                     <template #help>
                       {{ t('account.security.twoFactor.enterCodeFromAuthenticator') }}

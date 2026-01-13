@@ -94,6 +94,22 @@ const loadError = computed(() => {
 })
 
 const expandedKeys = ref<Set<string>>(new Set())
+const sortOrder = ref<'newest' | 'oldest'>('newest')
+
+const sortOptions = [
+  { label: t('common.newest'), value: 'newest' },
+  { label: t('common.oldest'), value: 'oldest' },
+]
+
+const sortedApiKeys = computed(() => {
+  const sorted = [...apiKeys.value]
+  if (sortOrder.value === 'newest') {
+    sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  } else {
+    sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  }
+  return sorted
+})
 
 function toggleKey(identifier: string) {
   if (expandedKeys.value.has(identifier)) {
@@ -474,7 +490,15 @@ async function copyToken() {
     <div>
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
-            <div class="flex justify-end">
+            <div class="flex items-center justify-between">
+              <div v-if="apiKeys.length > 0" class="flex-1">
+                <USelect
+                  v-model="sortOrder"
+                  :items="sortOptions"
+                  value-key="value"
+                  class="w-40"
+                />
+              </div>
               <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
                 {{ t('account.apiKeys.createKey') }}
               </UButton>
@@ -499,7 +523,7 @@ async function copyToken() {
 
           <div v-else class="space-y-3">
             <div
-              v-for="key in apiKeys"
+              v-for="key in sortedApiKeys"
               :key="key.identifier"
               class="rounded-lg border border-default overflow-hidden"
             >

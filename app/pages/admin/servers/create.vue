@@ -470,21 +470,21 @@ const stepTitles = [
               <h3 class="text-sm font-semibold mb-3">{{ t('admin.servers.create.featureLimits') }}</h3>
               <div class="grid grid-cols-3 gap-4">
                 <UFormField :label="t('admin.servers.create.databaseLimit')" name="databases">
-                  <UInput v-model.number="form.databases" type="number" :placeholder="t('admin.servers.create.databaseLimitPlaceholder')" class="w-full" />
+                  <UInputNumber v-model="form.databases" :min="0" :placeholder="t('admin.servers.create.databaseLimitPlaceholder')" class="w-full" />
                   <template #help>
                     {{ t('admin.servers.create.databaseLimitHelp') }}
                   </template>
                 </UFormField>
 
                 <UFormField :label="t('admin.servers.create.allocationLimit')" name="allocations">
-                  <UInput v-model.number="form.allocations" type="number" :placeholder="t('admin.servers.create.allocationLimitPlaceholder')" class="w-full" />
+                  <UInputNumber v-model="form.allocations" :min="0" :placeholder="t('admin.servers.create.allocationLimitPlaceholder')" class="w-full" />
                   <template #help>
                     {{ t('admin.servers.create.allocationLimitHelp') }}
                   </template>
                 </UFormField>
 
                 <UFormField :label="t('admin.servers.create.backupLimit')" name="backups">
-                  <UInput v-model.number="form.backups" type="number" :placeholder="t('admin.servers.create.backupLimitPlaceholder')" class="w-full" />
+                  <UInputNumber v-model="form.backups" :min="0" :placeholder="t('admin.servers.create.backupLimitPlaceholder')" class="w-full" />
                   <template #help>
                     {{ t('admin.servers.create.backupLimitHelp') }}
                   </template>

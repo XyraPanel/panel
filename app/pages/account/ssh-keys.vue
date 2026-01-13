@@ -42,6 +42,22 @@ const { data: keysData, refresh } = await useAsyncData('account-ssh-keys', () =>
 const sshKeys = computed(() => keysData.value?.data || [])
 const sshKeysPagination = computed(() => (keysData.value as { pagination?: { page: number; perPage: number; total: number; totalPages: number } } | null)?.pagination)
 const expandedKeys = ref<Set<string>>(new Set())
+const sortOrder = ref<'newest' | 'oldest'>('newest')
+
+const sortOptions = [
+  { label: t('common.newest'), value: 'newest' },
+  { label: t('common.oldest'), value: 'oldest' },
+]
+
+const sortedSshKeys = computed(() => {
+  const sorted = [...sshKeys.value]
+  if (sortOrder.value === 'newest') {
+    sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+  } else {
+    sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+  }
+  return sorted
+})
 
 function toggleKey(id: string) {
   if (expandedKeys.value.has(id)) {
@@ -269,7 +285,15 @@ async function confirmDelete() {
     <div>
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
-            <div class="flex justify-end">
+            <div class="flex items-center justify-between">
+              <div v-if="sshKeys.length > 0" class="flex-1">
+                <USelect
+                  v-model="sortOrder"
+                  :items="sortOptions"
+                  value-key="value"
+                  class="w-40"
+                />
+              </div>
               <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
                 {{ t('account.sshKeys.addSSHKey') }}
               </UButton>
@@ -284,7 +308,7 @@ async function confirmDelete() {
 
           <div v-else class="space-y-3">
             <div
-              v-for="key in sshKeys"
+              v-for="key in sortedSshKeys"
               :key="key.id"
               class="rounded-lg border border-default overflow-hidden"
             >
