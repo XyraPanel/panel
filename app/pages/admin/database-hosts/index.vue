@@ -164,6 +164,12 @@ async function handleDelete() {
                     :disabled="host.databaseCount > 0" @click="hostToDelete = host; showDeleteModal = true" />
                 </div>
               </div>
+
+              <div class="border-t border-default pt-4">
+                <p class="text-xs text-muted-foreground">
+                  {{ t('admin.databaseHosts.showingDatabaseHosts', { count: hosts.length }) }}
+                </p>
+              </div>
             </div>
           </UCard>
         </section>

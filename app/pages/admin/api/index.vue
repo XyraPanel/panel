@@ -180,13 +180,18 @@ function copyToClipboard(text: string) {
           <UCard>
             <template #header>
               <div class="flex items-center justify-between">
-                <div v-if="apiKeys.length > 0" class="flex-1">
-                  <USelect
-                    v-model="sortOrder"
-                    :items="sortOptions"
-                    value-key="value"
-                    class="w-40"
-                  />
+                <div class="flex items-center gap-2">
+                  <p v-if="apiKeys.length > 0" class="text-xs text-muted-foreground">
+                    {{ t('admin.api.showingApiKeys', { count: apiKeys.length }) }}
+                  </p>
+                  <div v-if="apiKeys.length > 0">
+                    <USelect
+                      v-model="sortOrder"
+                      :items="sortOptions"
+                      value-key="value"
+                      class="w-40"
+                    />
+                  </div>
                 </div>
                 <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="showCreateModal = true">
                   {{ t('admin.api.createApiKey') }}
@@ -229,6 +234,12 @@ function copyToClipboard(text: string) {
                 <UButton icon="i-lucide-trash-2" color="error" variant="ghost" size="sm" @click="keyToDelete = key; showDeleteModal = true">
                   {{ t('admin.api.revoke') }}
                 </UButton>
+              </div>
+
+              <div class="border-t border-default pt-4">
+                <p class="text-xs text-muted-foreground">
+                  {{ t('admin.api.showingApiKeys', { count: apiKeys.length }) }}
+                </p>
               </div>
             </div>
           </UCard>

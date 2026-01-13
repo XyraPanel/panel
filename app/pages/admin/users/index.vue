@@ -377,9 +377,9 @@ function formatDate(value: string) {
               </UTable>
 
               <div v-if="pagination" class="flex items-center justify-between border-t border-default pt-4">
-                <div class="text-sm text-muted-foreground">
-                  {{ t('admin.users.title') }}
-                </div>
+                <p class="text-xs text-muted-foreground">
+                  {{ t('admin.users.showingUsers', { count: users.length }) }}
+                </p>
                 <UPagination
                   v-model:page="page"
                   :total="pagination.total"

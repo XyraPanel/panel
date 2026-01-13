@@ -119,10 +119,7 @@ async function copyJson(schedule: AdminScheduleResponse) {
         <section class="space-y-6">
           <UCard :ui="{ body: 'space-y-3' }">
             <template #header>
-              <div class="flex items-center justify-between">
-                <p class="text-xs text-muted-foreground">
-                  {{ t('admin.schedules.showingSchedules', { count: schedules.length }) }}
-                </p>
+              <div class="flex items-center justify-end">
                 <UBadge v-if="schedulesPending" color="primary" variant="soft">
                   {{ t('common.loading') }}
                 </UBadge>
@@ -196,6 +193,12 @@ async function copyJson(schedule: AdminScheduleResponse) {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div class="border-t border-default pt-4">
+                <p class="text-xs text-muted-foreground">
+                  {{ t('admin.schedules.showingSchedules', { count: schedules.length }) }}
+                </p>
               </div>
             </template>
           </UCard>

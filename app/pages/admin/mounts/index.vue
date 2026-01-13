@@ -189,6 +189,12 @@ async function handleDelete() {
                     @click="mountToDelete = mount; showDeleteModal = true" />
                 </div>
               </div>
+
+              <div class="border-t border-default pt-4">
+                <p class="text-xs text-muted-foreground">
+                  {{ t('admin.mounts.showingMounts', { count: mounts.length }) }}
+                </p>
+              </div>
             </div>
           </UCard>
         </section>

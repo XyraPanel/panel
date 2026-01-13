@@ -445,6 +445,9 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
             :shortcut="dashboardSearchShortcut"
             :label="t('common.search')"
           />
+          <div v-if="!collapsed" class="text-[10px] uppercase tracking-wide text-muted-foreground/70 px-2 py-2">
+            <p>{{ t('layout.copyright', { year: new Date().getFullYear() }) }} <ULink href="https://xyrapanel.com" target="_blank">XyraPanel</ULink></p>
+          </div>
           <ClientOnly>
             <UNavigationMenu
               :collapsed="collapsed"
@@ -463,10 +466,32 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
       </template>
 
       <template #footer="{ collapsed }">
-        <div v-if="!collapsed" class="text-[10px] uppercase tracking-wide text-muted-foreground/70">
-          <p>{{ t('layout.copyright', { year: new Date().getFullYear() }) }} <ULink href="https://xyrapanel.com" target="_blank">XyraPanel</ULink></p>
-        </div>
-        <UIcon v-else name="i-lucide-copyright" class="mx-auto size-3 text-muted-foreground/50" />
+        <UDropdownMenu
+          :items="[[
+            { label: t('account.profile.title'), to: '/account/profile' },
+            { label: t('account.security.title'), to: '/account/security' },
+            { label: t('account.apiKeys.title'), to: '/account/api-keys' },
+            { label: t('account.sshKeys.title'), to: '/account/ssh-keys' },
+            { label: t('account.sessions.title'), to: '/account/sessions' },
+            { label: t('account.activity.title'), to: '/account/activity' }
+          ], [
+            { label: t('auth.signOut'), click: handleSignOut, color: 'error' }
+          ]]"
+        >
+          <UButton
+            color="neutral"
+            variant="ghost"
+            class="w-full"
+            :block="collapsed"
+            type="button"
+            @click.prevent
+          >
+            <template #leading>
+              <UAvatar v-bind="userAvatar" size="sm" />
+            </template>
+            <span v-if="!collapsed">{{ userLabel }}</span>
+          </UButton>
+        </UDropdownMenu>
       </template>
     </UDashboardSidebar>
     <UDashboardSearch
@@ -487,55 +512,11 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
     />
     <UDashboardPanel :ui="{ body: 'flex flex-1 flex-col p-0' }">
       <template #body>
-        <UDashboardNavbar :ui="{ left: 'flex flex-col gap-0.5 text-left py-2', root: 'justify-between py-2' }">
+        <UDashboardNavbar :ui="{ left: 'flex flex-col gap-0.5 text-left py-3', root: 'justify-between py-3' }">
           <template #left>
-            <div class="flex flex-col gap-0">
-              <h1 class="text-base font-semibold text-foreground">{{ adminTitle }}</h1>
+            <div v-if="adminTitle" class="flex flex-col gap-0.5">
+              <h1 class="text-lg font-semibold text-foreground">{{ adminTitle }}</h1>
               <p class="text-xs text-muted-foreground">{{ adminSubtitle }}</p>
-            </div>
-          </template>
-          <template #right>
-            <div class="flex flex-wrap items-center gap-3">
-              <ClientOnly>
-                <template v-if="authStatus === 'authenticated' && sessionUser && userLabel">
-                  <div class="flex items-center gap-2.5 rounded-lg border border-default/50 bg-card px-2.5 py-1.5 shadow-sm">
-                    <UAvatar v-bind="userAvatar" size="xs" />
-                    <div class="flex flex-col gap-0.5 min-w-0 flex-1">
-                      <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-semibold text-foreground truncate">{{ userLabel }}</span>
-                        <UBadge
-                          v-if="sessionUser.role"
-                          size="xs"
-                          variant="soft"
-                          color="error"
-                          class="uppercase tracking-wider text-[9px] font-semibold whitespace-nowrap"
-                        >
-                          {{ sessionUser.role }}
-                        </UBadge>
-                      </div>
-                      <span v-if="sessionUser.email" class="text-[11px] text-muted-foreground truncate">{{ sessionUser.email }}</span>
-                    </div>
-                    <UButton
-                      size="xs"
-                      variant="ghost"
-                      color="neutral"
-                      icon="i-lucide-log-out"
-                      class="h-6 w-6"
-                      @click="handleSignOut"
-                    />
-                  </div>
-                </template>
-                <template v-else>
-                  <UButton size="xs" variant="ghost" color="error" to="/auth/login" icon="i-lucide-log-in">
-                    {{ t('auth.signIn') }}
-                  </UButton>
-                </template>
-                <template #fallback>
-                  <UButton size="xs" variant="ghost" color="error" to="/auth/login" icon="i-lucide-log-in">
-                    {{ t('auth.signIn') }}
-                  </UButton>
-                </template>
-              </ClientOnly>
             </div>
           </template>
         </UDashboardNavbar>

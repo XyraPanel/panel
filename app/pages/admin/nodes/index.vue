@@ -325,6 +325,12 @@ watch(
                       </div>
                     </div>
                   </div>
+
+                  <div class="border-t border-default px-4 py-4">
+                    <p class="text-xs text-muted-foreground">
+                      {{ t('admin.nodes.showingNodes', { count: nodes.length }) }}
+                    </p>
+                  </div>
                 </div>
               </div>
             </UCard>

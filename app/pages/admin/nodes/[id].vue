@@ -425,6 +425,9 @@ async function handleDeleteAllocation(row: AdminWingsNodeAllocationSummary) {
       color: 'success',
     })
 
+    if (allocationQuery.page > 1) {
+      allocationQuery.page = 1
+    }
     await allocationTable.refresh()
     await refreshNode()
   } catch (error) {

@@ -181,11 +181,9 @@ function exportCsv() {
           <UCard :ui="{ body: 'space-y-3' }">
             <template #header>
               <div class="flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                  <p v-if="pagination" class="text-xs text-muted-foreground">
-                    {{ t('admin.activity.showingEvents', { count: activities.length, total: pagination.total }) }}
-                  </p>
-                  <div v-if="activities.length > 0" class="flex-1">
+                <div/>
+                <div class="flex items-center gap-2">
+                  <div v-if="activities.length > 0">
                     <USelect
                       v-model="sortOrder"
                       :items="sortOptions"
@@ -193,8 +191,6 @@ function exportCsv() {
                       class="w-40"
                     />
                   </div>
-                </div>
-                <div class="flex items-center gap-2">
                   <UBadge v-if="pending" color="primary" variant="soft">{{ t('common.loading') }}</UBadge>
                   <UButton
                     icon="i-lucide-download"
@@ -291,12 +287,9 @@ function exportCsv() {
               </div>
 
               <div v-if="pagination && pagination.total > itemsPerPage" class="flex items-center justify-between border-t border-default pt-4">
-                <div class="text-sm text-muted-foreground">
-                  {{ t('admin.activity.showingEvents', { 
-                      count: pagination.total
-                  }) }}
-                </div>
-
+                <p class="text-xs text-muted-foreground">
+                  {{ t('admin.activity.showingEvents', { count: activities.length, total: pagination.total }) }}
+                </p>
                 <UPagination
                   v-model:page="currentPage"
                   :total="pagination.total"

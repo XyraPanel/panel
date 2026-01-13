@@ -116,6 +116,9 @@ async function deleteServer(close?: () => void, force: boolean = false) {
       color: 'success',
     })
 
+    if (currentPage.value > 1) {
+      currentPage.value = 1
+    }
     await refreshServers()
   } catch (error) {
     const err = error as { status?: number; statusCode?: number; data?: { message?: string } }
@@ -289,13 +292,18 @@ const table = useTemplateRef('table')
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
                 <div class="flex items-center justify-between">
-                  <div v-if="servers.length > 0" class="flex-1">
-                    <USelect
-                      v-model="sortOrder"
-                      :items="sortOptions"
-                      value-key="value"
-                      class="w-40"
-                    />
+                  <div class="flex items-center gap-2">
+                    <p v-if="servers.length > 0" class="text-xs text-muted-foreground">
+                      {{ t('admin.servers.showingServersCount', { count: servers.length }) }}
+                    </p>
+                    <div v-if="servers.length > 0">
+                      <USelect
+                        v-model="sortOrder"
+                        :items="sortOptions"
+                        value-key="value"
+                        class="w-40"
+                      />
+                    </div>
                   </div>
                   <UButton icon="i-lucide-plus" color="primary" variant="subtle" to="/admin/servers/create">
                     {{ t('admin.servers.createServer') }}
