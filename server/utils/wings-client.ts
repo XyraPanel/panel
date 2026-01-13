@@ -522,15 +522,21 @@ export function getWingsClient(node: WingsNode): WingsClient {
 }
 
 export async function getWingsClientForServer(
-  serverUuid: string
+  serverIdentifier: string
 ): Promise<{ client: WingsClient; server: Record<string, unknown> }> {
-  const { useDrizzle, tables, eq } = await import('./drizzle')
+  const { useDrizzle, tables, eq, or } = await import('./drizzle')
   const db = useDrizzle()
 
   const server = db
     .select()
     .from(tables.servers)
-    .where(eq(tables.servers.uuid, serverUuid))
+    .where(
+      or(
+        eq(tables.servers.identifier, serverIdentifier),
+        eq(tables.servers.uuid, serverIdentifier),
+        eq(tables.servers.id, serverIdentifier),
+      ),
+    )
     .get()
 
   if (!server) {
