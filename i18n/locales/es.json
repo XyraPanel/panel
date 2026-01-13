@@ -68,7 +68,9 @@
     "tb": "TB",
     "na": "N/A",
     "readOnly": "Read-only",
-    "userEditable": "User editable"
+    "userEditable": "User editable",
+    "newest": "Newest",
+    "oldest": "Oldest"
   },
   "units": {
     "bytes": "bytes",
@@ -973,6 +975,7 @@
       "view": "View",
       "noUsers": "No users found",
       "noUsersDescription": "No users match your search criteria.",
+      "showingUsers": "Showing {count} users",
       "failedToLoadUsers": "Failed to load users",
       "admin": "Admin",
       "userRole": "User",
@@ -1069,7 +1072,8 @@
       "apiKeyDeletedTitle": "API key deleted",
       "apiKeyDeletedBody": "The API key is no longer valid.",
       "apiKeyDescriptionShort": "Store this key securely. This is the only time it will be shown.",
-      "apiKeyPermissions": "Key permissions"
+      "apiKeyPermissions": "Key permissions",
+      "showingApiKeys": "Showing {count} API keys"
     },
     "servers": {
       "title": "Servers",
@@ -1095,6 +1099,7 @@
       "owner": "Owner",
       "noServersFound": "No servers found",
       "noServersFoundDescription": "No servers match your search criteria.",
+      "showingServersCount": "Showing {count} servers",
       "viewDetailsAction": "View details",
       "delete": {
         "title": "Delete server",
@@ -1414,7 +1419,8 @@
       "lastSeen": "Last seen",
       "systemSnapshot": "System snapshot",
       "recentServers": "Recent servers",
-      "noServersForNodeYet": "No servers on this node yet."
+      "noServersForNodeYet": "No servers on this node yet.",
+      "showingNodes": "Showing {count} nodes"
     },
     "locations": {
       "title": "Locations",
@@ -1442,7 +1448,8 @@
       "shortCodeHelp": "2–8 characters used throughout the panel (e.g. NYC1, EU-West).",
       "longName": "Long name",
       "longNamePlaceholder": "New York City · Primary DC",
-      "longNameHelp": "Optional friendly name shown to admins and users."
+      "longNameHelp": "Optional friendly name shown to admins and users.",
+      "showingLocations": "Showing {count} locations"
     },
     "nests": {
       "title": "Nests",
@@ -1459,6 +1466,7 @@
       "confirmDelete": "Delete nest {name}? This is only allowed when no eggs exist.",
       "nestDeleted": "Nest deleted",
       "deleteFailed": "Failed to delete nest",
+      "showingNests": "Showing {count} service packs",
       "eggs": "eggs",
       "egg": "egg",
       "author": "Author",
@@ -1676,7 +1684,8 @@
       "deleteFailed": "Failed to delete database host",
       "failedToLoadDatabaseHosts": "Failed to load database hosts",
       "databasesPlaceholder": "{used} / {max}",
-      "addHost": "Add Host"
+      "addHost": "Add Host",
+      "showingDatabaseHosts": "Showing {count} database hosts"
     },
     "eggs": {
       "title": "Eggs",
@@ -1737,7 +1746,14 @@
       "nodes": "Nodes",
       "selectNodes": "Select Nodes",
       "eggs": "Eggs",
-      "selectEggs": "Select Eggs"
+      "selectEggs": "Select Eggs",
+      "showingMounts": "Showing {count} mounts",
+      "nameSourceTargetRequired": "Name, source, and target are required",
+      "mountCreated": "Mount created",
+      "createFailed": "Failed to create mount",
+      "mountDeleted": "Mount deleted",
+      "deleteFailed": "Failed to delete mount",
+      "failedToLoadMounts": "Failed to load mounts"
     },
     "navigation": {
       "backToPanel": "Back to panel",
