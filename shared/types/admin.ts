@@ -537,15 +537,22 @@ export interface UpdateWingsNodeResponse {
 
 
 export interface EggImportData {
+  meta?: {
+    version?: string
+    update_url?: string | null
+  }
+  exported_at?: string
   name: string
-  author?: string
-  description?: string
+  author: string
+  description?: string | null
+  features?: string[] | null
   docker_images?: Record<string, string>
+  file_denylist?: string[]
   startup?: string
   config?: {
-    files?: Record<string, unknown>
-    startup?: Record<string, unknown>
-    logs?: Record<string, unknown>
+    files?: string | Record<string, unknown>
+    startup?: string | Record<string, unknown>
+    logs?: string | Record<string, unknown>
     stop?: string
   }
   scripts?: {
@@ -563,6 +570,7 @@ export interface EggImportData {
     user_viewable?: boolean
     user_editable?: boolean
     rules?: string
+    field_type?: string
   }>
 }
 
@@ -599,6 +607,9 @@ export interface CreateEggPayload {
   author: string
   name: string
   description?: string
+  features?: string[]
+  fileDenylist?: string[]
+  updateUrl?: string
   dockerImage: string
   dockerImages?: string[]
   startup: string
@@ -616,6 +627,9 @@ export interface UpdateEggPayload {
   author?: string
   name?: string
   description?: string
+  features?: string[]
+  fileDenylist?: string[]
+  updateUrl?: string
   dockerImage?: string
   dockerImages?: string[]
   startup?: string

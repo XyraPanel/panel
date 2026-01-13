@@ -16,6 +16,9 @@ export interface Egg {
   author: string
   name: string
   description: string | null
+  features: string | null
+  fileDenylist: string | null
+  updateUrl: string | null
   dockerImage: string
   dockerImages: string | null
   startup: string

@@ -40,6 +40,9 @@ export default defineEventHandler(async (event) => {
   if (body.nestId) updates.nestId = body.nestId
   if (body.name !== undefined) updates.name = body.name
   if (body.description !== undefined) updates.description = body.description ?? null
+  if (body.features !== undefined) updates.features = body.features ? JSON.stringify(body.features) : null
+  if (body.fileDenylist !== undefined) updates.fileDenylist = body.fileDenylist ? JSON.stringify(body.fileDenylist) : null
+  if (body.updateUrl !== undefined) updates.updateUrl = body.updateUrl ?? null
   if (body.dockerImage !== undefined) updates.dockerImage = body.dockerImage
   if (body.dockerImages !== undefined) {
     updates.dockerImages = body.dockerImages ? JSON.stringify(body.dockerImages) : null

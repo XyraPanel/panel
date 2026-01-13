@@ -1,4 +1,4 @@
-import { createError } from 'h3'
+import { createError, readBody } from 'h3'
 import { randomUUID } from 'node:crypto'
 import { requireAdmin } from '~~/server/utils/security'
 import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
@@ -17,7 +17,28 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
   const { nestId, eggData } = body as { nestId: string; eggData: EggImportData }
 
   if (!nestId || !eggData) {
-    throw createError({ statusCode: 400, statusMessage: 'Nest ID and egg data are required' })
+    throw createError({ 
+      statusCode: 400, 
+      statusMessage: 'Nest ID and egg data are required',
+      message: 'Missing nestId or eggData in request body'
+    })
+  }
+
+  const metaVersion = eggData.meta?.version
+  if (!metaVersion || !['PTDL_v1', 'PTDL_v2'].includes(metaVersion)) {
+    throw createError({ 
+      statusCode: 400, 
+      statusMessage: `Invalid egg format. Expected PTDL_v1 or PTDL_v2, got: ${metaVersion || 'none'}`,
+      message: `The egg file must have a valid meta.version field (PTDL_v1 or PTDL_v2)`
+    })
+  }
+
+  if (!eggData.name || !eggData.author) {
+    throw createError({ 
+      statusCode: 400, 
+      statusMessage: 'Egg must have name and author fields',
+      message: `Missing required fields: ${!eggData.name ? 'name' : ''} ${!eggData.author ? 'author' : ''}`
+    })
   }
 
   const db = useDrizzle()
@@ -38,6 +59,12 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
   const dockerImages = eggData.docker_images || {}
   const firstImage = Object.values(dockerImages)[0] || 'ghcr.io/pterodactyl/yolks:latest'
 
+  const normalizeConfigField = (field: string | Record<string, unknown> | undefined): string => {
+    if (!field) return '{}'
+    if (typeof field === 'string') return field
+    return JSON.stringify(field)
+  }
+
   await db.insert(tables.eggs).values({
     id: eggId,
     uuid: randomUUID(),
@@ -45,12 +72,15 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
     author: eggData.author || 'unknown@unknown.com',
     name: eggData.name,
     description: eggData.description || null,
+    features: eggData.features ? JSON.stringify(eggData.features) : null,
+    fileDenylist: eggData.file_denylist ? JSON.stringify(eggData.file_denylist) : null,
+    updateUrl: eggData.meta?.update_url || null,
     dockerImage: firstImage,
     dockerImages: JSON.stringify(dockerImages),
     startup: eggData.startup || '',
-    configFiles: JSON.stringify(eggData.config?.files || {}),
-    configStartup: JSON.stringify(eggData.config?.startup || {}),
-    configLogs: JSON.stringify(eggData.config?.logs || {}),
+    configFiles: normalizeConfigField(eggData.config?.files),
+    configStartup: normalizeConfigField(eggData.config?.startup),
+    configLogs: normalizeConfigField(eggData.config?.logs),
     configStop: eggData.config?.stop || 'stop',
     scriptInstall: eggData.scripts?.installation?.script || '',
     scriptContainer: eggData.scripts?.installation?.container || 'alpine:3.4',
