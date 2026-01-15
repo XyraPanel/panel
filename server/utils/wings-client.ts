@@ -28,8 +28,7 @@ export class WingsClient {
   }
 
   private getToken(): string {
-    const plainSecret = decryptToken(this.encryptedToken)
-    return `Bearer ${plainSecret}`
+    return `Bearer ${decryptToken(this.encryptedToken)}`
   }
 
   getAuthHeader(): string {
@@ -106,10 +105,8 @@ export class WingsClient {
         } else if (error instanceof Error) {
           if (error.name === 'AbortError') {
             lastError = new WingsConnectionError(`Request timeout after ${this.timeout}ms`, error)
-          } else if (error.message.includes('fetch')) {
-            lastError = new WingsConnectionError(`Failed to connect to Wings daemon at ${this.baseUrl}`, error)
           } else {
-            lastError = new WingsConnectionError('Unknown Wings communication error', error)
+            lastError = new WingsConnectionError(`Failed to connect to Wings daemon at ${this.baseUrl}`, error)
           }
         } else {
           lastError = new WingsConnectionError('Unknown Wings communication error')
@@ -164,7 +161,7 @@ export class WingsClient {
   }
 
   async getServerResources(serverUuid: string): Promise<WingsServerDetails> {
-    return this.request<WingsServerDetails>(`/api/servers/${serverUuid}`)
+    return this.getServerDetails(serverUuid)
   }
 
   async listFiles(
@@ -200,7 +197,7 @@ export class WingsClient {
       clearTimeout(timeoutId)
 
       if (!response.ok) {
-        throw new Error(`Failed to read file: ${response.status}`)
+        throw new WingsConnectionError(`Failed to read file: ${response.status}`)
       }
 
       return response.text()
@@ -485,7 +482,7 @@ export class WingsClient {
 
   async updateServer(serverUuid: string, config: Record<string, unknown>): Promise<void> {
     await this.request(`/api/servers/${serverUuid}`, {
-      method: 'patch',
+      method: 'PATCH',
       body: JSON.stringify(config),
     })
   }

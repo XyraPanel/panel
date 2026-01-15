@@ -51,19 +51,33 @@ export interface WingsActivityBatchRequest {
 export type WingsSftpAuthRequest = SftpAuthRequest
 export type WingsSftpAuthResponse = SftpAuthResponse
 
+export interface WingsServerLimits {
+  memory: number
+  swap: number
+  disk: number
+  io: number
+  cpu: number
+}
+
+export interface WingsServerFeatureLimits {
+  databases: number
+  allocations: number
+  backups: number
+}
+
 export interface WingsRemoteServer {
   uuid: string
   identifier: string
   name: string
   node: string
   description?: string
-  limits?: Record<string, unknown>
-  feature_limits?: Record<string, unknown>
+  limits?: WingsServerLimits
+  feature_limits?: WingsServerFeatureLimits
 }
 
 export interface WingsServerConfigurationResponse {
   settings: Record<string, unknown>
-  process_configuration: unknown
+  process_configuration: Record<string, unknown>
 }
 
 export interface WingsPaginatedResponse<T> {
@@ -126,7 +140,7 @@ export interface WingsNodeConfiguration {
   remote: string
 }
 
-export type WingsSystemInformation = Record<string, unknown>
+export type WingsSystemInformation = Partial<WingsSystemStats> & Record<string, unknown>
 
 export interface WingsSystemStats {
   version: string

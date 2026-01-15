@@ -43,7 +43,7 @@ const {
 )
 
 const users = computed(() => usersData.value?.data ?? [])
-const pagination = computed(() => (usersData.value as { pagination?: { page: number; perPage: number; total: number; totalPages: number } })?.pagination)
+const pagination = computed(() => usersData.value?.pagination)
 
 watch(() => route.query.page, (newPage) => {
   const pageNum = Number.parseInt(newPage as string ?? '1', 10)
@@ -185,13 +185,24 @@ function openEditModal(user: AdminUserResponse) {
 }
 
 async function handleSubmit() {
-  if (!userForm.value.username || !userForm.value.email) {
-    toast.add({ title: t('validation.required'), description: t('validation.required'), color: 'error' })
+  const missingFields: string[] = []
+  if (!userForm.value.username) {
+    missingFields.push(t('auth.username'))
+  }
+  if (!userForm.value.email) {
+    missingFields.push(t('auth.email'))
+  }
+  if (missingFields.length > 0) {
+    toast.add({
+      title: t('validation.required'),
+      description: missingFields.join(', '),
+      color: 'error',
+    })
     return
   }
 
   if (!editingUser.value && !userForm.value.password) {
-    toast.add({ title: t('validation.required'), description: t('validation.required'), color: 'error' })
+    toast.add({ title: t('validation.required'), description: t('validation.passwordRequired'), color: 'error' })
     return
   }
 
@@ -203,14 +214,14 @@ async function handleSubmit() {
         method: 'patch',
         body: userForm.value,
       })
-      toast.add({ title: t('common.success'), description: t('common.success'), color: 'success' })
+      toast.add({ title: t('common.success'), description: t('admin.users.updateSuccess'), color: 'success' })
     }
     else {
       await $fetch('/api/admin/users', {
         method: 'POST',
         body: userForm.value,
       })
-      toast.add({ title: t('common.success'), description: t('common.success'), color: 'success' })
+      toast.add({ title: t('common.success'), description: t('admin.users.createSuccess'), color: 'success' })
     }
 
     showUserModal.value = false
@@ -235,7 +246,7 @@ async function handleDelete() {
     await $fetch(`/api/admin/users/${userToDelete.value.id}`, {
       method: 'DELETE',
     })
-    toast.add({ title: t('common.success'), description: t('common.success'), color: 'success' })
+    toast.add({ title: t('common.success'), description: t('admin.users.deleteSuccess'), color: 'success' })
     resetDeleteModal()
     await refreshUsers()
   } catch (err) {

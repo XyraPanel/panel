@@ -277,9 +277,6 @@ function createAuth() {
         enabled: true,
         maxAge: 5 * 60,
         strategy: 'compact',
-        refreshCache: {
-          updateAge: 60,
-        },
       },
       fields: {
         token: 'sessionToken',

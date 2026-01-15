@@ -5,8 +5,8 @@ export interface Nest {
   author: string
   name: string
   description: string | null
-  createdAt: Date | string
-  updatedAt: Date | string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface Egg {
@@ -30,8 +30,8 @@ export interface Egg {
   scriptEntry: string | null
   scriptInstall: string | null
   copyScriptFrom: string | null
-  createdAt: Date | string
-  updatedAt: Date | string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface EggVariable {
@@ -44,8 +44,8 @@ export interface EggVariable {
   userViewable: boolean
   userEditable: boolean
   rules: string | null
-  createdAt: Date | string
-  updatedAt: Date | string
+  createdAt: string
+  updatedAt: string
 }
 
 export interface WingsEggConfiguration {

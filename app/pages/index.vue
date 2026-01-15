@@ -200,10 +200,13 @@ function toErrorMessage(err: unknown, fallback: string) {
   if (err instanceof Error) {
     return err.message
   }
-  if (typeof err === 'object' && err !== null && 'data' in err) {
-    const data = (err as { data?: { message?: string } }).data
-    if (data?.message) {
-      return data.message
+  if (typeof err === 'object' && err !== null) {
+    const errObj = err as Record<string, unknown>
+    if ('data' in errObj && typeof errObj.data === 'object' && errObj.data !== null) {
+      const data = errObj.data as Record<string, unknown>
+      if (typeof data.message === 'string') {
+        return data.message
+      }
     }
   }
   return fallback

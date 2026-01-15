@@ -27,6 +27,8 @@ export default defineEventHandler(async (event) => {
 
   const hashedPassword = await bcrypt.hash(body.password, 12)
 
+  const defaultLanguage = process.env.DEFAULT_LANGUAGE || 'en'
+
   const newUser = {
     id: randomUUID(),
     username: body.username,
@@ -34,7 +36,7 @@ export default defineEventHandler(async (event) => {
     password: hashedPassword,
     nameFirst: body.nameFirst ?? null,
     nameLast: body.nameLast ?? null,
-    language: 'en',
+    language: body.language || defaultLanguage,
     rootAdmin: body.role === 'admin',
     emailVerified: null,
     image: null,
@@ -48,7 +50,6 @@ export default defineEventHandler(async (event) => {
     await sendAdminUserCreatedEmail({
       to: newUser.email,
       username: newUser.username,
-      temporaryPassword: body.password,
     })
   }
   catch (error) {
@@ -68,12 +69,16 @@ export default defineEventHandler(async (event) => {
     },
   })
 
+  const fullName = newUser.nameFirst && newUser.nameLast
+    ? `${newUser.nameFirst} ${newUser.nameLast}`
+    : newUser.nameFirst || newUser.nameLast || null
+
   return {
     data: {
       id: newUser.id,
       username: newUser.username,
       email: newUser.email,
-      name: newUser.nameFirst,
+      name: fullName,
       role: newUser.rootAdmin ? 'admin' : 'user',
       createdAt: newUser.createdAt.toISOString(),
     },

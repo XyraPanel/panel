@@ -50,6 +50,12 @@ export interface AdminUserResponse {
 
 export interface UsersResponse {
   data: AdminUserResponse[]
+  pagination?: {
+    page: number
+    perPage: number
+    total: number
+    totalPages: number
+  }
 }
 
 export interface StartupResponse {

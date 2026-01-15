@@ -593,9 +593,11 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
         }
         
         // $fetch throws H3Error objects for non-2xx responses
-        if (errorData && typeof errorData === 'object' && errorData !== null && 'message' in errorData) {
-          const dataMessage = typeof (errorData as { message?: unknown }).message === 'string' ? (errorData as { message: string }).message : undefined
-          throw new Error(dataMessage || error.message || t('server.websocket.failedToFetchCredentials'))
+        if (errorData && typeof errorData === 'object' && errorData !== null) {
+          const errDataObj = errorData as Record<string, unknown>
+          if ('message' in errDataObj && typeof errDataObj.message === 'string') {
+            throw new Error(errDataObj.message || error.message || t('server.websocket.failedToFetchCredentials'))
+          }
         }
         
         if (fetchError instanceof Error && fetchError.message.includes('HTML instead of JSON')) {
@@ -605,11 +607,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
         throw new Error(error.message || t('server.websocket.failedToFetchCredentials'))
       }
       
-      if (!credentials) {
-        throw new Error(t('server.websocket.invalidCredentials'))
-      }
-      
-      if (typeof credentials.socket !== 'string' || typeof credentials.token !== 'string') {
+      if (!credentials || typeof credentials.socket !== 'string' || typeof credentials.token !== 'string') {
         console.error(`[WebSocket] Invalid credentials structure:`, { 
           hasSocket: !!credentials?.socket, 
           hasToken: !!credentials?.token,

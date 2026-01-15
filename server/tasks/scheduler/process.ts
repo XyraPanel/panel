@@ -168,7 +168,7 @@ async function processSchedule(scheduleId: string, db: ReturnType<typeof useDriz
 
     debugLog(`Executing ${tasks.length} tasks for schedule "${schedule.name}" on server ${server.uuid}`)
 
-    let _allTasksSucceeded = true
+    let allTasksSucceeded = true
 
     for (const task of tasks) {
       if (task.timeOffset > 0) {
@@ -182,7 +182,7 @@ async function processSchedule(scheduleId: string, db: ReturnType<typeof useDriz
       } catch (taskError) {
         const errorMsg = `Task ${task.id} failed: ${taskError instanceof Error ? taskError.message : 'Unknown error'}`
         console.error(errorMsg)
-        _allTasksSucceeded = false
+        allTasksSucceeded = false
 
         if (!task.continueOnFailure) {
           debugLog(`Task ${task.id} failed and continueOnFailure is false, stopping execution`)
@@ -203,7 +203,7 @@ async function processSchedule(scheduleId: string, db: ReturnType<typeof useDriz
       .where(eq(tables.serverSchedules.id, scheduleId))
       .run()
 
-    debugLog(`Schedule ${scheduleId} completed. Next run: ${nextRun.toISOString()}`)
+    debugLog(`Schedule ${scheduleId} completed (success: ${allTasksSucceeded}). Next run: ${nextRun.toISOString()}`)
 
   } finally {
     runningTasks.delete(scheduleId)

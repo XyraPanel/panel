@@ -47,6 +47,7 @@ export interface AdminCreateUserPayload {
   password: string
   nameFirst?: string
   nameLast?: string
+  language?: string
   role: 'user' | 'admin'
 }
 
