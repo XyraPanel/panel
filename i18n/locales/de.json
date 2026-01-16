@@ -1018,7 +1018,14 @@
       "accountState": "Account State",
       "suspendUser": "Benutzer sperren",
       "startImpersonation": "Start Impersonation",
-      "accountStateDescription": "Manage account suspension and access controls."
+      "accountStateDescription": "Manage account suspension and access controls.",
+      "createUser": "Create User",
+      "deleteUser": "Delete User",
+      "confirmDeleteDescription": "Are you sure you want to delete this user?",
+      "deleteUserWarning": "This action cannot be undone. All user data will be permanently removed.",
+      "createSuccess": "User created successfully.",
+      "updateSuccess": "User updated successfully.",
+      "deleteSuccess": "User deleted successfully."
     },
     "api": {
       "activeKeys": "Active API Keys",
@@ -1786,7 +1793,8 @@
     "maxLength": "Must be no more than {max} characters",
     "invalidFormat": "Invalid format",
     "memoMaxLength": "Memo must be under 255 characters",
-    "invalidIPs": "Enter valid IPv4 addresses separated by commas."
+    "invalidIPs": "Enter valid IPv4 addresses separated by commas.",
+    "passwordRequired": "Password is required"
   },
   "layout": {
     "backToPanel": "Back to panel",
