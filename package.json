@@ -46,7 +46,7 @@
     "@xterm/addon-web-links": "^0.12.0",
     "@xterm/xterm": "^6.0.0",
     "bcryptjs": "^3.0.3",
-    "better-auth": "^1.4.13",
+    "better-auth": "^1.4.15",
     "better-sqlite3": "^12.6.0",
     "drizzle-orm": "^0.45.1",
     "jose": "^6.1.3",
