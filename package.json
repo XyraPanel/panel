@@ -56,7 +56,7 @@
     "nuxt-charts": "2.0.0",
     "nuxt-monaco-editor": "^1.4.0",
     "nuxt-qrcode": "^0.4.8",
-    "nuxt-security": "2.5.0",
+    "nuxt-security": "2.5.1",
     "pg": "^8.17.1",
     "pinia": "^3.0.4",
     "vue": "^3.5.26"

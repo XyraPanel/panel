@@ -84,8 +84,8 @@ importers:
         specifier: ^0.4.8
         version: 0.4.8(@types/emscripten@1.41.5)(magicast@0.5.1)(vue@3.5.26(typescript@5.9.3))
       nuxt-security:
-        specifier: 2.5.0
-        version: 2.5.0(magicast@0.5.1)(rollup@4.55.1)
+        specifier: 2.5.1
+        version: 2.5.1(magicast@0.5.1)(rollup@4.55.1)
       pg:
         specifier: ^8.17.1
         version: 8.17.1
@@ -6312,8 +6312,8 @@ packages:
   nuxt-qrcode@0.4.8:
     resolution: {integrity: sha512-m489cF5NtXbZ2P3s2euuKEQ2iClmNwFtXQU8B9H5RqdSpMrM+MRci9eHp+OE8IlTCXQBb4TEUZXApzz8xk91Tw==}
 
-  nuxt-security@2.5.0:
-    resolution: {integrity: sha512-mfoSXcY1V6DHJwXGVLY99G7W2XnkdGnJ5FgmGe8I2ZkWOb1DVr3rbwl8OgIb1C64CDWTBhwer8eXxgCLCGGLUg==}
+  nuxt-security@2.5.1:
+    resolution: {integrity: sha512-gXUhJiOqgkKkP0FHDAPOuREjoala0p6G/4TIlkti1ZafpJV8TkjjFqCNT6NuiWHxKzVYY00OIR1tbRcZuJ7LmQ==}
     engines: {node: '>=20.0.0'}
 
   nuxt-site-config-kit@3.2.17:
@@ -7454,6 +7454,7 @@ packages:
   tar@7.5.2:
     resolution: {integrity: sha512-7NyxrTE4Anh8km8iEy7o0QYPs+0JKBTj5ZaqHg6B39erLg0qYXN3BijtShwbsNSvQ+LN75+KV+C4QR/f6Gwnpg==}
     engines: {node: '>=18'}
+    deprecated: Old versions of tar are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exhorbitant rates) by contacting i@izs.me
 
   temp-dir@2.0.0:
     resolution: {integrity: sha512-aoBAniQmmwtcKp/7BzsH8Cxzv8OL736p7v1ihGb5e9DJ9kTwGWHrQrVB5+lfVDzfGrdRzXch+ig7LHaY1JTOrg==}
@@ -15300,7 +15301,7 @@ snapshots:
       - magicast
       - vue
 
-  nuxt-security@2.5.0(magicast@0.5.1)(rollup@4.55.1):
+  nuxt-security@2.5.1(magicast@0.5.1)(rollup@4.55.1):
     dependencies:
       '@nuxt/kit': 4.2.2(magicast@0.5.1)
       basic-auth: 2.0.1
