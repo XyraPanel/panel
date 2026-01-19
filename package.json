@@ -62,7 +62,7 @@
     "vue": "^3.5.26"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.85",
+    "@iconify-json/lucide": "^1.2.86",
     "@nuxt/hints": "1.0.0-alpha.5",
     "@nuxt/test-utils": "^3.23.0",
     "@types/better-sqlite3": "^7.6.13",
