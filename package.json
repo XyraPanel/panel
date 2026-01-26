@@ -78,7 +78,7 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.17",
-    "vue-tsc": "^3.2.2"
+    "vue-tsc": "^3.2.4"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,mjs,cjs,vue}": "pnpm run lint"
