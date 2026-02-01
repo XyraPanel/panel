@@ -22,23 +22,23 @@ export default defineEventHandler(async (event) => {
 
   if (!dbUser) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'User not found',
+      status: 404,
+      statusText: 'User not found',
     })
   }
 
   const isValidPassword = await bcrypt.compare(password, dbUser.password)
   if (!isValidPassword) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Invalid password',
+      status: 401,
+      statusText: 'Invalid password',
     })
   }
 
   if (!dbUser.useTotp) {
     throw createError({
-      statusCode: 400,
-      statusMessage: '2FA is not enabled for this account',
+      status: 400,
+      statusText: '2FA is not enabled for this account',
     })
   }
 
@@ -75,8 +75,8 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     console.error('Failed to disable 2FA:', error)
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to disable 2FA',
+      status: 500,
+      statusText: 'Failed to disable 2FA',
     })
   }
 })

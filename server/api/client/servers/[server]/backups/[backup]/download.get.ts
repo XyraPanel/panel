@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId || !backupUuid) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server and backup identifiers are required',
     })
   }
@@ -33,14 +33,14 @@ export default defineEventHandler(async (event) => {
 
   if (!backup || backup.serverId !== server.id) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Backup not found',
     })
   }
 
   if (!server.nodeId) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Server is not assigned to a Wings node',
     })
   }
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
   
   if (!node) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Wings node not found',
     })
   }
@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
   
   if (!server.uuid) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Server UUID is missing',
     })
   }

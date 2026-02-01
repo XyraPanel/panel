@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
   if (!database) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Database name is required',
     })
   }
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
 
   if (server.databaseLimit && existingDatabases.length >= server.databaseLimit) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: 'Database limit reached',
     })
   }
@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
 
   if (!databaseHost) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'No database host configured',
     })
   }
@@ -115,7 +115,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error('Failed to create database:', error)
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to create database',
     })
   }

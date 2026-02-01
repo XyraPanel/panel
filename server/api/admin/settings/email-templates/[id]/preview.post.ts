@@ -9,8 +9,8 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Template ID is required',
+      status: 400,
+      statusText: 'Template ID is required',
     })
   }
 
@@ -134,8 +134,8 @@ export default defineEventHandler(async (event) => {
   }
   catch (err) {
     throw createError({
-      statusCode: 500,
-      statusMessage: `Failed to render template: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      status: 500,
+      statusText: `Failed to render template: ${err instanceof Error ? err.message : 'Unknown error'}`,
     })
   }
 })

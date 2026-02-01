@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server')
 
   if (!serverIdentifier) {
-    throw createError({ statusCode: 400, statusMessage: 'Server identifier required' })
+    throw createError({ status: 400, statusText: 'Server identifier required' })
   }
 
   const accountContext = await requireAccountUser(event)
@@ -49,23 +49,23 @@ export default defineEventHandler(async (event) => {
     
     if (error instanceof WingsAuthError) {
       throw createError({
-        statusCode: 403,
-        statusMessage: 'Wings authentication failed',
+        status: 403,
+        statusText: 'Wings authentication failed',
         data: { error: error.message },
       })
     }
     
     if (error instanceof WingsConnectionError) {
       throw createError({
-        statusCode: 503,
-        statusMessage: 'Wings daemon unavailable',
+        status: 503,
+        statusText: 'Wings daemon unavailable',
         data: { error: error.message },
       })
     }
     
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to send power action to Wings',
+      status: 500,
+      statusText: 'Failed to send power action to Wings',
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     })
   }

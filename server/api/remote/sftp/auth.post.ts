@@ -36,8 +36,8 @@ export default defineEventHandler(async (event: H3Event) => {
 
   if (!checkRateLimit(clientIp)) {
     throw createError({
-      statusCode: 429,
-      statusMessage: 'Too Many Requests',
+      status: 429,
+      statusText: 'Too Many Requests',
       message: 'Too many SFTP authentication attempts. Please try again later.',
     })
   }
@@ -47,8 +47,8 @@ export default defineEventHandler(async (event: H3Event) => {
   const parts = username.split('.')
   if (parts.length < 2) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
+      status: 401,
+      statusText: 'Unauthorized',
       message: 'Invalid SFTP credentials format',
     })
   }
@@ -65,8 +65,8 @@ export default defineEventHandler(async (event: H3Event) => {
 
   if (!server) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
+      status: 401,
+      statusText: 'Unauthorized',
       message: 'Invalid SFTP credentials',
     })
   }
@@ -82,8 +82,8 @@ export default defineEventHandler(async (event: H3Event) => {
 
   if (!user) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
+      status: 401,
+      statusText: 'Unauthorized',
       message: 'Invalid SFTP credentials',
     })
   }
@@ -92,8 +92,8 @@ export default defineEventHandler(async (event: H3Event) => {
     const isValidPassword = await bcrypt.compare(credential, user.password)
     if (!isValidPassword) {
       throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized',
+        status: 401,
+        statusText: 'Unauthorized',
         message: 'Invalid SFTP credentials',
       })
     }
@@ -132,16 +132,16 @@ export default defineEventHandler(async (event: H3Event) => {
 
       if (!sshKey) {
         throw createError({
-          statusCode: 401,
-          statusMessage: 'Unauthorized',
+          status: 401,
+          statusText: 'Unauthorized',
           message: 'Invalid SSH key',
         })
       }
     }
     catch {
       throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized',
+        status: 401,
+        statusText: 'Unauthorized',
         message: 'Invalid SSH key',
       })
     }
@@ -161,8 +161,8 @@ export default defineEventHandler(async (event: H3Event) => {
 
     if (!subuser) {
       throw createError({
-        statusCode: 403,
-        statusMessage: 'Forbidden',
+        status: 403,
+        statusText: 'Forbidden',
         message: 'You do not have access to this server',
       })
     }

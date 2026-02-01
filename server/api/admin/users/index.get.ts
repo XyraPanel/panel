@@ -50,8 +50,8 @@ export default defineEventHandler(async (event): Promise<{ data: UserOption[] }>
   catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to list users'
     throw createError({
-      statusCode: 500,
-      statusMessage: message,
+      status: 500,
+      statusText: message,
     })
   }
 })

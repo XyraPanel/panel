@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   const uuid = getRouterParam(event, 'uuid')
   if (!uuid) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server UUID is required',
     })
   }

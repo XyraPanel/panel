@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')
 
   if (!identifier) {
-    throw createError({ statusCode: 400, message: 'Server ID required' })
+    throw createError({ status: 400, message: 'Server ID required' })
   }
 
   const db = useDrizzle()
@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   const foundServer = await findServerByIdentifier(identifier)
 
   if (!foundServer) {
-    throw createError({ statusCode: 404, message: 'Server not found' })
+    throw createError({ status: 404, message: 'Server not found' })
   }
 
   const result = db
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!result) {
-    throw createError({ statusCode: 404, message: 'Server not found' })
+    throw createError({ status: 404, message: 'Server not found' })
   }
 
   const { server, owner, node, egg, nest, allocation } = result

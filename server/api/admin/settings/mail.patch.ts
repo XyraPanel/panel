@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
 
   if (updatedKeys.length === 0) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'No settings to update',
     })
   }

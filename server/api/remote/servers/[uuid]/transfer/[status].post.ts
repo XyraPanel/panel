@@ -9,11 +9,11 @@ export default defineEventHandler(async (event: H3Event) => {
   const { uuid, status } = event.context.params ?? {}
 
   if (!uuid || typeof uuid !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing server UUID' })
+    throw createError({ status: 400, statusText: 'Missing server UUID' })
   }
 
   if (status !== 'success' && status !== 'failure') {
-    throw createError({ statusCode: 400, statusMessage: 'Invalid transfer status' })
+    throw createError({ status: 400, statusText: 'Invalid transfer status' })
   }
 
   const nodeId = await getNodeIdFromAuth(event)
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event: H3Event) => {
     .get()
 
   if (!server) {
-    throw createError({ statusCode: 404, statusMessage: 'Server not found' })
+    throw createError({ status: 404, statusText: 'Server not found' })
   }
 
   const transfer = db
@@ -43,8 +43,8 @@ export default defineEventHandler(async (event: H3Event) => {
 
   if (!transfer) {
     throw createError({
-      statusCode: 409,
-      statusMessage: 'No active transfer',
+      status: 409,
+      statusText: 'No active transfer',
       message: 'No transfer record found for this server.',
     })
   }

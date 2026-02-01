@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId || !databaseId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server and database identifiers are required',
     })
   }
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
 
   if (!database) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Database not found',
     })
   }

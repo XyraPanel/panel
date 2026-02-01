@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
   const { identifier } = await getValidatedRouterParams(event, (params) => {
     const identifierParam = (params as Record<string, unknown>).identifier
     if (typeof identifierParam !== 'string' || identifierParam.trim().length === 0) {
-      throw createError({ statusCode: 400, statusMessage: 'Missing API key identifier' })
+      throw createError({ status: 400, statusText: 'Missing API key identifier' })
     }
 
     return { identifier: identifierParam }
@@ -35,8 +35,8 @@ export default defineEventHandler(async (event) => {
 
   if (!apiKey) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'Not Found',
+      status: 404,
+      statusText: 'Not Found',
       message: 'API key not found',
     })
   }

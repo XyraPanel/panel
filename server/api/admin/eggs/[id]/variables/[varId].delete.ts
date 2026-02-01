@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   const varId = getRouterParam(event, 'varId')
 
   if (!eggId || !varId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'IDs are required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'IDs are required' })
   }
 
   const db = useDrizzle()
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!existing || existing.eggId !== eggId) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Variable not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Variable not found' })
   }
 
   await db.delete(tables.eggVariables).where(eq(tables.eggVariables.id, varId)).run()

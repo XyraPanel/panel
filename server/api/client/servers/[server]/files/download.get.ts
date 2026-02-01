@@ -11,14 +11,14 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
 
   if (!file) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'File path is required',
     })
   }
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error('Failed to get download URL from Wings:', error)
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to get download URL',
     })
   }

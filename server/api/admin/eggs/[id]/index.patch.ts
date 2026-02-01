@@ -13,13 +13,13 @@ export default defineEventHandler(async (event) => {
 
   const eggId = getRouterParam(event, 'id')
   if (!eggId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Egg ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Egg ID is required' })
   }
 
   const body = await readValidatedBodyWithLimit(event, updateEggSchema, BODY_SIZE_LIMITS.MEDIUM)
 
   if (Object.keys(body).length === 0) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'No fields provided to update' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'No fields provided to update' })
   }
 
   const db = useDrizzle()
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!egg) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Egg not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found' })
   }
 
   const now = new Date()
@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!updatedEgg) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Egg not found after update' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found after update' })
   }
 
   await recordAuditEventFromRequest(event, {

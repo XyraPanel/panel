@@ -7,7 +7,7 @@ import { recordServerActivity } from '#server/utils/server-activity'
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')
   if (!identifier) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing server identifier' })
+    throw createError({ status: 400, statusText: 'Missing server identifier' })
   }
 
   const { user, session } = await requireAccountUser(event)

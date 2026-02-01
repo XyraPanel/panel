@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverIdentifier) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -93,7 +93,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch (error) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: error instanceof Error ? error.message : 'Failed to upload files',
     })
   }

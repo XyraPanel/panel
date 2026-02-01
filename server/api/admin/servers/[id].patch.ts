@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   const server = await findServerByIdentifier(serverId)
 
   if (!server) {
-    throw createError({ statusCode: 404, message: 'Server not found' })
+    throw createError({ status: 404, message: 'Server not found' })
   }
 
   const { cpu, memory, swap, disk, io, threads, oomDisabled, databaseLimit, allocationLimit, backupLimit } = body
@@ -115,7 +115,7 @@ export default defineEventHandler(async (event) => {
     await client.syncServer(server.uuid)
   } catch (syncError) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: `Database updated successfully, but failed to sync with Wings: ${syncError instanceof Error ? syncError.message : String(syncError)}. The changes will be applied on next server restart.`,
       data: {
         databaseUpdated: true,

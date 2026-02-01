@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   const varId = getRouterParam(event, 'varId')
 
   if (!eggId || !varId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'IDs are required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'IDs are required' })
   }
 
   const body = await readValidatedBodyWithLimit(event, updateEggVariableSchema, BODY_SIZE_LIMITS.SMALL)
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!existing || existing.eggId !== eggId) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Variable not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Variable not found' })
   }
 
   const updates: Record<string, string | boolean | Date | null> = {

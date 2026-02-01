@@ -12,7 +12,7 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
   const { user } = accountContext
 
   if (!user?.id) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+    throw createError({ status: 401, statusText: 'Unauthorized' })
   }
 
   const db = useDrizzle()

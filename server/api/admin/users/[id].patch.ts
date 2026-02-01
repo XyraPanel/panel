@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   const userId = getRouterParam(event, 'id')
   if (!userId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'User ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'User ID is required' })
   }
 
   const body = await readBody<Partial<UpdateUserRequest>>(event)
@@ -109,7 +109,7 @@ export default defineEventHandler(async (event) => {
       .get()
 
     if (!updatedUser) {
-      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found after update' })
+      throw createError({ status: 404, statusText: 'Not Found', message: 'User not found after update' })
     }
 
     return {
@@ -126,13 +126,13 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     if (error instanceof APIError) {
       throw createError({
-        statusCode: error.statusCode,
-        statusMessage: error.message || 'Failed to update user',
+        status: error.status,
+        statusText: error.message || 'Failed to update user',
       })
     }
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to update user',
+      status: 500,
+      statusText: 'Failed to update user',
     })
   }
 })

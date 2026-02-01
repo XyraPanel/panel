@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing node id' })
+    throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
   const runtimeConfig = useRuntimeConfig()
@@ -30,6 +30,6 @@ export default defineEventHandler(async (event) => {
   }
   catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to build node configuration'
-    throw createError({ statusCode: 404, statusMessage: message })
+    throw createError({ status: 404, statusText: message })
   }
 })

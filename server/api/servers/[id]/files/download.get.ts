@@ -9,8 +9,8 @@ export default defineEventHandler(async (event: H3Event) => {
   const identifier = getRouterParam(event, 'id')
   if (!identifier) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: 'Missing server identifier',
     })
   }
@@ -30,8 +30,8 @@ export default defineEventHandler(async (event: H3Event) => {
 
   if (!file) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: 'File path is required',
     })
   }
@@ -53,8 +53,8 @@ export default defineEventHandler(async (event: H3Event) => {
   }
   catch (error) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Wings API Error',
+      status: 500,
+      statusText: 'Wings API Error',
       message: error instanceof Error ? error.message : 'Failed to generate download URL',
       cause: error,
     })

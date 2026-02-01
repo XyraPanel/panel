@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'id')
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server ID is required',
     })
   }
@@ -26,14 +26,14 @@ export default defineEventHandler(async (event) => {
 
   if (!server) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Server not found',
     })
   }
 
   if (!server.nodeId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server has no node assigned',
     })
   }
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
 
   if (!node) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Server node not found',
     })
   }
@@ -84,8 +84,8 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     const err = error as Error
     throw createError({
-      statusCode: 500,
-      statusMessage: `Failed to trigger server reinstall: ${err.message}`,
+      status: 500,
+      statusText: `Failed to trigger server reinstall: ${err.message}`,
     })
   }
 })

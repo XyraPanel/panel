@@ -19,15 +19,15 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Template ID is required',
+      status: 400,
+      statusText: 'Template ID is required',
     })
   }
 
   if (!defaultTemplates[id]) {
     throw createError({
-      statusCode: 404,
-      statusMessage: `No default template found for "${id}"`,
+      status: 404,
+      statusText: `No default template found for "${id}"`,
     })
   }
 
@@ -63,8 +63,8 @@ export default defineEventHandler(async (event) => {
   }
   catch (err) {
     throw createError({
-      statusCode: 500,
-      statusMessage: `Failed to reset template: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      status: 500,
+      statusText: `Failed to reset template: ${err instanceof Error ? err.message : 'Unknown error'}`,
     })
   }
 })

@@ -8,7 +8,7 @@ import { recordAuditEventFromRequest } from '#server/utils/audit'
 export default defineEventHandler(async (event) => {
   const { id: serverId } = event.context.params ?? {}
   if (!serverId || typeof serverId !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing server id' })
+    throw createError({ status: 400, statusText: 'Missing server id' })
   }
 
   const session = await requireAdmin(event)
@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const action = body.action as string
 
   if (!['start', 'stop', 'restart', 'kill'].includes(action)) {
-    throw createError({ statusCode: 400, statusMessage: 'Invalid power action' })
+    throw createError({ status: 400, statusText: 'Invalid power action' })
   }
 
   const db = useDrizzle()
@@ -38,18 +38,18 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!server) {
-    throw createError({ statusCode: 404, statusMessage: 'Server not found' })
+    throw createError({ status: 404, statusText: 'Server not found' })
   }
 
   if (!server.nodeId) {
-    throw createError({ statusCode: 400, statusMessage: 'Server has no assigned node' })
+    throw createError({ status: 400, statusText: 'Server has no assigned node' })
   }
 
   if (action === 'start' && (server.status === 'install_failed' || !server.status)) {
     if (!server.eggId) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Server has no egg assigned. Cannot install server.',
+        status: 400,
+        statusText: 'Server has no egg assigned. Cannot install server.',
       })
     }
 
@@ -65,8 +65,8 @@ export default defineEventHandler(async (event) => {
 
     if (!primaryAllocation) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Server has no primary allocation. Cannot install server.',
+        status: 400,
+        statusText: 'Server has no primary allocation. Cannot install server.',
       })
     }
 
@@ -104,7 +104,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!node) {
-    throw createError({ statusCode: 404, statusMessage: 'Node not found' })
+    throw createError({ status: 404, statusText: 'Node not found' })
   }
 
   try {
@@ -139,8 +139,8 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     const err = error as Error
     throw createError({
-      statusCode: 500,
-      statusMessage: `Failed to send power command: ${err.message}`,
+      status: 500,
+      statusText: `Failed to send power command: ${err.message}`,
     })
   }
 })

@@ -31,7 +31,7 @@ function safeJsonParse(value: string | null | undefined, defaultValue: unknown =
 export default defineEventHandler(async (event: H3Event) => {
   const { uuid } = event.context.params ?? {}
   if (!uuid || typeof uuid !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing server UUID' })
+    throw createError({ status: 400, statusText: 'Missing server UUID' })
   }
 
   const nodeId = await getNodeIdFromAuth(event)
@@ -45,13 +45,13 @@ export default defineEventHandler(async (event: H3Event) => {
     .get()
 
   if (!server) {
-    throw createError({ statusCode: 404, statusMessage: 'Server not found' })
+    throw createError({ status: 404, statusText: 'Server not found' })
   }
 
   if (server.nodeId !== nodeId) {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Forbidden',
+      status: 403,
+      statusText: 'Forbidden',
       message: 'This server is not assigned to your node',
     })
   }
@@ -67,8 +67,8 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!primaryAllocation) {
     debugError(`[Wings Config] Server ${uuid} has no primary allocation`)
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Server configuration error',
+      status: 500,
+      statusText: 'Server configuration error',
       message: 'Server is missing a primary allocation',
     })
   }
@@ -170,8 +170,8 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!egg) {
     debugError(`[Wings Config] Server ${uuid} has no egg configured`)
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Server configuration error',
+      status: 500,
+      statusText: 'Server configuration error',
       message: 'Server is missing egg configuration',
     })
   }

@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId || !scheduleId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server and schedule identifiers are required',
     })
   }
@@ -39,14 +39,14 @@ export default defineEventHandler(async (event) => {
 
   if (!schedule) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Schedule not found',
     })
   }
 
   if (!schedule.action) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Schedule action is not defined',
     })
   }
@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error('Failed to execute schedule:', error)
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to execute schedule tasks',
     })
   }

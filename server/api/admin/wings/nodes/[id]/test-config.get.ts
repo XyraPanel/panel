@@ -11,12 +11,12 @@ export default defineEventHandler(async (event) => {
 
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing node id' })
+    throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
   const node = findWingsNode(id)
   if (!node) {
-    throw createError({ statusCode: 404, statusMessage: 'Node not found' })
+    throw createError({ status: 404, statusText: 'Node not found' })
   }
 
   const runtimeConfig = useRuntimeConfig()

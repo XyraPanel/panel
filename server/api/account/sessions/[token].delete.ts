@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
 
   const targetToken = getRouterParam(event, 'token')
   if (!targetToken) {
-    throw createError({ statusCode: 400, statusMessage: 'Missing session token' })
+    throw createError({ status: 400, statusText: 'Missing session token' })
   }
 
   const cookies = parseCookies(event)
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   })
 
   if (!result.status) {
-    throw createError({ statusCode: 404, statusMessage: 'Session not found or failed to revoke' })
+    throw createError({ status: 404, statusText: 'Session not found or failed to revoke' })
   }
 
   await recordAuditEventFromRequest(event, {

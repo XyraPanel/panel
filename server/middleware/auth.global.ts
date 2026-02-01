@@ -142,8 +142,8 @@ export default defineEventHandler(async (event) => {
 
         if (!verification.valid || !verification.key?.userId) {
           throw createError({
-            statusCode: 401,
-            statusMessage: 'Unauthorized',
+            status: 401,
+            statusText: 'Unauthorized',
             message: 'Invalid API key',
           })
         }
@@ -166,8 +166,8 @@ export default defineEventHandler(async (event) => {
 
         if (!dbUser) {
           throw createError({
-            statusCode: 401,
-            statusMessage: 'Unauthorized',
+            status: 401,
+            statusText: 'Unauthorized',
             message: 'User not found',
           })
         }
@@ -228,7 +228,7 @@ export default defineEventHandler(async (event) => {
           console.error('Failed to import audit logging:', logError)
         }
 
-        if (error && typeof error === 'object' && 'statusCode' in error) {
+        if (error && typeof error === 'object' && 'status' in error) {
           throw error
         }
 
@@ -242,8 +242,8 @@ export default defineEventHandler(async (event) => {
   if (!session?.user?.id) {
     if (isApiRequest) {
       throw createError({
-        statusCode: 401,
-        statusMessage: 'Unauthorized',
+        status: 401,
+        statusText: 'Unauthorized',
         message: 'Authentication required.',
       })
     }
@@ -264,8 +264,8 @@ export default defineEventHandler(async (event) => {
   if (path.startsWith('/admin') && user.role !== 'admin') {
     if (isApiRequest) {
       throw createError({
-        statusCode: 403,
-        statusMessage: 'Forbidden',
+        status: 403,
+        statusText: 'Forbidden',
         message: 'Administrator privileges required.',
       })
     }
@@ -279,8 +279,8 @@ export default defineEventHandler(async (event) => {
   if (user.passwordResetRequired && !isForcedResetPage && !isForcedResetApi) {
     if (isApiRequest) {
       throw createError({
-        statusCode: 403,
-        statusMessage: 'Forbidden',
+        status: 403,
+        statusText: 'Forbidden',
         message: 'Password reset required.',
       })
     }

@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'id')
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server ID is required',
     })
   }
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
 
   if (!server) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Server not found',
     })
   }
@@ -70,7 +70,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error('Failed to check installation status:', error)
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to check installation status',
     })
   }

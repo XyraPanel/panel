@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!profile) {
-    throw createError({ statusCode: 404, statusMessage: 'User not found' })
+    throw createError({ status: 404, statusText: 'User not found' })
   }
 
   await recordAuditEventFromRequest(event, {

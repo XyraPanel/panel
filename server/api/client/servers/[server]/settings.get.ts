@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverIdentifier) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }

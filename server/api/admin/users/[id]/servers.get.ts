@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'User ID is required',
     })
   }
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
   if (!user) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'User not found',
     })
   }

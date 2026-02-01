@@ -20,8 +20,8 @@ async function assertBodySize(event: H3Event, limit: number): Promise<void> {
     const headerSize = Number.parseInt(Array.isArray(contentLength) ? contentLength[0] : contentLength, 10)
     if (!Number.isNaN(headerSize) && headerSize > limit) {
       throw createError({
-        statusCode: 413,
-        statusMessage: 'Request Entity Too Large',
+        status: 413,
+        statusText: 'Request Entity Too Large',
         message: `Request body size (${headerSize} bytes) exceeds the limit of ${limit} bytes`,
       })
     }
@@ -33,8 +33,8 @@ export async function requireAuth(event: H3Event) {
 
   if (!session?.user?.id) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
+      status: 401,
+      statusText: 'Unauthorized',
       message: 'Authentication required',
     })
   }
@@ -55,8 +55,8 @@ export async function requireAdmin(event: H3Event) {
   
   if (!session) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
+      status: 401,
+      statusText: 'Unauthorized',
       message: 'Authentication required',
     })
   }
@@ -81,8 +81,8 @@ export async function readValidatedBodyWithLimit<T extends z.ZodType>(
   
   if (bodySize > limit) {
     throw createError({
-      statusCode: 413,
-      statusMessage: 'Request Entity Too Large',
+      status: 413,
+      statusText: 'Request Entity Too Large',
       message: `Request body size (${bodySize} bytes) exceeds the limit of ${limit} bytes`,
     })
   }
@@ -95,8 +95,8 @@ export async function readValidatedBodyWithLimit<T extends z.ZodType>(
     }))
     
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Validation failed',
+      status: 400,
+      statusText: 'Validation failed',
       message: 'Request body validation failed',
       data: { errors },
     })
@@ -126,8 +126,8 @@ export async function requireApiKeyAuth(event: H3Event) {
   
   if (!isApiKey) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
+      status: 401,
+      statusText: 'Unauthorized',
       message: 'API key authentication required. Provide a valid API key via Authorization: Bearer <key> or x-api-key header.',
     })
   }

@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const locationId = getRouterParam(event, 'id')
   if (!locationId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Location ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Location ID is required' })
   }
 
   const body = await readValidatedBodyWithLimit(event, updateLocationSchema, BODY_SIZE_LIMITS.SMALL)
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Location not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Location not found' })
   }
 
   const updates: Partial<typeof tables.locations.$inferInsert> = {

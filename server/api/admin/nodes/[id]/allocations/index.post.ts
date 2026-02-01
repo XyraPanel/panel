@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   const nodeId = getRouterParam(event, 'id')
   if (!nodeId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Node ID is required',
     })
   }
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   if (!ip || typeof ip !== 'string') {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'IP address or CIDR notation is required',
     })
   }
@@ -37,13 +37,13 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     if (error instanceof CidrOutOfRangeError) {
       throw createError({
-        statusCode: 400,
+        status: 400,
         message: error.message,
       })
     }
     if (error instanceof InvalidIpAddressError) {
       throw createError({
-        statusCode: 400,
+        status: 400,
         message: error.message,
       })
     }
@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
         : parsePorts(ports)
   } catch (error) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: error instanceof Error ? error.message : 'Invalid port format',
     })
   }
@@ -110,7 +110,7 @@ export default defineEventHandler(async (event) => {
 
   if (created.length === 0 && skipped.length > 0) {
     throw createError({
-      statusCode: 409,
+      status: 409,
       message: 'All specified allocations already exist',
     })
   }

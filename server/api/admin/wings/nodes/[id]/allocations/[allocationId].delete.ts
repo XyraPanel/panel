@@ -9,11 +9,11 @@ export default defineEventHandler(async (event) => {
   const { id: nodeId, allocationId } = event.context.params ?? {}
 
   if (!nodeId || typeof nodeId !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing node id' })
+    throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
   if (!allocationId || typeof allocationId !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing allocation id' })
+    throw createError({ status: 400, statusText: 'Missing allocation id' })
   }
 
   const session = await requireAdmin(event)
@@ -30,13 +30,13 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!allocation) {
-    throw createError({ statusCode: 404, statusMessage: 'Allocation not found' })
+    throw createError({ status: 404, statusText: 'Allocation not found' })
   }
 
   if (allocation.serverId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Cannot delete allocation assigned to a server'
+      status: 400,
+      statusText: 'Cannot delete allocation assigned to a server'
     })
   }
 

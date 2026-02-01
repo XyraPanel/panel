@@ -14,8 +14,8 @@ export function requireSessionUser(
 ): ResolvedSessionUser {
   if (!session?.user?.id) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
+      status: 401,
+      statusText: 'Unauthorized',
       message: 'Authentication required',
     })
   }
@@ -24,8 +24,8 @@ export function requireSessionUser(
   
   if (!user) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'Unauthorized',
+      status: 401,
+      statusText: 'Unauthorized',
       message: 'Invalid session user',
     })
   }

@@ -25,17 +25,17 @@ export default defineEventHandler(async (event) => {
 
   const egg = await db.select().from(tables.eggs).where(eq(tables.eggs.id, body.eggId)).get()
   if (!egg) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Egg not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found' })
   }
 
   const node = await db.select().from(tables.wingsNodes).where(eq(tables.wingsNodes.id, body.nodeId)).get()
   if (!node) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Node not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Node not found' })
   }
 
   const owner = await db.select().from(tables.users).where(eq(tables.users.id, body.ownerId)).get()
   if (!owner) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Owner not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Owner not found' })
   }
 
   const allocation = await db.select({
@@ -50,15 +50,15 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!allocation) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Allocation not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Allocation not found' })
   }
 
   if (allocation.serverId) {
-    throw createError({ statusCode: 409, statusMessage: 'Allocation in use', message: 'Allocation already assigned to a server' })
+    throw createError({ status: 409, statusText: 'Allocation in use', message: 'Allocation already assigned to a server' })
   }
 
   if (allocation.nodeId !== body.nodeId) {
-    throw createError({ statusCode: 400, statusMessage: 'Invalid allocation', message: 'Allocation does not belong to selected node' })
+    throw createError({ status: 400, statusText: 'Invalid allocation', message: 'Allocation does not belong to selected node' })
   }
 
   const serverUuid = randomUUID()

@@ -27,14 +27,14 @@ export default defineEventHandler(async (event) => {
 
   if (!server) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Server not found',
     })
   }
 
   if (!server.nodeId || !server.eggId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server is missing required configuration (node or egg)',
     })
   }
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
   const primaryAllocation = allocations.find(a => a.isPrimary)
   if (!primaryAllocation) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server has no primary allocation assigned',
     })
   }
@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error('Failed to provision server on Wings:', error)
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: error instanceof Error ? error.message : 'Failed to provision server on Wings',
     })
   }

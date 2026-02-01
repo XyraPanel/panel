@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
 
   if (Object.keys(updates).length === 0 && deletions.length === 0) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'No settings to update',
     })
   }

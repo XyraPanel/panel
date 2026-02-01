@@ -19,7 +19,7 @@ export async function resolveServerRequest(
   const identifier = options.identifier ?? event.context.params?.id
 
   if (!identifier || typeof identifier !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing server identifier' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing server identifier' })
   }
 
   const contextAuth = (event.context as { auth?: { session?: Awaited<ReturnType<typeof getServerSession>>, user?: ReturnType<typeof resolveSessionUser> } }).auth
@@ -49,13 +49,13 @@ export async function resolveServerRequest(
   }
 
   if (!user) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized', message: 'Authentication required' })
+    throw createError({ status: 401, statusText: 'Unauthorized', message: 'Authentication required' })
   }
 
   const server = await findServerByIdentifier(identifier)
 
   if (!server) {
-    throw createError({ statusCode: 404, statusMessage: 'Server not found' })
+    throw createError({ status: 404, statusText: 'Server not found' })
   }
 
   const isAdmin = user.role === 'admin'
@@ -76,7 +76,7 @@ export async function resolveServerRequest(
       .get()
 
     if (!subuser) {
-      throw createError({ statusCode: 403, statusMessage: 'Forbidden' })
+      throw createError({ status: 403, statusText: 'Forbidden' })
     }
 
     subuserPermissions = normalizePermissionPayload(subuser.permissions)
@@ -114,7 +114,7 @@ export async function resolveServerRequest(
     })
     
     if (missing.length > 0) {
-      throw createError({ statusCode: 403, statusMessage: 'Forbidden', message: `Missing permissions: ${missing.join(', ')}` })
+      throw createError({ status: 403, statusText: 'Forbidden', message: `Missing permissions: ${missing.join(', ')}` })
     }
   }
 
@@ -125,7 +125,7 @@ export async function resolveServerRequest(
   if (requireNode) {
     const queryNodeIdRaw = getQuery(event).node
     if (!server.nodeId) {
-      throw createError({ statusCode: 500, statusMessage: 'Server has no assigned node' })
+      throw createError({ status: 500, statusText: 'Server has no assigned node' })
     }
 
     const resolved = resolveNodeConnection(queryNodeIdRaw && typeof queryNodeIdRaw === 'string' && queryNodeIdRaw.length > 0 ? queryNodeIdRaw : server.nodeId)

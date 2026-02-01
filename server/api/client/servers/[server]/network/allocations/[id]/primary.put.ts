@@ -11,14 +11,14 @@ export default defineEventHandler(async (event) => {
 
   if (!serverIdentifier) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
 
   if (!allocationId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Allocation identifier is required',
     })
   }
@@ -48,14 +48,14 @@ export default defineEventHandler(async (event) => {
 
   if (!allocation) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Allocation not found',
     })
   }
 
   if (allocation.isPrimary) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'This allocation is already the primary allocation',
     })
   }

@@ -11,7 +11,7 @@ interface InstallScriptResponse {
 export default defineEventHandler(async (event: H3Event) => {
   const { uuid } = event.context.params ?? {}
   if (!uuid || typeof uuid !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing server UUID' })
+    throw createError({ status: 400, statusText: 'Missing server UUID' })
   }
 
   const nodeId = await getNodeIdFromAuth(event)
@@ -25,21 +25,21 @@ export default defineEventHandler(async (event: H3Event) => {
     .get()
 
   if (!server) {
-    throw createError({ statusCode: 404, statusMessage: 'Server not found' })
+    throw createError({ status: 404, statusText: 'Server not found' })
   }
 
   if (server.nodeId !== nodeId) {
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Forbidden',
+      status: 403,
+      statusText: 'Forbidden',
       message: 'This server is not assigned to your node',
     })
   }
 
   if (!server.eggId) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Server configuration error',
+      status: 500,
+      statusText: 'Server configuration error',
       message: 'Server is missing egg configuration',
     })
   }
@@ -52,8 +52,8 @@ export default defineEventHandler(async (event: H3Event) => {
 
   if (!egg) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Server configuration error',
+      status: 500,
+      statusText: 'Server configuration error',
       message: 'Egg not found',
     })
   }

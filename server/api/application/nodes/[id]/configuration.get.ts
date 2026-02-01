@@ -8,17 +8,17 @@ import { useRuntimeConfig, getRequestURL } from '#imports'
 export default defineEventHandler(async (event) => {
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing node UUID' })
+    throw createError({ status: 400, statusText: 'Missing node UUID' })
   }
 
   const authHeader = getHeader(event, 'authorization')
   if (!authHeader) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+    throw createError({ status: 401, statusText: 'Unauthorized' })
   }
 
   const tokenData = parseAuthToken(authHeader)
   if (!tokenData) {
-    throw createError({ statusCode: 401, statusMessage: 'Invalid authorization token format' })
+    throw createError({ status: 401, statusText: 'Invalid authorization token format' })
   }
 
   const db = useDrizzle()
@@ -29,15 +29,15 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!nodeRow) {
-    throw createError({ statusCode: 404, statusMessage: 'Node not found' })
+    throw createError({ status: 404, statusText: 'Node not found' })
   }
 
   if (!nodeRow.tokenIdentifier || !nodeRow.tokenSecret) {
-    throw createError({ statusCode: 401, statusMessage: 'Node has no valid token' })
+    throw createError({ status: 401, statusText: 'Node has no valid token' })
   }
 
   if (tokenData.tokenId !== nodeRow.tokenIdentifier) {
-    throw createError({ statusCode: 403, statusMessage: 'Invalid token identifier' })
+    throw createError({ status: 403, statusText: 'Invalid token identifier' })
   }
 
   let decryptedSecret: string
@@ -45,8 +45,8 @@ export default defineEventHandler(async (event) => {
     decryptedSecret = decryptToken(nodeRow.tokenSecret)
   } catch (error) {
     throw createError({ 
-      statusCode: 500, 
-      statusMessage: 'Token decryption failed',
+      status: 500, 
+      statusText: 'Token decryption failed',
       message: error instanceof Error ? error.message : 'Failed to decrypt token'
     })
   }
@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
   const storedSecret = Buffer.from(decryptedSecret, 'utf8')
 
   if (providedSecret.byteLength !== storedSecret.byteLength || !timingSafeEqual(providedSecret, storedSecret)) {
-    throw createError({ statusCode: 403, statusMessage: 'Invalid token secret' })
+    throw createError({ status: 403, statusText: 'Invalid token secret' })
   }
 
   const config = useRuntimeConfig()
@@ -81,6 +81,6 @@ export default defineEventHandler(async (event) => {
     return configuration
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to build node configuration'
-    throw createError({ statusCode: 500, statusMessage: message })
+    throw createError({ status: 500, statusText: message })
   }
 })

@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')
   if (!identifier) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }

@@ -12,11 +12,11 @@ export default defineEventHandler(async (event) => {
   const databaseId = getRouterParam(event, 'databaseId')
 
   if (!identifier) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing server identifier' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing server identifier' })
   }
 
   if (!databaseId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing database identifier' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing database identifier' })
   }
 
   const { user, session } = await requireAccountUser(event)
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!database) {
-    throw createError({ statusCode: 404, statusMessage: 'Database not found' })
+    throw createError({ status: 404, statusText: 'Database not found' })
   }
 
   try {
@@ -71,8 +71,8 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Database Error',
+      status: 500,
+      statusText: 'Database Error',
       message: error instanceof Error ? error.message : 'Failed to delete database',
     })
   }

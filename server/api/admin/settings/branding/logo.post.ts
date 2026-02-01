@@ -36,21 +36,21 @@ export default defineEventHandler(async (event) => {
 
   const formData = await readMultipartFormData(event)
   if (!formData) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'No form data received' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'No form data received' })
   }
 
   const file = formData.find((field) => field.name === 'logo' && field.data)
 
   if (!file) {
-    throw createError({ statusCode: 422, statusMessage: 'Unprocessable Entity', message: 'Logo file is required' })
+    throw createError({ status: 422, statusText: 'Unprocessable Entity', message: 'Logo file is required' })
   }
 
   if (file.data.length > MAX_FILE_SIZE) {
-    throw createError({ statusCode: 413, statusMessage: 'Payload Too Large', message: 'Logo must be less than 2MB' })
+    throw createError({ status: 413, statusText: 'Payload Too Large', message: 'Logo must be less than 2MB' })
   }
 
   if (file.type && !ALLOWED_MIME_TYPES[file.type]) {
-    throw createError({ statusCode: 415, statusMessage: 'Unsupported Media Type', message: 'Unsupported image format' })
+    throw createError({ status: 415, statusText: 'Unsupported Media Type', message: 'Unsupported image format' })
   }
 
   const extension = resolveExtension(file.filename, file.type)

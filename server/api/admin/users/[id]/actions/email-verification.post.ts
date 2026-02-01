@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const userId = getRouterParam(event, 'id')
   if (!userId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'User ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'User ID is required' })
   }
 
   const body = await readValidatedBodyWithLimit(
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!user) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' })
   }
 
   try {
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event) => {
       }
       case 'resend-link': {
         if (!user.email) {
-          throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'User is missing an email address' })
+          throw createError({ status: 400, statusText: 'Bad Request', message: 'User is missing an email address' })
         }
 
         try {
@@ -123,18 +123,18 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to perform email verification action'
-    let statusCode = 500
+    let status = 500
     
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      const code = error.statusCode
+    if (error && typeof error === 'object' && 'status' in error) {
+      const code = error.status
       if (typeof code === 'number') {
-        statusCode = code
+        status = code
       }
     }
     
     throw createError({
-      statusCode,
-      statusMessage: message,
+      status,
+      statusText: message,
     })
   }
 })

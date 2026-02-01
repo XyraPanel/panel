@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   const mountId = getRouterParam(event, 'id')
   if (!mountId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Mount ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Mount ID is required' })
   }
 
   const db = useDrizzle()
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Mount not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Mount not found' })
   }
 
   await db.delete(tables.mounts).where(eq(tables.mounts.id, mountId)).run()

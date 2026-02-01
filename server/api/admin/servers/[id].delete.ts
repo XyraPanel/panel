@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'id')
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server ID is required',
     })
   }
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
   if (!server) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Server not found',
     })
   }
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
       } else {
         console.error('Failed to delete server from Wings:', error)
         throw createError({
-          statusCode: 409,
+          status: 409,
           message: 'Failed to delete server from Wings node. The node may be offline or unreachable. Use force=true to delete from panel anyway.',
         })
       }

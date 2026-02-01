@@ -12,11 +12,11 @@ export default defineEventHandler(async (event) => {
 
   const userId = getRouterParam(event, 'id')
   if (!userId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'User ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'User ID is required' })
   }
 
   if (userId === session.user.id) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Cannot impersonate yourself' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Cannot impersonate yourself' })
   }
 
   const db = useDrizzle()
@@ -32,11 +32,11 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!user) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' })
   }
 
   if (user.suspended || user.banned) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Cannot impersonate a suspended or banned user' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Cannot impersonate a suspended or banned user' })
   }
 
   try {
@@ -79,8 +79,8 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to impersonate user'
     throw createError({
-      statusCode: 500,
-      statusMessage: message,
+      status: 500,
+      statusText: message,
     })
   }
 })

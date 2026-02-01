@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
   if (!location) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'File location is required',
     })
   }
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error('Failed to copy file on Wings:', error)
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to copy file',
     })
   }

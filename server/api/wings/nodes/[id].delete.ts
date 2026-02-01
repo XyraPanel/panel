@@ -7,7 +7,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const session = await requireAdmin(event)
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing node id' })
+    throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
   try {
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event: H3Event) => {
   }
   catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unable to delete node'
-    const statusCode = message.includes('not found') ? 404 : 500
-    throw createError({ statusCode, statusMessage: message })
+    const status = message.includes('not found') ? 404 : 500
+    throw createError({ status, statusText: message })
   }
 })

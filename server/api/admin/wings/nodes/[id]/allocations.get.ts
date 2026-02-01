@@ -9,7 +9,7 @@ import { recordAuditEventFromRequest } from '#server/utils/audit'
 export default defineEventHandler(async (event): Promise<AdminWingsNodeAllocationsPayload> => {
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing node id' })
+    throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
   const session = await requireAdmin(event)

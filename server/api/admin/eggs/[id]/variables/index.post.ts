@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
 
   const eggId = getRouterParam(event, 'id')
   if (!eggId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Egg ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Egg ID is required' })
   }
 
   const body = await readValidatedBodyWithLimit(event, createEggVariableSchema, BODY_SIZE_LIMITS.SMALL)
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
 
   const egg = await db.select().from(tables.eggs).where(eq(tables.eggs.id, eggId)).get()
   if (!egg) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Egg not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found' })
   }
 
   const now = new Date()

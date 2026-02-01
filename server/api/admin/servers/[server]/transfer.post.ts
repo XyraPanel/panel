@@ -9,8 +9,8 @@ export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server')
   if (!serverId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Server identifier is required',
+      status: 400,
+      statusText: 'Server identifier is required',
     })
   }
 
@@ -62,8 +62,8 @@ export default defineEventHandler(async (event) => {
     console.error('Failed to initiate server transfer:', error)
     
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to initiate server transfer',
+      status: 500,
+      statusText: 'Failed to initiate server transfer',
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     })
   }

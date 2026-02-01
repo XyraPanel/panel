@@ -12,7 +12,7 @@ import { serverScheduleCreateSchema } from '#shared/schema/server/operations'
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')
   if (!identifier) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing server identifier' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing server identifier' })
   }
 
   const { user, session } = await requireAccountUser(event)
@@ -47,8 +47,8 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Database Error',
+      status: 500,
+      statusText: 'Database Error',
       message: error instanceof Error ? error.message : 'Failed to create schedule',
     })
   }

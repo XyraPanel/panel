@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId || !backupUuid) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server and backup identifiers are required',
     })
   }
@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
 
   if (!backup || backup.serverId !== server.id) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Backup not found',
     })
   }
@@ -93,7 +93,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error('Failed to restore backup on Wings:', error)
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to restore backup',
     })
   }

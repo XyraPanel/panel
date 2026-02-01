@@ -16,8 +16,8 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
 
   if (!nestId || !eggData) {
     throw createError({ 
-      statusCode: 400, 
-      statusMessage: 'Nest ID and egg data are required',
+      status: 400, 
+      statusText: 'Nest ID and egg data are required',
       message: 'Missing nestId or eggData in request body'
     })
   }
@@ -25,16 +25,16 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
   const metaVersion = eggData.meta?.version
   if (!metaVersion || !['PTDL_v1', 'PTDL_v2'].includes(metaVersion)) {
     throw createError({ 
-      statusCode: 400, 
-      statusMessage: `Invalid egg format. Expected PTDL_v1 or PTDL_v2, got: ${metaVersion || 'none'}`,
+      status: 400, 
+      statusText: `Invalid egg format. Expected PTDL_v1 or PTDL_v2, got: ${metaVersion || 'none'}`,
       message: `The egg file must have a valid meta.version field (PTDL_v1 or PTDL_v2)`
     })
   }
 
   if (!eggData.name || !eggData.author) {
     throw createError({ 
-      statusCode: 400, 
-      statusMessage: 'Egg must have name and author fields',
+      status: 400, 
+      statusText: 'Egg must have name and author fields',
       message: `Missing required fields: ${!eggData.name ? 'name' : ''} ${!eggData.author ? 'author' : ''}`
     })
   }
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
     .get()
 
   if (!nest) {
-    throw createError({ statusCode: 404, statusMessage: 'Nest not found' })
+    throw createError({ status: 404, statusText: 'Nest not found' })
   }
 
   const now = new Date()

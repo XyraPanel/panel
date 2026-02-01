@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
   const userId = getRouterParam(event, 'id')
   if (!userId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'User ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'User ID is required' })
   }
 
   const body = await readValidatedBodyWithLimit(
@@ -107,7 +107,7 @@ export default defineEventHandler(async (event) => {
       .get()
 
     if (!existing) {
-      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found' })
+      throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' })
     }
 
     if (body.action === 'suspend') {
@@ -177,8 +177,8 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to perform action'
     throw createError({
-      statusCode: 500,
-      statusMessage: message,
+      status: 500,
+      statusText: message,
     })
   }
 })

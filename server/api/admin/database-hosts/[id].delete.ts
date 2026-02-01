@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   const hostId = getRouterParam(event, 'id')
   if (!hostId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Host ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Host ID is required' })
   }
 
   const db = useDrizzle()
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Database host not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Database host not found' })
   }
 
   const databasesCount = await db
@@ -35,8 +35,8 @@ export default defineEventHandler(async (event) => {
 
   if (databasesCount.length > 0) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: `Cannot delete host with ${databasesCount.length} database(s)`,
     })
   }

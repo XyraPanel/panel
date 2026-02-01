@@ -35,7 +35,7 @@ function toIsoTimestamp(value: unknown): string {
 export default defineEventHandler(async (event): Promise<AdminWingsNodeServersPayload> => {
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing node id' })
+    throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
   const session = await requireAdmin(event)

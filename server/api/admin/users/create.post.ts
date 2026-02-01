@@ -13,16 +13,16 @@ export default defineEventHandler(async (event) => {
 
   if (!email) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: 'Email is required',
     })
   }
 
   if (!username) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: 'Username is required',
     })
   }
@@ -43,8 +43,8 @@ export default defineEventHandler(async (event) => {
 
   if (existingUser) {
     throw createError({
-      statusCode: 409,
-      statusMessage: 'Conflict',
+      status: 409,
+      statusText: 'Conflict',
       message: 'Username or email already exists',
     })
   }
@@ -112,8 +112,8 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to create user'
     throw createError({
-      statusCode: 500,
-      statusMessage: message,
+      status: 500,
+      statusText: message,
     })
   }
 })

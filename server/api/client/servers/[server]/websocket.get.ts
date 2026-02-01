@@ -16,8 +16,8 @@ export default defineEventHandler(async (event): Promise<WebSocketToken> => {
   const id = getRouterParam(event, 'server')
   if (!id || typeof id !== 'string') {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: 'Missing server identifier',
     })
   }
@@ -39,8 +39,8 @@ export default defineEventHandler(async (event): Promise<WebSocketToken> => {
 
   if (!nodeConnection) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Node not available',
+      status: 500,
+      statusText: 'Node not available',
       message: 'Server has no resolved Wings node',
     })
   }

@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverIdentifier) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
 
   if (!files || !Array.isArray(files) || files.length === 0) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Files array is required',
     })
   }
@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to delete files',
     })
   }

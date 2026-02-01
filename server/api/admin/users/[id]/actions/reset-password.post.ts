@@ -14,8 +14,8 @@ export default defineEventHandler(async (event) => {
   const userId = getRouterParam(event, 'id')
   if (!userId) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: 'User ID is required',
     })
   }
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!user) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' })
   }
 
   const auth = getAuth()
@@ -117,8 +117,8 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to reset password'
     throw createError({
-      statusCode: 500,
-      statusMessage: message,
+      status: 500,
+      statusText: message,
     })
   }
 })

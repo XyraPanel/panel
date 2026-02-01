@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')
   if (!identifier) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server ID is required',
     })
   }
@@ -30,7 +30,7 @@ export default defineEventHandler(async (event) => {
 
   if (!server) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Server not found',
     })
   }
@@ -128,7 +128,7 @@ export default defineEventHandler(async (event) => {
     await client.syncServer(server.uuid)
   } catch (syncError) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: `Database updated successfully, but failed to sync with Wings: ${syncError instanceof Error ? syncError.message : String(syncError)}. The changes will be applied on next server restart.`,
       data: {
         databaseUpdated: true,

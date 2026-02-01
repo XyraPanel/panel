@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server')
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
 
   if (!file) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'File path is required',
     })
   }
@@ -49,8 +49,8 @@ export default defineEventHandler(async (event) => {
     
     if (isBinaryFile(file)) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Cannot view binary file',
+        status: 400,
+        statusText: 'Cannot view binary file',
         data: { isBinary: true },
       })
     }
@@ -62,8 +62,8 @@ export default defineEventHandler(async (event) => {
     
     if (fileInfo && fileInfo.size > MAX_FILE_SIZE) {
       throw createError({
-        statusCode: 413,
-        statusMessage: 'File too large to view',
+        status: 413,
+        statusText: 'File too large to view',
         data: { size: fileInfo.size, maxSize: MAX_FILE_SIZE },
       })
     }
@@ -83,25 +83,25 @@ export default defineEventHandler(async (event) => {
     
     if (error instanceof WingsAuthError) {
       throw createError({
-        statusCode: 403,
-        statusMessage: 'Wings authentication failed',
+        status: 403,
+        statusText: 'Wings authentication failed',
       })
     }
     
     if (error instanceof WingsConnectionError) {
       throw createError({
-        statusCode: 503,
-        statusMessage: 'Wings daemon unavailable',
+        status: 503,
+        statusText: 'Wings daemon unavailable',
       })
     }
     
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (error && typeof error === 'object' && 'status' in error) {
       throw error
     }
     
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to read file',
+      status: 500,
+      statusText: 'Failed to read file',
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     })
   }

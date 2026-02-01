@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverIdentifier || !scheduleId || !taskId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server, schedule, and task identifiers are required',
     })
   }
@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
 
   if (!schedule) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Schedule not found',
     })
   }
@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
 
   if (!task) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Task not found',
     })
   }

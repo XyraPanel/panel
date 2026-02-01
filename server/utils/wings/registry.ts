@@ -396,7 +396,7 @@ async function wingsFetch<T = unknown>(url: string, options: WingsHttpRequestOpt
       debugError(`[Wings Fetch] Error message: ${errorMessage}`)
 
       const error = new Error(errorMessage)
-      Object.assign(error, { response, statusCode: response.status })
+      Object.assign(error, { response, status: response.status })
       throw error
     }
 
@@ -417,7 +417,7 @@ async function wingsFetch<T = unknown>(url: string, options: WingsHttpRequestOpt
       if (error.message.includes('fetch failed') || error.message.includes('ECONNREFUSED') || error.message.includes('ENOTFOUND')) {
         throw new Error(`Failed to connect to Wings daemon at ${fullUrl.origin} - check if Wings is running and accessible`)
       }
-      if ('statusCode' in error) {
+      if ('status' in error) {
         throw error
       }
     }
@@ -572,7 +572,7 @@ export async function remoteListServerDirectory(serverUuid: string, directory: s
     }
   }
   catch (error) {
-    if (error && typeof error === 'object' && 'statusCode' in error && error.statusCode === 403) {
+    if (error && typeof error === 'object' && 'status' in error && error.status === 403) {
       try {
         const { syncWingsNodeConfiguration } = await import('./nodesStore')
         const runtimeConfig = useRuntimeConfig()

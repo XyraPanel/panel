@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   const session = middlewareAuth?.session ?? await requireAuth(event)
 
   if (!session?.user?.id) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+    throw createError({ status: 401, statusText: 'Unauthorized' })
   }
 
   const body = await readValidatedBodyWithLimit(event, accountPasswordUpdateSchema, BODY_SIZE_LIMITS.SMALL)
@@ -51,13 +51,13 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     if (error instanceof APIError) {
       throw createError({
-        statusCode: error.statusCode,
-        statusMessage: error.message || 'Failed to change password',
+        status: error.status,
+        statusText: error.message || 'Failed to change password',
       })
     }
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Failed to change password',
+      status: 400,
+      statusText: 'Failed to change password',
     })
   }
 })

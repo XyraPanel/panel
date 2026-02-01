@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverIdentifier || !allocationId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server and allocation identifiers are required',
     })
   }
@@ -40,14 +40,14 @@ export default defineEventHandler(async (event) => {
 
   if (!allocation) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Allocation not found',
     })
   }
 
   if (allocation.id === server.allocationId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Cannot delete primary allocation',
     })
   }

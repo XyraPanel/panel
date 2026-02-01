@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId || !subuserId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server and user identifiers are required',
     })
   }
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
   if (!subuser) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Subuser not found',
     })
   }

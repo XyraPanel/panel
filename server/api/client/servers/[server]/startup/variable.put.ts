@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -42,14 +42,14 @@ export default defineEventHandler(async (event) => {
 
   if (!eggVariable) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Variable not found',
     })
   }
 
   if (!eggVariable.userEditable) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: 'This variable cannot be edited',
     })
   }

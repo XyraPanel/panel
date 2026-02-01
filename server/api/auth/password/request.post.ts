@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     if (error instanceof APIError) {
       console.error('Failed to send password reset email', {
-        status: error.statusCode,
+        status: error.status,
         message: error.message,
       })
     }

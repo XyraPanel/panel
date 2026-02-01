@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   const nestId = getRouterParam(event, 'id')
   if (!nestId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Nest ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Nest ID is required' })
   }
 
   const db = useDrizzle()
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!nest) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Nest not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Nest not found' })
   }
 
   const eggs = await db

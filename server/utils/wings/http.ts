@@ -8,7 +8,7 @@ function isFetchError(error: unknown): error is WingsFetchError {
 }
 
 export function isH3Error(error: unknown): error is H3Error {
-  return Boolean(error && typeof error === 'object' && 'statusCode' in error)
+  return Boolean(error && typeof error === 'object' && 'status' in error)
 }
 
 export function getNodeIdFromQuery(query: WingsQuery): string | undefined {
@@ -37,17 +37,17 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
   }
 
   if (isFetchError(error)) {
-    const statusCode = error.response?.status ?? 502
-    const statusMessage = error.response?.statusText || 'Bad Gateway'
+    const status = error.response?.status ?? 502
+    const statusText = error.response?.statusText || 'Bad Gateway'
     const data = error.data
 
     const message = typeof data === 'object' && data !== null && 'message' in data && typeof (data as { message?: unknown }).message === 'string'
       ? (data as { message: string }).message
-      : `Wings responded with status ${statusCode}.`
+      : `Wings responded with status ${status}.`
 
     return createError({
-      statusCode,
-      statusMessage,
+      status,
+      statusText,
       message,
       data: {
         nodeId: options.nodeId,
@@ -60,16 +60,16 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
   if (error instanceof Error) {
     if (error.message === 'No Wings node configured') {
       return createError({
-        statusCode: 503,
-        statusMessage: 'No Wings node configured',
+        status: 503,
+        statusText: 'No Wings node configured',
         message: 'Add a Wings node before attempting this operation.',
       })
     }
 
     if (error.message === 'Multiple Wings nodes configured; specify nodeId') {
       return createError({
-        statusCode: 400,
-        statusMessage: 'Multiple Wings nodes configured',
+        status: 400,
+        statusText: 'Multiple Wings nodes configured',
         message: 'Select a Wings node by providing a node query parameter.',
         data: {
           nodeId: options.nodeId,
@@ -80,8 +80,8 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
     const nodeNotFoundMatch = /^Node\s+(.+)\s+not\s+found$/.exec(error.message)
     if (nodeNotFoundMatch) {
       return createError({
-        statusCode: 404,
-        statusMessage: 'Wings node not found',
+        status: 404,
+        statusText: 'Wings node not found',
         message: `Wings node \u201c${nodeNotFoundMatch[1]}\u201d could not be located.`,
         data: {
           nodeId: nodeNotFoundMatch[1],
@@ -90,8 +90,8 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
     }
 
     return createError({
-      statusCode: 502,
-      statusMessage: 'Wings request failed',
+      status: 502,
+      statusText: 'Wings request failed',
       message: `Unable to ${operation}.`,
       data: {
         nodeId: options.nodeId,
@@ -102,8 +102,8 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
   }
 
   return createError({
-    statusCode: 500,
-    statusMessage: 'Unexpected Wings error',
+    status: 500,
+    statusText: 'Unexpected Wings error',
     message: `Unable to ${operation}.`,
     data: {
       nodeId: options.nodeId,

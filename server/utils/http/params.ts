@@ -5,8 +5,8 @@ export async function requireRouteParam(event: H3Event, name: string, message?: 
     const value = (input as Record<string, unknown>)[name]
     if (typeof value !== 'string' || value.trim().length === 0) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Bad Request',
+        status: 400,
+        statusText: 'Bad Request',
         message: message ?? `Missing required route parameter: ${name}`,
       })
     }

@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   if (server.suspended) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: 'Server is suspended',
     })
   }
@@ -92,7 +92,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error('Failed to trigger reinstall on Wings:', error)
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to trigger reinstall',
     })
   }

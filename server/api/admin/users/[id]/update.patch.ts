@@ -25,8 +25,8 @@ export default defineEventHandler(async (event) => {
   const id = getRouterParam(event, 'id')
   if (!id) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: 'User ID is required',
     })
   }
@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
       .get()
 
     if (!userRecord) {
-      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found' })
+      throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' })
     }
 
     const changedFields = new Set<string>()
@@ -176,7 +176,7 @@ export default defineEventHandler(async (event) => {
       .get()
 
     if (!user) {
-      throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found' })
+      throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' })
     }
 
     return {
@@ -186,13 +186,13 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     if (error instanceof APIError) {
       throw createError({
-        statusCode: error.statusCode,
-        statusMessage: error.message || 'Failed to update user',
+        status: error.status,
+        statusText: error.message || 'Failed to update user',
       })
     }
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to update user',
+      status: 500,
+      statusText: 'Failed to update user',
     })
   }
 })

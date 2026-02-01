@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
       .all()
 
     if (nodes.length !== body.nodeIds.length) {
-      throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'One or more nodes were not found' })
+      throw createError({ status: 400, statusText: 'Bad Request', message: 'One or more nodes were not found' })
     }
   }
 
@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
       .all()
 
     if (eggs.length !== body.eggIds.length) {
-      throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'One or more eggs were not found' })
+      throw createError({ status: 400, statusText: 'Bad Request', message: 'One or more eggs were not found' })
     }
   }
 

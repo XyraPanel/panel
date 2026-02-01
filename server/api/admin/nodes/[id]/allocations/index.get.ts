@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const nodeId = getRouterParam(event, 'id')
   if (!nodeId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Node ID is required',
     })
   }

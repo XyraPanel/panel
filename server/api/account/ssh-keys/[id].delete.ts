@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
 
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing SSH key ID' })
+    throw createError({ status: 400, statusText: 'Missing SSH key ID' })
   }
 
   const db = useDrizzle()
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!key) {
-    throw createError({ statusCode: 404, statusMessage: 'SSH key not found' })
+    throw createError({ status: 404, statusText: 'SSH key not found' })
   }
 
   await recordAuditEventFromRequest(event, {

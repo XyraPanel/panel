@@ -19,8 +19,8 @@ export async function requireAdminApiKeyPermission(
   if (!checkApiKeyPermission(apiKeyPermissions, resource, action)) {
     const actionName = action === ADMIN_ACL_PERMISSIONS.READ ? 'read' : 'write'
     throw createError({
-      statusCode: 403,
-      statusMessage: 'Forbidden',
+      status: 403,
+      statusText: 'Forbidden',
       message: `API key does not have ${actionName} permission for ${resource}`,
     })
   }

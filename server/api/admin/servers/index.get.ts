@@ -20,8 +20,8 @@ export default defineEventHandler(async (event) => {
 
     if (!parsed.success) {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Invalid pagination parameters',
+        status: 400,
+        statusText: 'Invalid pagination parameters',
         data: parsed.error.format(),
       })
     }
@@ -117,12 +117,12 @@ export default defineEventHandler(async (event) => {
   }
  catch (error) {
     console.error('[GET] /api/admin/servers: Error:', error)
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (error && typeof error === 'object' && 'status' in error) {
       throw error
     }
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal Server Error',
+      status: 500,
+      statusText: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Failed to fetch servers',
     })
   }

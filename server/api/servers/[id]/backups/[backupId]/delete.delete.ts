@@ -12,11 +12,11 @@ export default defineEventHandler(async (event) => {
   const backupId = getRouterParam(event, 'backupId')
 
   if (!identifier) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing server identifier' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing server identifier' })
   }
 
   if (!backupId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing backup identifier' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing backup identifier' })
   }
 
   const { user, session } = await requireAccountUser(event)
@@ -39,11 +39,11 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!backup) {
-    throw createError({ statusCode: 404, statusMessage: 'Backup not found' })
+    throw createError({ status: 404, statusText: 'Backup not found' })
   }
 
   if (!server.nodeId) {
-    throw createError({ statusCode: 500, statusMessage: 'Server has no assigned node' })
+    throw createError({ status: 500, statusText: 'Server has no assigned node' })
   }
 
   try {
@@ -73,8 +73,8 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Wings API Error',
+      status: 500,
+      statusText: 'Wings API Error',
       message: error instanceof Error ? error.message : 'Failed to delete backup',
     })
   }

@@ -10,8 +10,8 @@ export default defineEventHandler(async (event: H3Event) => {
   const identifier = getRouterParam(event, 'id')
   if (!identifier) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Missing server identifier',
+      status: 400,
+      statusText: 'Missing server identifier',
     })
   }
 
@@ -42,12 +42,12 @@ export default defineEventHandler(async (event: H3Event) => {
   }
   catch (error) {
     let errorMessage = 'Unable to list server directory.'
-    let statusCode = 502
+    let status = 502
     let errorData: Record<string, unknown> = {}
 
-    if (error && typeof error === 'object' && 'statusCode' in error) {
-      const h3Error = error as { statusCode: number; message?: string; data?: unknown }
-      statusCode = h3Error.statusCode
+    if (error && typeof error === 'object' && 'status' in error) {
+      const h3Error = error as { status: number; message?: string; data?: unknown }
+      status = h3Error.status
       errorMessage = h3Error.message || errorMessage
       if (h3Error.data && typeof h3Error.data === 'object') {
         errorData = h3Error.data as Record<string, unknown>
@@ -61,13 +61,13 @@ export default defineEventHandler(async (event: H3Event) => {
       serverStatus: server.status,
       directory,
       error: errorMessage,
-      statusCode,
+      status,
     })
 
     if (server.status === 'installing') {
       throw createError({
-        statusCode: 400,
-        statusMessage: 'Server not ready',
+        status: 400,
+        statusText: 'Server not ready',
         message: 'The server is currently installing. Please wait for installation to complete.',
         data: {
           serverUuid: server.uuid,
@@ -77,10 +77,10 @@ export default defineEventHandler(async (event: H3Event) => {
       })
     }
 
-    if (server.status === 'install_failed' && (errorMessage.includes('directory') || errorMessage.includes('not found') || statusCode === 404)) {
+    if (server.status === 'install_failed' && (errorMessage.includes('directory') || errorMessage.includes('not found') || status === 404)) {
       throw createError({
-        statusCode: 404,
-        statusMessage: 'Server directory not found',
+        status: 404,
+        statusText: 'Server directory not found',
         message: 'The server directory does not exist. This usually happens when installation fails. Please try installing the server again using the "Install on Wings" button.',
         data: {
           serverUuid: server.uuid,
@@ -90,10 +90,10 @@ export default defineEventHandler(async (event: H3Event) => {
       })
     }
 
-    if (statusCode === 403) {
+    if (status === 403) {
       throw createError({
-        statusCode: 502,
-        statusMessage: 'Wings Authentication Failed',
+        status: 502,
+        statusText: 'Wings Authentication Failed',
         message: 'Unable to authenticate with Wings daemon. The Wings node token may be incorrect. Please update your Wings configuration with the token from Admin → Wings → Nodes → [Your Node] → Configuration.',
         data: {
           serverUuid: server.uuid,
@@ -106,13 +106,13 @@ export default defineEventHandler(async (event: H3Event) => {
       })
     }
 
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (error && typeof error === 'object' && 'status' in error) {
       throw error
     }
 
     throw createError({
-      statusCode,
-      statusMessage: 'Wings request failed',
+      status,
+      statusText: 'Wings request failed',
       message: errorMessage,
       data: {
         serverUuid: server.uuid,

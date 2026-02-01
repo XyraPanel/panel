@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
 
   if (!targetUser) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'User not found with that email address',
     })
   }
@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
 
   if (existing) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'User is already a subuser on this server',
     })
   }

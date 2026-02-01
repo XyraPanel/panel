@@ -13,12 +13,12 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing node id' })
+    throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
   const existing = findWingsNode(id)
   if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'Node not found' })
+    throw createError({ status: 404, statusText: 'Node not found' })
   }
 
   try {
@@ -27,16 +27,16 @@ export default defineEventHandler(async (event: H3Event) => {
 
     if (!row.tokenSecret || row.tokenSecret.trim().length === 0) {
       throw createError({
-        statusCode: 500,
-        statusMessage: 'Node token error',
+        status: 500,
+        statusText: 'Node token error',
         message: `Node ${id} does not have a token secret. Please regenerate the node token.`,
       })
     }
 
     if (!row.tokenIdentifier || row.tokenIdentifier.trim().length === 0) {
       throw createError({
-        statusCode: 500,
-        statusMessage: 'Node token error',
+        status: 500,
+        statusText: 'Node token error',
         message: `Node ${id} does not have a token identifier. Please regenerate the node token.`,
       })
     }
@@ -47,16 +47,16 @@ export default defineEventHandler(async (event: H3Event) => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       throw createError({
-        statusCode: 500,
-        statusMessage: 'Token decryption failed',
+        status: 500,
+        statusText: 'Token decryption failed',
         message: `Failed to decrypt token for node ${id}: ${errorMessage}. Ensure WINGS_ENCRYPTION_KEY or NUXT_SESSION_PASSWORD is set.`,
       })
     }
 
     if (!plainSecret || plainSecret.trim().length === 0) {
       throw createError({
-        statusCode: 500,
-        statusMessage: 'Node token error',
+        status: 500,
+        statusText: 'Node token error',
         message: `Node ${id} has an empty decrypted token. Please regenerate the node token.`,
       })
     }
@@ -82,14 +82,14 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
   catch (error: unknown) {
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (error && typeof error === 'object' && 'status' in error) {
       throw error
     }
     
     const message = error instanceof Error ? error.message : 'Failed to issue token'
     throw createError({ 
-      statusCode: 500, 
-      statusMessage: message,
+      status: 500, 
+      statusText: message,
       message: `Failed to generate deployment token: ${message}`,
     })
   }

@@ -13,11 +13,11 @@ export default defineEventHandler(async (event) => {
   const scheduleId = getRouterParam(event, 'scheduleId')
 
   if (!identifier) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing server identifier' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing server identifier' })
   }
 
   if (!scheduleId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing schedule identifier' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing schedule identifier' })
   }
 
   const { user, session } = await requireAccountUser(event)
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!schedule) {
-    throw createError({ statusCode: 404, statusMessage: 'Schedule not found' })
+    throw createError({ status: 404, statusText: 'Schedule not found' })
   }
 
   try {
@@ -79,8 +79,8 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Database Error',
+      status: 500,
+      statusText: 'Database Error',
       message: error instanceof Error ? error.message : 'Failed to delete schedule',
     })
   }

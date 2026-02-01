@@ -7,7 +7,7 @@ import { recordServerActivity } from '#server/utils/server-activity'
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')
   if (!identifier) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing server identifier' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing server identifier' })
   }
 
   const { user, session } = await requireAccountUser(event)
@@ -22,8 +22,8 @@ export default defineEventHandler(async (event) => {
 
   if (!formData) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: 'No form data provided',
     })
   }
@@ -33,23 +33,23 @@ export default defineEventHandler(async (event) => {
 
   if (!directory) {
     throw createError({
-      statusCode: 422,
-      statusMessage: 'Unprocessable Entity',
+      status: 422,
+      statusText: 'Unprocessable Entity',
       message: 'Target directory is required',
     })
   }
 
   if (files.length === 0) {
     throw createError({
-      statusCode: 422,
-      statusMessage: 'Unprocessable Entity',
+      status: 422,
+      statusText: 'Unprocessable Entity',
       message: 'At least one file is required for upload',
     })
   }
 
   try {
     if (!server.nodeId) {
-      throw createError({ statusCode: 500, statusMessage: 'Server has no assigned node' })
+      throw createError({ status: 500, statusText: 'Server has no assigned node' })
     }
 
     await remoteUploadFiles(
@@ -83,8 +83,8 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Wings API Error',
+      status: 500,
+      statusText: 'Wings API Error',
       message: error instanceof Error ? error.message : 'Failed to upload files',
       cause: error,
     })

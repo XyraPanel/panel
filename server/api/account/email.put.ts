@@ -24,13 +24,13 @@ export default defineEventHandler(async (event): Promise<UpdateEmailResponse> =>
     .get()
 
   if (!userRow) {
-    throw createError({ statusCode: 404, message: 'User not found' })
+    throw createError({ status: 404, message: 'User not found' })
   }
 
   const valid = await bcrypt.compare(body.password, userRow.password)
 
   if (!valid) {
-    throw createError({ statusCode: 400, message: 'Invalid password' })
+    throw createError({ status: 400, message: 'Invalid password' })
   }
 
   const existing = db
@@ -40,7 +40,7 @@ export default defineEventHandler(async (event): Promise<UpdateEmailResponse> =>
     .get()
 
   if (existing && existing.id !== user.id) {
-    throw createError({ statusCode: 400, message: 'Email already in use' })
+    throw createError({ status: 400, message: 'Email already in use' })
   }
   const oldEmail = userRow.email
 

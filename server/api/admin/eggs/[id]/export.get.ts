@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const eggId = getRouterParam(event, 'id')
 
   if (!eggId) {
-    throw createError({ statusCode: 400, statusMessage: 'Egg ID is required' })
+    throw createError({ status: 400, statusText: 'Egg ID is required' })
   }
 
   const db = useDrizzle()
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!egg) {
-    throw createError({ statusCode: 404, statusMessage: 'Egg not found' })
+    throw createError({ status: 404, statusText: 'Egg not found' })
   }
 
   const variables = await db

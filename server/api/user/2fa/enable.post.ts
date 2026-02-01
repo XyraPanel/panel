@@ -46,13 +46,13 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     if (error instanceof APIError) {
       throw createError({
-        statusCode: error.statusCode,
-        statusMessage: error.message || 'Failed to enable 2FA',
+        status: error.status,
+        statusText: error.message || 'Failed to enable 2FA',
       })
     }
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to enable 2FA',
+      status: 500,
+      statusText: 'Failed to enable 2FA',
     })
   }
 })

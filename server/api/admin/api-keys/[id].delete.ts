@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!keyId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'API key ID is required',
     })
   }
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
   if (!key) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'API key not found',
     })
   }

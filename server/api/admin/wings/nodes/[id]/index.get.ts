@@ -37,7 +37,7 @@ function toIsoTimestamp(value: unknown): string {
 export default defineEventHandler(async (event) => {
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing node id' })
+    throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
   await requireAdmin(event)
@@ -132,7 +132,7 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     if (isH3Error(error)) {
-      systemError = error.message || error.statusMessage || 'Failed to reach Wings node'
+      systemError = error.message || error.statusText || 'Failed to reach Wings node'
     }
     else if (error instanceof Error) {
       systemError = error.message

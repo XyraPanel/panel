@@ -35,13 +35,13 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     if (error instanceof APIError) {
       throw createError({
-        statusCode: error.statusCode,
-        statusMessage: error.message || 'Invalid or expired password reset token',
+        status: error.status,
+        statusText: error.message || 'Invalid or expired password reset token',
       })
     }
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Invalid or expired password reset token',
+      status: 400,
+      statusText: 'Invalid or expired password reset token',
     })
   }
 })

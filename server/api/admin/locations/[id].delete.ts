@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   const locationId = getRouterParam(event, 'id')
   if (!locationId) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Location ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Location ID is required' })
   }
 
   const db = useDrizzle()
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'Location not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Location not found' })
   }
 
   const nodesCount = await db
@@ -35,8 +35,8 @@ export default defineEventHandler(async (event) => {
 
   if (nodesCount.length > 0) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Bad Request',
+      status: 400,
+      statusText: 'Bad Request',
       message: `Cannot delete location with ${nodesCount.length} assigned node(s)`,
     })
   }

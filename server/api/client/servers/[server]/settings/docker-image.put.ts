@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
 
   if (!egg) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Egg not found',
     })
   }
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
   
   if (!isInEggImages && currentImage) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'This server\'s Docker image has been manually set by an administrator and cannot be updated.',
     })
   }

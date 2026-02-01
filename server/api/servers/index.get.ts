@@ -17,7 +17,7 @@ export default defineEventHandler(async (event): Promise<ServersResponse> => {
     if (includeAll) {
       const userRole = (user as { role?: string }).role
       if (userRole !== 'admin') {
-        throw createError({ statusCode: 403, statusMessage: 'Forbidden', message: 'Admin access required to view all servers' })
+        throw createError({ status: 403, statusText: 'Forbidden', message: 'Admin access required to view all servers' })
       }
     }
 
@@ -91,12 +91,12 @@ export default defineEventHandler(async (event): Promise<ServersResponse> => {
     }
   } catch (error) {
     console.error('[GET] /api/servers: Error fetching servers:', error)
-    if (error && typeof error === 'object' && 'statusCode' in error) {
+    if (error && typeof error === 'object' && 'status' in error) {
       throw error
     }
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Internal Server Error',
+      status: 500,
+      statusText: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Failed to fetch servers',
     })
   }

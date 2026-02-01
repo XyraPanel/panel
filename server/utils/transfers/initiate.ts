@@ -7,7 +7,7 @@ import { createWingsTransferClient } from '#server/utils/wings/transfer'
 import type { TransferOptions, TransferResult } from '#shared/types/server'
 
 export class TransferError extends Error {
-  constructor(message: string, public statusCode = 400) {
+  constructor(message: string, public status = 400) {
     super(message)
     this.name = 'TransferError'
   }

@@ -42,13 +42,13 @@ export default defineEventHandler(async (event) => {
   catch (error) {
     if (error instanceof APIError) {
       throw createError({
-        statusCode: error.statusCode,
-        statusMessage: error.message || 'Invalid TOTP code',
+        status: error.status,
+        statusText: error.message || 'Invalid TOTP code',
       })
     }
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Failed to verify TOTP code',
+      status: 500,
+      statusText: 'Failed to verify TOTP code',
     })
   }
 })

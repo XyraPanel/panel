@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverIdentifier) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -33,7 +33,7 @@ export default defineEventHandler(async (event) => {
 
   if (server.allocationLimit && existingAllocations.length >= server.allocationLimit) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: 'Allocation limit reached',
     })
   }
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
 
   if (availableAllocations.length === 0) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'No available allocations on this node',
     })
   }
@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
 
   if (!allocation) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'No allocation found',
     })
   }

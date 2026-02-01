@@ -19,8 +19,8 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
 
   if (!user || !user.id) {
     throw createError({
-      statusCode: 401,
-      statusMessage: 'User not found in session',
+      status: 401,
+      statusText: 'User not found in session',
     })
   }
 
@@ -29,8 +29,8 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
   const dbUser = await db.select().from(tables.users).where(eq(tables.users.id, user.id)).get()
   if (!dbUser) {
     throw createError({
-      statusCode: 404,
-      statusMessage: 'User not found in database. Please log out and log back in.',
+      status: 404,
+      statusText: 'User not found in database. Please log out and log back in.',
     })
   }
 

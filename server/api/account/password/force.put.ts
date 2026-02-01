@@ -25,16 +25,16 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!existing) {
-    throw createError({ statusCode: 404, statusMessage: 'Not Found', message: 'User not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' })
   }
 
   if (!existing.passwordResetRequired) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Password reset not required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Password reset not required' })
   }
 
   const isSamePassword = await bcrypt.compare(body.newPassword, existing.password)
   if (isSamePassword) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Choose a different password' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Choose a different password' })
   }
 
   const hashedPassword = await bcrypt.hash(body.newPassword, 12)

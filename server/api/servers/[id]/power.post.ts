@@ -8,7 +8,7 @@ import { serverPowerActionSchema } from '#shared/schema/server/operations'
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')
   if (!identifier) {
-    throw createError({ statusCode: 400, statusMessage: 'Bad Request', message: 'Missing server identifier' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing server identifier' })
   }
 
   const accountContext = await requireAccountUser(event)
@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBodyWithLimit(event, serverPowerActionSchema, BODY_SIZE_LIMITS.SMALL)
 
   if (!server.nodeId) {
-    throw createError({ statusCode: 500, statusMessage: 'Server has no assigned node' })
+    throw createError({ status: 500, statusText: 'Server has no assigned node' })
   }
 
   try {
@@ -48,8 +48,8 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Wings API Error',
+      status: 500,
+      statusText: 'Wings API Error',
       message: error instanceof Error ? error.message : 'Failed to send power action',
     })
   }

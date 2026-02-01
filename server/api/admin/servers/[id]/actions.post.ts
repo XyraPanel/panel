@@ -15,7 +15,7 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
 
   const serverId = getRouterParam(event, 'id')
   if (!serverId) {
-    throw createError({ statusCode: 400, statusMessage: 'Server ID is required' })
+    throw createError({ status: 400, statusText: 'Server ID is required' })
   }
 
   const body = await readValidatedBodyWithLimit(
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
     .get()
 
   if (!server) {
-    throw createError({ statusCode: 404, statusMessage: 'Server not found' })
+    throw createError({ status: 404, statusText: 'Server not found' })
   }
 
   try {
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
         await serverManager.powerAction(server.uuid, body.action, options)
         break
       default:
-        throw createError({ statusCode: 400, statusMessage: 'Invalid action' })
+        throw createError({ status: 400, statusText: 'Invalid action' })
     }
 
     await recordAuditEventFromRequest(event, {
@@ -85,23 +85,23 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
 
     if (error instanceof WingsAuthError) {
       throw createError({
-        statusCode: 403,
-        statusMessage: 'Wings authentication failed',
+        status: 403,
+        statusText: 'Wings authentication failed',
         data: { error: error.message },
       })
     }
 
     if (error instanceof WingsConnectionError) {
       throw createError({
-        statusCode: 503,
-        statusMessage: 'Wings daemon unavailable',
+        status: 503,
+        statusText: 'Wings daemon unavailable',
         data: { error: error.message },
       })
     }
 
     throw createError({
-      statusCode: 500,
-      statusMessage: `Failed to ${body.action} server`,
+      status: 500,
+      statusText: `Failed to ${body.action} server`,
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     })
   }

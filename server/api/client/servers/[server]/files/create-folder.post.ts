@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverIdentifier) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -50,8 +50,8 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     throw createError({
-      statusCode: 500,
-      statusMessage: 'Wings API Error',
+      status: 500,
+      statusText: 'Wings API Error',
       message: error instanceof Error ? error.message : 'Failed to create directory',
       cause: error,
     })

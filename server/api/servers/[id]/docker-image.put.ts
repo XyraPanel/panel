@@ -10,8 +10,8 @@ export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')
   if (!identifier) {
     throw createError({
-      statusCode: 400,
-      statusMessage: 'Missing server identifier',
+      status: 400,
+      statusText: 'Missing server identifier',
     })
   }
 
@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
     const validImages = Object.values(dockerImages)
     if (validImages.length > 0 && !validImages.includes(dockerImage)) {
       throw createError({
-        statusCode: 400,
+        status: 400,
         message: 'This server\'s Docker image can only be changed to one from the egg\'s list.',
       })
     }

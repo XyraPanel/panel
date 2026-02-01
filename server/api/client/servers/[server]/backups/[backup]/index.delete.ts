@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverId || !backupUuid) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server and backup identifiers are required',
     })
   }
@@ -35,14 +35,14 @@ export default defineEventHandler(async (event) => {
 
   if (!backup || backup.serverId !== server.id) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Backup not found',
     })
   }
 
   if (backup.isLocked) {
     throw createError({
-      statusCode: 403,
+      status: 403,
       message: 'Cannot delete locked backup',
     })
   }
@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
     }
   } catch {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to delete backup',
     })
   }

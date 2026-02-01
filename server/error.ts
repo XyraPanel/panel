@@ -10,7 +10,7 @@ export default async function errorHandler(
   const isApiRoute = path.startsWith('/api/') || url.startsWith('/api/')
   
   const isH3Error = (e: H3Error | Error): e is H3Error => {
-    return 'statusCode' in e
+    return 'status' in e
   }
 
   const h3Error = isH3Error(error) ? error : null
@@ -19,7 +19,7 @@ export default async function errorHandler(
     path,
     url,
     isApiRoute,
-    status: h3Error?.statusCode,
+    status: h3Error?.status,
     message: error.message,
     accept: event.node.req.headers.accept,
     errorName: error.name,
@@ -31,8 +31,8 @@ export default async function errorHandler(
     return
   }
   
-  const status = h3Error?.statusCode || 500
-  const statusText = h3Error?.statusMessage || 'Internal Server Error'
+  const status = h3Error?.status || 500
+  const statusText = h3Error?.statusText || 'Internal Server Error'
   const message = error.message || 'An error occurred'
   
   console.log('[Error Handler] Returning JSON for API route:', { path, status, statusText })

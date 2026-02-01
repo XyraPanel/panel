@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
 
   if (!matchedTokenId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Invalid recovery token',
     })
   }

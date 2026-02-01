@@ -12,7 +12,7 @@ import { nodeAllocationsCreateSchema } from '#shared/schema/admin/infrastructure
 export default defineEventHandler(async (event) => {
   const { id: nodeId } = event.context.params ?? {}
   if (!nodeId || typeof nodeId !== 'string') {
-    throw createError({ statusCode: 400, statusMessage: 'Missing node id' })
+    throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
   const session = await requireAdmin(event)
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
     .get()
 
   if (!node) {
-    throw createError({ statusCode: 404, statusMessage: 'Node not found' })
+    throw createError({ status: 404, statusText: 'Node not found' })
   }
 
   const body = await readValidatedBodyWithLimit(
@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
       ipAddresses = parseCidr(body.ip)
     } catch (error) {
       if (error instanceof CidrOutOfRangeError || error instanceof InvalidIpAddressError) {
-        throw createError({ statusCode: 400, statusMessage: error.message })
+        throw createError({ status: 400, statusText: error.message })
       }
       throw error
     }
@@ -51,19 +51,19 @@ export default defineEventHandler(async (event) => {
     ipAddresses = body.ip
     for (const ip of ipAddresses) {
       if (typeof ip !== 'string') {
-        throw createError({ statusCode: 400, statusMessage: 'IP addresses must be strings' })
+        throw createError({ status: 400, statusText: 'IP addresses must be strings' })
       }
     }
   } else {
-    throw createError({ statusCode: 400, statusMessage: 'IP address or CIDR notation is required' })
+    throw createError({ status: 400, statusText: 'IP address or CIDR notation is required' })
   }
 
   try {
     ports = parsePorts(body.ports)
   } catch (error) {
     throw createError({
-      statusCode: 400,
-      statusMessage: error instanceof Error ? error.message : 'Invalid port format',
+      status: 400,
+      statusText: error instanceof Error ? error.message : 'Invalid port format',
     })
   }
 
@@ -105,8 +105,8 @@ export default defineEventHandler(async (event) => {
 
   if (allocationsToCreate.length === 0) {
     throw createError({
-      statusCode: 409,
-      statusMessage: 'All specified allocations already exist'
+      status: 409,
+      statusText: 'All specified allocations already exist'
     })
   }
 

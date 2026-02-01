@@ -12,7 +12,7 @@ export default defineEventHandler(async (event) => {
   const allocationId = getRouterParam(event, 'id')
   if (!allocationId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Allocation ID is required',
     })
   }
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
   if (!allocation) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Allocation not found',
     })
   }

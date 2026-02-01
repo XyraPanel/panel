@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
 
   if (!serverIdentifier) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server identifier is required',
     })
   }
@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
 
   if (!server.allocationLimit) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server does not have an allocation limit set',
     })
   }
@@ -41,14 +41,14 @@ export default defineEventHandler(async (event) => {
 
   if (currentAllocations.length >= server.allocationLimit) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server has reached its allocation limit',
     })
   }
 
   if (!server.nodeId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server is not assigned to a node',
     })
   }
@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
   const primaryAllocation = currentAllocations.find(a => a.isPrimary)
   if (!primaryAllocation) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server has no primary allocation',
     })
   }
@@ -76,7 +76,7 @@ export default defineEventHandler(async (event) => {
 
   if (!allocation) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'No available allocations on this node. Please contact an administrator to add more ports.',
     })
   }
@@ -97,7 +97,7 @@ export default defineEventHandler(async (event) => {
 
   if (!updated) {
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: 'Failed to retrieve updated allocation',
     })
   }

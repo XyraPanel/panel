@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   if (!id) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server ID is required',
     })
   }
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
 
   if (!server) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Server not found',
     })
   }
@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     console.error('Failed to sync server:', error)
     throw createError({
-      statusCode: 500,
+      status: 500,
       message: error instanceof Error ? error.message : 'Failed to sync server',
     })
   }

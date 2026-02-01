@@ -9,7 +9,7 @@ export async function getServerWithAccess(identifier: string, session: Awaited<R
   const sessionUser = getSessionUser(session)
   if (!sessionUser?.id) {
     throw createError({
-      statusCode: 401,
+      status: 401,
       message: 'Unauthorized',
     })
   }
@@ -24,7 +24,7 @@ export async function getServerWithAccess(identifier: string, session: Awaited<R
 
   if (!user) {
     throw createError({
-      statusCode: 401,
+      status: 401,
       message: 'User not found',
     })
   }
@@ -43,7 +43,7 @@ export async function getServerWithAccess(identifier: string, session: Awaited<R
 
   if (!server) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Server not found',
     })
   }
@@ -59,7 +59,7 @@ export async function getServerWithAccess(identifier: string, session: Awaited<R
 
     if (!subuser) {
       throw createError({
-        statusCode: 403,
+        status: 403,
         message: 'You do not have access to this server',
       })
     }
@@ -71,7 +71,7 @@ export async function getServerWithAccess(identifier: string, session: Awaited<R
 export async function getNodeForServer(nodeId: string | null) {
   if (!nodeId) {
     throw createError({
-      statusCode: 400,
+      status: 400,
       message: 'Server has no node assigned',
     })
   }
@@ -91,7 +91,7 @@ export async function getNodeForServer(nodeId: string | null) {
 
   if (!node) {
     throw createError({
-      statusCode: 404,
+      status: 404,
       message: 'Node not found',
     })
   }
