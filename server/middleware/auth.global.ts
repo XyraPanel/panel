@@ -1,15 +1,10 @@
-import { type H3Event } from 'h3'
-import type { AuthContext, ResolvedSessionUser } from '#shared/types/auth'
-import { getServerSession } from '#server/utils/session'
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
-import { requireSessionUser } from '#server/utils/auth/sessionUser'
+import { createError, sendRedirect, type H3Event } from 'h3';
+import type { AuthContext, ResolvedSessionUser } from '#shared/types/auth';
+import { getServerSession } from '#server/utils/session';
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { requireSessionUser } from '#server/utils/auth/sessionUser';
 
-const PUBLIC_ASSET_PREFIXES = [
-  '/_nuxt/',
-  '/__nuxt_devtools__/',
-  '/_ipx/',
-  '/public/',
-]
+const PUBLIC_ASSET_PREFIXES = ['/_nuxt/', '/__nuxt_devtools__/', '/_ipx/', '/public/'];
 
 const PUBLIC_ASSET_PATHS = new Set([
   '/favicon.ico',
@@ -18,18 +13,16 @@ const PUBLIC_ASSET_PATHS = new Set([
   '/site.webmanifest',
   '/sw.js',
   '/service-worker.js',
-])
+]);
 
-const PUBLIC_PAGE_PATTERNS = [
-  /^\/auth(?:\/|$)/,
-]
+const PUBLIC_PAGE_PATTERNS = [/^\/auth(?:\/|$)/];
 
 const PROTECTED_PAGE_PATTERNS = [
   /^\/$/,
   /^\/account(?:\/|$)/,
   /^\/admin(?:\/|$)/,
   /^\/server(?:\/|$)/,
-]
+];
 
 const PUBLIC_API_PATTERNS = [
   /^\/api\/auth(?:\/|$)/,
@@ -40,116 +33,123 @@ const PUBLIC_API_PATTERNS = [
   /^\/api\/_nuxt_icon(?:\/|$)/,
   /^\/api\/_nuxt(?:\/|$)/,
   /^\/api\/maintenance-status(?:\/|$)/,
-]
+];
 
 function isAssetPath(path: string): boolean {
-  return PUBLIC_ASSET_PATHS.has(path)
-    || PUBLIC_ASSET_PREFIXES.some(prefix => path.startsWith(prefix))
-    || (path.includes('.') && !path.startsWith('/api/'))
+  return (
+    PUBLIC_ASSET_PATHS.has(path) ||
+    PUBLIC_ASSET_PREFIXES.some((prefix) => path.startsWith(prefix)) ||
+    (path.includes('.') && !path.startsWith('/api/'))
+  );
 }
 
 function matchesPattern(patterns: RegExp[], path: string): boolean {
-  return patterns.some(pattern => pattern.test(path))
+  return patterns.some((pattern) => pattern.test(path));
 }
 
 function isProtectedPagePath(path: string): boolean {
-  return matchesPattern(PROTECTED_PAGE_PATTERNS, path)
+  return matchesPattern(PROTECTED_PAGE_PATTERNS, path);
 }
 
 function isPublicPagePath(path: string): boolean {
-  return matchesPattern(PUBLIC_PAGE_PATTERNS, path)
+  return matchesPattern(PUBLIC_PAGE_PATTERNS, path);
 }
 
 function isPublicApiPath(path: string): boolean {
-  return matchesPattern(PUBLIC_API_PATTERNS, path)
+  return matchesPattern(PUBLIC_API_PATTERNS, path);
 }
 
 function redirectToLogin(event: H3Event, requestUrl: string) {
-  const path = event.path ?? requestUrl.split('?')[0] ?? '/'
-  const searchParams = new URLSearchParams()
+  const path = event.path ?? requestUrl.split('?')[0] ?? '/';
+  const searchParams = new URLSearchParams();
   if (path !== '/auth/login' && !path.startsWith('/auth/')) {
-    searchParams.set('redirect', requestUrl)
+    searchParams.set('redirect', requestUrl);
   }
 
-  const redirectTarget = searchParams.size > 0
-    ? `/auth/login?${searchParams.toString()}`
-    : '/auth/login'
+  const redirectTarget =
+    searchParams.size > 0 ? `/auth/login?${searchParams.toString()}` : '/auth/login';
 
-  return sendRedirect(event, redirectTarget, 302)
+  return sendRedirect(event, redirectTarget, 302);
 }
 
 export default defineEventHandler(async (event) => {
-  const requestUrl = event.node.req.url ?? '/'
-  const path = event.path ?? requestUrl.split('?')[0] ?? '/'
+  const requestUrl = event.node.req.url ?? '/';
+  const path = event.path ?? requestUrl.split('?')[0] ?? '/';
 
   if (!path || isAssetPath(path)) {
-    return
+    return;
   }
 
-  const isApiRequest = path.startsWith('/api/')
+  const isApiRequest = path.startsWith('/api/');
 
   if (isApiRequest && isPublicApiPath(path)) {
-    return
+    return;
   }
 
   if (!isApiRequest && isPublicPagePath(path)) {
-    return
+    return;
   }
 
   if (!isApiRequest && !isProtectedPagePath(path)) {
-    return
+    return;
   }
 
-  const existingAuth = (event.context as { auth?: AuthContext }).auth
+  const existingAuth = (event.context as { auth?: AuthContext }).auth;
   if (existingAuth?.session && existingAuth.user) {
-    return
+    return;
   }
 
   if (isApiRequest) {
-    const hasAuthHeader = Boolean(event.node.req.headers.authorization)
-    const hasApiKeyHeader = Boolean(event.node.req.headers['x-api-key'])
+    const hasAuthHeader = Boolean(event.node.req.headers.authorization);
+    const hasApiKeyHeader = Boolean(event.node.req.headers['x-api-key']);
 
-    if (hasApiKeyHeader || (hasAuthHeader && event.node.req.headers.authorization?.startsWith('Bearer '))) {
-      const rawKeyHeader = event.node.req.headers['x-api-key']
-      const apiKeyValue = typeof rawKeyHeader === 'string'
-        ? rawKeyHeader
-        : Array.isArray(rawKeyHeader)
-          ? rawKeyHeader[0]
-          : (event.node.req.headers.authorization?.startsWith('Bearer ') ? event.node.req.headers.authorization.slice(7) : null)
+    if (
+      hasApiKeyHeader ||
+      (hasAuthHeader && event.node.req.headers.authorization?.startsWith('Bearer '))
+    ) {
+      const rawKeyHeader = event.node.req.headers['x-api-key'];
+      const apiKeyValue =
+        typeof rawKeyHeader === 'string'
+          ? rawKeyHeader
+          : Array.isArray(rawKeyHeader)
+            ? rawKeyHeader[0]
+            : event.node.req.headers.authorization?.startsWith('Bearer ')
+              ? event.node.req.headers.authorization.slice(7)
+              : null;
 
       if (!apiKeyValue || typeof apiKeyValue !== 'string') {
-        return
+        return;
       }
 
-      const auth = getAuth()
-      const headers = normalizeHeadersForAuth(event.node.req.headers)
+      const auth = getAuth();
+      const headers = normalizeHeadersForAuth(event.node.req.headers);
       type AuthApiWithApiKey = typeof auth.api & {
         verifyApiKey: (options: {
-          body: { key: string }
-          headers?: Record<string, string>
+          body: { key: string };
+          headers?: Record<string, string>;
         }) => Promise<{
-          valid: boolean
-          key: { userId?: string; id?: string } | null
-        }>
-      }
-      const authApi = auth.api as AuthApiWithApiKey
+          valid: boolean;
+          key: { userId?: string; id?: string } | null;
+        }>;
+      };
+      const authApi = auth.api as AuthApiWithApiKey;
 
       try {
         const verification = await authApi.verifyApiKey({
           body: { key: apiKeyValue },
           headers,
-        })
+        });
 
         if (!verification.valid || !verification.key?.userId) {
           throw createError({
             status: 401,
             statusText: 'Unauthorized',
             message: 'Invalid API key',
-          })
+          });
         }
 
-        const { useDrizzle, tables, eq } = await import('#server/utils/drizzle')
-        const db = useDrizzle()
+        const { useDrizzle, tables, eq } = await import('#server/utils/drizzle');
+        const db = useDrizzle();
 
         const dbUser = db
           .select({
@@ -162,35 +162,35 @@ export default defineEventHandler(async (event) => {
           })
           .from(tables.users)
           .where(eq(tables.users.id, verification.key.userId))
-          .get()
+          .get();
 
         if (!dbUser) {
           throw createError({
             status: 401,
             statusText: 'Unauthorized',
             message: 'User not found',
-          })
+          });
         }
 
         const resolvedUser: ResolvedSessionUser = {
           id: dbUser.id,
           username: dbUser.username || '',
           email: dbUser.email || null,
-          role: (dbUser.rootAdmin || dbUser.role === 'admin') ? 'admin' : 'user',
+          role: dbUser.rootAdmin || dbUser.role === 'admin' ? 'admin' : 'user',
           name: null,
           image: null,
           permissions: [],
           remember: null,
           passwordResetRequired: dbUser.passwordResetRequired || false,
-        }
+        };
 
-        ;(event.context as { auth?: AuthContext }).auth = {
+        (event.context as { auth?: AuthContext }).auth = {
           session: null,
           user: resolvedUser,
-        }
+        };
 
         try {
-          const { recordAuditEventFromRequest } = await import('#server/utils/audit')
+          const { recordAuditEventFromRequest } = await import('#server/utils/audit');
           recordAuditEventFromRequest(event, {
             actor: verification.key.userId,
             actorType: 'user',
@@ -201,17 +201,15 @@ export default defineEventHandler(async (event) => {
               endpoint: event.node.req.url,
               method: event.method,
             },
-          }).catch(err => console.error('Failed to log API key usage:', err))
-        }
-        catch (logError) {
-          console.error('Failed to import audit logging:', logError)
+          }).catch((err) => console.error('Failed to log API key usage:', err));
+        } catch (logError) {
+          console.error('Failed to import audit logging:', logError);
         }
 
-        return
-      }
-      catch (error) {
+        return;
+      } catch (error) {
         try {
-          const { recordAuditEventFromRequest } = await import('#server/utils/audit')
+          const { recordAuditEventFromRequest } = await import('#server/utils/audit');
           recordAuditEventFromRequest(event, {
             actor: 'unknown',
             actorType: 'system',
@@ -222,22 +220,21 @@ export default defineEventHandler(async (event) => {
               method: event.method,
               reason: error instanceof Error ? error.message : 'unknown_error',
             },
-          }).catch(err => console.error('Failed to log failed API key attempt:', err))
-        }
-        catch (logError) {
-          console.error('Failed to import audit logging:', logError)
+          }).catch((err) => console.error('Failed to log failed API key attempt:', err));
+        } catch (logError) {
+          console.error('Failed to import audit logging:', logError);
         }
 
         if (error && typeof error === 'object' && 'status' in error) {
-          throw error
+          throw error;
         }
 
-        console.error('API key verification failed:', error)
+        console.error('API key verification failed:', error);
       }
     }
   }
 
-  const session = await getServerSession(event)
+  const session = await getServerSession(event);
 
   if (!session?.user?.id) {
     if (isApiRequest) {
@@ -245,20 +242,20 @@ export default defineEventHandler(async (event) => {
         status: 401,
         statusText: 'Unauthorized',
         message: 'Authentication required.',
-      })
+      });
     }
 
-    return redirectToLogin(event, requestUrl)
+    return redirectToLogin(event, requestUrl);
   }
 
-  let user
+  let user;
   try {
-    user = requireSessionUser(session)
+    user = requireSessionUser(session);
   } catch (error) {
     if (isApiRequest) {
-      throw error
+      throw error;
     }
-    return redirectToLogin(event, requestUrl)
+    return redirectToLogin(event, requestUrl);
   }
 
   if (path.startsWith('/admin') && user.role !== 'admin') {
@@ -267,14 +264,14 @@ export default defineEventHandler(async (event) => {
         status: 403,
         statusText: 'Forbidden',
         message: 'Administrator privileges required.',
-      })
+      });
     }
 
-    return sendRedirect(event, '/', 302)
+    return sendRedirect(event, '/', 302);
   }
 
-  const isForcedResetPage = path.startsWith('/auth/password/force')
-  const isForcedResetApi = path.startsWith('/api/account/password/force')
+  const isForcedResetPage = path.startsWith('/auth/password/force');
+  const isForcedResetApi = path.startsWith('/api/account/password/force');
 
   if (user.passwordResetRequired && !isForcedResetPage && !isForcedResetApi) {
     if (isApiRequest) {
@@ -282,23 +279,24 @@ export default defineEventHandler(async (event) => {
         status: 403,
         statusText: 'Forbidden',
         message: 'Password reset required.',
-      })
+      });
     }
 
-    const searchParams = new URLSearchParams()
+    const searchParams = new URLSearchParams();
     if (!path.startsWith('/auth/')) {
-      searchParams.set('redirect', requestUrl)
+      searchParams.set('redirect', requestUrl);
     }
 
-    const redirectTarget = searchParams.size > 0
-      ? `/auth/password/force?${searchParams.toString()}`
-      : '/auth/password/force'
+    const redirectTarget =
+      searchParams.size > 0
+        ? `/auth/password/force?${searchParams.toString()}`
+        : '/auth/password/force';
 
-    return sendRedirect(event, redirectTarget, 302)
+    return sendRedirect(event, redirectTarget, 302);
   }
 
-  ;(event.context as { auth?: AuthContext }).auth = {
+  (event.context as { auth?: AuthContext }).auth = {
     session,
     user,
-  }
-})
+  };
+});
