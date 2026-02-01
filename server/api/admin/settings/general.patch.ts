@@ -1,6 +1,6 @@
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { SETTINGS_KEYS, deleteSetting, setSettings } from '~~/server/utils/settings'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { SETTINGS_KEYS, deleteSetting, setSettings } from '#server/utils/settings'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { generalSettingsSchema } from '#shared/schema/admin/settings'
 
 export default defineEventHandler(async (event) => {

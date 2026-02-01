@@ -1,7 +1,7 @@
 import { randomUUID, createHash } from 'node:crypto'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { createSshKeySchema } from '#shared/schema/account'
 
 function parseSSHPublicKey(publicKey: string): { fingerprint: string; valid: boolean } {

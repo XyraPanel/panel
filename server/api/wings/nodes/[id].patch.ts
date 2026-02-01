@@ -1,7 +1,7 @@
 import { type H3Event } from 'h3'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { findWingsNode, updateWingsNode, toWingsNodeSummary } from '~~/server/utils/wings/nodesStore'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { findWingsNode, updateWingsNode, toWingsNodeSummary } from '#server/utils/wings/nodesStore'
 
 import { updateWingsNodeSchema } from '#shared/schema/wings'
 

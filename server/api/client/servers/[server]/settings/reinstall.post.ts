@@ -1,10 +1,10 @@
-import { requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess, getNodeForServer } from '~~/server/utils/server-helpers'
-import { createWingsClient } from '~~/server/utils/wings/client'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess, getNodeForServer } from '#server/utils/server-helpers'
+import { createWingsClient } from '#server/utils/wings/client'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { recordServerActivity } from '#server/utils/server-activity'
 
 export default defineEventHandler(async (event) => {
   const { user, session } = await requireAccountUser(event)

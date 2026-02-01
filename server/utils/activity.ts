@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
+import { useDrizzle, tables } from '#server/utils/drizzle'
 import type { LogActivityOptions } from '#shared/types/audit'
 
 export function logActivity(options: LogActivityOptions): void {

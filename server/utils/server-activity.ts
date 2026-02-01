@@ -1,5 +1,5 @@
 import type { H3Event } from 'h3'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import type { ActivityMetadata } from '#shared/types/audit'
 
 interface RecordServerActivityOptions {

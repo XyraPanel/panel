@@ -1,8 +1,8 @@
 import { type H3Event } from 'h3'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { getNodeIdFromAuth } from '~~/server/utils/wings/auth'
-import { BODY_SIZE_LIMITS, readValidatedBodyWithLimit } from '~~/server/utils/security'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { getNodeIdFromAuth } from '#server/utils/wings/auth'
+import { BODY_SIZE_LIMITS, readValidatedBodyWithLimit } from '#server/utils/security'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { remoteBackupRestoreStatusSchema } from '#shared/schema/wings'
 
 export default defineEventHandler(async (event: H3Event) => {

@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm'
-import * as tables from '~~/server/database/schema'
-import { useDrizzle } from '~~/server/utils/drizzle'
+import * as tables from '#server/database/schema'
+import { useDrizzle } from '#server/utils/drizzle'
 import type { ServerSubuser } from '#shared/types/server'
 import { deleteCacheItems, withCache } from './cache'
 import {

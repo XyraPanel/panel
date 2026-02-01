@@ -1,8 +1,8 @@
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import type { WingsServerConfiguration } from '#shared/types/wings-config'
 
 export default defineEventHandler(async (event) => {

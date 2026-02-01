@@ -1,7 +1,7 @@
-import { provisionServerOnWings } from '~~/server/utils/server-provisioning'
-import { sendServerCreatedEmail } from '~~/server/utils/email'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { debugLog, debugError } from '~~/server/utils/logger'
+import { provisionServerOnWings } from '#server/utils/server-provisioning'
+import { sendServerCreatedEmail } from '#server/utils/email'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { debugLog, debugError } from '#server/utils/logger'
 import type { ServerProvisioningConfig } from '#shared/types/server'
 
 export default defineTask({

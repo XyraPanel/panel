@@ -1,8 +1,8 @@
 import { type H3Event } from 'h3'
 import type { AuthContext, ResolvedSessionUser } from '#shared/types/auth'
-import { getServerSession } from '~~/server/utils/session'
-import { getAuth, normalizeHeadersForAuth } from '~~/server/utils/auth'
-import { requireSessionUser } from '~~/server/utils/auth/sessionUser'
+import { getServerSession } from '#server/utils/session'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { requireSessionUser } from '#server/utils/auth/sessionUser'
 
 const PUBLIC_ASSET_PREFIXES = [
   '/_nuxt/',
@@ -148,7 +148,7 @@ export default defineEventHandler(async (event) => {
           })
         }
 
-        const { useDrizzle, tables, eq } = await import('~~/server/utils/drizzle')
+        const { useDrizzle, tables, eq } = await import('#server/utils/drizzle')
         const db = useDrizzle()
 
         const dbUser = db
@@ -190,7 +190,7 @@ export default defineEventHandler(async (event) => {
         }
 
         try {
-          const { recordAuditEventFromRequest } = await import('~~/server/utils/audit')
+          const { recordAuditEventFromRequest } = await import('#server/utils/audit')
           recordAuditEventFromRequest(event, {
             actor: verification.key.userId,
             actorType: 'user',
@@ -211,7 +211,7 @@ export default defineEventHandler(async (event) => {
       }
       catch (error) {
         try {
-          const { recordAuditEventFromRequest } = await import('~~/server/utils/audit')
+          const { recordAuditEventFromRequest } = await import('#server/utils/audit')
           recordAuditEventFromRequest(event, {
             actor: 'unknown',
             actorType: 'system',

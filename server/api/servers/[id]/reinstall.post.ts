@@ -1,8 +1,8 @@
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordServerActivity } from '#server/utils/server-activity'
 
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
   })
 
   try {
-    const { getWingsClientForServer } = await import('~~/server/utils/wings-client')
+    const { getWingsClientForServer } = await import('#server/utils/wings-client')
     const { client } = await getWingsClientForServer(server.uuid)
     
     console.log('[Reinstall] Calling Wings reinstall endpoint...')

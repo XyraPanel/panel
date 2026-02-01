@@ -1,10 +1,10 @@
 import { promises as fs, existsSync  } from 'node:fs'
 import { randomUUID } from 'node:crypto'
 import { join, extname } from 'pathe'
-import { requireAdmin } from '~~/server/utils/security'
-import { SETTINGS_KEYS, getSetting, setSetting } from '~~/server/utils/settings'
-import { getUploadsPath } from '~~/server/utils/storage'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { SETTINGS_KEYS, getSetting, setSetting } from '#server/utils/settings'
+import { getUploadsPath } from '#server/utils/storage'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024
 const ALLOWED_MIME_TYPES: Record<string, string> = {

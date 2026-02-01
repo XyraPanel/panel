@@ -1,8 +1,8 @@
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { getWingsClientForServer } from '~~/server/utils/wings-client'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { requireAccountUser } from '~~/server/utils/security'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { getWingsClientForServer } from '#server/utils/wings-client'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { requireAccountUser } from '#server/utils/security'
+import { recordServerActivity } from '#server/utils/server-activity'
 
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server')

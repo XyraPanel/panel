@@ -1,9 +1,9 @@
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { TaskScheduler } from '~~/server/utils/task-scheduler'
-import { requireAccountUser } from '~~/server/utils/security'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { useDrizzle, tables, eq, and } from '#server/utils/drizzle'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { TaskScheduler } from '#server/utils/task-scheduler'
+import { requireAccountUser } from '#server/utils/security'
+import { recordServerActivity } from '#server/utils/server-activity'
 
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server')

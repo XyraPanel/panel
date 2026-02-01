@@ -1,4 +1,4 @@
-import { and, eq, useDrizzle, tables } from '~~/server/utils/drizzle'
+import { and, eq, useDrizzle, tables } from '#server/utils/drizzle'
 import type { Permission, PermissionCheck, UserPermissions } from '#shared/types/server'
 import { invalidateServerSubusersCache } from './subusers'
 import { buildUserPermissionsMapCacheKey } from './cache-keys'

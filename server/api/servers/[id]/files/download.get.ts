@@ -1,9 +1,9 @@
 import { type H3Event } from 'h3'
-import { remoteGetFileDownloadUrl } from '~~/server/utils/wings/registry'
-import { requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { remoteGetFileDownloadUrl } from '#server/utils/wings/registry'
+import { requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordServerActivity } from '#server/utils/server-activity'
 
 export default defineEventHandler(async (event: H3Event) => {
   const identifier = getRouterParam(event, 'id')

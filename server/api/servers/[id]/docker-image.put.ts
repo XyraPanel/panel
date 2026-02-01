@@ -1,10 +1,10 @@
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
 import { updateDockerImageSchema } from '#shared/schema/server/operations'
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordServerActivity } from '~~/server/utils/server-activity'
-import { invalidateServerCaches } from '~~/server/utils/serversStore'
+import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordServerActivity } from '#server/utils/server-activity'
+import { invalidateServerCaches } from '#server/utils/serversStore'
 
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')

@@ -1,9 +1,9 @@
 import { z } from 'zod'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   const uuid = getRouterParam(event, 'uuid')

@@ -1,9 +1,9 @@
 import { APIError } from 'better-auth/api'
-import { getAuth, normalizeHeadersForAuth } from '~~/server/utils/auth'
-import { useDrizzle, tables, eq, or } from '~~/server/utils/drizzle'
-import { resolvePanelBaseUrl } from '~~/server/utils/email'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { useDrizzle, tables, eq, or } from '#server/utils/drizzle'
+import { resolvePanelBaseUrl } from '#server/utils/email'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { passwordRequestSchema } from '#shared/schema/account'
 
 export default defineEventHandler(async (event) => {

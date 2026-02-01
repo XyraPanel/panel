@@ -1,7 +1,7 @@
-import { requireAdmin } from '~~/server/utils/security'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import type { NitroTasksResponse } from '#shared/types/admin'
 
 export default defineEventHandler(async (event): Promise<{ data: NitroTasksResponse }> => {

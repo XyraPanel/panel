@@ -1,7 +1,7 @@
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { verifyRecoveryToken } from '~~/server/utils/totp'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '~~/server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { verifyRecoveryToken } from '#server/utils/totp'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
 import { twoFactorRecoverySchema } from '#shared/schema/account'
 
 export default defineEventHandler(async (event) => {

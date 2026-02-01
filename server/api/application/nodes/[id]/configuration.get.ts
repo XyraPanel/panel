@@ -1,8 +1,8 @@
 import { timingSafeEqual } from 'node:crypto'
-import { getWingsNodeConfigurationById } from '~~/server/utils/wings/nodesStore'
-import { parseAuthToken, decryptToken } from '~~/server/utils/wings/encryption'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { getWingsNodeConfigurationById } from '#server/utils/wings/nodesStore'
+import { parseAuthToken, decryptToken } from '#server/utils/wings/encryption'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { useRuntimeConfig, getRequestURL } from '#imports'
 
 export default defineEventHandler(async (event) => {

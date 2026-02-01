@@ -1,5 +1,5 @@
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { requireAccountUser } from '~~/server/utils/security'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAccountUser } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event)

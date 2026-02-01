@@ -1,9 +1,9 @@
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
-import { invalidateServerSubusersCache } from '~~/server/utils/subusers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordServerActivity } from '~~/server/utils/server-activity'
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { useDrizzle, tables, eq, and } from '#server/utils/drizzle'
+import { invalidateServerSubusersCache } from '#server/utils/subusers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordServerActivity } from '#server/utils/server-activity'
+import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { serverSubuserPermissionsSchema } from '#shared/schema/server/operations'
 
 export default defineEventHandler(async (event) => {

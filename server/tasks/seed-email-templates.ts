@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
 
 const defaultTemplates = [
   {

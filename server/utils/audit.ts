@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { type H3Event } from 'h3'
 
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
+import { useDrizzle, tables } from '#server/utils/drizzle'
 import type { LogActivityOptions, ActivityMetadata } from '#shared/types/audit'
 
 function sanitizeMetadata(metadata: ActivityMetadata): ActivityMetadata {

@@ -1,7 +1,7 @@
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { requirePermission } from '~~/server/utils/permission-middleware'
-import { getWingsClientForServer } from '~~/server/utils/wings-client'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { requirePermission } from '#server/utils/permission-middleware'
+import { getWingsClientForServer } from '#server/utils/wings-client'
+import { recordServerActivity } from '#server/utils/server-activity'
 import { chmodBodySchema } from '#shared/schema/server/operations'
 
 export default defineEventHandler(async (event) => {

@@ -1,7 +1,7 @@
 import { type H3Event } from 'h3'
-import { getNodeIdFromAuth } from '~~/server/utils/wings/auth'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { debugError, debugWarn } from '~~/server/utils/logger'
+import { getNodeIdFromAuth } from '#server/utils/wings/auth'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { debugError, debugWarn } from '#server/utils/logger'
 
 function safeJsonParse(value: string | null | undefined, defaultValue: unknown = {}): unknown {
   if (!value || typeof value !== 'string' || value.trim().length === 0) {

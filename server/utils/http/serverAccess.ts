@@ -1,12 +1,12 @@
 import type { H3Event } from 'h3'
 import { createError, getQuery } from 'h3'
-import { getServerSession } from '~~/server/utils/session'
+import { getServerSession } from '#server/utils/session'
 import type { ServerAccessOptions as SharedServerAccessOptions, ServerRequestContext as SharedServerRequestContext } from '#shared/types/server'
-import { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
-import { findServerByIdentifier } from '~~/server/utils/serversStore'
-import { tables } from '~~/server/utils/drizzle'
-import { getUserPermissions } from '~~/server/utils/permissions'
-import { resolveNodeConnection } from '~~/server/utils/wings/nodesStore'
+import { resolveSessionUser } from '#server/utils/auth/sessionUser'
+import { findServerByIdentifier } from '#server/utils/serversStore'
+import { tables } from '#server/utils/drizzle'
+import { getUserPermissions } from '#server/utils/permissions'
+import { resolveNodeConnection } from '#server/utils/wings/nodesStore'
 import type { StoredWingsNode } from '#shared/types/wings'
 
 type ServerRequestContext = SharedServerRequestContext<typeof tables.servers.$inferSelect>

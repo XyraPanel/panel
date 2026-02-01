@@ -1,9 +1,9 @@
 import { desc, eq, sql } from 'drizzle-orm'
 import type { PaginatedServerActivityResponse, ServerActivityEvent } from '#shared/types/server'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { requireAccountUser } from '~~/server/utils/security'
+import { useDrizzle, tables } from '#server/utils/drizzle'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { requireAccountUser } from '#server/utils/security'
 
 function parseMetadata(raw: string | null): Record<string, unknown> | null {
   if (!raw) {

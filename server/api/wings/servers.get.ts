@@ -1,8 +1,8 @@
 import { type H3Event } from 'h3'
-import { requireAdmin } from '~~/server/utils/security'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { listServers, paginateServers } from '~~/server/utils/wings/registry'
-import { getNodeIdFromQuery, toWingsHttpError } from '~~/server/utils/wings/http'
+import { requireAdmin } from '#server/utils/security'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { listServers, paginateServers } from '#server/utils/wings/registry'
+import { getNodeIdFromQuery, toWingsHttpError } from '#server/utils/wings/http'
 
 export default defineEventHandler(async (event: H3Event) => {
   const session = await requireAdmin(event)

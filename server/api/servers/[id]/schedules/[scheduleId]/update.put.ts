@@ -1,13 +1,13 @@
 import { eq, and } from 'drizzle-orm'
-import { useDrizzle } from '~~/server/utils/drizzle'
-import * as tables from '~~/server/database/schema'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '~~/server/utils/security'
+import { useDrizzle } from '#server/utils/drizzle'
+import * as tables from '#server/database/schema'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
 import { updateScheduleSchema } from '#shared/schema/server/operations'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordServerActivity } from '~~/server/utils/server-activity'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { invalidateScheduleCaches } from '~~/server/utils/serversStore'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordServerActivity } from '#server/utils/server-activity'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { invalidateScheduleCaches } from '#server/utils/serversStore'
 
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')

@@ -1,8 +1,8 @@
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { listServerSubusers } from '~~/server/utils/subusers'
-import { requireAccountUser } from '~~/server/utils/security'
-import { recordServerActivity } from '~~/server/utils/server-activity'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { listServerSubusers } from '#server/utils/subusers'
+import { requireAccountUser } from '#server/utils/security'
+import { recordServerActivity } from '#server/utils/server-activity'
+import { requireServerPermission } from '#server/utils/permission-middleware'
 
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server')

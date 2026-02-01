@@ -1,7 +1,7 @@
 import { type H3Event } from 'h3'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { findServerByIdentifier } from '~~/server/utils/serversStore'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { findServerByIdentifier } from '#server/utils/serversStore'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import type { ActivityAction } from '#shared/types/audit'
 import { remoteActivityBatchSchema } from '#shared/schema/wings'
 

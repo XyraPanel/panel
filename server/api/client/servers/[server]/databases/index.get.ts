@@ -1,7 +1,7 @@
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { listServerDatabases } from '~~/server/utils/databases'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { requireAccountUser } from '~~/server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { listServerDatabases } from '#server/utils/databases'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { requireAccountUser } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event)

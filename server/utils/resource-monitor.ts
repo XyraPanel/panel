@@ -1,6 +1,6 @@
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { getWingsClientForServer, getWingsClient, WingsConnectionError, WingsAuthError } from '~~/server/utils/wings-client'
-import { debugLog, debugError, debugWarn } from '~~/server/utils/logger'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { getWingsClientForServer, getWingsClient, WingsConnectionError, WingsAuthError } from '#server/utils/wings-client'
+import { debugLog, debugError, debugWarn } from '#server/utils/logger'
 import type { ServerResourceStats, NodeResourceStats, NodeHealthStatus } from '#shared/types/server'
 
 export class ResourceMonitor {

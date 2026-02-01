@@ -1,11 +1,11 @@
 import type { H3Event } from 'h3'
 import { consoleBaseMessageSchema, consoleCommandPayloadSchema } from '#shared/schema/server/console'
-import { getWingsClientForServer } from '~~/server/utils/wings-client'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { getServerSession } from '~~/server/utils/session'
-import { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
-import { permissionManager } from '~~/server/utils/permission-manager'
-import { recordAuditEvent } from '~~/server/utils/audit'
+import { getWingsClientForServer } from '#server/utils/wings-client'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { getServerSession } from '#server/utils/session'
+import { resolveSessionUser } from '#server/utils/auth/sessionUser'
+import { permissionManager } from '#server/utils/permission-manager'
+import { recordAuditEvent } from '#server/utils/audit'
 
 const connections = new Map<string, {
   serverId: string

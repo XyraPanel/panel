@@ -1,8 +1,8 @@
-import { backupManager } from '~~/server/utils/backup-manager'
-import { WingsConnectionError, WingsAuthError } from '~~/server/utils/wings-client'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireAccountUser } from '~~/server/utils/security'
+import { backupManager } from '#server/utils/backup-manager'
+import { WingsConnectionError, WingsAuthError } from '#server/utils/wings-client'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireAccountUser } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event)

@@ -1,11 +1,11 @@
 import { eq } from 'drizzle-orm'
 import type { SettingsData } from '#shared/types/server'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { useDrizzle, tables } from '#server/utils/drizzle'
+import { requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { recordServerActivity } from '#server/utils/server-activity'
 
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')

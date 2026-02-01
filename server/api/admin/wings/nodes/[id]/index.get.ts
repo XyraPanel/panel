@@ -1,10 +1,10 @@
 import { desc, sql } from 'drizzle-orm'
 import type { AdminWingsNodeDetail, AdminWingsNodeAllocationSummary, AdminWingsNodeServerSummary } from '#shared/types/admin'
-import { requireAdmin } from '~~/server/utils/security'
-import { getWingsNode } from '~~/server/utils/wings/nodesStore'
-import { remoteGetSystemInformation } from '~~/server/utils/wings/registry'
-import { isH3Error } from '~~/server/utils/wings/http'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { requireAdmin } from '#server/utils/security'
+import { getWingsNode } from '#server/utils/wings/nodesStore'
+import { remoteGetSystemInformation } from '#server/utils/wings/registry'
+import { isH3Error } from '#server/utils/wings/http'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
 
 function toIsoTimestamp(value: unknown): string {
   if (value instanceof Date) {

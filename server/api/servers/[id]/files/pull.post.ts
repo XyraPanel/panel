@@ -1,8 +1,8 @@
-import { remotePullFile } from '~~/server/utils/wings/registry'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { remotePullFile } from '#server/utils/wings/registry'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordServerActivity } from '#server/utils/server-activity'
 import { pullFileSchema } from '#shared/schema/server/operations'
 
 export default defineEventHandler(async (event) => {

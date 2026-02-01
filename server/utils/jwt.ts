@@ -1,6 +1,6 @@
 import type { WingsJWTClaims as _WingsJWTClaims } from '#shared/types/wings'
 import { ADMIN_PERMISSIONS, DEFAULT_SUBUSER_PERMISSIONS, type GetUserPermissionsOptions } from '#shared/types/server'
-import { getUserPermissions as getServerUserPermissions } from '~~/server/utils/permissions'
+import { getUserPermissions as getServerUserPermissions } from '#server/utils/permissions'
 
 export function normalizePermissionPayload(payload: unknown): string[] {
   if (!payload) {

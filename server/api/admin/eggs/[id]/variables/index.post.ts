@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
 import { eq } from 'drizzle-orm'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { useDrizzle, tables } from '#server/utils/drizzle'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 import { createEggVariableSchema } from '#shared/schema/admin/infrastructure'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)

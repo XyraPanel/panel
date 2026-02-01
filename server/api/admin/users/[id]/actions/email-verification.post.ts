@@ -1,10 +1,10 @@
-import { getAuth, normalizeHeadersForAuth } from '~~/server/utils/auth'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { emailVerificationActionSchema } from '~~/shared/schema/admin/users'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
@@ -75,8 +75,8 @@ export default defineEventHandler(async (event) => {
               headers: normalizeHeadersForAuth(event.node.req.headers),
             })
           } else {
-            const { sendEmailVerificationEmail } = await import('~~/server/utils/email')
-            const { createEmailVerificationToken } = await import('~~/server/utils/email-verification')
+            const { sendEmailVerificationEmail } = await import('#server/utils/email')
+            const { createEmailVerificationToken } = await import('#server/utils/email-verification')
             
             const { token, expiresAt } = await createEmailVerificationToken(user.id)
             await sendEmailVerificationEmail({
@@ -87,8 +87,8 @@ export default defineEventHandler(async (event) => {
             })
           }
         } catch {
-          const { sendEmailVerificationEmail } = await import('~~/server/utils/email')
-          const { createEmailVerificationToken } = await import('~~/server/utils/email-verification')
+          const { sendEmailVerificationEmail } = await import('#server/utils/email')
+          const { createEmailVerificationToken } = await import('#server/utils/email-verification')
           
           const { token, expiresAt } = await createEmailVerificationToken(user.id)
           await sendEmailVerificationEmail({

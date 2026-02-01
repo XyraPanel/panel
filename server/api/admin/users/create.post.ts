@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto'
 import bcrypt from 'bcryptjs'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { useDrizzle, tables, eq, or } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { useDrizzle, tables, eq, or } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { createUserSchema } from '~~/shared/schema/admin/users'
 
 export default defineEventHandler(async (event) => {

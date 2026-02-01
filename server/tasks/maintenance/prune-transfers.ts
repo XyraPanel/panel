@@ -1,5 +1,5 @@
-import { useDrizzle, tables, and, eq, lt } from '~~/server/utils/drizzle'
-import { debugLog, debugError } from '~~/server/utils/logger'
+import { useDrizzle, tables, and, eq, lt } from '#server/utils/drizzle'
+import { debugLog, debugError } from '#server/utils/logger'
 
 export default defineTask({
   meta: {

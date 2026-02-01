@@ -1,12 +1,12 @@
 import { eq, and } from 'drizzle-orm'
-import { useDrizzle } from '~~/server/utils/drizzle'
-import * as tables from '~~/server/database/schema'
-import { requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordServerActivity } from '~~/server/utils/server-activity'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { invalidateScheduleCaches } from '~~/server/utils/serversStore'
+import { useDrizzle } from '#server/utils/drizzle'
+import * as tables from '#server/database/schema'
+import { requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordServerActivity } from '#server/utils/server-activity'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { invalidateScheduleCaches } from '#server/utils/serversStore'
 
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')

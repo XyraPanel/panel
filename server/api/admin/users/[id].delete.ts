@@ -1,9 +1,9 @@
 import { count } from 'drizzle-orm'
-import { requireAdmin } from '~~/server/utils/security'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
+import { requireAdmin } from '#server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)

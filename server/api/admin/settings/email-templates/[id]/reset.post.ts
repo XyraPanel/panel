@@ -1,6 +1,6 @@
-import { requireAdmin } from '~~/server/utils/security'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 const defaultTemplates: Record<string, string> = {
   'password-reset': `<h1>Password Reset Request</h1><p>Hello,</p><p>You requested a password reset for your <strong>{{ appName }}</strong> account.</p><p>Click the button below to reset your password:</p><p><a href="{{ resetUrl }}" class="button">Reset Password</a></p><p>Or copy and paste this link into your browser:</p><p><a href="{{ resetUrl }}">{{ resetUrl }}</a></p><p><strong>⏱️ Link Expires:</strong> This link will expire in {{ expiresIn }}.</p><p>If you didn't request this, please ignore this email and your password will remain unchanged.</p><p>For security reasons, never share this link with anyone.</p><p>© {{ year }} {{ appName }}. All rights reserved.</p><p>This is an automated message, please do not reply to this email.</p>`,

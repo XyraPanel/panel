@@ -1,6 +1,6 @@
 import { type H3Event } from 'h3'
-import { getNodeIdFromAuth } from '~~/server/utils/wings/auth'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { getNodeIdFromAuth } from '#server/utils/wings/auth'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
 
 interface InstallScriptResponse {
   container_image: string

@@ -1,11 +1,11 @@
 import { APIError } from 'better-auth/api'
 import { z } from 'zod'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { auth, normalizeHeadersForAuth } from '~~/server/utils/auth'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { auth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 
 const adminUpdateUserSchema = z.object({
   username: z.string().min(1).max(255).optional(),

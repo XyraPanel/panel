@@ -1,4 +1,4 @@
-import { formatAuthToken } from '~~/server/utils/wings/encryption'
+import { formatAuthToken } from '#server/utils/wings/encryption'
 import type { WingsNodeConnection } from '#shared/types/wings'
 
 export function createWingsClient(node: WingsNodeConnection) {

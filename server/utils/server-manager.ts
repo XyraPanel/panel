@@ -1,10 +1,10 @@
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { getWingsClientForServer, WingsConnectionError, WingsAuthError } from '~~/server/utils/wings-client'
-import { getServerStatus, updateServerStatus } from '~~/server/utils/server-status'
-import { provisionServerOnWings, waitForServerInstall } from '~~/server/utils/server-provisioning'
-import { recordAuditEvent } from '~~/server/utils/audit'
-import { sendServerReinstalledEmail, sendServerSuspendedEmail } from '~~/server/utils/email'
-import type { WingsClient } from '~~/server/utils/wings-client'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { getWingsClientForServer, WingsConnectionError, WingsAuthError } from '#server/utils/wings-client'
+import { getServerStatus, updateServerStatus } from '#server/utils/server-status'
+import { provisionServerOnWings, waitForServerInstall } from '#server/utils/server-provisioning'
+import { recordAuditEvent } from '#server/utils/audit'
+import { sendServerReinstalledEmail, sendServerSuspendedEmail } from '#server/utils/email'
+import type { WingsClient } from '#server/utils/wings-client'
 import type { ServerManagerOptions } from '#shared/types/server'
 
 export class ServerManager {

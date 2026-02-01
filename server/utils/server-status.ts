@@ -1,5 +1,5 @@
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { getWingsClientForServer, WingsConnectionError, WingsAuthError } from '~~/server/utils/wings-client'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { getWingsClientForServer, WingsConnectionError, WingsAuthError } from '#server/utils/wings-client'
 import type { ServerStatus } from '#shared/types/server'
 import { getCacheItem, setCacheItem, deleteCacheItem } from './cache'
 import { buildServerStatusCacheKey } from './cache-keys'

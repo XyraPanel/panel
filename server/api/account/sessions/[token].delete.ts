@@ -1,6 +1,6 @@
-import { auth, normalizeHeadersForAuth } from '~~/server/utils/auth'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { requireAuth } from '~~/server/utils/security'
+import { auth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAuth } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'DELETE')

@@ -2,9 +2,9 @@ import { asc, desc, sql } from 'drizzle-orm'
 
 import type { AdminPaginatedMeta, AdminWingsNodeAllocationSummary, AdminWingsNodeAllocationsPayload } from '#shared/types/admin'
 
-import { requireAdmin } from '~~/server/utils/security'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event): Promise<AdminWingsNodeAllocationsPayload> => {
   const { id } = event.context.params ?? {}

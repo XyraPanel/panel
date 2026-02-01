@@ -1,7 +1,7 @@
 import { type H3Event } from 'h3'
-import { requireAdmin } from '~~/server/utils/security'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { deleteWingsNode } from '~~/server/utils/wings/nodesStore'
+import { requireAdmin } from '#server/utils/security'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { deleteWingsNode } from '#server/utils/wings/nodesStore'
 
 export default defineEventHandler(async (event: H3Event) => {
   const session = await requireAdmin(event)

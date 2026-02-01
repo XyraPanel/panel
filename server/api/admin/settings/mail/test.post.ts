@@ -1,7 +1,7 @@
-import { requireAdmin } from '~~/server/utils/security'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.PANEL_SETTINGS, ADMIN_ACL_PERMISSIONS.READ)
 
   try {
-    const { sendEmail } = await import('~~/server/utils/email')
+    const { sendEmail } = await import('#server/utils/email')
 
     const appName = useRuntimeConfig().public.appName || 'XyraPanel'
     await sendEmail({

@@ -1,9 +1,9 @@
 import bcrypt from 'bcryptjs'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import type { UpdateEmailResponse } from '#shared/types/account'
 import { updateEmailSchema } from '#shared/schema/account'
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
+import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 
 export default defineEventHandler(async (event): Promise<UpdateEmailResponse> => {
   assertMethod(event, 'PUT')

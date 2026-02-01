@@ -1,8 +1,8 @@
 import { type H3Event } from 'h3'
-import { requireAdmin } from '~~/server/utils/security'
-import { findWingsNode, ensureNodeHasToken, requireNodeRow } from '~~/server/utils/wings/nodesStore'
-import { decryptToken } from '~~/server/utils/wings/encryption'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { findWingsNode, ensureNodeHasToken, requireNodeRow } from '#server/utils/wings/nodesStore'
+import { decryptToken } from '#server/utils/wings/encryption'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 function formatCombinedToken(identifier: string, secret: string): string {
   return `${identifier}.${secret}`

@@ -1,6 +1,6 @@
-import { requireAdmin } from '~~/server/utils/security'
-import { getWingsNodeConfigurationById } from '~~/server/utils/wings/nodesStore'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { getWingsNodeConfigurationById } from '#server/utils/wings/nodesStore'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { useRuntimeConfig } from '#imports'
 
 export default defineEventHandler(async (event) => {

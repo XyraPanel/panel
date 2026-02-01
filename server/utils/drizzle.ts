@@ -6,7 +6,7 @@ import { Pool } from 'pg'
 import { drizzle as drizzleSQLite, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3/driver'
 import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres'
 import { and, eq, or, inArray, isNull, isNotNull, lt, desc } from 'drizzle-orm'
-import * as schema from '~~/server/database/schema'
+import * as schema from '#server/database/schema'
 
 const DIALECT = (process.env.DB_DIALECT ?? 'sqlite').toLowerCase()
 const isPostgres = DIALECT === 'postgresql' || DIALECT === 'postgres'

@@ -1,10 +1,10 @@
-import { generateWingsJWT } from '~~/server/utils/wings/jwt'
-import { requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { getNodeForServer } from '~~/server/utils/server-helpers'
-import { resolveNodeConnection } from '~~/server/utils/wings/nodesStore'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { generateWingsJWT } from '#server/utils/wings/jwt'
+import { requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { getNodeForServer } from '#server/utils/server-helpers'
+import { resolveNodeConnection } from '#server/utils/wings/nodesStore'
+import { recordServerActivity } from '#server/utils/server-activity'
 import type { Permission } from '#shared/types/server'
 
 interface WebSocketToken {

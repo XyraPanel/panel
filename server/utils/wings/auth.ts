@@ -1,6 +1,6 @@
 import { createError, getHeader, type H3Event } from 'h3'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { parseAuthToken, decryptToken } from '~~/server/utils/wings/encryption'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { parseAuthToken, decryptToken } from '#server/utils/wings/encryption'
 
 export async function getNodeIdFromAuth(event: H3Event): Promise<string> {
   const authHeader = getHeader(event, 'authorization')

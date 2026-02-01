@@ -1,8 +1,8 @@
-import { requireAdmin } from '~~/server/utils/security'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { remoteGetSystemInformation } from '~~/server/utils/wings/registry'
+import { requireAdmin } from '#server/utils/security'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { remoteGetSystemInformation } from '#server/utils/wings/registry'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)

@@ -1,7 +1,7 @@
-import { toWingsHttpError } from '~~/server/utils/wings/http'
-import { findWingsNode, listWingsNodes, requireNodeRow, resolveNodeConnection } from '~~/server/utils/wings/nodesStore'
-import { decryptToken } from '~~/server/utils/wings/encryption'
-import { debugError } from '~~/server/utils/logger'
+import { toWingsHttpError } from '#server/utils/wings/http'
+import { findWingsNode, listWingsNodes, requireNodeRow, resolveNodeConnection } from '#server/utils/wings/nodesStore'
+import { decryptToken } from '#server/utils/wings/encryption'
+import { debugError } from '#server/utils/logger'
 import { useRuntimeConfig } from '#imports'
 
 import type {

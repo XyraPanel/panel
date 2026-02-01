@@ -1,8 +1,8 @@
 import { and, desc, like, or, sql } from 'drizzle-orm'
 import type { AdminPaginatedMeta, AdminWingsNodeServerSummary, AdminWingsNodeServersPayload } from '#shared/types/admin'
-import { requireAdmin } from '~~/server/utils/security'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 function toIsoTimestamp(value: unknown): string {
   if (value instanceof Date) {

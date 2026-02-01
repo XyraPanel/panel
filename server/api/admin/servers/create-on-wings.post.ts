@@ -1,9 +1,9 @@
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import { provisionServerOnWings } from '~~/server/utils/server-provisioning'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { provisionServerOnWings } from '#server/utils/server-provisioning'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { serverProvisionSchema } from '#shared/schema/admin/server'
 
 export default defineEventHandler(async (event) => {

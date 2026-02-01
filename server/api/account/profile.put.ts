@@ -1,7 +1,7 @@
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '~~/server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
 import { accountProfileUpdateSchema } from '#shared/schema/account'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT')

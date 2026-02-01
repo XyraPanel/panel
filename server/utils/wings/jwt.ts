@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose'
 import { createHash, randomBytes } from 'crypto'
-import { decryptToken } from '~~/server/utils/wings/encryption'
+import { decryptToken } from '#server/utils/wings/encryption'
 import type { WingsJWTClaims, WingsJWTOptions } from '#shared/types/wings'
 
 export async function generateWingsJWT(

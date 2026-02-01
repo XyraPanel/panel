@@ -1,9 +1,9 @@
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { recordServerActivity } from '#server/utils/server-activity'
 import { serverDockerImageUpdateSchema } from '#shared/schema/server/operations'
 
 export default defineEventHandler(async (event) => {

@@ -1,6 +1,6 @@
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { renderEmailTemplate } from '~~/server/utils/email-templates'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { renderEmailTemplate } from '#server/utils/email-templates'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { emailTemplatePreviewSchema } from '#shared/schema/admin/settings'
 
 export default defineEventHandler(async (event) => {
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     
     let templateHtml: string
     if (isPlaceholderMode) {
-      const { getTemplate } = await import('~~/server/utils/email-templates')
+      const { getTemplate } = await import('#server/utils/email-templates')
       const templateData = await getTemplate(id)
       templateHtml = templateData.html
     } else {

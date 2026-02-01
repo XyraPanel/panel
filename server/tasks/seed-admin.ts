@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import bcrypt from "bcryptjs";
-import { useDrizzle, tables, eq, and } from "~~/server/utils/drizzle";
+import { useDrizzle, tables, eq, and } from "#server/utils/drizzle";
 import type { SeedUser } from "#shared/types/seed";
 
 export default defineTask({

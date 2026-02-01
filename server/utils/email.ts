@@ -1,6 +1,6 @@
 import { createTransport } from 'nodemailer'
 import type { Transporter, TransportOptions as NodemailerTransportOptions } from 'nodemailer'
-import { getSettings, getSettingWithDefault, SETTINGS_KEYS } from '~~/server/utils/settings'
+import { getSettings, getSettingWithDefault, SETTINGS_KEYS } from '#server/utils/settings'
 import type { EmailConfig } from '#shared/types/email'
 import {
   renderPasswordResetTemplate,
@@ -11,7 +11,7 @@ import {
   renderServerSuspendedTemplate,
   renderServerReinstalledTemplate,
   renderAdminUserCreatedTemplate,
-} from '~~/server/utils/email-templates'
+} from '#server/utils/email-templates'
 
 let transporter: Transporter | null = null
 

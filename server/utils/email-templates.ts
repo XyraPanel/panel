@@ -1,4 +1,4 @@
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
 
 interface TemplateData {
   [key: string]: string | number | boolean | null | undefined

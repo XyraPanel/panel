@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
-import { useDrizzle, tables, eq, and, inArray } from '~~/server/utils/drizzle'
-import { getNodeIdFromAuth } from '~~/server/utils/wings/auth'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { useDrizzle, tables, eq, and, inArray } from '#server/utils/drizzle'
+import { getNodeIdFromAuth } from '#server/utils/wings/auth'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event: H3Event) => {
   assertMethod(event, 'POST')

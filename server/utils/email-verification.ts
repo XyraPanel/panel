@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
-import { generateRawToken, hashToken } from '~~/server/utils/crypto'
-import { useDrizzle, tables, eq, and, lt } from '~~/server/utils/drizzle'
+import { generateRawToken, hashToken } from '#server/utils/crypto'
+import { useDrizzle, tables, eq, and, lt } from '#server/utils/drizzle'
 
 const EMAIL_VERIFICATION_TOKEN_PREFIX = 'email-verify:'
 const EMAIL_VERIFICATION_EXPIRATION_MS = 24 * 60 * 60 * 1000

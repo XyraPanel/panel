@@ -1,10 +1,10 @@
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
 import { randomBytes } from 'crypto'
-import { invalidateServerCaches } from '~~/server/utils/serversStore'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { requireAccountUser } from '~~/server/utils/security'
+import { invalidateServerCaches } from '#server/utils/serversStore'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAccountUser } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event)

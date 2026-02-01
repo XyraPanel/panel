@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '~~/server/utils/security'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
 import { createApiKeySchema } from '#shared/schema/account'
 import type { ApiKeyResponse } from '#shared/types/api'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { useDrizzle, tables } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
   const accountContext = await requireAccountUser(event)

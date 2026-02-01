@@ -1,7 +1,7 @@
-import type { getServerSession } from '~~/server/utils/session'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import type { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
-import { parseUserAgent } from '~~/server/utils/user-agent'
+import type { getServerSession } from '#server/utils/session'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import type { resolveSessionUser } from '#server/utils/auth/sessionUser'
+import { parseUserAgent } from '#server/utils/user-agent'
 
 type AuthContext = {
   session: Awaited<ReturnType<typeof getServerSession>>

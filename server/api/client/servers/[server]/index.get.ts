@@ -1,12 +1,12 @@
 import { eq, sql } from 'drizzle-orm'
 import type { PanelServerDetails, ServerAllocationSummary } from '#shared/types/server'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { permissionManager } from '~~/server/utils/permission-manager'
-import { getServerLimits, listServerAllocations } from '~~/server/utils/serversStore'
-import { getServerStatus } from '~~/server/utils/server-status'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { requireAccountUser } from '~~/server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { useDrizzle, tables } from '#server/utils/drizzle'
+import { permissionManager } from '#server/utils/permission-manager'
+import { getServerLimits, listServerAllocations } from '#server/utils/serversStore'
+import { getServerStatus } from '#server/utils/server-status'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { requireAccountUser } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server')

@@ -1,9 +1,9 @@
-import { remoteWriteFile } from '~~/server/utils/wings/registry'
-import { debugError } from '~~/server/utils/logger'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { remoteWriteFile } from '#server/utils/wings/registry'
+import { debugError } from '#server/utils/logger'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordServerActivity } from '#server/utils/server-activity'
 import { writeFileSchema } from '#shared/schema/server/operations'
 
 export default defineEventHandler(async (event) => {

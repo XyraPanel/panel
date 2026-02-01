@@ -1,6 +1,6 @@
-import { requireAdmin } from '~~/server/utils/security'
-import { SETTINGS_KEYS, getSetting, getSettingWithDefault } from '~~/server/utils/settings'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { SETTINGS_KEYS, getSetting, getSettingWithDefault } from '#server/utils/settings'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)

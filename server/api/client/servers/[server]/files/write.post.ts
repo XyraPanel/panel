@@ -1,8 +1,8 @@
-import { getWingsClientForServer, WingsConnectionError, WingsAuthError } from '~~/server/utils/wings-client'
-import { recordAuditEvent } from '~~/server/utils/audit'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireAccountUser } from '~~/server/utils/security'
+import { getWingsClientForServer, WingsConnectionError, WingsAuthError } from '#server/utils/wings-client'
+import { recordAuditEvent } from '#server/utils/audit'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireAccountUser } from '#server/utils/security'
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024
 

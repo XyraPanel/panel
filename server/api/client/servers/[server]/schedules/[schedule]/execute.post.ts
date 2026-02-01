@@ -1,8 +1,8 @@
-import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireAccountUser } from '~~/server/utils/security'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { useDrizzle, tables, eq, and } from '#server/utils/drizzle'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireAccountUser } from '#server/utils/security'
+import { recordServerActivity } from '#server/utils/server-activity'
 
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server')
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
   })
 
   try {
-    const { executeScheduledTask } = await import('~~/server/utils/task-scheduler')
+    const { executeScheduledTask } = await import('#server/utils/task-scheduler')
 
     const tasks = await db
       .select()

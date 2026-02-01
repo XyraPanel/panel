@@ -1,8 +1,8 @@
-import { useDrizzle, tables, eq, or } from '~~/server/utils/drizzle'
+import { useDrizzle, tables, eq, or } from '#server/utils/drizzle'
 import { desc, count } from 'drizzle-orm'
-import { getNumericSetting, SETTINGS_KEYS } from '~~/server/utils/settings'
-import { requireAdmin } from '~~/server/utils/security'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { getNumericSetting, SETTINGS_KEYS } from '#server/utils/settings'
+import { requireAdmin } from '#server/utils/security'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)

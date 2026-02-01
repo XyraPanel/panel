@@ -1,6 +1,6 @@
 import type { WingsNode, WingsServerDetails, WingsFileObject, WingsBackup } from '#shared/types/wings-client'
-import { decryptToken } from '~~/server/utils/wings/encryption'
-import { debugError } from '~~/server/utils/logger'
+import { decryptToken } from '#server/utils/wings/encryption'
+import { debugError } from '#server/utils/logger'
 
 export class WingsConnectionError extends Error {
   constructor(message: string, public override cause?: Error) {

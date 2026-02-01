@@ -2,7 +2,7 @@ import { betterAuth } from "better-auth"
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { admin, bearer, multiSession, customSession, captcha, username, twoFactor, apiKey } from "better-auth/plugins"
 import type { AuthContext } from '@better-auth/core'
-import { useDrizzle, tables, eq, isPostgresDialect } from '~~/server/utils/drizzle'
+import { useDrizzle, tables, eq, isPostgresDialect } from '#server/utils/drizzle'
 import type { Role } from '#shared/types/auth'
 import bcrypt from 'bcryptjs'
 
@@ -194,7 +194,7 @@ function createAuth() {
         enabled: true,
         updateEmailWithoutVerification: false,
         sendChangeEmailConfirmation: async ({ user, newEmail, url }, _request) => {
-          const { sendEmail } = await import('~~/server/utils/email')
+          const { sendEmail } = await import('#server/utils/email')
           await sendEmail({
             to: user.email,
             subject: 'Confirm Email Change',
@@ -211,7 +211,7 @@ function createAuth() {
       deleteUser: {
         enabled: true,
         sendDeleteAccountVerification: async ({ user, url }, _request) => {
-          const { sendEmail } = await import('~~/server/utils/email')
+          const { sendEmail } = await import('#server/utils/email')
           await sendEmail({
             to: user.email,
             subject: 'Confirm Account Deletion',
@@ -259,7 +259,7 @@ function createAuth() {
         },
       },
       sendResetPassword: async ({ user, token }, _request) => {
-        const { sendPasswordResetEmail, resolvePanelBaseUrl } = await import('~~/server/utils/email')
+        const { sendPasswordResetEmail, resolvePanelBaseUrl } = await import('#server/utils/email')
         const resetBaseUrl = `${resolvePanelBaseUrl()}/auth/password/reset`
         await sendPasswordResetEmail(user.email, token, resetBaseUrl)
       },
@@ -305,7 +305,7 @@ function createAuth() {
       autoSignInAfterVerification: true,
       expiresIn: 60 * 60 * 24,
       sendVerificationEmail: async ({ user, token }, _request) => {
-        const { sendEmailVerificationEmail } = await import('~~/server/utils/email')
+        const { sendEmailVerificationEmail } = await import('#server/utils/email')
         await sendEmailVerificationEmail({
           to: user.email,
           token,

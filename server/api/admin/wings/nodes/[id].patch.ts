@@ -1,9 +1,9 @@
 import type { H3Event } from 'h3'
-import { requireAdmin } from '~~/server/utils/security'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import { updateWingsNode } from '~~/server/utils/wings/nodesStore'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { updateWingsNode } from '#server/utils/wings/nodesStore'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import type { UpdateWingsNodePayload, UpdateWingsNodeResponse } from '#shared/types/admin'
 
 const MAX_BODY_SIZE = 32 * 1024

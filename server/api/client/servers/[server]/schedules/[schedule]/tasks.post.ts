@@ -1,12 +1,12 @@
 import { randomUUID } from 'crypto'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { useDrizzle, tables, eq, and } from '#server/utils/drizzle'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { createTaskSchema } from '#shared/schema/server/operations'
-import { invalidateScheduleCaches } from '~~/server/utils/serversStore'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordServerActivity } from '~~/server/utils/server-activity'
-import { requireAccountUser } from '~~/server/utils/security'
+import { invalidateScheduleCaches } from '#server/utils/serversStore'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordServerActivity } from '#server/utils/server-activity'
+import { requireAccountUser } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server')

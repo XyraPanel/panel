@@ -1,6 +1,6 @@
 import { or, like, desc } from 'drizzle-orm'
-import { requireAdmin } from '~~/server/utils/security'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
+import { requireAdmin } from '#server/utils/security'
+import { useDrizzle, tables } from '#server/utils/drizzle'
 import type { UserOption } from '#shared/types/ui'
 
 export default defineEventHandler(async (event): Promise<{ data: UserOption[] }> => {

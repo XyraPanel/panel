@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { useDrizzle, tables } from '#server/utils/drizzle'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { createNestSchema } from '#shared/schema/admin/infrastructure'
 
 export default defineEventHandler(async (event) => {

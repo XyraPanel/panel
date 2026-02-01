@@ -1,10 +1,10 @@
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq, and } from '~~/server/utils/drizzle'
-import { invalidateServerCaches } from '~~/server/utils/serversStore'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '~~/server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { useDrizzle, tables, eq, and } from '#server/utils/drizzle'
+import { invalidateServerCaches } from '#server/utils/serversStore'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
 import { updateAllocationSchema } from '#shared/schema/server/subusers'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { recordServerActivity } from '#server/utils/server-activity'
 
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server')

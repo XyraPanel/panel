@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm'
-import { requireAdmin } from '~~/server/utils/security'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { useDrizzle, tables } from '#server/utils/drizzle'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   const { id: serverId } = event.context.params ?? {}
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
       })
     }
 
-    const { provisionServerOnWings } = await import('~~/server/utils/server-provisioning')
+    const { provisionServerOnWings } = await import('#server/utils/server-provisioning')
     
     const allocations = db
       .select()
@@ -108,7 +108,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    const { getWingsClientForServer } = await import('~~/server/utils/wings-client')
+    const { getWingsClientForServer } = await import('#server/utils/wings-client')
     const { client } = await getWingsClientForServer(server.uuid)
 
     await client.sendPowerAction(server.uuid, action as 'start' | 'stop' | 'restart' | 'kill')

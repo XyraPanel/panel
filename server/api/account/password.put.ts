@@ -1,10 +1,10 @@
 import { APIError } from 'better-auth/api'
 import type { AuthContext } from '#shared/types/auth'
-import { getAuth, normalizeHeadersForAuth } from '~~/server/utils/auth'
-import { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { resolveSessionUser } from '#server/utils/auth/sessionUser'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { accountPasswordUpdateSchema } from '#shared/schema/account'
-import { requireAuth, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
+import { requireAuth, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT')

@@ -1,4 +1,4 @@
-import { requireAdmin } from '~~/server/utils/security'
+import { requireAdmin } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)

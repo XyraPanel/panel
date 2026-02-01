@@ -1,8 +1,8 @@
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { getWingsClientForServer } from '~~/server/utils/wings-client'
-import { recordServerActivity } from '~~/server/utils/server-activity'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { getWingsClientForServer } from '#server/utils/wings-client'
+import { recordServerActivity } from '#server/utils/server-activity'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { serverCommandSchema } from '#shared/schema/server/operations'
 
 export default defineEventHandler(async (event) => {

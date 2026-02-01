@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3'
 import type { ServerSessionUser } from '#shared/types/auth'
-import { normalizeHeadersForAuth, auth } from '~~/server/utils/auth'
+import { normalizeHeadersForAuth, auth } from '#server/utils/auth'
 
 type SessionType = Awaited<ReturnType<typeof auth.api.getSession>>
 

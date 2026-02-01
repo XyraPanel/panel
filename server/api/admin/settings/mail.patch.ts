@@ -1,7 +1,7 @@
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { SETTINGS_KEYS, setSettings } from '~~/server/utils/settings'
-import { refreshEmailService } from '~~/server/utils/email'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { SETTINGS_KEYS, setSettings } from '#server/utils/settings'
+import { refreshEmailService } from '#server/utils/email'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { mailSettingsSchema } from '#shared/schema/admin/settings'
 
 export default defineEventHandler(async (event) => {

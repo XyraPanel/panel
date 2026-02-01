@@ -1,6 +1,6 @@
 import { desc, eq, or } from 'drizzle-orm'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { buildCacheKey, deleteCacheItems, setCacheItem, withCache } from '~~/server/utils/cache'
+import { useDrizzle, tables } from '#server/utils/drizzle'
+import { buildCacheKey, deleteCacheItems, setCacheItem, withCache } from '#server/utils/cache'
 import { buildScheduleListCacheKey, buildScheduleTasksCacheKey } from './cache-keys'
 
 const SERVER_CACHE_TTL = 30

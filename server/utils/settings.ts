@@ -1,4 +1,4 @@
-import { useDrizzle, tables, eq, inArray } from '~~/server/utils/drizzle'
+import { useDrizzle, tables, eq, inArray } from '#server/utils/drizzle'
 
 export const SETTINGS_KEYS = {
   PANEL_LOCALE: 'app:locale',

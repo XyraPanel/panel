@@ -1,7 +1,7 @@
 import { desc, eq, or, sql } from 'drizzle-orm'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { requireAccountUser } from '~~/server/utils/security'
+import { useDrizzle, tables } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAccountUser } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAccountUser(event)

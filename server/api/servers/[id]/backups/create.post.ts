@@ -1,11 +1,11 @@
 import { randomUUID } from 'node:crypto'
-import { getWingsClientForServer } from '~~/server/utils/wings-client'
-import { useDrizzle } from '~~/server/utils/drizzle'
-import * as tables from '~~/server/database/schema'
-import { requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { getWingsClientForServer } from '#server/utils/wings-client'
+import { useDrizzle } from '#server/utils/drizzle'
+import * as tables from '#server/database/schema'
+import { requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id')

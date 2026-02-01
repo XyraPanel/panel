@@ -1,7 +1,7 @@
 import { type H3Event } from 'h3'
-import { getNodeIdFromAuth } from '~~/server/utils/wings/auth'
-import { toWingsHttpError } from '~~/server/utils/wings/http'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
+import { getNodeIdFromAuth } from '#server/utils/wings/auth'
+import { toWingsHttpError } from '#server/utils/wings/http'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
 import { sql } from 'drizzle-orm'
 import { remoteServersPaginationSchema } from '#shared/schema/wings'
 

@@ -1,5 +1,5 @@
-import { getWingsClientForServer } from '~~/server/utils/wings-client'
-import { recordAuditEvent } from '~~/server/utils/audit'
+import { getWingsClientForServer } from '#server/utils/wings-client'
+import { recordAuditEvent } from '#server/utils/audit'
 import type { FileManagerOptions, FileUploadResult } from '#shared/types/server'
 
 export class FileManager {

@@ -1,10 +1,10 @@
 import { type H3Event } from 'h3'
-import { remoteListServerDirectory } from '~~/server/utils/wings/registry'
-import { debugError } from '~~/server/utils/logger'
-import { requireAccountUser } from '~~/server/utils/security'
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { recordServerActivity } from '~~/server/utils/server-activity'
+import { remoteListServerDirectory } from '#server/utils/wings/registry'
+import { debugError } from '#server/utils/logger'
+import { requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { recordServerActivity } from '#server/utils/server-activity'
 
 export default defineEventHandler(async (event: H3Event) => {
   const identifier = getRouterParam(event, 'id')

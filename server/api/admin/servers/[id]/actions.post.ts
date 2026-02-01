@@ -1,11 +1,11 @@
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { serverManager } from '~~/server/utils/server-manager'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import { WingsConnectionError, WingsAuthError } from '~~/server/utils/wings-client'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { serverManager } from '#server/utils/server-manager'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { WingsConnectionError, WingsAuthError } from '#server/utils/wings-client'
 import type { ServerActionResponse } from '#shared/types/admin'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { serverActionSchema } from '#shared/schema/admin/actions'
 
 export default defineEventHandler(async (event): Promise<ServerActionResponse> => {

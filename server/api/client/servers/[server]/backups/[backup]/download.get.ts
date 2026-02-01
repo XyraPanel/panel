@@ -1,9 +1,9 @@
-import { getServerWithAccess } from '~~/server/utils/server-helpers'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { requireServerPermission } from '~~/server/utils/permission-middleware'
-import { decryptToken } from '~~/server/utils/wings/encryption'
+import { getServerWithAccess } from '#server/utils/server-helpers'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { requireServerPermission } from '#server/utils/permission-middleware'
+import { decryptToken } from '#server/utils/wings/encryption'
 import { generateBackupDownloadToken } from '../../../../../../../server/utils/wings-tokens'
-import { requireAccountUser } from '~~/server/utils/security'
+import { requireAccountUser } from '#server/utils/security'
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event)

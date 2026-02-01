@@ -1,7 +1,7 @@
 import { eq, desc } from 'drizzle-orm'
 import type { ServerBackup } from '#shared/types/server'
-import { useDrizzle } from '~~/server/utils/drizzle'
-import * as tables from '~~/server/database/schema'
+import { useDrizzle } from '#server/utils/drizzle'
+import * as tables from '#server/database/schema'
 import { withCache, buildCacheKey, deleteCacheItem } from './cache'
 
 const SERVER_BACKUPS_CACHE_TTL = 60

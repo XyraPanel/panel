@@ -1,7 +1,7 @@
 import type { UserSessionSummary, AccountSessionsResponse, AuthContext } from '#shared/types/auth'
-import { requireAccountUser } from '~~/server/utils/security'
-import { parseUserAgent } from '~~/server/utils/user-agent'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAccountUser } from '#server/utils/security'
+import { parseUserAgent } from '#server/utils/user-agent'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event): Promise<AccountSessionsResponse> => {
   const middlewareAuth = (event.context as { auth?: AuthContext }).auth

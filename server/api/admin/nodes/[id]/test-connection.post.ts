@@ -1,10 +1,10 @@
-import { requireAdmin } from '~~/server/utils/security'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import { getWingsClient, WingsConnectionError, WingsAuthError } from '~~/server/utils/wings-client'
+import { requireAdmin } from '#server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { getWingsClient, WingsConnectionError, WingsAuthError } from '#server/utils/wings-client'
 import type { WingsNode } from '#shared/types/wings-client'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)

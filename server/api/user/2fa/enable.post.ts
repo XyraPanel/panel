@@ -1,7 +1,7 @@
 import { APIError } from 'better-auth/api'
-import { getAuth, normalizeHeadersForAuth } from '~~/server/utils/auth'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '~~/server/utils/security'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
 import { twoFactorEnableSchema } from '#shared/schema/account'
 
 export default defineEventHandler(async (event) => {

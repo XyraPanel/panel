@@ -1,5 +1,5 @@
-import { resourceMonitor } from '~~/server/utils/resource-monitor'
-import { debugLog, debugError, debugWarn } from '~~/server/utils/logger'
+import { resourceMonitor } from '#server/utils/resource-monitor'
+import { debugLog, debugError, debugWarn } from '#server/utils/logger'
 
 export default defineTask({
   meta: {

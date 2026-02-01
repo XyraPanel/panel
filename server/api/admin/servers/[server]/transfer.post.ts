@@ -1,9 +1,9 @@
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAdmin } from '~~/server/utils/security'
-import { initiateServerTransfer } from '~~/server/utils/transfers/initiate'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAdmin } from '#server/utils/security'
+import { initiateServerTransfer } from '#server/utils/transfers/initiate'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 import { serverTransferSchema } from '~~/shared/schema/admin/server'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server')

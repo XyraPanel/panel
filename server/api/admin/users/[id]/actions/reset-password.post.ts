@@ -1,11 +1,11 @@
 import { randomBytes } from 'node:crypto'
-import { getAuth, normalizeHeadersForAuth } from '~~/server/utils/auth'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { resetPasswordActionSchema } from '#shared/schema/admin/actions'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     if (mode === 'link') {
-      const { resolvePanelBaseUrl } = await import('~~/server/utils/email')
+      const { resolvePanelBaseUrl } = await import('#server/utils/email')
       const resetBaseUrl = `${resolvePanelBaseUrl()}/auth/password/reset`
       
       await auth.api.requestPasswordReset({

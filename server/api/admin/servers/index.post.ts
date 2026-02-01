@@ -1,12 +1,12 @@
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { useDrizzle, tables } from '~~/server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { useDrizzle, tables } from '#server/utils/drizzle'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { randomUUID } from 'node:crypto'
 import { and, eq, isNull } from 'drizzle-orm'
-import { provisionServerOnWings } from '~~/server/utils/server-provisioning'
-import { sendServerCreatedEmail } from '~~/server/utils/email'
+import { provisionServerOnWings } from '#server/utils/server-provisioning'
+import { sendServerCreatedEmail } from '#server/utils/email'
 import { createAdminServerSchema } from '#shared/schema/admin/server'
 
 export default defineEventHandler(async (event) => {
@@ -146,7 +146,7 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const { invalidateServerCaches } = await import('~~/server/utils/serversStore')
+  const { invalidateServerCaches } = await import('#server/utils/serversStore')
   await invalidateServerCaches({
     id: serverId,
     uuid: serverUuid,

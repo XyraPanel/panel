@@ -1,8 +1,8 @@
 import { createError, type H3Event, readBody } from 'h3'
-import { getServerSession } from '~~/server/utils/session'
-import { requireAdminPermission } from '~~/server/utils/permission-middleware'
-import { getAuth, normalizeHeadersForAuth } from '~~/server/utils/auth'
-import { requireSessionUser } from '~~/server/utils/auth/sessionUser'
+import { getServerSession } from '#server/utils/session'
+import { requireAdminPermission } from '#server/utils/permission-middleware'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { requireSessionUser } from '#server/utils/auth/sessionUser'
 import type { z } from 'zod'
 
 export const BODY_SIZE_LIMITS = {

@@ -1,7 +1,7 @@
 import type { H3Event } from 'h3'
-import { getServerSession } from '~~/server/utils/session'
-import { permissionManager } from '~~/server/utils/permission-manager'
-import { resolveSessionUser } from '~~/server/utils/auth/sessionUser'
+import { getServerSession } from '#server/utils/session'
+import { permissionManager } from '#server/utils/permission-manager'
+import { resolveSessionUser } from '#server/utils/auth/sessionUser'
 import type { Permission, PermissionContext, PermissionMiddlewareOptions } from '#shared/types/server'
 
 export async function requireServerPermission(

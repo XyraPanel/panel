@@ -1,5 +1,5 @@
-import { and, eq, useDrizzle, tables } from '~~/server/utils/drizzle'
-import { withCache, setCacheItem } from '~~/server/utils/cache'
+import { and, eq, useDrizzle, tables } from '#server/utils/drizzle'
+import { withCache, setCacheItem } from '#server/utils/cache'
 import { buildServerUserPermissionsCacheKey } from './cache-keys'
 
 export const PERMISSIONS = {

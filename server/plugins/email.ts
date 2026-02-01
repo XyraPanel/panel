@@ -1,4 +1,4 @@
-import { initializeEmailService } from '~~/server/utils/email'
+import { initializeEmailService } from '#server/utils/email'
 
 export default defineNitroPlugin(() => {
   try {

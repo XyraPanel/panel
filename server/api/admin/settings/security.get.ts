@@ -1,6 +1,6 @@
-import { requireAdmin } from '~~/server/utils/security'
-import { SETTINGS_KEYS, getSetting } from '~~/server/utils/settings'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { requireAdmin } from '#server/utils/security'
+import { SETTINGS_KEYS, getSetting } from '#server/utils/settings'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 import type { SecuritySettings } from '#shared/types/admin'
 
 export default defineEventHandler(async (event) => {

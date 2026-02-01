@@ -1,4 +1,4 @@
-import { SETTINGS_KEYS, getSetting } from '~~/server/utils/settings'
+import { SETTINGS_KEYS, getSetting } from '#server/utils/settings'
 
 const DEFAULT_BRAND_LOGO = '/logo.png'
 

@@ -1,9 +1,9 @@
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '~~/server/utils/security'
-import { useDrizzle, tables, eq } from '~~/server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '~~/server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '~~/server/utils/admin-acl'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 import { serverBuildSchema } from '#shared/schema/admin/server'
-import { recordAuditEventFromRequest } from '~~/server/utils/audit'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 export default defineEventHandler(async (event) => {
   
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
   const { cpu, memory, swap, disk, io, threads, oomDisabled, databaseLimit, allocationLimit, backupLimit } = body
 
   const db = useDrizzle()
-  const { findServerByIdentifier, invalidateServerCaches } = await import('~~/server/utils/serversStore')
+  const { findServerByIdentifier, invalidateServerCaches } = await import('#server/utils/serversStore')
   const server = await findServerByIdentifier(identifier)
 
   if (!server) {
@@ -120,7 +120,7 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  const { getWingsClientForServer } = await import('~~/server/utils/wings-client')
+  const { getWingsClientForServer } = await import('#server/utils/wings-client')
   const result = await getWingsClientForServer(server.uuid)
   const { client } = result
   
