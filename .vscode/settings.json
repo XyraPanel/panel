@@ -1,8 +1,10 @@
 {
   "editor.codeActionsOnSave": {
-    "source.fixAll": "never",
-    "source.fixAll.oxc": "explicit"
+    "source.fixAll.oxc": "always"
   },
+  "oxc.fmt.configPath": ".oxfmtrc.json",
+  "editor.defaultFormatter": "oxc.oxc-vscode",
+  "editor.formatOnSave": true,
   "oxc.typeAware": true,
   "conventionalCommits.scopes": [
     "auth",

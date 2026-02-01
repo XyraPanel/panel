@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["typescript", "unicorn", "import", "vitest", "promise"],
+  "plugins": ["typescript", "unicorn", "import", "vitest", "promise", "vue"],
   "env": {
     "browser": true,
     "node": true
@@ -70,6 +70,12 @@
     ".nuxt",
     ".output",
     "dist",
-    "coverage"
+    "coverage",
+    ".data",
+    "build",
+    ".vscode",
+    ".idea",
+    "pnpm-lock.yaml",
+    "*.min.js"
   ]
 }

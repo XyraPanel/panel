@@ -23,6 +23,10 @@
     "postinstall": "nuxt prepare",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
+    "lint:type-aware": "oxlint --type-aware",
+    "lint:type-check": "oxlint --type-aware --type-check",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "test": "vitest run",
@@ -74,14 +78,20 @@
     "@vue/test-utils": "^2.4.6",
     "drizzle-kit": "^0.31.8",
     "lint-staged": "^16.2.7",
+    "oxfmt": "^0.27.0",
     "oxlint": "^1.42.0",
+    "oxlint-tsgolint": "^0.11.4",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "vitest": "^4.0.18",
     "vue-tsc": "^3.2.4"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx,mjs,cjs,vue}": "pnpm run lint"
+    "*.{js,jsx,ts,tsx,mjs,cjs,vue}": [
+      "pnpm run lint",
+      "pnpm run fmt:check"
+    ],
+    "*.{json,jsonc,json5,yml,yaml,md,mdx,css,scss,less,html,vue,ts,tsx,js,jsx,graphql,toml}": "pnpm run fmt"
   },
   "packageManager": "pnpm@10.26.0+sha512.3b3f6c725ebe712506c0ab1ad4133cf86b1f4b687effce62a9b38b4d72e3954242e643190fc51fa1642949c735f403debd44f5cb0edd657abe63a8b6a7e1e402",
   "pnpm": {}

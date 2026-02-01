@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check formatting with Oxfmt
+        run: pnpm run fmt:check
+
       - name: Lint with Oxlint
         run: pnpm run lint
 
