@@ -57,7 +57,7 @@
     "monaco-editor": "^0.55.1",
     "nodemailer": "^7.0.12",
     "nuxt": "^4.3.0",
-    "nuxt-charts": "2.1.0",
+    "nuxt-charts": "2.1.1",
     "nuxt-monaco-editor": "^1.4.0",
     "nuxt-qrcode": "^0.4.8",
     "nuxt-security": "^2.5.1",
