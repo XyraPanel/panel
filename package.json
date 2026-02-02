@@ -39,7 +39,7 @@
     "@nuxt/scripts": "0.13.2",
     "@nuxt/ui": "4.4.0",
     "@nuxtjs/i18n": "^10.2.1",
-    "@nuxtjs/robots": "5.6.7",
+    "@nuxtjs/robots": "5.7.0",
     "@nuxtjs/turnstile": "^1.1.1",
     "@pinia/colada": "^0.21.2",
     "@pinia/colada-nuxt": "0.3.1",
