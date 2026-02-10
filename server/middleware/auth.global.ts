@@ -4,6 +4,8 @@ import { getServerSession } from '#server/utils/session';
 import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
 import { requireSessionUser } from '#server/utils/auth/sessionUser';
 
+type EventContextWithAuth = H3Event['context'] & { auth?: AuthContext };
+
 const PUBLIC_ASSET_PREFIXES = ['/_nuxt/', '/__nuxt_devtools__/', '/_ipx/', '/public/'];
 
 const PUBLIC_ASSET_PATHS = new Set([
@@ -94,7 +96,8 @@ export default defineEventHandler(async (event) => {
     return;
   }
 
-  const existingAuth = (event.context as { auth?: AuthContext }).auth;
+  const ctx = event.context as EventContextWithAuth;
+  const existingAuth = ctx.auth;
   if (existingAuth?.session && existingAuth.user) {
     return;
   }
@@ -123,8 +126,8 @@ export default defineEventHandler(async (event) => {
 
       const auth = getAuth();
       const headers = normalizeHeadersForAuth(event.node.req.headers);
-      type AuthApiWithApiKey = typeof auth.api & {
-        verifyApiKey: (options: {
+      const authApi = auth.api as typeof auth.api & {
+        verifyApiKey?: (options: {
           body: { key: string };
           headers?: Record<string, string>;
         }) => Promise<{
@@ -132,9 +135,15 @@ export default defineEventHandler(async (event) => {
           key: { userId?: string; id?: string } | null;
         }>;
       };
-      const authApi = auth.api as AuthApiWithApiKey;
 
       try {
+        if (typeof authApi.verifyApiKey !== 'function') {
+          throw createError({
+            status: 500,
+            statusText: 'API key verification unavailable',
+          });
+        }
+
         const verification = await authApi.verifyApiKey({
           body: { key: apiKeyValue },
           headers,
@@ -184,7 +193,7 @@ export default defineEventHandler(async (event) => {
           passwordResetRequired: dbUser.passwordResetRequired || false,
         };
 
-        (event.context as { auth?: AuthContext }).auth = {
+        ctx.auth = {
           session: null,
           user: resolvedUser,
         };
@@ -295,7 +304,7 @@ export default defineEventHandler(async (event) => {
     return sendRedirect(event, redirectTarget, 302);
   }
 
-  (event.context as { auth?: AuthContext }).auth = {
+  ctx.auth = {
     session,
     user,
   };
