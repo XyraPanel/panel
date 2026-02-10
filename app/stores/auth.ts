@@ -17,8 +17,11 @@ export const useAuthStore = defineStore('auth', () => {
   const user = computed<SessionUser | null>(() => {
     const session = sessionData.value
     if (!session) return null
-    const sessionUser = (session as { user?: SessionUser }).user
-    return sessionUser ?? null
+    const sessionUser = 'user' in session && typeof (session as { user?: unknown }).user !== 'undefined'
+      ? (session as { user?: unknown }).user
+      : null
+    if (!sessionUser || typeof sessionUser !== 'object') return null
+    return sessionUser as SessionUser
   })
 
   const permissions = computed(() => user.value?.permissions ?? [])

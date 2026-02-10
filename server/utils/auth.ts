@@ -195,7 +195,7 @@ function createAuth() {
         updateEmailWithoutVerification: false,
         sendChangeEmailConfirmation: async ({ user, newEmail, url }, _request) => {
           const { sendEmail } = await import('#server/utils/email')
-          await sendEmail({
+          void sendEmail({
             to: user.email,
             subject: 'Confirm Email Change',
             html: `
@@ -205,14 +205,14 @@ function createAuth() {
               <p><a href="${url}">Confirm Email Change</a></p>
               <p>If you didn't request this change, please ignore this email.</p>
             `,
-          })
+          }).catch(error => console.error('[auth][email][change-email-confirmation]', error))
         },
       },
       deleteUser: {
         enabled: true,
         sendDeleteAccountVerification: async ({ user, url }, _request) => {
           const { sendEmail } = await import('#server/utils/email')
-          await sendEmail({
+          void sendEmail({
             to: user.email,
             subject: 'Confirm Account Deletion',
             html: `
@@ -223,7 +223,7 @@ function createAuth() {
               <p><a href="${url}" style="color: #ef4444; font-weight: bold;">Delete My Account</a></p>
               <p>If you didn't request this, please ignore this email and secure your account.</p>
             `,
-          })
+          }).catch(error => console.error('[auth][email][delete-account]', error))
         },
         beforeDelete: async (user, _request) => {
           const db = useDrizzle()
@@ -261,16 +261,17 @@ function createAuth() {
       sendResetPassword: async ({ user, token }, _request) => {
         const { sendPasswordResetEmail, resolvePanelBaseUrl } = await import('#server/utils/email')
         const resetBaseUrl = `${resolvePanelBaseUrl()}/auth/password/reset`
-        await sendPasswordResetEmail(user.email, token, resetBaseUrl)
+        void sendPasswordResetEmail(user.email, token, resetBaseUrl)
+          .catch(error => console.error('[auth][email][password-reset]', error))
       },
       resetPasswordTokenExpiresIn: 3600,
       onPasswordReset: async ({ user }, _request) => {
         const db = useDrizzle()
-        await db.delete(tables.sessions)
+        db.delete(tables.sessions)
           .where(eq(tables.sessions.userId, user.id))
           .run()
         
-        await db.update(tables.users)
+        db.update(tables.users)
           .set({ 
             passwordResetRequired: false,
           })
@@ -306,12 +307,14 @@ function createAuth() {
       expiresIn: 60 * 60 * 24,
       sendVerificationEmail: async ({ user, token }, _request) => {
         const { sendEmailVerificationEmail } = await import('#server/utils/email')
-        await sendEmailVerificationEmail({
+        const rawUser = user as Record<string, unknown>
+        const username = typeof rawUser.username === 'string' ? rawUser.username : user.name || null
+        void sendEmailVerificationEmail({
           to: user.email,
           token,
           expiresAt: new Date(Date.now() + 60 * 60 * 24 * 1000),
-          username: (user as { username?: string }).username || user.name || null,
-        })
+          username,
+        }).catch(error => console.error('[auth][email][verify-email]', error))
       },
     },
     trustedOrigins,
@@ -359,7 +362,8 @@ function createAuth() {
     onAPIError: {
       throw: false,
       onError: (error: unknown, ctx: AuthContext) => {
-        const request = (ctx as { request?: Request }).request
+        const maybeRequest = 'request' in ctx ? (ctx as { request?: unknown }).request : undefined
+        const request = maybeRequest instanceof Request ? maybeRequest : undefined
         const isProduction = process.env.NODE_ENV === 'production'
         let path = 'unknown'
         if (request?.url) {
@@ -373,10 +377,9 @@ function createAuth() {
         const isAuthPath = path.startsWith('/api/auth')
 
         if (path.startsWith('/api/auth/sign-in')) {
-          const identifier = (ctx as { body?: { email?: string; username?: string } }).body
-            ? ((ctx as { body?: { email?: string; username?: string } }).body!.email
-              || (ctx as { body?: { email?: string; username?: string } }).body!.username
-              || null)
+          const maybeBody = 'body' in ctx ? (ctx as { body?: unknown }).body : undefined
+          const identifier = (maybeBody && typeof maybeBody === 'object')
+            ? ((maybeBody as { email?: string }).email || (maybeBody as { username?: string }).username || null)
             : null
           const headers = request?.headers
           const ip = headers
@@ -446,8 +449,8 @@ function createAuth() {
           return headerKey || null
         },
         enableSessionForAPIKeys: true,
-        disableKeyHashing: true,
-        defaultKeyLength: 16,
+        disableKeyHashing: false,
+        defaultKeyLength: 32,
         fallbackToDatabase: true,
       }),
       bearer(),
@@ -475,9 +478,10 @@ function createAuth() {
           .where(eq(tables.users.id, user.id))
           .get()
 
+        const rawUser = user as Record<string, unknown>
         const name = dbUser
           ? [dbUser.nameFirst, dbUser.nameLast].filter(Boolean).join(' ') || dbUser.username
-          : user.name || (user as { username?: string }).username || null
+          : user.name || (typeof rawUser.username === 'string' ? rawUser.username : null)
 
         return {
           user: {

@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     return
   }
 
-  const contextAuth = (event.context as { auth?: AuthContext }).auth
+  const contextAuth = (event.context as typeof event.context & { auth?: AuthContext }).auth
   if (!contextAuth?.user?.id) {
     return
   }
