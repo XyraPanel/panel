@@ -256,40 +256,23 @@ async function handleExportEgg() {
 
               <div class="space-y-4">
                 <UFormField :label="t('admin.nests.createEgg.dockerImage')" name="dockerImage" required>
-                  <UInput
-                    v-model="configForm.dockerImage"
-                    :placeholder="t('admin.nests.createEgg.dockerImage')"
-                    class="w-full"
-                    :disabled="isSavingConfig"
-                  />
+                  <UInput v-model="configForm.dockerImage" :placeholder="t('admin.nests.createEgg.dockerImage')"
+                    class="w-full" :disabled="isSavingConfig" />
                 </UFormField>
 
                 <UFormField :label="t('admin.nests.createEgg.startupCommand')" name="startup" required>
-                  <UTextarea
-                    v-model="configForm.startup"
-                    :rows="4"
-                    class="font-mono w-full"
-                    :disabled="isSavingConfig"
-                  />
+                  <UTextarea v-model="configForm.startup" :rows="4" class="font-mono w-full"
+                    :disabled="isSavingConfig" />
                 </UFormField>
 
                 <UFormField :label="t('admin.eggs.stopCommand')" name="configStop">
-                  <UInput
-                    v-model="configForm.configStop"
-                    :placeholder="t('admin.eggs.stopCommand')"
-                    class="w-full"
-                    :disabled="isSavingConfig"
-                  />
+                  <UInput v-model="configForm.configStop" :placeholder="t('admin.eggs.stopCommand')" class="w-full"
+                    :disabled="isSavingConfig" />
                 </UFormField>
 
                 <div class="flex justify-end">
-                  <UButton
-                    color="primary"
-                    variant="subtle"
-                    :loading="isSavingConfig"
-                    :disabled="isSavingConfig"
-                    @click="handleSaveConfig"
-                  >
+                  <UButton color="primary" variant="subtle" :loading="isSavingConfig" :disabled="isSavingConfig"
+                    @click="handleSaveConfig">
                     {{ t('common.save') }}
                   </UButton>
                 </div>
@@ -301,21 +284,21 @@ async function handleExportEgg() {
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2">
                     <h2 class="text-lg font-semibold">{{ t('admin.eggs.environmentVariables') }}</h2>
-                    <UBadge color="neutral" variant="outline" size="sm">{{ egg.variables.length }} {{ t('common.all') }}</UBadge>
+                    <UBadge color="neutral" variant="outline" size="sm">{{ egg.variables.length }} {{ t('common.all') }}
+                    </UBadge>
                   </div>
-                  <UButton icon="i-lucide-plus" size="xs" color="primary" variant="subtle" @click="openCreateVariableModal">
+                  <UButton icon="i-lucide-plus" size="sm" color="primary" variant="subtle"
+                    @click="openCreateVariableModal">
                     {{ t('admin.eggs.addVariable') }}
                   </UButton>
                 </div>
               </template>
 
-              <UEmpty
-                v-if="egg.variables.length === 0"
-                icon="i-lucide-variable"
+              <UEmpty v-if="egg.variables.length === 0" icon="i-lucide-variable"
                 :title="t('admin.eggs.noVariablesDefined')"
-                :description="t('admin.eggs.noVariablesDefinedDescription')"
-              >
-                <UButton class="mt-4" size="sm" @click="openCreateVariableModal">{{ t('admin.eggs.addFirstVariable') }}</UButton>
+                :description="t('admin.eggs.noVariablesDefinedDescription')">
+                <UButton class="mt-4" size="sm" @click="openCreateVariableModal">{{ t('admin.eggs.addFirstVariable') }}
+                </UButton>
               </UEmpty>
 
               <div v-else class="divide-y divide-default">
@@ -324,8 +307,11 @@ async function handleExportEgg() {
                     <div class="flex-1">
                       <div class="flex items-center gap-2">
                         <span class="font-medium">{{ variable.name }}</span>
-                        <UBadge v-if="variable.userEditable" size="xs" color="primary">{{ t('admin.eggs.userEditable') }}</UBadge>
-                        <UBadge v-if="!variable.userViewable" size="xs" color="neutral">{{ t('admin.eggs.hidden') }}</UBadge>
+                        <UBadge v-if="variable.userEditable" size="sm" color="neutral" variant="subtle">{{
+                          t('admin.eggs.userEditable')
+                          }}</UBadge>
+                        <UBadge v-if="!variable.userViewable" size="xs" color="neutral">{{ t('admin.eggs.hidden') }}
+                        </UBadge>
                       </div>
                       <p v-if="variable.description" class="mt-1 text-sm text-muted-foreground">
                         {{ variable.description }}
@@ -347,7 +333,7 @@ async function handleExportEgg() {
                     </div>
 
                     <div class="flex items-center gap-2">
-                      <UButton icon="i-lucide-pencil" size="xs" variant="ghost"
+                      <UButton icon="i-lucide-pencil" size="xs" variant="ghost" color="info"
                         @click="openEditVariableModal(variable)" />
                       <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
                         @click="variableToDelete = variable; showDeleteVariableModal = true" />
@@ -364,17 +350,23 @@ async function handleExportEgg() {
 
               <div class="space-y-4">
                 <div v-if="egg.scriptContainer">
-                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.eggs.container') }}</label>
+                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{
+                    t('admin.eggs.container')
+                    }}</label>
                   <p class="mt-1 font-mono text-sm">{{ egg.scriptContainer }}</p>
                 </div>
 
                 <div v-if="egg.scriptEntry">
-                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.eggs.entrypoint') }}</label>
+                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{
+                    t('admin.eggs.entrypoint')
+                    }}</label>
                   <p class="mt-1 font-mono text-sm">{{ egg.scriptEntry }}</p>
                 </div>
 
                 <div>
-                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.eggs.script') }}</label>
+                  <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{
+                    t('admin.eggs.script')
+                    }}</label>
                   <pre class="mt-1 max-h-96 overflow-auto rounded bg-muted/40 p-3 text-xs">{{ egg.scriptInstall }}</pre>
                 </div>
               </div>
@@ -384,12 +376,14 @@ async function handleExportEgg() {
       </UContainer>
     </UPageBody>
 
-    <UModal v-model:open="showVariableModal" :title="editingVariable ? t('admin.eggs.editVariable') : t('admin.eggs.createVariable')"
+    <UModal v-model:open="showVariableModal"
+      :title="editingVariable ? t('admin.eggs.editVariable') : t('admin.eggs.createVariable')"
       :description="editingVariable ? t('admin.eggs.updateEnvironmentVariable') : t('admin.eggs.addNewEnvironmentVariable')">
       <template #body>
         <form class="space-y-4" @submit.prevent="handleVariableSubmit">
           <UFormField :label="t('common.name')" name="name" required>
-            <UInput v-model="variableForm.name" :placeholder="t('admin.eggs.variableNamePlaceholder')" required :disabled="isSubmitting" class="w-full" />
+            <UInput v-model="variableForm.name" :placeholder="t('admin.eggs.variableNamePlaceholder')" required
+              :disabled="isSubmitting" class="w-full" />
             <template #help>
               {{ t('admin.eggs.variableNameHelp') }}
             </template>
@@ -397,23 +391,25 @@ async function handleExportEgg() {
 
           <UFormField :label="t('common.description')" name="description">
             <UTextarea v-model="variableForm.description" :placeholder="t('admin.eggs.variableDescriptionPlaceholder')"
-              class="w-full"
-              :disabled="isSubmitting" />
+              class="w-full" :disabled="isSubmitting" />
           </UFormField>
 
           <UFormField :label="t('admin.eggs.environmentVariable')" name="envVariable" required>
-            <UInput v-model="variableForm.envVariable" :placeholder="t('admin.eggs.envVariablePlaceholder')" required :disabled="isSubmitting" class="w-full" />
+            <UInput v-model="variableForm.envVariable" :placeholder="t('admin.eggs.envVariablePlaceholder')" required
+              :disabled="isSubmitting" class="w-full" />
             <template #help>
               {{ t('admin.eggs.envVariableHelp') }}
             </template>
           </UFormField>
 
           <UFormField :label="t('admin.eggs.defaultValue')" name="defaultValue">
-            <UInput v-model="variableForm.defaultValue" :placeholder="t('admin.eggs.defaultValuePlaceholder')" :disabled="isSubmitting" class="w-full" />
+            <UInput v-model="variableForm.defaultValue" :placeholder="t('admin.eggs.defaultValuePlaceholder')"
+              :disabled="isSubmitting" class="w-full" />
           </UFormField>
 
           <UFormField :label="t('admin.eggs.validationRules')" name="rules">
-            <UInput v-model="variableForm.rules" :placeholder="t('admin.eggs.validationRulesPlaceholder')" :disabled="isSubmitting" class="w-full" />
+            <UInput v-model="variableForm.rules" :placeholder="t('admin.eggs.validationRulesPlaceholder')"
+              :disabled="isSubmitting" class="w-full" />
             <template #help>
               {{ t('admin.eggs.validationRulesHelp') }}
             </template>
@@ -449,20 +445,18 @@ async function handleExportEgg() {
       </template>
     </UModal>
 
-    <UModal
-      v-model:open="showDeleteVariableModal"
-      :title="t('admin.eggs.deleteVariable')"
-      :description="t('admin.eggs.confirmDeleteVariableDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
-    >
+    <UModal v-model:open="showDeleteVariableModal" :title="t('admin.eggs.deleteVariable')"
+      :description="t('admin.eggs.confirmDeleteVariableDescription')" :ui="{ footer: 'justify-end gap-2' }">
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.eggs.deleteVariableWarning') }}</template>
         </UAlert>
         <div v-if="variableToDelete" class="rounded-md bg-muted p-3 text-sm">
-          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ variableToDelete.name }}</span></p>
-          <p class="text-muted-foreground mt-2">{{ t('admin.eggs.environmentVariable') }}: <code class="font-mono">{{ variableToDelete.envVariable }}</code></p>
+          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ variableToDelete.name
+              }}</span></p>
+          <p class="text-muted-foreground mt-2">{{ t('admin.eggs.environmentVariable') }}: <code class="font-mono">{{
+            variableToDelete.envVariable }}</code></p>
         </div>
       </template>
 
@@ -470,7 +464,8 @@ async function handleExportEgg() {
         <UButton variant="ghost" :disabled="isDeletingVariable" @click="resetDeleteVariableModal">
           {{ t('common.cancel') }}
         </UButton>
-        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeletingVariable" @click="handleDeleteVariable">
+        <UButton color="error" variant="subtle" icon="i-lucide-trash-2" :loading="isDeletingVariable"
+          @click="handleDeleteVariable">
           {{ t('admin.eggs.deleteVariable') }}
         </UButton>
       </template>

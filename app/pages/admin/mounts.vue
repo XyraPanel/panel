@@ -149,12 +149,8 @@ async function handleDelete() {
               <template #description>{{ error.message }}</template>
             </UAlert>
 
-            <UEmpty
-              v-else-if="mounts.length === 0"
-              icon="i-lucide-folder-tree"
-              :title="t('admin.mounts.noMountsYet')"
-              :description="t('admin.mounts.mountsDescription')"
-            />
+            <UEmpty v-else-if="mounts.length === 0" icon="i-lucide-folder-tree" :title="t('admin.mounts.noMountsYet')"
+              :description="t('admin.mounts.mountsDescription')" />
 
             <div v-else class="divide-y divide-default">
               <div v-for="mount in mounts" :key="mount.id" class="flex items-start justify-between py-4">
@@ -163,7 +159,8 @@ async function handleDelete() {
                     <UIcon name="i-lucide-folder-tree" class="size-4 text-primary" />
                     <span class="font-medium">{{ mount.name }}</span>
                     <UBadge v-if="mount.readOnly" size="xs" color="neutral">{{ t('admin.mounts.readOnly') }}</UBadge>
-                    <UBadge v-if="mount.userMountable" size="xs" color="primary">{{ t('admin.mounts.userMountable') }}</UBadge>
+                    <UBadge v-if="mount.userMountable" size="xs" color="primary">{{ t('admin.mounts.userMountable') }}
+                    </UBadge>
                   </div>
                   <p v-if="mount.description" class="mt-1 text-sm text-muted-foreground">
                     {{ mount.description }}
@@ -176,9 +173,14 @@ async function handleDelete() {
                       <code class="rounded bg-muted px-1 py-0.5">{{ mount.target }}</code>
                     </div>
                     <div class="flex items-center gap-3">
-                      <span>{{ mount.eggs.length }} {{ mount.eggs.length !== 1 ? t('admin.nests.eggs') : t('admin.nests.egg') }}</span>
-                      <span>{{ mount.nodes.length }} {{ mount.nodes.length !== 1 ? t('admin.locations.nodes') : t('admin.locations.node') }}</span>
-                      <span>{{ mount.servers.length }} {{ mount.servers.length !== 1 ? t('admin.dashboard.servers') : 'server' }}</span>
+                      <span>{{ mount.eggs.length }} {{ mount.eggs.length !== 1 ? t('admin.nests.eggs') :
+                        t('admin.nests.egg')
+                        }}</span>
+                      <span>{{ mount.nodes.length }} {{ mount.nodes.length !== 1 ? t('admin.locations.nodes') :
+                        t('admin.locations.node') }}</span>
+                      <span>{{ mount.servers.length }} {{ mount.servers.length !== 1 ? t('admin.dashboard.servers') :
+                        'server'
+                        }}</span>
                     </div>
                   </div>
                 </div>
@@ -200,29 +202,31 @@ async function handleDelete() {
       </UContainer>
     </UPageBody>
 
-    <UModal v-model:open="showCreateModal" :title="t('admin.mounts.createMount')" :description="t('admin.mounts.createMountDescription')">
+    <UModal v-model:open="showCreateModal" :title="t('admin.mounts.createMount')"
+      :description="t('admin.mounts.createMountDescription')">
       <template #body>
         <form class="space-y-4" @submit.prevent="handleSubmit">
           <UFormField :label="t('admin.mounts.name')" name="name" required>
-            <UInput v-model="form.name" :placeholder="t('admin.mounts.namePlaceholder')" required :disabled="isSubmitting" class="w-full" />
+            <UInput v-model="form.name" :placeholder="t('admin.mounts.namePlaceholder')" required
+              :disabled="isSubmitting" class="w-full" />
           </UFormField>
 
           <UFormField :label="t('common.description')" name="description">
-            <UTextarea v-model="form.description" :placeholder="t('admin.mounts.descriptionPlaceholder')" :disabled="isSubmitting"
-              class="w-full" />
+            <UTextarea v-model="form.description" :placeholder="t('admin.mounts.descriptionPlaceholder')"
+              :disabled="isSubmitting" class="w-full" />
           </UFormField>
 
           <UFormField :label="t('admin.mounts.source')" name="source" required>
-            <UInput v-model="form.source" :placeholder="t('admin.mounts.sourcePlaceholder')" required :disabled="isSubmitting"
-              class="w-full" />
+            <UInput v-model="form.source" :placeholder="t('admin.mounts.sourcePlaceholder')" required
+              :disabled="isSubmitting" class="w-full" />
             <template #help>
               {{ t('admin.mounts.sourceHelp') }}
             </template>
           </UFormField>
 
           <UFormField :label="t('admin.mounts.target')" name="target" required>
-            <UInput v-model="form.target" :placeholder="t('admin.mounts.targetPlaceholder')" required :disabled="isSubmitting"
-              class="w-full" />
+            <UInput v-model="form.target" :placeholder="t('admin.mounts.targetPlaceholder')" required
+              :disabled="isSubmitting" class="w-full" />
             <template #help>
               {{ t('admin.mounts.targetHelp') }}
             </template>
@@ -242,13 +246,13 @@ async function handleDelete() {
           </div>
 
           <UFormField :label="t('admin.mounts.nodes')" name="nodes">
-            <USelect v-model="form.nodes" :items="nodeOptions" multiple value-key="value" :placeholder="t('admin.mounts.selectNodes')"
-              :disabled="isSubmitting" />
+            <USelect v-model="form.nodes" :items="nodeOptions" multiple value-key="value"
+              :placeholder="t('admin.mounts.selectNodes')" :disabled="isSubmitting" />
           </UFormField>
 
           <UFormField :label="t('admin.mounts.eggs')" name="eggs">
-            <USelect v-model="form.eggs" :items="eggOptions" multiple value-key="value" :placeholder="t('admin.mounts.selectEggs')"
-              :disabled="isSubmitting" />
+            <USelect v-model="form.eggs" :items="eggOptions" multiple value-key="value"
+              :placeholder="t('admin.mounts.selectEggs')" :disabled="isSubmitting" />
           </UFormField>
         </form>
       </template>
@@ -265,19 +269,16 @@ async function handleDelete() {
       </template>
     </UModal>
 
-    <UModal
-      v-model:open="showDeleteModal"
-      :title="t('admin.mounts.deleteMount')"
-      :description="t('admin.mounts.confirmDeleteDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
-    >
+    <UModal v-model:open="showDeleteModal" :title="t('admin.mounts.deleteMount')"
+      :description="t('admin.mounts.confirmDeleteDescription')" :ui="{ footer: 'justify-end gap-2' }">
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.mounts.deleteMountWarning') }}</template>
         </UAlert>
         <div v-if="mountToDelete" class="rounded-md bg-muted p-3 text-sm">
-          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ mountToDelete.name }}</span></p>
+          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ mountToDelete.name }}</span>
+          </p>
           <p class="text-muted-foreground mt-2">{{ mountToDelete.source }} → {{ mountToDelete.target }}</p>
         </div>
       </template>

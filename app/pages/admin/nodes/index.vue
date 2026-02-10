@@ -262,7 +262,7 @@ watch(
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
                 <div class="flex justify-end">
-                  <UButton icon="i-lucide-plus" color="primary" variant="soft" @click="showCreate = true">
+                  <UButton icon="i-lucide-plus" color="primary" variant="subtle" @click="showCreate = true">
                     {{ t('admin.nodes.addNode') }}
                   </UButton>
                 </div>
@@ -276,12 +276,8 @@ watch(
                 {{ t('admin.nodes.unableToLoadNodes') }}: {{ (error as Error).message || t('common.unknown') }}
               </div>
               <div v-else>
-                <UEmpty
-                  v-if="nodes.length === 0"
-                  icon="i-lucide-server"
-                  :title="t('admin.nodes.noNodesLinked')"
-                  :description="t('admin.nodes.description')"
-                />
+                <UEmpty v-if="nodes.length === 0" icon="i-lucide-server" :title="t('admin.nodes.noNodesLinked')"
+                  :description="t('admin.nodes.description')" />
                 <div v-else class="overflow-hidden rounded-lg border border-default">
                   <div
                     class="grid grid-cols-12 bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -303,11 +299,13 @@ watch(
                       </div>
                       <div class="col-span-4 space-y-1 text-xs text-muted-foreground">
                         <code class="block truncate">{{ node.baseURL }}</code>
-                        <span>{{ node.allowInsecure ? t('admin.nodes.tlsVerificationDisabled') : t('admin.nodes.tlsVerificationEnforced') }}</span>
+                        <span>{{ node.allowInsecure ? t('admin.nodes.tlsVerificationDisabled') :
+                          t('admin.nodes.tlsVerificationEnforced') }}</span>
                         <span>{{ t('admin.nodes.updated') }} {{ formatUpdatedAt(node.updatedAt) }}</span>
                       </div>
                       <div class="col-span-2">
-                        <UBadge :color="node.hasToken ? 'neutral' : 'warning'" :variant="node.hasToken ? 'outline' : 'soft'" size="sm">
+                        <UBadge :color="node.hasToken ? 'neutral' : 'warning'"
+                          :variant="node.hasToken ? 'outline' : 'soft'" size="sm">
                           {{ node.hasToken ? t('admin.nodes.configured') : t('admin.nodes.missingToken') }}
                         </UBadge>
                       </div>
@@ -343,10 +341,12 @@ watch(
       <template #body>
         <UForm :state="createState" class="space-y-4" @submit.prevent="handleCreateNode">
           <UFormField :label="t('admin.nodes.nodeName')" name="name" required>
-            <UInput v-model="createState.name" :placeholder="t('admin.nodes.nodeNamePlaceholder')" required class="w-full" />
+            <UInput v-model="createState.name" :placeholder="t('admin.nodes.nodeNamePlaceholder')" required
+              class="w-full" />
           </UFormField>
           <UFormField :label="t('admin.nodes.nodeDescription')" name="description">
-            <UTextarea v-model="createState.description" :placeholder="t('admin.nodes.nodeDescriptionPlaceholder')" class="w-full" />
+            <UTextarea v-model="createState.description" :placeholder="t('admin.nodes.nodeDescriptionPlaceholder')"
+              class="w-full" />
           </UFormField>
           <UFormField :label="t('admin.nodes.baseURL')" name="baseURL" required :help="t('admin.nodes.baseURLHelp')">
             <UInput v-model="createState.baseURL" type="url" required class="w-full" />
@@ -366,7 +366,8 @@ watch(
       <template #footer>
         <div class="flex gap-2">
           <UButton variant="ghost" @click="showCreate = false">{{ t('common.cancel') }}</UButton>
-          <UButton type="submit" color="primary" variant="subtle" :loading="isSubmitting" @click="handleCreateNode">{{ t('admin.nodes.saveNode') }}</UButton>
+          <UButton type="submit" color="primary" variant="subtle" :loading="isSubmitting" @click="handleCreateNode">{{
+            t('admin.nodes.saveNode') }}</UButton>
         </div>
       </template>
     </UModal>
@@ -381,7 +382,8 @@ watch(
             {{ tokenModal.error }}
           </div>
           <div class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.nodes.command') }}</label>
+            <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{
+              t('admin.nodes.command') }}</label>
             <UTextarea :model-value="tokenModal.command" readonly autoresize class="font-mono text-sm w-full" />
           </div>
           <div class="space-y-1 text-xs text-muted-foreground">
@@ -390,7 +392,8 @@ watch(
               <li><code>--panel-url</code> {{ t('admin.nodes.setTo') }} {{ panelOrigin }}</li>
               <li><code>--node</code> {{ t('admin.nodes.setTo') }} {{ tokenModal.nodeId }}</li>
               <li><code>--token</code> {{ t('admin.nodes.setToFreshlyIssuedToken') }}</li>
-              <li v-if="tokenModal.allowInsecure"><code>--allow-insecure</code> {{ t('admin.nodes.toDisableTLSVerification') }}</li>
+              <li v-if="tokenModal.allowInsecure"><code>--allow-insecure</code> {{
+                t('admin.nodes.toDisableTLSVerification') }}</li>
             </ul>
           </div>
         </div>
@@ -402,12 +405,14 @@ watch(
         </div>
         <div class="flex gap-2">
           <UButton variant="ghost" @click="tokenModal.visible = false">{{ t('common.close') }}</UButton>
-          <UButton color="primary" icon="i-lucide-clipboard" @click="copyInstallCommand">{{ t('admin.nodes.copyCommand') }}</UButton>
+          <UButton color="primary" icon="i-lucide-clipboard" @click="copyInstallCommand">{{ t('admin.nodes.copyCommand')
+          }}</UButton>
         </div>
       </template>
     </UModal>
 
-    <UModal v-model:open="systemModal.visible" :title="t('admin.nodes.systemInformationModal', { name: systemModal.nodeName || t('admin.nodes.wingsNode') })"
+    <UModal v-model:open="systemModal.visible"
+      :title="t('admin.nodes.systemInformationModal', { name: systemModal.nodeName || t('admin.nodes.wingsNode') })"
       :description="t('admin.nodes.systemInformationModalDescription')"
       :ui="{ footer: 'justify-between items-center flex-wrap gap-3' }">
       <template #body>
@@ -420,8 +425,9 @@ watch(
             <template #description>{{ systemModal.error }}</template>
           </UAlert>
           <div v-else class="space-y-2">
-            <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.nodes.latestSnapshot') }}</label>
-            <pre class="max-h-[420px] overflow-auto rounded bg-muted/40 p-3 text-xs leading-relaxed">
+            <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{
+              t('admin.nodes.latestSnapshot') }}</label>
+            <pre class="max-h-105 overflow-auto rounded bg-muted/40 p-3 text-xs leading-relaxed">
       {{ JSON.stringify(systemModal.info, null, 2) }}
     </pre>
           </div>
@@ -436,20 +442,18 @@ watch(
       </template>
     </UModal>
 
-    <UModal
-      v-model:open="showDeleteModal"
-      :title="t('admin.nodes.deleteNode')"
-      :description="t('admin.nodes.confirmDeleteNodeDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
-    >
+    <UModal v-model:open="showDeleteModal" :title="t('admin.nodes.deleteNode')"
+      :description="t('admin.nodes.confirmDeleteNodeDescription')" :ui="{ footer: 'justify-end gap-2' }">
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.nodes.deleteNodeWarning') }}</template>
         </UAlert>
         <div v-if="nodeToDelete" class="rounded-md bg-muted p-3 text-sm">
-          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ nodeToDelete.name }}</span></p>
-          <p class="text-muted-foreground mt-2">{{ t('admin.nodes.id') }}: <code class="font-mono">{{ nodeToDelete.id }}</code></p>
+          <p class="font-medium">{{ t('common.name') }}: <span class="text-foreground">{{ nodeToDelete.name }}</span>
+          </p>
+          <p class="text-muted-foreground mt-2">{{ t('admin.nodes.id') }}: <code class="font-mono">{{ nodeToDelete.id
+          }}</code></p>
           <p v-if="nodeToDelete.description" class="text-muted-foreground mt-2">{{ nodeToDelete.description }}</p>
         </div>
       </template>

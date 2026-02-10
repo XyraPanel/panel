@@ -141,12 +141,9 @@ async function handleDelete() {
               <template #description>{{ error.message }}</template>
             </UAlert>
 
-            <UEmpty
-              v-else-if="locations.length === 0"
-              icon="i-lucide-map-pin"
+            <UEmpty v-else-if="locations.length === 0" icon="i-lucide-map-pin"
               :title="t('admin.locations.noLocationsYet')"
-              :description="t('admin.locations.noLocationsYetDescription')"
-            />
+              :description="t('admin.locations.noLocationsYetDescription')" />
 
             <div v-else class="divide-y divide-default">
               <div v-for="location in locations" :key="location.id" class="flex items-center justify-between py-4">
@@ -155,7 +152,9 @@ async function handleDelete() {
                     <UIcon name="i-lucide-map-pin" class="size-4 text-primary" />
                     <span class="font-medium">{{ location.short }}</span>
                     <UBadge v-if="location.nodeCount > 0" size="xs" color="neutral">
-                      {{ location.nodeCount }} {{ location.nodeCount !== 1 ? t('admin.locations.nodes') : t('admin.locations.node') }}
+                      {{ location.nodeCount }} {{ location.nodeCount !== 1 ? t('admin.locations.nodes') :
+                        t('admin.locations.node')
+                      }}
                     </UBadge>
                   </div>
                   <p v-if="location.long" class="mt-1 text-sm text-muted-foreground">
@@ -164,7 +163,8 @@ async function handleDelete() {
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <UButton icon="i-lucide-pencil" size="xs" variant="ghost" @click="openEditModal(location)" />
+                  <UButton icon="i-lucide-pencil" size="xs" variant="ghost" color="info"
+                    @click="openEditModal(location)" />
                   <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
                     :disabled="location.nodeCount > 0" @click="locationToDelete = location; showDeleteModal = true" />
                 </div>
@@ -175,12 +175,14 @@ async function handleDelete() {
       </UContainer>
     </UPageBody>
 
-    <UModal v-model:open="showCreateModal" :title="editingLocation ? t('admin.locations.editLocation') : t('admin.locations.createLocation')"
+    <UModal v-model:open="showCreateModal"
+      :title="editingLocation ? t('admin.locations.editLocation') : t('admin.locations.createLocation')"
       :description="editingLocation ? t('admin.locations.editLocationDescription') : t('admin.locations.createLocationDescription')">
       <template #body>
         <form class="space-y-4" @submit.prevent="handleSubmit">
           <UFormField :label="t('admin.locations.shortCode')" name="short" required>
-            <UInput v-model="form.short" :placeholder="t('admin.locations.shortCodePlaceholder')" required :disabled="isSubmitting" class="w-full" />
+            <UInput v-model="form.short" :placeholder="t('admin.locations.shortCodePlaceholder')" required
+              :disabled="isSubmitting" class="w-full" />
             <template #help>
               {{ t('admin.locations.shortCodeHelp') }}
             </template>
@@ -208,19 +210,16 @@ async function handleDelete() {
       </template>
     </UModal>
 
-    <UModal
-      v-model:open="showDeleteModal"
-      :title="t('admin.locations.deleteLocation')"
-      :description="t('admin.locations.confirmDeleteDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
-    >
+    <UModal v-model:open="showDeleteModal" :title="t('admin.locations.deleteLocation')"
+      :description="t('admin.locations.confirmDeleteDescription')" :ui="{ footer: 'justify-end gap-2' }">
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.locations.deleteLocationWarning') }}</template>
         </UAlert>
         <div v-if="locationToDelete" class="rounded-md bg-muted p-3 text-sm">
-          <p class="font-medium">{{ t('admin.locations.shortCode') }}: <code class="font-mono">{{ locationToDelete.short }}</code></p>
+          <p class="font-medium">{{ t('admin.locations.shortCode') }}: <code class="font-mono">{{ locationToDelete.short
+          }}</code></p>
           <p v-if="locationToDelete.long" class="text-muted-foreground mt-2">{{ locationToDelete.long }}</p>
         </div>
       </template>
