@@ -195,7 +195,7 @@ function createAuth() {
         updateEmailWithoutVerification: false,
         sendChangeEmailConfirmation: async ({ user, newEmail, url }, _request) => {
           const { sendEmail } = await import('#server/utils/email')
-          await sendEmail({
+          void sendEmail({
             to: user.email,
             subject: 'Confirm Email Change',
             html: `
@@ -205,14 +205,14 @@ function createAuth() {
               <p><a href="${url}">Confirm Email Change</a></p>
               <p>If you didn't request this change, please ignore this email.</p>
             `,
-          })
+          }).catch(error => console.error('[auth][email][change-email-confirmation]', error))
         },
       },
       deleteUser: {
         enabled: true,
         sendDeleteAccountVerification: async ({ user, url }, _request) => {
           const { sendEmail } = await import('#server/utils/email')
-          await sendEmail({
+          void sendEmail({
             to: user.email,
             subject: 'Confirm Account Deletion',
             html: `
@@ -223,7 +223,7 @@ function createAuth() {
               <p><a href="${url}" style="color: #ef4444; font-weight: bold;">Delete My Account</a></p>
               <p>If you didn't request this, please ignore this email and secure your account.</p>
             `,
-          })
+          }).catch(error => console.error('[auth][email][delete-account]', error))
         },
         beforeDelete: async (user, _request) => {
           const db = useDrizzle()
@@ -261,7 +261,8 @@ function createAuth() {
       sendResetPassword: async ({ user, token }, _request) => {
         const { sendPasswordResetEmail, resolvePanelBaseUrl } = await import('#server/utils/email')
         const resetBaseUrl = `${resolvePanelBaseUrl()}/auth/password/reset`
-        await sendPasswordResetEmail(user.email, token, resetBaseUrl)
+        void sendPasswordResetEmail(user.email, token, resetBaseUrl)
+          .catch(error => console.error('[auth][email][password-reset]', error))
       },
       resetPasswordTokenExpiresIn: 3600,
       onPasswordReset: async ({ user }, _request) => {
@@ -308,12 +309,12 @@ function createAuth() {
         const { sendEmailVerificationEmail } = await import('#server/utils/email')
         const rawUser = user as Record<string, unknown>
         const username = typeof rawUser.username === 'string' ? rawUser.username : user.name || null
-        await sendEmailVerificationEmail({
+        void sendEmailVerificationEmail({
           to: user.email,
           token,
           expiresAt: new Date(Date.now() + 60 * 60 * 24 * 1000),
           username,
-        })
+        }).catch(error => console.error('[auth][email][verify-email]', error))
       },
     },
     trustedOrigins,
