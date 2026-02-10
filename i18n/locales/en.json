@@ -923,8 +923,6 @@
       "viewAll": "View all",
       "noIncidents": "No recent audit events logged.",
       "noTarget": "No target recorded",
-      "operations": "Operations",
-      "noOperations": "No recommended operations at this time.",
       "justNow": "Just now",
       "minutesAgo": "{count} minute ago | {count} minutes ago",
       "hoursAgo": "{count} hour ago | {count} hours ago",

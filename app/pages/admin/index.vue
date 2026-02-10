@@ -4,7 +4,7 @@ import type { DashboardResponse } from '#shared/types/admin'
 
 definePageMeta({
   adminTitle: 'Dashboard',
-  adminSubtitle: 'Infrastructure overview sourced from Wings metrics',
+  adminSubtitle: 'Infrastructure overview',
 })
 
 const { t } = useI18n()
@@ -192,38 +192,6 @@ fetchDashboard()
               </ul>
             </UCard>
           </div>
-
-          <UCard :ui="{ body: 'space-y-3' }">
-            <template #header>
-              <div class="flex items-center justify-between">
-                <h2 class="text-lg font-semibold">{{ t('admin.dashboard.operations') }}</h2>
-              </div>
-            </template>
-
-            <ul class="space-y-3">
-              <li v-if="loading" class="space-y-2">
-                <USkeleton v-for="i in 3" :key="`operation-skeleton-${i}`" class="h-10 w-full" />
-              </li>
-              <li v-else-if="error" class="rounded-md border border-default px-4 py-3 text-sm text-destructive">
-                {{ error }}
-              </li>
-              <li v-else-if="operations.length === 0"
-                class="rounded-md border border-default px-4 py-3 text-sm text-muted-foreground">
-                {{ t('admin.dashboard.noOperations') }}
-              </li>
-              <template v-else>
-                <li v-for="operation in operations" :key="operation.key"
-                  class="flex flex-col gap-1 rounded-md border border-default px-4 py-3 md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p class="text-sm font-semibold">{{ operation.label }}</p>
-                    <p class="text-xs text-muted-foreground">
-                      {{ operation.detail }}
-                    </p>
-                  </div>
-                </li>
-              </template>
-            </ul>
-          </UCard>
         </section>
       </UContainer>
     </UPageBody>
