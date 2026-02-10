@@ -136,59 +136,48 @@ async function copyJson(schedule: AdminScheduleResponse) {
                 <template #description>{{ schedulesError }}</template>
               </UAlert>
             </template>
-            <UEmpty
-              v-else-if="schedules.length === 0"
-              icon="i-lucide-calendar-clock"
+            <UEmpty v-else-if="schedules.length === 0" icon="i-lucide-calendar-clock"
               :title="t('admin.schedules.noSchedulesFound')"
-              :description="t('admin.schedules.noSchedulesFoundDescription')"
-            />
+              :description="t('admin.schedules.noSchedulesFoundDescription')" />
             <template v-else>
               <div class="space-y-3">
-                <div
-                  v-for="schedule in schedules"
-                  :key="schedule.id"
-                  class="rounded-lg border border-default overflow-hidden"
-                >
+                <div v-for="schedule in schedules" :key="schedule.id"
+                  class="rounded-lg border border-default overflow-hidden">
                   <button
                     class="w-full flex flex-col gap-2 p-3 text-left hover:bg-elevated/50 transition-colors md:flex-row md:items-center md:justify-between"
-                    @click="toggleEntry(schedule.id)"
-                  >
+                    @click="toggleEntry(schedule.id)">
                     <div class="flex-1 min-w-0 flex items-center gap-3">
                       <UIcon
                         :name="expandedEntries.has(schedule.id) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-                        class="size-4 text-muted-foreground shrink-0"
-                      />
+                        class="size-4 text-muted-foreground shrink-0" />
                       <span class="text-sm text-muted-foreground">
-                        {{ t('admin.schedules.serverName') }}: <span class="font-medium text-foreground">{{ schedule.serverName }}</span>
+                        {{ t('admin.schedules.serverName') }}: <span class="font-medium text-foreground">{{
+                          schedule.serverName }}</span>
                       </span>
-                      <UBadge :color="statusColor(schedule.enabled)" size="xs">
+                      <UBadge :color="statusColor(schedule.enabled)" variant="soft" size="sm">
                         {{ schedule.enabled ? t('common.active') : t('admin.schedules.paused') }}
                       </UBadge>
                     </div>
                     <div class="flex flex-wrap items-center gap-4 text-xs text-muted-foreground shrink-0">
                       <span>
-                        {{ t('admin.schedules.cron') }}: <span class="font-medium text-foreground font-mono">{{ schedule.cron }}</span>
+                        {{ t('admin.schedules.cron') }}: <span class="font-medium text-foreground font-mono">{{
+                          schedule.cron }}</span>
                       </span>
                     </div>
                   </button>
-                  
-                  <div
-                    v-if="expandedEntries.has(schedule.id)"
-                    class="border-t border-default bg-muted/30 p-4"
-                  >
+
+                  <div v-if="expandedEntries.has(schedule.id)" class="border-t border-default bg-muted/30 p-4">
                     <div class="space-y-2">
                       <div class="flex items-center justify-between mb-2">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.schedules.scheduleDetails') }}</p>
-                        <UButton
-                          variant="ghost"
-                          size="xs"
-                          icon="i-lucide-copy"
-                          @click.stop="copyJson(schedule)"
-                        >
+                        <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{
+                          t('admin.schedules.scheduleDetails') }}</p>
+                        <UButton variant="ghost" color="secondary" size="xs" icon="i-lucide-copy"
+                          @click.stop="copyJson(schedule)">
                           {{ t('admin.schedules.copyJson') }}
                         </UButton>
                       </div>
-                      <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatJson(getFullScheduleData(schedule)) }}</code></pre>
+                      <pre
+                        class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatJson(getFullScheduleData(schedule)) }}</code></pre>
                     </div>
                   </div>
                 </div>

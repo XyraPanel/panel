@@ -181,13 +181,10 @@ function handleFileChange(event: Event) {
                 </div>
               </template>
 
-              <UEmpty
-                v-if="eggs.length === 0"
-                icon="i-lucide-egg"
-                :title="t('admin.nests.createEgg.noEggsInNest')"
-                :description="t('admin.nests.createEgg.eggsDescription')"
-              >
-                <UButton class="mt-4" size="sm" @click="openCreateEggModal">{{ t('admin.nests.createEgg.createFirstEgg') }}</UButton>
+              <UEmpty v-if="eggs.length === 0" icon="i-lucide-egg" :title="t('admin.nests.createEgg.noEggsInNest')"
+                :description="t('admin.nests.createEgg.eggsDescription')">
+                <UButton class="mt-4" size="sm" @click="openCreateEggModal">{{ t('admin.nests.createEgg.createFirstEgg')
+                  }}</UButton>
               </UEmpty>
 
               <div v-else class="divide-y divide-default">
@@ -222,39 +219,39 @@ function handleFileChange(event: Event) {
       </UContainer>
     </UPageBody>
 
-    <UModal v-model:open="showCreateEggModal" :title="t('admin.nests.createEgg.createEgg')" :description="t('admin.nests.createEgg.createEggDescription')">
+    <UModal v-model:open="showCreateEggModal" :title="t('admin.nests.createEgg.createEgg')"
+      :description="t('admin.nests.createEgg.createEggDescription')">
       <template #body>
         <form class="space-y-4" @submit.prevent="handleCreateEgg">
           <UFormField :label="t('common.name')" name="name" required>
-            <UInput v-model="eggForm.name" :placeholder="t('admin.nests.createEgg.namePlaceholder')" required :disabled="isSubmitting"
-              class="w-full" />
+            <UInput v-model="eggForm.name" :placeholder="t('admin.nests.createEgg.namePlaceholder')" required
+              :disabled="isSubmitting" class="w-full" />
           </UFormField>
 
           <UFormField :label="t('common.description')" name="description">
-            <UTextarea v-model="eggForm.description" :placeholder="t('admin.nests.createEgg.descriptionPlaceholder')" :disabled="isSubmitting"
-              class="w-full" />
+            <UTextarea v-model="eggForm.description" :placeholder="t('admin.nests.createEgg.descriptionPlaceholder')"
+              :disabled="isSubmitting" class="w-full" />
           </UFormField>
 
           <UFormField :label="t('admin.nests.createEgg.dockerImage')" name="dockerImage" required>
-            <UInput v-model="eggForm.dockerImage" :placeholder="t('admin.nests.createEgg.dockerImagePlaceholder')" required
-              :disabled="isSubmitting" class="w-full" />
+            <UInput v-model="eggForm.dockerImage" :placeholder="t('admin.nests.createEgg.dockerImagePlaceholder')"
+              required :disabled="isSubmitting" class="w-full" />
             <template #help>
               {{ t('admin.nests.createEgg.dockerImageHelp') }}
             </template>
           </UFormField>
 
           <UFormField :label="t('admin.nests.createEgg.startupCommand')" name="startup" required>
-            <UTextarea v-model="eggForm.startup"
-              :placeholder="t('admin.nests.createEgg.startupCommandPlaceholder')" required
-              :disabled="isSubmitting" class="w-full" />
+            <UTextarea v-model="eggForm.startup" :placeholder="t('admin.nests.createEgg.startupCommandPlaceholder')"
+              required :disabled="isSubmitting" class="w-full" />
             <template #help>
               {{ t('admin.nests.createEgg.startupCommandHelp') }}
             </template>
           </UFormField>
 
           <UFormField :label="t('admin.nests.author')" name="author" required>
-            <UInput v-model="eggForm.author" :placeholder="t('admin.nests.authorPlaceholder')" required :disabled="isSubmitting"
-              class="w-full" />
+            <UInput v-model="eggForm.author" :placeholder="t('admin.nests.authorPlaceholder')" required
+              :disabled="isSubmitting" class="w-full" />
           </UFormField>
         </form>
       </template>
@@ -271,16 +268,14 @@ function handleFileChange(event: Event) {
       </template>
     </UModal>
 
-    <UModal v-model:open="showImportEggModal" :title="t('admin.nests.createEgg.importEgg')" :description="t('admin.nests.createEgg.importEggDescription')">
+    <UModal v-model:open="showImportEggModal" :title="t('admin.nests.createEgg.importEgg')"
+      :description="t('admin.nests.createEgg.importEggDescription')">
       <template #body>
         <div class="space-y-4">
           <UFormField :label="t('admin.nests.createEgg.eggJsonFile')" name="file" required>
-            <input
-              type="file"
-              accept=".json,application/json"
+            <input type="file" accept=".json,application/json"
               class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-              @change="handleFileChange"
-            >
+              @change="handleFileChange">
             <template #help>
               {{ t('admin.nests.createEgg.eggJsonFileHelp') }}
             </template>

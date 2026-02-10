@@ -299,15 +299,15 @@ const userLabel = computed(() => {
   if (!authStatus.value || authStatus.value !== 'authenticated' || !sessionUser.value) {
     return null
   }
-  
+
   if (displayName.value && displayName.value.length > 0) {
     return displayName.value
   }
-  
+
   if (sessionUser.value) {
     return sessionUser.value.username || sessionUser.value.email || sessionUser.value.name || null
   }
-  
+
   return null
 })
 
@@ -315,16 +315,16 @@ const userAvatar = computed(() => {
   if (!authStatus.value || authStatus.value !== 'authenticated' || !sessionUser.value) {
     return null
   }
-  
+
   if (avatar.value) {
     return avatar.value
   }
-  
+
   const name = sessionUser.value.username || sessionUser.value.email || sessionUser.value.name
   if (!name) {
     return null
   }
-  
+
   return {
     alt: name,
     text: name.slice(0, 2).toUpperCase(),
@@ -419,17 +419,10 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
 
 <template>
   <UDashboardGroup class="admin-layout min-h-screen bg-muted/15" storage="local" storage-key="admin-dashboard">
-    <UDashboardSidebar
-      collapsible
-      :toggle="sidebarToggleProps"
-      :ui="{ footer: 'border-t border-default' }"
-    >
+    <UDashboardSidebar collapsible :toggle="sidebarToggleProps" :ui="{ footer: 'border-t border-default' }">
       <template #header="{ collapsed }">
-        <NuxtLink
-          v-if="!collapsed"
-          to="/"
-          class="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary py-1"
-        >
+        <NuxtLink v-if="!collapsed" to="/"
+          class="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary py-1">
           <UIcon name="i-lucide-arrow-left" class="size-3" />
           {{ t('layout.backToPanel') }}
         </NuxtLink>
@@ -438,31 +431,17 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
 
       <template #default="{ collapsed }">
         <div class="flex flex-col gap-1">
-          <UDashboardSearchButton
-            v-model:open="dashboardSearchOpen"
-            class="w-full"
-            :block="collapsed"
-            :shortcut="dashboardSearchShortcut"
-            :label="t('common.search')"
-          />
+          <UDashboardSearchButton v-model:open="dashboardSearchOpen" class="w-full" :block="collapsed"
+            :shortcut="dashboardSearchShortcut" :label="t('common.search')" />
           <div v-if="!collapsed" class="text-[10px] uppercase tracking-wide text-muted-foreground/70 px-2 py-2">
             <p class="flex items-center gap-1">
-              <img
-                src="/logo.png"
-                alt="XyraPanel logo"
-                class="h-4 w-auto"
-                loading="lazy"
-              >
+              <img src="/logo.png" alt="XyraPanel logo" class="h-4 w-auto" loading="lazy">
               {{ t('layout.copyright', { year: new Date().getFullYear() }) }}
               <ULink href="https://xyrapanel.com" target="_blank">XyraPanel</ULink>
             </p>
           </div>
           <ClientOnly>
-            <UNavigationMenu
-              :collapsed="collapsed"
-              :items="[navItems]"
-              orientation="vertical"
-            />
+            <UNavigationMenu :collapsed="collapsed" :items="[navItems]" orientation="vertical" />
             <template #fallback>
               <div class="space-y-1">
                 <USkeleton class="h-8 w-full rounded-md" />
@@ -475,26 +454,17 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
       </template>
 
       <template #footer="{ collapsed }">
-        <UDropdownMenu
-          :items="[[
-            { label: t('account.profile.title'), to: '/account/profile' },
-            { label: t('account.security.title'), to: '/account/security' },
-            { label: t('account.apiKeys.title'), to: '/account/api-keys' },
-            { label: t('account.sshKeys.title'), to: '/account/ssh-keys' },
-            { label: t('account.sessions.title'), to: '/account/sessions' },
-            { label: t('account.activity.title'), to: '/account/activity' }
-          ], [
-            { label: t('auth.signOut'), click: handleSignOut, color: 'error' }
-          ]]"
-        >
-          <UButton
-            color="neutral"
-            variant="ghost"
-            class="w-full"
-            :block="collapsed"
-            type="button"
-            @click.prevent
-          >
+        <UDropdownMenu :items="[[
+          { label: t('account.profile.title'), to: '/account/profile' },
+          { label: t('account.security.title'), to: '/account/security' },
+          { label: t('account.apiKeys.title'), to: '/account/api-keys' },
+          { label: t('account.sshKeys.title'), to: '/account/ssh-keys' },
+          { label: t('account.sessions.title'), to: '/account/sessions' },
+          { label: t('account.activity.title'), to: '/account/activity' }
+        ], [
+          { label: t('auth.signOut'), click: handleSignOut, color: 'error' }
+        ]]">
+          <UButton color="neutral" variant="ghost" class="w-full" :block="collapsed" type="button" @click.prevent>
             <template #leading>
               <UAvatar v-bind="userAvatar" size="sm" />
             </template>
@@ -503,22 +473,16 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
         </UDropdownMenu>
       </template>
     </UDashboardSidebar>
-    <UDashboardSearch
-      v-model:open="dashboardSearchOpen"
-      v-model:search-term="dashboardSearchTerm"
-      :groups="dashboardSearchGroups"
-      :shortcut="dashboardSearchShortcut"
-      :placeholder="t('common.search')"
-      :color-mode="false"
-      :fuse="{
+    <UDashboardSearch v-model:open="dashboardSearchOpen" v-model:search-term="dashboardSearchTerm"
+      :groups="dashboardSearchGroups" :shortcut="dashboardSearchShortcut" :placeholder="t('common.search')"
+      :color-mode="false" :fuse="{
         fuseOptions: {
           threshold: 0.3,
           ignoreLocation: true,
           keys: ['label', 'suffix'],
         },
         resultLimit: 40,
-      }"
-    />
+      }" />
     <UDashboardPanel :ui="{ body: 'flex flex-1 flex-col p-0' }">
       <template #body>
         <UDashboardNavbar :ui="{ left: 'flex flex-col gap-0.5 text-left py-3', root: 'justify-between py-3' }">

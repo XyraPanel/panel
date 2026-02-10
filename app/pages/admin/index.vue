@@ -96,7 +96,7 @@ fetchDashboard()
               <template #header>
                 <div class="flex items-center justify-between">
                   <h2 class="text-lg font-semibold">{{ t('admin.dashboard.nodeHealth') }}</h2>
-                  <UBadge :color="loading ? 'neutral' : 'primary'" :variant="'subtle'">
+                  <UBadge :color="loading ? 'neutral' : 'primary'" :variant="'soft'">
                     {{ loading ? t('admin.dashboard.loading') : t('admin.dashboard.tracked', { count: nodes.length }) }}
                   </UBadge>
                 </div>
@@ -116,12 +116,10 @@ fetchDashboard()
                     <div>
                       <div class="flex items-center gap-2">
                         <h3 class="text-sm font-semibold">{{ node.name }}</h3>
-                        <UBadge
-                          size="sm"
-                          variant="subtle"
-                          :color="node.status === 'online' ? 'success' : node.status === 'maintenance' ? 'warning' : 'warning'"
-                        >
-                          {{ node.status === 'online' ? t('admin.dashboard.online') : node.status === 'maintenance' ? t('admin.dashboard.maintenance') : t('admin.dashboard.unknown') }}
+                        <UBadge size="sm" variant="subtle"
+                          :color="node.status === 'online' ? 'success' : node.status === 'maintenance' ? 'warning' : 'warning'">
+                          {{ node.status === 'online' ? t('admin.dashboard.online') : node.status === 'maintenance' ?
+                            t('admin.dashboard.maintenance') : t('admin.dashboard.unknown') }}
                         </UBadge>
                       </div>
                       <p class="text-xs text-muted-foreground">{{ node.fqdn }}</p>
@@ -129,7 +127,8 @@ fetchDashboard()
                     <div class="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                       <span class="inline-flex items-center gap-1">
                         <UIcon name="i-lucide-hard-drive" class="size-3" />
-                        {{ node.serverCount !== null ? t('admin.dashboard.servers', { count: node.serverCount }) : t('admin.dashboard.unknownServers') }}
+                        {{ node.serverCount !== null ? t('admin.dashboard.servers', { count: node.serverCount }) :
+                          t('admin.dashboard.unknownServers') }}
                       </span>
                       <span v-if="node.maintenanceMode" class="inline-flex items-center gap-1 text-warning">
                         <UIcon name="i-lucide-cone" class="size-3" /> {{ t('admin.dashboard.maintenanceMode') }}
@@ -151,7 +150,7 @@ fetchDashboard()
               <template #header>
                 <div class="flex items-center justify-between">
                   <h2 class="text-lg font-semibold">{{ t('admin.dashboard.openIncidents') }}</h2>
-                  <UButton size="xs" variant="ghost" color="neutral" :disabled="loading">
+                  <UButton size="xs" variant="subtle" color="primary" :disabled="loading">
                     {{ t('admin.dashboard.viewAll') }}
                   </UButton>
                 </div>
@@ -164,11 +163,13 @@ fetchDashboard()
                 <li v-else-if="error" class="rounded-md border border-default px-3 py-3 text-sm text-destructive">
                   {{ error }}
                 </li>
-                <li v-else-if="incidents.length === 0" class="rounded-md border border-default px-3 py-3 text-sm text-muted-foreground">
+                <li v-else-if="incidents.length === 0"
+                  class="rounded-md border border-default px-3 py-3 text-sm text-muted-foreground">
                   {{ t('admin.dashboard.noIncidents') }}
                 </li>
                 <template v-else>
-                  <li v-for="incident in incidents" :key="incident.id" class="rounded-md border border-default px-3 py-3">
+                  <li v-for="incident in incidents" :key="incident.id"
+                    class="rounded-md border border-default px-3 py-3">
                     <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                       <span class="text-sm font-semibold">{{ incident.action }}</span>
                       <NuxtTime :datetime="incident.occurredAt" locale="en-US" />
@@ -176,11 +177,8 @@ fetchDashboard()
                     <div class="mt-2 space-y-1 text-xs text-muted-foreground">
                       <div v-if="incident.actorUsername || incident.actor" class="flex items-center gap-2">
                         <UIcon name="i-lucide-user" class="size-3" />
-                        <NuxtLink
-                          v-if="incident.actor"
-                          :to="`/admin/users/${incident.actor}`"
-                          class="text-primary hover:underline"
-                        >
+                        <NuxtLink v-if="incident.actor" :to="`/admin/users/${incident.actor}`"
+                          class="text-primary hover:underline">
                           {{ incident.actorUsername ?? incident.actor }}
                         </NuxtLink>
                       </div>
@@ -209,12 +207,13 @@ fetchDashboard()
               <li v-else-if="error" class="rounded-md border border-default px-4 py-3 text-sm text-destructive">
                 {{ error }}
               </li>
-              <li v-else-if="operations.length === 0" class="rounded-md border border-default px-4 py-3 text-sm text-muted-foreground">
+              <li v-else-if="operations.length === 0"
+                class="rounded-md border border-default px-4 py-3 text-sm text-muted-foreground">
                 {{ t('admin.dashboard.noOperations') }}
               </li>
               <template v-else>
                 <li v-for="operation in operations" :key="operation.key"
-                    class="flex flex-col gap-1 rounded-md border border-default px-4 py-3 md:flex-row md:items-center md:justify-between">
+                  class="flex flex-col gap-1 rounded-md border border-default px-4 py-3 md:flex-row md:items-center md:justify-between">
                   <div>
                     <p class="text-sm font-semibold">{{ operation.label }}</p>
                     <p class="text-xs text-muted-foreground">

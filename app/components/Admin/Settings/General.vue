@@ -207,104 +207,86 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 </script>
 
 <template>
-  <UForm
-      ref="generalSettingsForm"
-      :schema="schema"
-      :state="form"
-      class="space-y-4"
-      :disabled="isSubmitting"
-      :validate-on="['input']"
-      @submit="handleSubmit"
-    >
-      <UFormField :label="t('admin.settings.generalSettings.language')" name="locale" required>
-        <ULocaleSelect
-          v-model="form.locale"
-          :locales="availableLocales"
-          :disabled="isSubmitting"
-          class="w-full"
-        />
-      </UFormField>
+  <UForm ref="generalSettingsForm" :schema="schema" :state="form" class="space-y-4" :disabled="isSubmitting"
+    :validate-on="['input']" @submit="handleSubmit">
+    <UFormField :label="t('admin.settings.generalSettings.language')" name="locale" required>
+      <ULocaleSelect v-model="form.locale" :locales="availableLocales" :disabled="isSubmitting" class="w-full" />
+    </UFormField>
 
-      <UFormField :label="t('admin.settings.generalSettings.timezone')" name="timezone" required>
-        <USelect v-model="form.timezone" :items="timezoneOptions" value-key="value" :disabled="isSubmitting" />
-      </UFormField>
+    <UFormField :label="t('admin.settings.generalSettings.timezone')" name="timezone" required>
+      <USelect v-model="form.timezone" :items="timezoneOptions" value-key="value" :disabled="isSubmitting" />
+    </UFormField>
 
-      <UFormField :label="t('admin.settings.generalSettings.paginationLimit')" name="paginationLimit" required>
-        <UInput v-model.number="form.paginationLimit" type="number" min="10" max="100" :disabled="isSubmitting" class="w-full max-w-32" />
-        <template #description>
-          <span class="text-xs text-muted-foreground">{{ t('admin.settings.generalSettings.paginationLimitDescription') }}</span>
-        </template>
-      </UFormField>
+    <UFormField :label="t('admin.settings.generalSettings.paginationLimit')" name="paginationLimit" required>
+      <UInput v-model.number="form.paginationLimit" type="number" min="10" max="100" :disabled="isSubmitting"
+        class="w-full max-w-32" />
+      <template #description>
+        <span class="text-xs text-muted-foreground">{{ t('admin.settings.generalSettings.paginationLimitDescription')
+          }}</span>
+      </template>
+    </UFormField>
 
-      <USeparator />
+    <USeparator />
 
-      <div class="space-y-4">
-        <div>
-          <h3 class="text-sm font-medium">{{ t('admin.settings.generalSettings.branding') }}</h3>
-          <p class="text-xs text-muted-foreground">{{ t('admin.settings.generalSettings.brandingDescription') }}</p>
-        </div>
+    <div class="space-y-4">
+      <div>
+        <h3 class="text-sm font-medium">{{ t('admin.settings.generalSettings.branding') }}</h3>
+        <p class="text-xs text-muted-foreground">{{ t('admin.settings.generalSettings.brandingDescription') }}</p>
+      </div>
 
-        <div class="grid gap-4 md:grid-cols-2">
-          <UFormField :label="t('admin.settings.generalSettings.showBrandLogo')" name="showBrandLogo">
-            <div class="flex items-center justify-between rounded-lg border border-default p-3">
-              <p class="text-sm text-muted-foreground">{{ t('admin.settings.generalSettings.showBrandLogoDescription') }}</p>
-              <USwitch v-model="form.showBrandLogo" />
-            </div>
-          </UFormField>
-
-          <div class="space-y-3">
-            <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">{{ t('admin.settings.generalSettings.logo') }}</p>
-            <div class="flex items-center gap-3">
-              <UAvatar :src="form.brandLogoUrl || undefined" icon="i-lucide-image" size="xl" />
-              <div class="text-xs text-muted-foreground">
-                <p v-if="form.brandLogoUrl" class="font-medium">{{ t('admin.settings.generalSettings.currentLogo') }}</p>
-                <p v-else class="font-medium">{{ t('admin.settings.generalSettings.noLogoUploaded') }}</p>
-              </div>
-            </div>
+      <div class="grid gap-4 md:grid-cols-2">
+        <UFormField :label="t('admin.settings.generalSettings.showBrandLogo')" name="showBrandLogo">
+          <div class="flex items-center justify-between rounded-lg border border-default p-3">
+            <p class="text-sm text-muted-foreground">{{ t('admin.settings.generalSettings.showBrandLogoDescription') }}
+            </p>
+            <USwitch v-model="form.showBrandLogo" />
           </div>
-        </div>
+        </UFormField>
 
         <div class="space-y-3">
-          <UFileUpload 
-            v-model="logoFile" 
-            accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml"
-            class="w-full" 
-            :label="t('admin.settings.generalSettings.uploadLogo')" 
-            :description="t('admin.settings.generalSettings.logoDescription')"
-            :disabled="logoUploading" 
-          />
-          <div class="flex items-center justify-between">
-            <p class="text-[11px] text-muted-foreground">{{ t('admin.settings.generalSettings.logoStoredAt') }}</p>
-            <UButton 
-              v-if="form.brandLogoUrl" 
-              variant="ghost" 
-              color="error" 
-              size="sm" 
-              icon="i-lucide-trash"
-              @click="removeLogo"
-            >
-              {{ t('admin.settings.generalSettings.removeLogo') }}
-            </UButton>
+          <p class="text-xs font-medium text-muted-foreground uppercase tracking-wide">{{
+            t('admin.settings.generalSettings.logo') }}</p>
+          <div class="flex items-center gap-3">
+            <UAvatar :src="form.brandLogoUrl || undefined" icon="i-lucide-image" size="xl" />
+            <div class="text-xs text-muted-foreground">
+              <p v-if="form.brandLogoUrl" class="font-medium">{{ t('admin.settings.generalSettings.currentLogo') }}</p>
+              <p v-else class="font-medium">{{ t('admin.settings.generalSettings.noLogoUploaded') }}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      <USeparator />
-
-      <div class="space-y-4">
-        <div>
-          <h3 class="text-sm font-medium">{{ t('admin.settings.generalSettings.system') }}</h3>
+      <div class="space-y-3">
+        <UFileUpload v-model="logoFile" accept="image/png,image/jpeg,image/jpg,image/webp,image/svg+xml" class="w-full"
+          :label="t('admin.settings.generalSettings.uploadLogo')"
+          :description="t('admin.settings.generalSettings.logoDescription')" :disabled="logoUploading" />
+        <div class="flex items-center justify-between">
+          <p class="text-[11px] text-muted-foreground">{{ t('admin.settings.generalSettings.logoStoredAt') }}</p>
+          <UButton v-if="form.brandLogoUrl" variant="ghost" color="error" size="sm" icon="i-lucide-trash"
+            @click="removeLogo">
+            {{ t('admin.settings.generalSettings.removeLogo') }}
+          </UButton>
         </div>
+      </div>
+    </div>
 
-        <UFormField name="telemetryEnabled">
-          <USwitch v-model="form.telemetryEnabled" :label="t('admin.settings.generalSettings.enableTelemetry')" :disabled="isSubmitting" />
-        </UFormField>
+    <USeparator />
+
+    <div class="space-y-4">
+      <div>
+        <h3 class="text-sm font-medium">{{ t('admin.settings.generalSettings.system') }}</h3>
       </div>
 
-      <div class="flex justify-end">
-        <UButton type="submit" color="primary" variant="subtle" :loading="isSubmitting" :disabled="isSubmitting">
-          {{ t('admin.settings.generalSettings.saveChanges') }}
-        </UButton>
-      </div>
+      <UFormField name="telemetryEnabled">
+        <USwitch v-model="form.telemetryEnabled" :label="t('admin.settings.generalSettings.enableTelemetry')"
+          :disabled="isSubmitting" />
+      </UFormField>
+    </div>
+
+    <div class="flex justify-end">
+      <UButton type="submit" color="primary" variant="subtle" :loading="isSubmitting" :disabled="isSubmitting">
+        {{ t('admin.settings.generalSettings.saveChanges') }}
+      </UButton>
+    </div>
   </UForm>
 </template>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TableColumn, CommandPaletteItem  } from '@nuxt/ui'
+import type { TableColumn, CommandPaletteItem } from '@nuxt/ui'
 import type { AdminUserResponse, UsersResponse } from '#shared/types/api'
 
 const { t } = useI18n()
@@ -272,12 +272,7 @@ function formatDate(value: string) {
           <UCard :ui="{ body: 'space-y-3' }">
             <template #header>
               <div class="flex justify-end gap-2">
-                <UButton
-                  icon="i-lucide-search"
-                  color="neutral"
-                  variant="subtle"
-                  @click="openSearchModal"
-                >
+                <UButton icon="i-lucide-search" color="neutral" variant="subtle" @click="openSearchModal">
                   {{ t('common.search') }}
                 </UButton>
                 <UButton icon="i-lucide-user-plus" color="primary" variant="subtle" @click="openCreateModal">
@@ -287,22 +282,10 @@ function formatDate(value: string) {
             </template>
 
             <div class="space-y-3">
-              <UAlert
-                v-if="errorMessage"
-                color="error"
-                variant="soft"
-                icon="i-lucide-alert-triangle"
-                :description="errorMessage"
-                :title="t('admin.users.failedToLoadUsers')"
-              />
+              <UAlert v-if="errorMessage" color="error" variant="soft" icon="i-lucide-alert-triangle"
+                :description="errorMessage" :title="t('admin.users.failedToLoadUsers')" />
 
-              <UTable
-                :data="users"
-                :columns="columns"
-                :loading="loading"
-                sticky
-                class="w-full"
-              >
+              <UTable :data="users" :columns="columns" :loading="loading" sticky class="w-full">
                 <template #loading>
                   <div class="space-y-2 p-4">
                     <USkeleton v-for="i in 4" :key="`row-skeleton-${i}`" class="h-10 w-full" />
@@ -317,20 +300,13 @@ function formatDate(value: string) {
 
                 <template #username-cell="{ row }">
                   <div class="flex items-center gap-2">
-                    <UAvatar
-                      v-bind="getUserAvatar(row.original)"
-                      size="xs"
-                    />
+                    <UAvatar v-bind="getUserAvatar(row.original)" size="xs" />
                     <div class="flex flex-col">
                       <div class="flex items-center gap-1">
                         <NuxtLink :to="`/admin/users/${row.original.id}`" class="font-semibold hover:text-primary">
                           {{ row.original.username }}
                         </NuxtLink>
-                        <UIcon
-                          v-if="row.original.rootAdmin"
-                          name="i-lucide-star"
-                          class="h-4 w-4 text-warning"
-                        />
+                        <UIcon v-if="row.original.rootAdmin" name="i-lucide-star" class="h-4 w-4 text-warning" />
                       </div>
                       <p v-if="row.original.name" class="text-xs text-muted-foreground">{{ row.original.name }}</p>
                     </div>
@@ -342,11 +318,8 @@ function formatDate(value: string) {
                 </template>
 
                 <template #twoFactorEnabled-cell="{ row }">
-                  <UIcon
-                    :name="row.original.twoFactorEnabled ? 'i-lucide-lock' : 'i-lucide-unlock'"
-                    :class="row.original.twoFactorEnabled ? 'text-success' : 'text-muted-foreground'"
-                    class="h-4 w-4"
-                  />
+                  <UIcon :name="row.original.twoFactorEnabled ? 'i-lucide-lock' : 'i-lucide-unlock'"
+                    :class="row.original.twoFactorEnabled ? 'text-success' : 'text-muted-foreground'" class="h-4 w-4" />
                 </template>
 
                 <template #serversOwned-cell="{ row }">
@@ -373,15 +346,12 @@ function formatDate(value: string) {
 
                 <template #actions-cell="{ row }">
                   <div class="flex gap-1 justify-end">
-                    <UButton icon="i-lucide-user-circle" size="xs" variant="ghost" :to="`/admin/users/${row.original.id}`" />
-                    <UButton icon="i-lucide-pencil" size="xs" variant="ghost" @click="openEditModal(row.original)" />
-                    <UButton
-                      icon="i-lucide-trash"
-                      size="xs"
-                      variant="ghost"
-                      color="error"
-                      @click="userToDelete = row.original; showDeleteModal = true"
-                    />
+                    <UButton icon="i-lucide-user-circle" size="xs" variant="ghost"
+                      :to="`/admin/users/${row.original.id}`" />
+                    <UButton icon="i-lucide-pencil" size="xs" color="info" variant="ghost"
+                      @click="openEditModal(row.original)" />
+                    <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
+                      @click="userToDelete = row.original; showDeleteModal = true" />
                   </div>
                 </template>
               </UTable>
@@ -390,13 +360,8 @@ function formatDate(value: string) {
                 <p class="text-xs text-muted-foreground">
                   {{ t('admin.users.showingUsers', { count: users.length }) }}
                 </p>
-                <UPagination
-                  v-model:page="page"
-                  :total="pagination.total"
-                  :items-per-page="pagination.perPage"
-                  size="sm"
-                  @update:page="handlePageChange"
-                />
+                <UPagination v-model:page="page" :total="pagination.total" :items-per-page="pagination.perPage"
+                  size="sm" @update:page="handlePageChange" />
               </div>
             </div>
           </UCard>
@@ -452,13 +417,10 @@ function formatDate(value: string) {
       </template>
     </UModal>
 
-    <UModal v-model:open="showSearchModal" :title="t('admin.users.searchUsers')" :description="t('admin.users.searchUsers')">
+    <UModal v-model:open="showSearchModal" :title="t('admin.users.searchUsers')"
+      :description="t('admin.users.searchUsers')">
       <template #content>
-        <UCommandPalette
-          :groups="commandPaletteGroups"
-          :placeholder="t('admin.users.searchUsers')"
-          class="h-96"
-          close
+        <UCommandPalette :groups="commandPaletteGroups" :placeholder="t('admin.users.searchUsers')" class="h-96" close
           :fuse="{
             fuseOptions: {
               ignoreLocation: true,
@@ -467,25 +429,21 @@ function formatDate(value: string) {
             },
             resultLimit: 50,
             matchAllWhenSearchEmpty: true,
-          }"
-          @update:open="showSearchModal = $event"
-        />
+          }" @update:open="showSearchModal = $event" />
       </template>
     </UModal>
 
-    <UModal
-      v-model:open="showDeleteModal"
-      :title="t('admin.users.deleteUser')"
-      :description="t('admin.users.confirmDeleteDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
-    >
+    <UModal v-model:open="showDeleteModal" :title="t('admin.users.deleteUser')"
+      :description="t('admin.users.confirmDeleteDescription')" :ui="{ footer: 'justify-end gap-2' }">
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.users.deleteUserWarning') }}</template>
         </UAlert>
         <div v-if="userToDelete" class="rounded-md bg-muted p-3 text-sm">
-          <p class="font-medium">{{ t('auth.username') }}: <span class="text-foreground">{{ userToDelete.username }}</span></p>
+          <p class="font-medium">{{ t('auth.username') }}: <span class="text-foreground">{{ userToDelete.username
+              }}</span>
+          </p>
           <p class="text-muted-foreground mt-2">{{ t('auth.email') }}: {{ userToDelete.email }}</p>
         </div>
       </template>
