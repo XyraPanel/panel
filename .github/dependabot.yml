@@ -13,15 +13,14 @@ updates:
       prefix: "deps"
     allow:
       - dependency-type: "direct"
-        update-types:
-          - version-update:semver-patch
-          - version-update:semver-minor
     ignore:
       - dependency-name: "some-noisy-package"
+        update-types:
+          - version-update:semver-major
     groups:
       all-minor-patch:
         patterns:
           - "*"
         update-types:
-          - version-update:semver-patch
-          - version-update:semver-minor
+          - minor
+          - patch
