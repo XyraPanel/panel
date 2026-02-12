@@ -30,8 +30,6 @@ const extraConnectSources = process.env.NUXT_SECURITY_CONNECT_SRC
 
 const connectSrcDirectives = ["'self'", 'https:', 'wss:', 'ws:', ...extraConnectSources]
 const isDev = process.env.NODE_ENV !== 'production'
-const enableHintsModule = process.env.NUXT_ENABLE_HINTS === 'true'
-
 const maxRequestSize = process.env.NUXT_MAX_REQUEST_SIZE_MB
   ? Number.parseInt(process.env.NUXT_MAX_REQUEST_SIZE_MB) * 1024 * 1024
   : 4 * 1024 * 1024
@@ -55,9 +53,6 @@ export default defineNuxtConfig({
     'nuxt-qrcode',
     'nuxt-security',
     '@vite-pwa/nuxt',
-    // '@nuxt/a11y', // Disabled due to crypto.randomUUID browser compatibility issue
-    ...(isDev ? ['@nuxt/test-utils/module'] : []), // Only include test utils in development
-    ...(enableHintsModule ? ['@nuxt/hints'] : []),
     'nuxt-charts',
     '@nuxtjs/robots',
     '@pinia/nuxt',
