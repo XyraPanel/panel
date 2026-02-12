@@ -39,13 +39,9 @@ const maxUploadSize = process.env.NUXT_MAX_UPLOAD_SIZE_MB
   : 20 * 1024 * 1024
 
 export default defineNuxtConfig({
-  compatibilityDate: '2024-11-01',
+  compatibilityDate: '2026-02-12',
   devtools: {
     enabled: true,
-
-    timeline: {
-      enabled: true,
-    },
   },
   css: ['~/assets/css/main.css'],
   modules: [
