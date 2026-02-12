@@ -61,7 +61,6 @@ export default defineNuxtConfig({
     'nuxt-charts',
     '@nuxtjs/robots',
     '@pinia/nuxt',
-    '@pinia/colada-nuxt',
     'nuxt-monaco-editor',
     '@nuxtjs/turnstile',
     '@nuxt/scripts',
