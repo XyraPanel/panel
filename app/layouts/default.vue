@@ -13,13 +13,16 @@ const pageTitle = computed(() => {
   if (typeof title === 'string' && title.length > 0) {
     return title
   }
-  return null
+  return appName.value
 })
 
 const pageSubtitle = computed(() => {
   const subtitle = route.meta.subtitle
   if (typeof subtitle === 'string' && subtitle.length > 0) {
     return subtitle
+  }
+  if (route.name === 'index' || route.path === '/') {
+    return t('dashboard.description')
   }
   return null
 })
@@ -230,10 +233,15 @@ async function handleLocaleChange(newLocale: string | undefined) {
 
     <UDashboardPanel :key="'dashboard-panel'" :ui="{ body: 'flex flex-1 flex-col p-0' }">
       <template #body>
-        <UDashboardNavbar :ui="{ left: 'flex flex-col gap-0.5 text-left py-3', root: 'justify-between py-3' }">
+        <UDashboardNavbar
+          :ui="{
+            left: 'flex flex-col gap-0.5 text-left leading-tight sm:flex-row sm:items-baseline sm:gap-2',
+            root: 'justify-between items-center px-4 py-1.5 sm:px-6 sm:py-2'
+          }"
+        >
           <template #left>
-            <div v-if="pageTitle" class="flex flex-col gap-0.5">
-              <h1 class="text-lg font-semibold text-foreground">{{ pageTitle }}</h1>
+            <div v-if="pageTitle" class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2">
+              <h1 class="text-base font-semibold text-foreground sm:text-lg">{{ pageTitle }}</h1>
               <p v-if="pageSubtitle" class="text-xs text-muted-foreground">{{ pageSubtitle }}</p>
             </div>
           </template>
@@ -275,7 +283,7 @@ async function handleLocaleChange(newLocale: string | undefined) {
               {{ t('auth.signOut') }}
             </UButton>
           </div>
-          <div v-else class="px-6 py-8">
+          <div v-else class="px-4 py-5 sm:px-6">
             <slot />
           </div>
         </main>
