@@ -1,19 +1,19 @@
 import { defineConfig } from "drizzle-kit";
 
-const DIALECT = (process.env.DB_DIALECT ?? "sqlite").toLowerCase();
-const isPostgres = DIALECT === "postgresql" || DIALECT === "postgres";
 const defaultSqliteUrl = "file:./data/XyraPanel.sqlite";
+const rawDatabaseUrl = process.env.DATABASE_URL || defaultSqliteUrl;
+const resolvedDialect = (process.env.DB_DIALECT ?? "sqlite").toLowerCase();
+const isPostgres = resolvedDialect === "postgresql" || resolvedDialect === "postgres";
 
 function resolveDatabaseUrl() {
   if (isPostgres) {
-    const url = process.env.DRIZZLE_DATABASE_URL;
-    if (!url) {
-      throw new Error("DRIZZLE_DATABASE_URL is required when DB_DIALECT=postgresql");
+    if (!rawDatabaseUrl) {
+      throw new Error("DATABASE_URL is required when DB_DIALECT=postgresql");
     }
-    return url;
+    return rawDatabaseUrl;
   }
 
-  return process.env.DRIZZLE_DATABASE_URL || defaultSqliteUrl;
+  return rawDatabaseUrl || defaultSqliteUrl;
 }
 
 export default defineConfig({
