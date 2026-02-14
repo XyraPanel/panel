@@ -1,15 +1,24 @@
 import { existsSync, mkdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { join, resolve } from 'pathe'
+import { join, resolve, dirname } from 'pathe'
 import Database from 'better-sqlite3'
 import { Pool } from 'pg'
 import { drizzle as drizzleSQLite, type BetterSQLite3Database } from 'drizzle-orm/better-sqlite3/driver'
-import { drizzle as drizzlePostgres } from 'drizzle-orm/node-postgres'
+import { drizzle as drizzlePostgres, type NodePgDatabase } from 'drizzle-orm/node-postgres'
 import { and, eq, or, inArray, isNull, isNotNull, lt, desc } from 'drizzle-orm'
 import * as schema from '#server/database/schema'
 
-const DIALECT = (process.env.DB_DIALECT ?? 'sqlite').toLowerCase()
-const isPostgres = DIALECT === 'postgresql' || DIALECT === 'postgres'
+const moduleDir = fileURLToPath(new URL('.', import.meta.url))
+const projectRoot = findProjectRoot(moduleDir)
+const dataDir = join(projectRoot, 'data')
+const defaultSqlitePath = join(dataDir, 'XyraPanel.sqlite')
+const defaultSqliteUrl = 'file:./data/XyraPanel.sqlite'
+
+const rawDatabaseUrl = process.env.DATABASE_URL || defaultSqliteUrl
+const resolvedDialect = (process.env.DB_DIALECT ?? inferDialect(rawDatabaseUrl)).toLowerCase()
+const isPostgres = resolvedDialect === 'postgresql' || resolvedDialect === 'postgres'
+const sqliteFilePath = resolveSqliteFilePath(rawDatabaseUrl)
+const sqliteDirectory = dirname(sqliteFilePath)
 
 function findProjectRoot(startDir: string): string {
   let current = startDir
@@ -30,15 +39,41 @@ function findProjectRoot(startDir: string): string {
   }
 }
 
-const moduleDir = fileURLToPath(new URL('.', import.meta.url))
-const projectRoot = findProjectRoot(moduleDir)
-const dataDir = join(projectRoot, 'data')
-const databasePath = join(dataDir, 'XyraPanel.sqlite')
+function inferDialect(url: string | null): 'sqlite' | 'postgresql' {
+  if (!url) {
+    return 'sqlite'
+  }
+
+  if (url.startsWith('postgres')) {
+    return 'postgresql'
+  }
+
+  return 'sqlite'
+}
+
+function resolveSqliteFilePath(url: string | null): string {
+  if (url && url.startsWith('file:')) {
+    const target = url.slice('file:'.length)
+    if (!target) {
+      return defaultSqlitePath
+    }
+
+    if (target.startsWith('./') || target.startsWith('../')) {
+      return resolve(projectRoot, target)
+    }
+
+    return target
+  }
+
+  return defaultSqlitePath
+}
 
 let sqlite: ReturnType<typeof Database> | null = null
 let pgPool: Pool | null = null
 
-type DrizzleDatabase = BetterSQLite3Database<typeof schema>
+type SqliteDatabase = BetterSQLite3Database<typeof schema>
+type PostgresDatabase = NodePgDatabase<typeof schema>
+type DrizzleDatabase = SqliteDatabase | PostgresDatabase
 
 let db: DrizzleDatabase | null = null
 
@@ -47,11 +82,11 @@ function getSqliteClient() {
     return sqlite
   }
 
-  if (!existsSync(dataDir)) {
-    mkdirSync(dataDir, { recursive: true, mode: 0o755 })
+  if (!existsSync(sqliteDirectory)) {
+    mkdirSync(sqliteDirectory, { recursive: true, mode: 0o755 })
   }
 
-  sqlite = new Database(databasePath, {
+  sqlite = new Database(sqliteFilePath, {
     verbose: process.env.NODE_ENV === 'development' ? console.log : undefined
   })
   sqlite.pragma('foreign_keys = ON')
@@ -64,19 +99,20 @@ function getPgPool() {
     return pgPool
   }
 
-  const connectionString = process.env.DRIZZLE_DATABASE_URL
+  const connectionString = rawDatabaseUrl
 
-  if (!connectionString) {
-    throw new Error('DRIZZLE_DATABASE_URL is required when DB_DIALECT=postgresql')
+  if (!connectionString || connectionString.startsWith('file:')) {
+    throw new Error('DATABASE_URL must be set to a PostgreSQL connection string when DB_DIALECT=postgresql')
   }
 
   pgPool = new Pool({ connectionString })
+
   return pgPool
 }
 
 function createDatabase(): DrizzleDatabase {
   if (isPostgres) {
-    return drizzlePostgres(getPgPool(), { schema }) as unknown as DrizzleDatabase
+    return drizzlePostgres(getPgPool(), { schema })
   }
 
   return drizzleSQLite(getSqliteClient(), { schema })
