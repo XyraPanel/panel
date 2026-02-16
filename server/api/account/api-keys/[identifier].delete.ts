@@ -1,6 +1,7 @@
-import { useDrizzle, tables, eq, and } from '#server/utils/drizzle'
+import { useDrizzle, tables, eq, and, assertSqliteDatabase } from '#server/utils/drizzle'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { requireAccountUser } from '#server/utils/security'
+import { requireRouteParam } from '#server/utils/http/params'
 
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'DELETE')
@@ -8,26 +9,17 @@ export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event)
   const user = accountContext.user
 
-  const { identifier } = await getValidatedRouterParams(event, (params) => {
-    const identifierParam = (params as Record<string, unknown>).identifier
-    if (typeof identifierParam !== 'string' || identifierParam.trim().length === 0) {
-      throw createError({ status: 400, statusText: 'Missing API key identifier' })
-    }
-
-    return { identifier: identifierParam }
-  })
+  const identifier = await requireRouteParam(event, 'identifier', 'Missing API key identifier')
 
   const db = useDrizzle()
+  assertSqliteDatabase(db)
 
   const apiKey = db
-    .select({
-      id: tables.apiKeys.id,
-      userId: tables.apiKeys.userId,
-    })
+    .select()
     .from(tables.apiKeys)
     .where(
       and(
-        eq(tables.apiKeys.identifier, identifier),
+        eq(tables.apiKeys.id, identifier),
         eq(tables.apiKeys.userId, user.id)
       )
     )
@@ -41,7 +33,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await db.delete(tables.apiKeys)
+  db.delete(tables.apiKeys)
     .where(eq(tables.apiKeys.id, apiKey.id))
     .run()
 

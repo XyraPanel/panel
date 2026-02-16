@@ -71,9 +71,9 @@ function resolveSqliteFilePath(url: string | null): string {
 let sqlite: ReturnType<typeof Database> | null = null
 let pgPool: Pool | null = null
 
-type SqliteDatabase = BetterSQLite3Database<typeof schema>
-type PostgresDatabase = NodePgDatabase<typeof schema>
-type DrizzleDatabase = SqliteDatabase | PostgresDatabase
+export type SqliteDatabase = BetterSQLite3Database<typeof schema>
+export type PostgresDatabase = NodePgDatabase<typeof schema>
+export type DrizzleDatabase = SqliteDatabase | PostgresDatabase
 
 let db: DrizzleDatabase | null = null
 
@@ -116,6 +116,12 @@ function createDatabase(): DrizzleDatabase {
   }
 
   return drizzleSQLite(getSqliteClient(), { schema })
+}
+
+export function assertSqliteDatabase(_db: DrizzleDatabase): asserts _db is SqliteDatabase {
+  if (isPostgres) {
+    throw new Error('SQLite-only operation attempted while DB_DIALECT=postgresql')
+  }
 }
 
 export function useDrizzle(): DrizzleDatabase {

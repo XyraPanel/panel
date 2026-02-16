@@ -139,7 +139,7 @@ async function createSshKey() {
       method: 'POST',
       body: {
         name: createForm.name,
-        public_key: createForm.publicKey,
+        publicKey: createForm.publicKey,
       },
     })
 

@@ -1,4 +1,5 @@
 import { APIError } from 'better-auth/api'
+import type { H3EventContext } from 'h3'
 import type { AuthContext } from '#shared/types/auth'
 import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
 import { resolveSessionUser } from '#server/utils/auth/sessionUser'
@@ -6,11 +7,15 @@ import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { accountPasswordUpdateSchema } from '#shared/schema/account'
 import { requireAuth, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 
+function hasAuthContext(ctx: H3EventContext): ctx is H3EventContext & { auth?: AuthContext } {
+  return 'auth' in ctx
+}
+
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT')
 
   const auth = getAuth()
-  const middlewareAuth = (event.context as { auth?: AuthContext }).auth
+  const middlewareAuth = hasAuthContext(event.context) ? event.context.auth : undefined
   const session = middlewareAuth?.session ?? await requireAuth(event)
 
   if (!session?.user?.id) {
@@ -40,18 +45,30 @@ export default defineEventHandler(async (event) => {
       })
     }
 
+    let signedOut = false
+    const cookies = parseCookies(event)
+    const currentToken = cookies['better-auth.session_token']
+
+    if (currentToken) {
+      await auth.api.revokeSession({
+        body: { token: currentToken },
+        headers: normalizeHeadersForAuth(event.node.req.headers),
+      })
+      signedOut = true
+    }
+
     return {
       data: {
         success: true,
-        revokedSessions: 0,
-        signedOut: false,
+        revokedSessions: signedOut ? 1 : 0,
+        signedOut,
       },
     }
   }
   catch (error) {
     if (error instanceof APIError) {
       throw createError({
-        status: error.status,
+        status: Number(error.status) || 400,
         statusText: error.message || 'Failed to change password',
       })
     }
