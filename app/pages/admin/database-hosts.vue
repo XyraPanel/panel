@@ -9,10 +9,11 @@ definePageMeta({
 
 const { t } = useI18n()
 const toast = useToast()
+const requestFetch = useRequestFetch()
 
 const { data: hostsData, pending, error, refresh } = await useAsyncData(
   'admin-database-hosts',
-  () => $fetch<{ data: DatabaseHostWithStats[] }>('/api/admin/database-hosts'),
+  () => requestFetch<{ data: DatabaseHostWithStats[] }>('/api/admin/database-hosts'),
 )
 
 const hosts = computed(() => hostsData.value?.data ?? [])

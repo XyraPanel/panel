@@ -87,16 +87,22 @@ export const sessions = sqliteTable('sessions', {
   index('sessions_token_index').on(table.sessionToken),
 ])
 
-export const sessionMetadata = sqliteTable('session_metadata', {
-  sessionToken: text('session_token').primaryKey().references(() => sessions.sessionToken, { onDelete: 'cascade' }),
-  firstSeenAt: integer('first_seen_at', { mode: 'timestamp' }),
-  lastSeenAt: integer('last_seen_at', { mode: 'timestamp' }),
-  ipAddress: text('ip_address'),
-  userAgent: text('user_agent'),
-  deviceName: text('device_name'),
-  browserName: text('browser_name'),
-  osName: text('os_name'),
-})
+export const sessionMetadata = sqliteTable(
+  'session_metadata',
+  {
+    sessionToken: text('session_token').primaryKey().references(() => sessions.sessionToken, { onDelete: 'cascade' }),
+    firstSeenAt: integer('first_seen_at', { mode: 'timestamp' }),
+    lastSeenAt: integer('last_seen_at', { mode: 'timestamp' }),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+    deviceName: text('device_name'),
+    browserName: text('browser_name'),
+    osName: text('os_name'),
+  },
+  table => [
+    index('session_metadata_last_seen_index').on(table.lastSeenAt),
+  ],
+)
 
 export const verificationTokens = sqliteTable(
   'verification_tokens',
@@ -217,6 +223,9 @@ export const servers = sqliteTable(
     uniqueIndex('servers_uuid_unique').on(table.uuid),
     uniqueIndex('servers_identifier_unique').on(table.identifier),
     uniqueIndex('servers_external_id_unique').on(table.externalId),
+    index('servers_owner_id_index').on(table.ownerId),
+    index('servers_node_id_index').on(table.nodeId),
+    index('servers_status_index').on(table.status),
   ],
 )
 
@@ -271,6 +280,10 @@ export const serverSchedules = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp' }).notNull(),
   },
+  table => [
+    index('server_schedules_enabled_next_run_index').on(table.enabled, table.nextRunAt),
+    index('server_schedules_server_id_index').on(table.serverId),
+  ],
 )
 
 export const serverScheduleTasks = sqliteTable(

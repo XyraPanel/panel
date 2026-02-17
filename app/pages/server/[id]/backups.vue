@@ -15,12 +15,12 @@ const {
   pending,
   error,
   refresh: refreshBackups,
-} = useAsyncData(
-  `server-${serverId.value}-backups`,
-  () => $fetch<{ data: ServerBackup[] }>(`/api/client/servers/${serverId.value}/backups`),
+} = await useFetch<{ data: ServerBackup[] }>(
+  () => `/api/client/servers/${serverId.value}/backups`,
   {
+    key: () => `server-${serverId.value}-backups`,
     watch: [serverId],
-    server: false,
+    default: () => ({ data: [] }),
   },
 )
 
@@ -62,7 +62,7 @@ async function createBackup() {
     await $fetch(`/api/client/servers/${serverId.value}/backups`, {
       method: 'POST',
       body: {
-        name: t('server.backups.defaultBackupName', { date: new Date().toLocaleString() }),
+        name: t('server.backups.defaultBackupName', { date: new Date().toISOString() }),
         locked: false,
       },
     })

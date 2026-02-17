@@ -1,10 +1,15 @@
 import { APIError } from 'better-auth/api'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { useDrizzle, tables, eq, assertSqliteDatabase } from '#server/utils/drizzle'
 import type { UpdateUserRequest } from '#shared/types/user'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { requireAdmin } from '#server/utils/security'
+import { auth, normalizeHeadersForAuth } from '#server/utils/auth'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+
+type PatchUserBody = Partial<UpdateUserRequest> & {
+  role?: 'admin' | 'user'
+}
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
@@ -15,7 +20,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Bad Request', message: 'User ID is required' })
   }
 
-  const body = await readBody<Partial<UpdateUserRequest>>(event)
+  const body = await readBody<PatchUserBody>(event)
 
   try {
     const updateData: Record<string, unknown> = {}
@@ -26,6 +31,8 @@ export default defineEventHandler(async (event) => {
     }
 
     const db = useDrizzle()
+    assertSqliteDatabase(db)
+    const headers = normalizeHeadersForAuth(event.node.req.headers)
     
     if (body.email !== undefined) {
       const currentUser = db
@@ -35,7 +42,7 @@ export default defineEventHandler(async (event) => {
         .get()
       
       if (currentUser && currentUser.email !== body.email) {
-        await db.update(tables.users)
+        db.update(tables.users)
           .set({
             email: body.email,
             emailVerified: null,
@@ -46,10 +53,15 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    if ((body as { role?: string }).role !== undefined) {
-      await db.update(tables.users)
+    if (body.role !== undefined) {
+      await auth.api.setRole({
+        body: { userId, role: body.role },
+        headers,
+      })
+
+      db.update(tables.users)
         .set({
-          role: (body as { role: string }).role,
+          role: body.role,
           updatedAt: new Date(),
         })
         .where(eq(tables.users.id, userId))
@@ -57,11 +69,16 @@ export default defineEventHandler(async (event) => {
     }
 
     if (body.password) {
-      const bcrypt = await import('bcryptjs')
-      const hashedPassword = await bcrypt.default.hash(body.password, 12)
-      await db.update(tables.users)
+      await auth.api.setUserPassword({
+        body: {
+          userId,
+          newPassword: body.password,
+        },
+        headers,
+      })
+
+      db.update(tables.users)
         .set({
-          password: hashedPassword,
           passwordResetRequired: false,
           updatedAt: new Date(),
         })
@@ -77,7 +94,7 @@ export default defineEventHandler(async (event) => {
       if (body.username !== undefined) updates.username = body.username
       if (body.rootAdmin !== undefined) updates.rootAdmin = body.rootAdmin
       
-      await db.update(tables.users)
+      db.update(tables.users)
         .set(updates)
         .where(eq(tables.users.id, userId))
         .run()
@@ -125,9 +142,10 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
       throw createError({
-        status: error.status,
-        statusText: error.message || 'Failed to update user',
+        statusCode,
+        statusMessage: error.message || 'Failed to update user',
       })
     }
     throw createError({

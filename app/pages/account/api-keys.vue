@@ -50,7 +50,6 @@ type KeyFormSchema = CreateApiKeyFormInput
 
 const createForm = reactive<KeyFormSchema>(keySchema.parse({}))
 
-const keysFetch = useRequestFetch() as (input: string, init?: Record<string, unknown>) => Promise<unknown>
 const untypedFetch = $fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>
 
 type AccountApiKey = ApiKeyResponse['data']
@@ -65,20 +64,19 @@ const { data: generalSettings } = await useFetch<{ paginationLimit: number }>('/
 })
 const itemsPerPage = computed(() => generalSettings.value?.paginationLimit ?? 25)
 
-async function fetchApiKeys(): Promise<AccountApiKeysResponse> {
-  const result = await keysFetch('/api/account/api-keys?page=' + currentPage.value + '&limit=' + itemsPerPage.value) as unknown
-  return result as AccountApiKeysResponse
-}
-
 const {
   data: keysData,
   pending: keysPending,
   refresh: refreshKeys,
   error: keysError,
-} = await useAsyncData(
-  'account-api-keys',
-  () => fetchApiKeys(),
+} = await useFetch<AccountApiKeysResponse>(
+  '/api/account/api-keys',
   {
+    key: 'account-api-keys',
+    query: computed(() => ({
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+    })),
     default: () => ({ data: [], pagination: { page: 1, perPage: itemsPerPage.value, total: 0, totalPages: 0 } }),
     watch: [currentPage, itemsPerPage],
   },
@@ -629,4 +627,3 @@ async function copyToken() {
     </div>
   </div>
 </template>
-

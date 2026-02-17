@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 export const suspensionActionSchema = z.object({
-  action: z.enum(['suspend', 'unsuspend', 'ban', 'unban'], 'Action must be one of: suspend, unsuspend, ban, unban'),
+  action: z.enum(['suspend', 'unsuspend'], 'Action must be one of: suspend, unsuspend'),
   reason: z
     .string()
     .trim()

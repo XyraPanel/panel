@@ -12,6 +12,7 @@ definePageMeta({
 const toast = useToast()
 const router = useRouter()
 const route = useRoute()
+const requestFetch = useRequestFetch()
 
 const page = ref(Number.parseInt(route.query.page as string ?? '1', 10) || 1)
 const showSearchModal = ref(false)
@@ -29,7 +30,7 @@ const {
   refresh: refreshUsers,
 } = await useAsyncData<UsersResponse>(
   'admin-users',
-  () => $fetch('/api/admin/users', {
+  () => requestFetch<UsersResponse>('/api/admin/users' as string, {
     query: {
       page: page.value,
       limit: itemsPerPage.value,
@@ -259,9 +260,6 @@ async function handleDelete() {
   }
 }
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleString()
-}
 </script>
 
 <template>
@@ -337,7 +335,10 @@ function formatDate(value: string) {
                 </template>
 
                 <template #createdAt-cell="{ row }">
-                  <span class="text-xs text-muted-foreground">{{ formatDate(row.original.createdAt) }}</span>
+                  <NuxtTime
+                    class="text-xs text-muted-foreground"
+                    :datetime="row.original.createdAt"
+                  />
                 </template>
 
                 <template #actions-header>

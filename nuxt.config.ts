@@ -8,6 +8,14 @@ const redisStorageConfig = {
   tls: process.env.REDIS_TLS === 'true',
 }
 
+const redisRateLimiterOptions = {
+  host: process.env.REDIS_HOST || 'localhost',
+  port: process.env.REDIS_PORT ? Number.parseInt(process.env.REDIS_PORT) : 6379,
+  username: process.env.REDIS_USERNAME,
+  password: process.env.REDIS_PASSWORD,
+  ...(process.env.REDIS_TLS === 'true' ? { tls: {} } : {}),
+}
+
 const authOrigin = process.env.BETTER_AUTH_URL
   || process.env.AUTH_ORIGIN
   || process.env.NUXT_AUTH_ORIGIN
@@ -30,6 +38,29 @@ const extraConnectSources = process.env.NUXT_SECURITY_CONNECT_SRC
 
 const connectSrcDirectives = ["'self'", 'https:', 'wss:', 'ws:', ...extraConnectSources]
 const isDev = process.env.NODE_ENV !== 'production'
+const enableCspReportOnly = process.env.NUXT_SECURITY_CSP_REPORT_ONLY === 'true'
+const cspReportUri = process.env.NUXT_SECURITY_CSP_REPORT_URI?.trim() || null
+const hasRedisRateLimitConfig = Boolean(process.env.REDIS_HOST && process.env.REDIS_PORT)
+const preferredRateLimiterDriver = (process.env.NUXT_SECURITY_RATE_LIMIT_DRIVER || 'lruCache').trim()
+const shouldUseRedisRateLimiter = !isDev && preferredRateLimiterDriver === 'redis' && hasRedisRateLimitConfig
+
+const globalRateLimiterDriver = shouldUseRedisRateLimiter
+  ? {
+      name: 'redis',
+      options: redisRateLimiterOptions,
+    } as const
+  : {
+      name: 'lruCache',
+    } as const
+
+const globalRateLimiterTokens = process.env.NUXT_SECURITY_RATE_LIMIT_TOKENS
+  ? Number.parseInt(process.env.NUXT_SECURITY_RATE_LIMIT_TOKENS, 10)
+  : 150
+
+const globalRateLimiterInterval = process.env.NUXT_SECURITY_RATE_LIMIT_INTERVAL_MS
+  ? Number.parseInt(process.env.NUXT_SECURITY_RATE_LIMIT_INTERVAL_MS, 10)
+  : 300000
+
 const maxRequestSize = process.env.NUXT_MAX_REQUEST_SIZE_MB
   ? Number.parseInt(process.env.NUXT_MAX_REQUEST_SIZE_MB) * 1024 * 1024
   : 4 * 1024 * 1024
@@ -70,6 +101,114 @@ export default defineNuxtConfig({
     },
     '/server/**': {
       appLayout: 'server',
+    },
+    '/api/auth/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 45,
+          interval: 300000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/auth/sign-in/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 5,
+          interval: 600000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/auth/forget-password': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 5,
+          interval: 900000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/auth/reset-password': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 8,
+          interval: 900000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/auth/password/request': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 5,
+          interval: 900000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/auth/password/reset': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 8,
+          interval: 900000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/user/2fa/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 8,
+          interval: 300000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/account/password/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 8,
+          interval: 300000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/account/email': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 8,
+          interval: 300000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/account/sessions/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 15,
+          interval: 300000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/account/api-keys/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 20,
+          interval: 300000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/admin/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 60,
+          interval: 60000,
+          throwError: true,
+        },
+      },
     },
   },
 
@@ -172,6 +311,33 @@ export default defineNuxtConfig({
       siteKey: process.env.NUXT_HCAPTCHA_SITE_KEY || '',
     },
     debug: process.env.DEBUG === 'true',
+    httpCache: {
+      enabled: process.env.NUXT_HTTP_CACHE_ENABLED !== 'false',
+      defaultMaxAge: process.env.NUXT_HTTP_CACHE_DEFAULT_MAX_AGE
+        ? Number.parseInt(process.env.NUXT_HTTP_CACHE_DEFAULT_MAX_AGE)
+        : 5,
+      defaultSwr: process.env.NUXT_HTTP_CACHE_DEFAULT_SWR
+        ? Number.parseInt(process.env.NUXT_HTTP_CACHE_DEFAULT_SWR)
+        : 15,
+      dashboardMaxAge: process.env.NUXT_HTTP_CACHE_DASHBOARD_MAX_AGE
+        ? Number.parseInt(process.env.NUXT_HTTP_CACHE_DASHBOARD_MAX_AGE)
+        : 10,
+      dashboardSwr: process.env.NUXT_HTTP_CACHE_DASHBOARD_SWR
+        ? Number.parseInt(process.env.NUXT_HTTP_CACHE_DASHBOARD_SWR)
+        : 30,
+      adminDashboardMaxAge: process.env.NUXT_HTTP_CACHE_ADMIN_DASHBOARD_MAX_AGE
+        ? Number.parseInt(process.env.NUXT_HTTP_CACHE_ADMIN_DASHBOARD_MAX_AGE)
+        : 10,
+      adminDashboardSwr: process.env.NUXT_HTTP_CACHE_ADMIN_DASHBOARD_SWR
+        ? Number.parseInt(process.env.NUXT_HTTP_CACHE_ADMIN_DASHBOARD_SWR)
+        : 30,
+      adminNodeMaxAge: process.env.NUXT_HTTP_CACHE_ADMIN_NODE_MAX_AGE
+        ? Number.parseInt(process.env.NUXT_HTTP_CACHE_ADMIN_NODE_MAX_AGE)
+        : 5,
+      adminNodeSwr: process.env.NUXT_HTTP_CACHE_ADMIN_NODE_SWR
+        ? Number.parseInt(process.env.NUXT_HTTP_CACHE_ADMIN_NODE_SWR)
+        : 15,
+    },
     public: {
       appName: process.env.APP_NAME || 'XyraPanel',
       debug: process.env.DEBUG === 'true',
@@ -207,19 +373,40 @@ export default defineNuxtConfig({
     }
     : {
       headers: {
-        contentSecurityPolicy: {
-          'default-src': ["'self'"],
-          'connect-src': connectSrcDirectives,
-          'img-src': ["'self'", 'data:', 'https:', 'blob:'],
-          'style-src': ["'self'", 'https:', "'unsafe-inline'"],
-          'font-src': ["'self'", 'https:', 'data:'],
-          'script-src': ["'self'", "'unsafe-inline'"],
-          'object-src': ["'none'"],
-          'base-uri': ["'self'"],
-          'form-action': ["'self'"],
-          'frame-ancestors': ["'none'"],
-          'upgrade-insecure-requests': true,
-        },
+        ...(enableCspReportOnly
+          ? {
+              contentSecurityPolicyReportOnly: {
+                'default-src': ["'self'"],
+                'connect-src': connectSrcDirectives,
+                'img-src': ["'self'", 'data:', 'https:', 'blob:'],
+                'style-src': ["'self'", 'https:', "'unsafe-inline'"],
+                'font-src': ["'self'", 'https:', 'data:'],
+                'script-src': ["'strict-dynamic'", "'nonce-{{nonce}}'", "'self'", 'https:'],
+                'object-src': ["'none'"],
+                'base-uri': ["'self'"],
+                'form-action': ["'self'"],
+                'frame-ancestors': ["'none'"],
+                ...(cspReportUri ? { 'report-uri': [cspReportUri] } : {}),
+                'upgrade-insecure-requests': true,
+              },
+              contentSecurityPolicy: false,
+            }
+          : {
+              contentSecurityPolicy: {
+                'default-src': ["'self'"],
+                'connect-src': connectSrcDirectives,
+                'img-src': ["'self'", 'data:', 'https:', 'blob:'],
+                'style-src': ["'self'", 'https:', "'unsafe-inline'"],
+                'font-src': ["'self'", 'https:', 'data:'],
+                'script-src': ["'strict-dynamic'", "'nonce-{{nonce}}'", "'self'", 'https:'],
+                'object-src': ["'none'"],
+                'base-uri': ["'self'"],
+                'form-action': ["'self'"],
+                'frame-ancestors': ["'none'"],
+                ...(cspReportUri ? { 'report-uri': [cspReportUri] } : {}),
+                'upgrade-insecure-requests': true,
+              },
+            }),
         crossOriginEmbedderPolicy: 'unsafe-none',
         crossOriginOpenerPolicy: 'same-origin-allow-popups',
         crossOriginResourcePolicy: 'cross-origin',
@@ -245,13 +432,12 @@ export default defineNuxtConfig({
         throwError: true,
       },
       rateLimiter: {
-        tokensPerInterval: 150,
-        interval: 'hour',
+        tokensPerInterval: globalRateLimiterTokens,
+        interval: globalRateLimiterInterval,
         headers: true,
-        driver: {
-          name: 'lruCache',
-        },
+        driver: globalRateLimiterDriver,
       },
+      nonce: true,
     },
 
   app: {

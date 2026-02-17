@@ -6,6 +6,7 @@ const props = defineProps<{
 }>()
 
 const toast = useToast()
+const requestFetch = useRequestFetch()
 const isGenerating = ref(false)
 const showConfig = ref(false)
 
@@ -17,7 +18,7 @@ const {
   `node-config-${props.nodeId}`,
   async () => {
     try {
-      const response = await $fetch<{ data: WingsNodeConfiguration }>(`/api/admin/wings/nodes/${props.nodeId}/configuration`)
+      const response = await requestFetch<{ data: WingsNodeConfiguration }>(`/api/admin/wings/nodes/${props.nodeId}/configuration`)
       return response.data
     }
     catch {

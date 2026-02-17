@@ -1,6 +1,7 @@
+import { sql } from 'drizzle-orm'
+import type { H3Event } from 'h3'
 import { requireAccountUser } from '#server/utils/security'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { tables, useDrizzle } from '#server/utils/drizzle'
+import { tables, useDrizzle, assertSqliteDatabase } from '#server/utils/drizzle'
 import { listWingsNodes } from '#server/utils/wings/nodesStore'
 import { remoteListServers } from '#server/utils/wings/registry'
 import { listAuditEvents } from '#server/utils/serversStore'
@@ -14,51 +15,33 @@ import type {
   ClientDashboardResponse,
 } from '#shared/types/dashboard'
 
+type DashboardSection = 'full' | 'metrics'
+type DashboardAuditEntry = Awaited<ReturnType<typeof listAuditEvents>>[number]
+
 function selectActivityIcon(action: string): string {
   const normalized = action.toLowerCase()
-  if (normalized.includes('backup')) {
-    return 'i-lucide-archive-restore'
-  }
-  if (normalized.includes('install') || normalized.includes('deploy')) {
-    return 'i-lucide-rocket'
-  }
-  if (normalized.includes('restart') || normalized.includes('power')) {
-    return 'i-lucide-power'
-  }
-  if (normalized.includes('node')) {
-    return 'i-lucide-hard-drive'
-  }
-  if (normalized.includes('schedule')) {
-    return 'i-lucide-calendar-clock'
-  }
-  if (normalized.includes('user') || normalized.includes('team')) {
-    return 'i-lucide-users'
-  }
+  if (normalized.includes('backup')) return 'i-lucide-archive-restore'
+  if (normalized.includes('install') || normalized.includes('deploy')) return 'i-lucide-rocket'
+  if (normalized.includes('restart') || normalized.includes('power')) return 'i-lucide-power'
+  if (normalized.includes('node')) return 'i-lucide-hard-drive'
+  if (normalized.includes('schedule')) return 'i-lucide-calendar-clock'
+  if (normalized.includes('user') || normalized.includes('team')) return 'i-lucide-users'
   return 'i-lucide-activity'
 }
 
 function deriveNodeStatus(node: ClientDashboardNodeSummary): ClientDashboardNodeSummary['status'] {
-  if (node.maintenanceMode) {
-    return 'maintenance'
-  }
-  if (node.serverCount !== null && node.serverCount > 0) {
-    return 'operational'
-  }
+  if (node.maintenanceMode) return 'maintenance'
+  if (node.serverCount !== null && node.serverCount > 0) return 'operational'
   return 'unknown'
 }
 
 function parseMetadata(raw: string | null): string {
-  if (!raw) {
-    return ''
-  }
-
+  if (!raw) return ''
   try {
-    const value = JSON.parse(raw) as unknown
-    if (typeof value === 'string') {
-      return value
-    }
-    if (value && typeof value === 'object') {
-      const summary = Object.entries(value as Record<string, unknown>)
+    const value: unknown = JSON.parse(raw)
+    if (typeof value === 'string') return value
+    if (value && typeof value === 'object' && !Array.isArray(value)) {
+      const summary = Object.entries(value)
         .map(([key, val]) => `${key}: ${String(val)}`)
         .join(', ')
       return summary || raw
@@ -70,12 +53,46 @@ function parseMetadata(raw: string | null): string {
   }
 }
 
-export default defineEventHandler(async (event): Promise<ClientDashboardResponse> => {
-  const accountContext = await requireAccountUser(event)
-  const user = accountContext.user
+function resolveSection(event: H3Event): DashboardSection {
+  const query = getQuery(event)
+  const section = Array.isArray(query.section) ? query.section[0] : query.section
+  return section === 'metrics' ? 'metrics' : 'full'
+}
 
+async function fetchMetrics(): Promise<ClientDashboardMetric[]> {
   const db = useDrizzle()
+  assertSqliteDatabase(db)
 
+  const totalServersRow = db.select({
+    value: sql<number>`count(*)`,
+  }).from(tables.servers).get()
+
+  const scheduleCountRow = db.select({
+    value: sql<number>`count(*)`,
+  }).from(tables.serverSchedules).get()
+
+  const totalServers = Number(totalServersRow?.value ?? 0)
+  const scheduleCount = Number(scheduleCountRow?.value ?? 0)
+
+  return [
+    {
+      key: 'servers-active',
+      label: 'Active servers',
+      value: totalServers,
+      icon: 'i-lucide-server',
+      delta: totalServers > 0 ? `${totalServers} registered` : 'No servers deployed',
+    },
+    {
+      key: 'schedules-active',
+      label: 'Automation schedules',
+      value: scheduleCount,
+      icon: 'i-lucide-calendar-clock',
+      delta: scheduleCount > 0 ? `${scheduleCount} tracking` : 'None configured',
+    },
+  ]
+}
+
+async function fetchFullDashboard(): Promise<ClientDashboardResponse> {
   const nodes = listWingsNodes()
   const enrichedNodes: ClientDashboardNodeSummary[] = await Promise.all(nodes.map(async (node) => {
     let serverCount: number | null = null
@@ -104,31 +121,10 @@ export default defineEventHandler(async (event): Promise<ClientDashboardResponse
     }
   }))
 
-  const serverRows = db.select({ id: tables.servers.id }).from(tables.servers).all()
-  const totalServers = serverRows.length
-
-  const scheduleCount = db.select({ id: tables.serverSchedules.id }).from(tables.serverSchedules).all().length
-
   const incidents = await listAuditEvents({ limit: 5 })
+  const metrics = await fetchMetrics()
 
-  const metrics: ClientDashboardMetric[] = [
-    {
-      key: 'servers-active',
-      label: 'Active servers',
-      value: totalServers,
-      icon: 'i-lucide-server',
-      delta: totalServers > 0 ? `${totalServers} registered` : 'No servers deployed',
-    },
-    {
-      key: 'schedules-active',
-      label: 'Automation schedules',
-      value: scheduleCount,
-      icon: 'i-lucide-calendar-clock',
-      delta: scheduleCount > 0 ? `${scheduleCount} tracking` : 'None configured',
-    },
-  ]
-
-  const activity: ClientDashboardActivity[] = incidents.map((entry) => ({
+  const activity: ClientDashboardActivity[] = incidents.map((entry: DashboardAuditEntry) => ({
     id: entry.id,
     title: entry.action,
     description: parseMetadata(entry.metadata),
@@ -169,7 +165,7 @@ export default defineEventHandler(async (event): Promise<ClientDashboardResponse
     },
   ]
 
-  const response: ClientDashboardResponse = {
+  return {
     metrics,
     activity,
     quickLinks,
@@ -177,14 +173,22 @@ export default defineEventHandler(async (event): Promise<ClientDashboardResponse
     nodes: enrichedNodes,
     generatedAt: new Date().toISOString(),
   }
+}
 
-  await recordAuditEventFromRequest(event, {
-    actor: user.id,
-    actorType: 'user',
-    action: 'account.dashboard.viewed',
-    targetType: 'user',
-    targetId: user.id,
-  })
+export default defineEventHandler(async (event): Promise<ClientDashboardResponse> => {
+  await requireAccountUser(event)
+  const section = resolveSection(event)
 
-  return response
+  if (section === 'metrics') {
+    return {
+      metrics: await fetchMetrics(),
+      activity: [],
+      quickLinks: [],
+      maintenance: [],
+      nodes: [],
+      generatedAt: new Date().toISOString(),
+    }
+  }
+
+  return fetchFullDashboard()
 })

@@ -2,8 +2,7 @@
 
 definePageMeta({
   auth: true,
+  middleware: 'account-index-redirect',
 })
-
-navigateTo('/account/profile', { replace: true })
 
 </script>

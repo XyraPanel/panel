@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { z } from 'zod'
 import type { FormSubmitEvent } from '@nuxt/ui'
-import type { FetchError } from 'ofetch'
 import type { Server, ServerLimits } from '#shared/types/server'
 import { serverBuildFormSchema } from '#shared/schema/admin/server'
 
@@ -12,54 +11,43 @@ const props = defineProps<{
 const toast = useToast()
 const isSubmitting = ref(false)
 const skipNextUpdate = ref(false)
-const requestFetch = useRequestFetch()
 
 const {
   data: limitsData,
   pending: limitsPending,
   refresh: refreshLimits,
-} = await useAsyncData(
-  `server-limits-${props.server.id}`,
-  async () => {
-    try {
-      const result = await requestFetch(`/api/admin/servers/${props.server.id}`) as unknown
-      if (result && typeof result === 'object' && 'data' in result) {
-        const payload = result as { data?: { 
-          limits?: ServerLimits | null
-          allocationLimit?: number | null
-          databaseLimit?: number | null
-          backupLimit?: number | null
-        } | null }
-        const serverData = payload.data
-        if (!serverData) return null
-        
-        return {
-          cpu: serverData.limits?.cpu ?? 0,
-          memory: serverData.limits?.memory ?? 0,
-          disk: serverData.limits?.disk ?? 0,
-          swap: serverData.limits?.swap ?? 0,
-          io: serverData.limits?.io ?? 500,
-          threads: serverData.limits?.threads ?? null,
-          oomDisabled: serverData.limits?.oomDisabled ?? true,
-          allocationLimit: serverData.allocationLimit ?? null,
-          databaseLimit: serverData.databaseLimit ?? null,
-          backupLimit: serverData.backupLimit ?? null,
-        } as ServerLimits
-      }
-      console.warn('[Build Form] Unexpected server response shape:', result)
-      return null
-    }
-    catch (error) {
-      console.error('Failed to load server limits', error)
-      return null
-    }
-  },
+} = await useFetch<{ data?: {
+  limits?: ServerLimits | null
+  allocationLimit?: number | null
+  databaseLimit?: number | null
+  backupLimit?: number | null
+} | null }>(
+  () => `/api/admin/servers/${props.server.id}`,
   {
-    default: () => null,
+    key: () => `server-limits-${props.server.id}`,
+    watch: [() => props.server.id],
   },
 )
 
-const limits = computed(() => limitsData.value)
+const limits = computed<ServerLimits | null>(() => {
+  const serverData = limitsData.value?.data
+  if (!serverData) {
+    return null
+  }
+
+  return {
+    cpu: serverData.limits?.cpu ?? 0,
+    memory: serverData.limits?.memory ?? 0,
+    disk: serverData.limits?.disk ?? 0,
+    swap: serverData.limits?.swap ?? 0,
+    io: serverData.limits?.io ?? 500,
+    threads: serverData.limits?.threads ?? null,
+    oomDisabled: serverData.limits?.oomDisabled ?? true,
+    allocationLimit: serverData.allocationLimit ?? null,
+    databaseLimit: serverData.databaseLimit ?? null,
+    backupLimit: serverData.backupLimit ?? null,
+  }
+})
 
 const schema = serverBuildFormSchema.extend({
   cpu: z.coerce.number().min(0, 'CPU limit cannot be negative'),
@@ -90,7 +78,7 @@ function createFormState(payload: ServerLimits | null): FormSchema {
   }
 }
 
-const form = reactive<FormSchema>(createFormState(limits.value))
+const form = reactive<FormSchema>(createFormState(limits.value ?? null))
 
 watch(limits, (value) => {
   if (skipNextUpdate.value) {
@@ -100,20 +88,12 @@ watch(limits, (value) => {
   
   if (value) {
     const newState = createFormState(value)
-    console.log('[Build Form] Limits updated, refreshing form:', {
-      old: { ...form },
-      new: newState,
-    })
     Object.assign(form, newState)
   } else {
     const defaultState = createFormState(null)
     Object.assign(form, defaultState)
   }
 }, { immediate: true, deep: true })
-
-function isFetchError(error: unknown): error is FetchError<unknown> {
-  return typeof error === 'object' && error !== null && ('status' in error || 'statusText' in error || 'response' in error)
-}
 
 async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
   if (isSubmitting.value)
@@ -135,68 +115,13 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       backupLimit: event.data.backupLimit ?? null,
     }
 
-    console.log('[Build Form] Sending update:', { 
-      serverId: props.server.id,
-      serverUuid: props.server.uuid,
-      payload,
-      url: `/api/admin/servers/${props.server.id}`,
+    await $fetch(`/api/admin/servers/${props.server.id}`, {
+      method: 'PATCH',
+      body: payload,
     })
 
-    let response: unknown
-    try {
-      response = await $fetch(`/api/admin/servers/${props.server.id}`, {
-        method: 'PATCH',
-        body: payload,
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        baseURL: window.location.origin,
-      }) as unknown
-
-      console.log('[Build Form] Update response:', response)
-      console.log('[Build Form] Response type:', typeof response)
-      console.log('[Build Form] Response keys:', response ? Object.keys(response) : 'null')
-      
-      if (typeof response === 'string' && response.includes('<!DOCTYPE html>')) {
-        console.error('[Build Form] CRITICAL: Received HTML instead of JSON! Route not matching!')
-        throw new Error('Route not found - received HTML instead of JSON. The API endpoint may not be registered. Please restart the dev server.')
-      }
-      
-      const responseObj = response as { success?: boolean } | null
-      if (!response || (typeof response === 'object' && responseObj && 'success' in responseObj && !responseObj.success)) {
-        console.warn('[Build Form] Response does not indicate success:', response)
-      }
-    } catch (fetchError: unknown) {
-      const error = fetchError instanceof Error ? fetchError : new Error(String(fetchError))
-      const httpError = isFetchError(fetchError) ? fetchError : null
-
-      console.error('[Build Form] Fetch error:', {
-        error: fetchError,
-        message: error?.message,
-        status: httpError?.status,
-        statusText: httpError?.statusText,
-        data: (httpError as FetchError<{ message?: string }> | null)?.data,
-        response: httpError?.response,
-        responseText: typeof httpError?.data === 'string' ? httpError.data.slice(0, 200) : undefined,
-      })
-      
-      if (typeof httpError?.data === 'string' && httpError.data.includes('<!DOCTYPE html>')) {
-        toast.add({
-          title: 'Route Error',
-          description: 'The API endpoint is not registered. Please restart the dev server.',
-          color: 'error',
-        })
-        throw new Error('API route not found - dev server may need restart')
-      }
-      
-      throw fetchError
-    }
-
-    console.log('[Build Form] Refreshing limits from server...')
     skipNextUpdate.value = true
     await refreshLimits()
-    console.log('[Build Form] Limits refreshed:', limitsData.value)
 
     toast.add({
       title: 'Build updated',

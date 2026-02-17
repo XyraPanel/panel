@@ -1,13 +1,14 @@
 import { randomUUID } from 'node:crypto'
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { useDrizzle, tables, eq, assertSqliteDatabase } from '#server/utils/drizzle'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { generateIdentifier, generateApiToken, formatApiKey } from '#server/utils/apiKeys'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import type { CreateApiKeyResponse } from '#shared/types/admin'
 import { createAdminApiKeySchema } from '#shared/schema/admin/api-keys'
 import type { AdminApiKeyPermissionAction } from '#shared/schema/admin/api-keys'
+import { APIError } from 'better-auth/api'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
 type PermissionAction = AdminApiKeyPermissionAction
 
 export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyResponse }> => {
@@ -25,8 +26,9 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
   }
 
   const db = useDrizzle()
+  assertSqliteDatabase(db)
 
-  const dbUser = await db.select().from(tables.users).where(eq(tables.users.id, user.id)).get()
+  const dbUser = db.select().from(tables.users).where(eq(tables.users.id, user.id)).get()
   if (!dbUser) {
     throw createError({
       status: 404,
@@ -36,33 +38,48 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
 
   const body = await readValidatedBodyWithLimit(event, createAdminApiKeySchema, BODY_SIZE_LIMITS.SMALL)
   const trimmedMemo = body.memo?.trim() || null
-  const permissions = body.permissions ?? {}
-
-  const identifier = generateIdentifier()
-  const token = generateApiToken()
+  const permissions: Record<string, PermissionAction[]> = body.permissions ?? {}
+  const auth = getAuth()
 
   const now = new Date()
 
-  const apiKeyId = randomUUID()
+  let expiresIn: number | undefined
+  if (body.expiresAt) {
+    const expiresAtMs = new Date(body.expiresAt).getTime()
+    if (Number.isNaN(expiresAtMs) || expiresAtMs <= Date.now()) {
+      throw createError({
+        status: 400,
+        statusText: 'Bad Request',
+        message: 'expiresAt must be a valid future datetime',
+      })
+    }
+    expiresIn = Math.floor((expiresAtMs - Date.now()) / 1000)
+  }
 
-  const formattedKey = formatApiKey(identifier, token)
+  let created: Awaited<ReturnType<typeof auth.api.createApiKey>>
+  try {
+    created = await auth.api.createApiKey({
+      body: {
+        name: trimmedMemo || 'API Key',
+        ...(expiresIn ? { expiresIn } : {}),
+        permissions,
+      },
+      headers: normalizeHeadersForAuth(event.node.req.headers),
+    })
+  } catch (error) {
+    if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
+      throw createError({
+        statusCode,
+        statusMessage: error.message || 'Failed to create API key',
+      })
+    }
+    throw error
+  }
 
-  await db.insert(tables.apiKeys).values({
-    id: apiKeyId,
-    userId: user.id,
-    name: trimmedMemo || 'API Key',
-    start: formattedKey.slice(0, 6),
-    prefix: 'sk',
-    key: formattedKey,
-    expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
-    enabled: true,
-    rateLimitEnabled: true,
-    requestCount: 0,
-    createdAt: now,
-    updatedAt: now,
-  }).run()
+  const apiKeyId = created.id
 
-  await db.insert(tables.apiKeyMetadata).values({
+  db.insert(tables.apiKeyMetadata).values({
     id: randomUUID(),
     apiKeyId: apiKeyId,
     keyType: 1,
@@ -72,11 +89,11 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
     updatedAt: now,
   }).run()
 
-  const permissionValues = Object.values(permissions) as PermissionAction[][]
+  const permissionValues = Object.values(permissions)
   const hasAnyPermissions = permissionValues.some(actions => Array.isArray(actions) && actions.length > 0)
 
   if (hasAnyPermissions) {
-    await db.update(tables.apiKeys)
+    db.update(tables.apiKeys)
       .set({
         metadata: JSON.stringify(permissions),
       })
@@ -88,10 +105,10 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
     actor: user.id,
     actorType: 'user',
     action: 'admin.api_key.create',
-    targetType: 'api_key',
-    targetId: apiKeyId,
-    metadata: {
-      identifier,
+      targetType: 'api_key',
+      targetId: apiKeyId,
+      metadata: {
+      identifier: created.start || apiKeyId,
       memo: trimmedMemo,
       allowedIpsCount: body.allowedIps?.length || 0,
       permissions,
@@ -101,8 +118,8 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
   return {
     data: {
       id: apiKeyId,
-      identifier,
-      apiKey: formattedKey,
+      identifier: created.start || apiKeyId,
+      apiKey: created.key,
       memo: trimmedMemo,
       createdAt: now.toISOString(),
     },

@@ -4,6 +4,7 @@ import type { ServerAllocation, NetworkData } from '#shared/types/server'
 const route = useRoute()
 const { t } = useI18n()
 const toast = useToast()
+const requestFetch = useRequestFetch()
 
 definePageMeta({
   auth: true,
@@ -13,7 +14,7 @@ const serverId = computed(() => route.params.id as string)
 
 const { data: networkData, pending, error, refresh } = await useAsyncData(
   `server-${serverId.value}-network`,
-  () => $fetch<{ data: NetworkData }>(`/api/client/servers/${serverId.value}/network`),
+  () => requestFetch<{ data: NetworkData }>(`/api/client/servers/${serverId.value}/network`),
   {
     watch: [serverId],
   },

@@ -10,12 +10,13 @@ definePageMeta({
 const route = useRoute()
 const { t } = useI18n()
 const toast = useToast()
+const requestFetch = useRequestFetch()
 
 const eggId = computed(() => route.params.id as string)
 
 const { data: eggData, pending, error, refresh } = await useAsyncData(
   `admin-egg-${eggId.value}`,
-  () => $fetch<{ data: EggWithVariables }>(`/api/admin/eggs/${eggId.value}`),
+  () => requestFetch<{ data: EggWithVariables }>(`/api/admin/eggs/${eggId.value}`),
 )
 
 const egg = computed(() => eggData.value?.data)

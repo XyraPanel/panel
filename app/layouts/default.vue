@@ -35,15 +35,20 @@ onMounted(() => {
 const { user, isAdmin: isAdminRef, status: authStatus } = storeToRefs(authStore)
 const signOutLoading = ref(false)
 
-const { data: securitySettings } = await useFetch<{ data: { maintenanceMode: boolean; maintenanceMessage: string } }>(
-  '/api/admin/settings/security',
+const {
+  isImpersonating,
+  impersonatedUserName,
+  stopImpersonating,
+  stopImpersonationLoading,
+} = useImpersonationControls({ redirectTo: '/admin' })
+
+const { data: securitySettings } = await useFetch<{ maintenanceMode: boolean; maintenanceMessage: string }>(
+  '/api/maintenance-status',
   {
     key: 'default-layout-security-settings',
     default: () => ({
-      data: {
-        maintenanceMode: false,
-        maintenanceMessage: '',
-      },
+      maintenanceMode: false,
+      maintenanceMessage: '',
     }),
   },
 )
@@ -60,12 +65,12 @@ const showBrandLogo = computed(() => brandingSettings.value?.showBrandLogo !== f
 const brandLogoUrl = computed(() => brandingSettings.value?.brandLogoUrl || '/logo.png')
 
 const isMaintenanceMode = computed(() => {
-  if (!securitySettings.value?.data?.maintenanceMode) return false
+  if (!securitySettings.value?.maintenanceMode) return false
   if (authStatus.value === 'loading' || authStatus.value === 'unauthenticated') return false
   const isAdmin = isAdminRef.value || user.value?.role === 'admin'
   return !isAdmin
 })
-const maintenanceMessage = computed(() => securitySettings.value?.data?.maintenanceMessage?.trim() || t('layout.defaultMaintenanceMessage'))
+const maintenanceMessage = computed(() => securitySettings.value?.maintenanceMessage?.trim() || t('layout.defaultMaintenanceMessage'))
 
 const fallbackUserLabel = computed(() => t('common.user'))
 const userLabel = computed(() => {
@@ -90,6 +95,7 @@ async function handleSignOut() {
 
   signOutLoading.value = true
   try {
+    await clearNuxtData()
     await authStore.logout()
     await navigateTo(localePath('/auth/login'))
   }
@@ -283,7 +289,30 @@ async function handleLocaleChange(newLocale: string | undefined) {
               {{ t('auth.signOut') }}
             </UButton>
           </div>
-          <div v-else class="px-4 py-5 sm:px-6">
+          <div v-else class="px-4 py-5 sm:px-6 space-y-6">
+            <UAlert
+              v-if="isImpersonating"
+              color="error"
+              variant="soft"
+              icon="i-lucide-user-round-minus"
+            >
+              <template #title>
+                {{ t('layout.impersonationBannerTitle', { user: impersonatedUserName }) }}
+              </template>
+              <template #description>
+                {{ t('layout.impersonationBannerDescription', { user: impersonatedUserName }) }}
+              </template>
+              <template #actions>
+                <UButton
+                  size="xs"
+                  color="error"
+                  :loading="stopImpersonationLoading"
+                  @click="() => stopImpersonating()"
+                >
+                  {{ t('layout.stopImpersonating') }}
+                </UButton>
+              </template>
+            </UAlert>
             <slot />
           </div>
         </main>

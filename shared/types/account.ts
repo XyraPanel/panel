@@ -55,7 +55,13 @@ export interface TotpSetupResponse {
 }
 
 export interface TotpVerifyRequest {
-  token: string
+  code: string
+  trustDevice?: boolean
+}
+
+export interface TotpEnableRequest {
+  password: string
+  issuer?: string
 }
 
 export interface TotpDisableRequest {

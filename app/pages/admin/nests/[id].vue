@@ -10,12 +10,13 @@ const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
 const toast = useToast()
+const requestFetch = useRequestFetch()
 
 const nestId = computed(() => route.params.id as string)
 
 const { data: nestData, pending, error, refresh } = await useAsyncData(
   `admin-nest-${nestId.value}`,
-  () => $fetch<{ data: { nest: Nest; eggs: Egg[] } }>(`/api/admin/nests/${nestId.value}`),
+  () => requestFetch<{ data: { nest: Nest; eggs: Egg[] } }>(`/api/admin/nests/${nestId.value}`),
 )
 
 const nest = computed(() => nestData.value?.data.nest)

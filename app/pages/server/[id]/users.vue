@@ -9,32 +9,19 @@ definePageMeta({
 
 const { t } = useI18n()
 const serverId = computed(() => route.params.id as string)
+const requestFetch = useRequestFetch()
 
 const toast = useToast()
 
 const { data: subusersData, pending, error, refresh: refreshSubusers } = await useAsyncData(
   `server-${serverId.value}-users`,
-  () => $fetch<{ data: ServerSubuser[] }>(`/api/client/servers/${serverId.value}/users`),
+  () => requestFetch<{ data: ServerSubuser[] }>(`/api/client/servers/${serverId.value}/users`),
   {
     watch: [serverId],
   },
 )
 
 const users = computed(() => subusersData.value?.data || [])
-
-function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffMins = Math.floor(diffMs / 60000)
-  const diffHours = Math.floor(diffMs / 3600000)
-  const diffDays = Math.floor(diffMs / 86400000)
-
-  if (diffMins < 1) return t('server.users.justNow')
-  if (diffMins < 60) return t('server.users.minutesAgo', { count: diffMins })
-  if (diffHours < 24) return t('server.users.hoursAgo', { count: diffHours })
-  return t('server.users.daysAgo', { count: diffDays })
-}
 
 const permissionGroups = computed(() => [
   {
@@ -207,7 +194,7 @@ async function submitInvite() {
                   <UBadge color="primary" size="xs">{{ t('server.users.active') }}</UBadge>
                 </div>
                 <p class="text-xs text-muted-foreground">
-                  {{ user.email }} · {{ t('server.users.added') }} {{ formatRelativeTime(user.createdAt) }}
+                  {{ user.email }} · {{ t('server.users.added') }} <NuxtTime :datetime="user.createdAt" relative />
                 </p>
               </div>
               <div class="flex flex-wrap gap-2 text-xs text-muted-foreground">

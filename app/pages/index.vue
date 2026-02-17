@@ -10,7 +10,7 @@
         <section>
           <h2 class="sr-only">{{ t('dashboard.keyMetrics') }}</h2>
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
-            <template v-if="loading">
+            <template v-if="showMetricSkeleton">
               <UCard v-for="i in 2" :key="`metric-skeleton-${i}`">
                 <div class="space-y-3">
                   <USkeleton class="h-3 w-24" />
@@ -66,39 +66,92 @@ definePageMeta({
 
 const { t } = useI18n()
 const authStore = useAuthStore()
+const isAdminUser = computed(() => authStore.isAdmin || authStore.user?.role === 'admin')
 
 const isHydrated = ref(false)
-onMounted(() => {
-  isHydrated.value = true
-})
+const [
+  meFetch,
+  dashboardFetch,
+  sessionsFetch,
+] = await Promise.all([
+  useFetch<MeResponse>('/api/me', {
+    key: 'dashboard-me',
+    dedupe: 'defer',
+  }),
+  useFetch<ClientDashboardResponse>('/api/dashboard', {
+    key: 'dashboard-data',
+    query: { section: 'metrics' },
+    dedupe: 'defer',
+  }),
+  useFetch<AccountSessionsResponse>('/api/account/sessions', {
+    key: 'dashboard-sessions',
+    dedupe: 'defer',
+  }),
+])
 
 const {
   data: meData,
   error: meError,
-} = await useFetch<MeResponse>('/api/me', { key: 'dashboard-me' })
+} = meFetch
 
 const {
   data: dashboardResponse,
   error: dashboardError,
-} = await useFetch<ClientDashboardResponse>('/api/dashboard', { key: 'dashboard-data' })
+} = dashboardFetch
 
 const {
   data: sessionsResponse,
-} = await useFetch<AccountSessionsResponse>('/api/account/sessions', { key: 'dashboard-sessions' })
+} = sessionsFetch
 
-const { data: securitySettings } = await useFetch<SecuritySettings>('/api/admin/settings/security', {
-  key: 'dashboard-security-settings',
-  default: () => ({
-    enforceTwoFactor: false,
-    maintenanceMode: false,
-    maintenanceMessage: '',
-    announcementEnabled: false,
-    announcementMessage: '',
-    sessionTimeoutMinutes: 60,
-    queueConcurrency: 4,
-    queueRetryLimit: 3,
-  }),
+const defaultSecuritySettings: SecuritySettings = {
+  enforceTwoFactor: false,
+  maintenanceMode: false,
+  maintenanceMessage: '',
+  announcementEnabled: false,
+  announcementMessage: '',
+  sessionTimeoutMinutes: 60,
+  queueConcurrency: 4,
+  queueRetryLimit: 3,
+}
+
+const securityFetch = await useAsyncData<SecuritySettings>(
+  'dashboard-security-settings',
+  async () => {
+    if (!isAdminUser.value) {
+      return defaultSecuritySettings
+    }
+
+    return await $fetch<SecuritySettings>('/api/admin/settings/security')
+  },
+  {
+    default: () => defaultSecuritySettings,
+    watch: [isAdminUser],
+  },
+)
+
+const {
+  data: securitySettings,
+} = securityFetch
+
+onMounted(() => {
+  isHydrated.value = true
 })
+
+if (import.meta.client) {
+  await callOnce(async () => {
+    await prefetchComponents('/admin')
+  })
+
+  void callOnce(async () => {
+    await new Promise(resolve => setTimeout(resolve, 250))
+    await refreshNuxtData([
+      'dashboard-me',
+      'dashboard-data',
+      'dashboard-sessions',
+      'dashboard-security-settings',
+    ])
+  })
+}
 
 const announcement = computed(() => (securitySettings.value?.announcementEnabled ? securitySettings.value?.announcementMessage?.trim() : ''))
 
@@ -213,6 +266,9 @@ function toErrorMessage(err: unknown, fallback: string) {
 }
 
 const loading = computed(() => dashboardPending.value)
+const showMetricSkeleton = computed(() =>
+  loading.value && metrics.value.length === 0,
+)
 const error = computed<string | null>(() => {
   if (meError.value) return toErrorMessage(meError.value, t('dashboard.failedToLoadUserData'))
   if (dashboardError.value) return toErrorMessage(dashboardError.value, t('dashboard.failedToLoadDashboard'))

@@ -257,6 +257,8 @@ export interface DashboardIncident {
   occurredAt: string
   actor: string
   actorUsername?: string
+  actorUserId?: string
+  actorEmail?: string
   action: string
   target: string | null
   metadata: Record<string, unknown> | null

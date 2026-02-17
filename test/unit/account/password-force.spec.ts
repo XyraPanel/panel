@@ -61,6 +61,7 @@ vi.mock('~~/server/utils/drizzle', () => ({
   },
   eq: (...args: unknown[]) => args,
   isPostgresDialect: false,
+  assertSqliteDatabase: vi.fn((db: unknown) => db),
 }));
 
 const mockRecordAudit = vi.fn<(event: H3Event, payload: Record<string, unknown>) => Promise<void>>(
@@ -76,6 +77,34 @@ const mockBcrypt = {
 };
 vi.mock('bcryptjs', () => ({
   default: mockBcrypt,
+}));
+
+const mockUseRuntimeConfig = vi.fn(() => ({
+  authSecret: 'test-secret',
+  authOrigin: 'http://localhost:3000',
+  public: {
+    appName: 'Test Panel',
+  },
+  turnstile: { secretKey: 'test-turnstile-secret' },
+  recaptcha: { secretKey: 'test-recaptcha-secret' },
+  hcaptcha: { secretKey: 'test-hcaptcha-secret', siteKey: 'test-hcaptcha-sitekey' },
+}));
+vi.mock('#imports', () => ({
+  useRuntimeConfig: mockUseRuntimeConfig,
+}));
+
+const mockAuthApi = {
+  verifyPassword: vi.fn(),
+  setPassword: vi.fn(),
+};
+const mockAuth = {
+  api: mockAuthApi,
+};
+vi.mock('#server/utils/auth', () => ({
+  getAuth: vi.fn(() => mockAuth),
+  normalizeHeadersForAuth: vi.fn((headers) => 
+    Object.fromEntries(Object.entries(headers).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]))
+  ),
 }));
 
 type Handler = (event: H3Event) => Promise<unknown>;
@@ -109,15 +138,25 @@ function createDb(selectResult: SelectRow | undefined, deletedChanges = 1) {
   };
 }
 
-const baseEvent: H3Event = {
-  node: { req: { method: 'PUT', headers: {} } },
+const baseEvent = {
+  node: { 
+    req: { 
+      method: 'PUT', 
+      headers: {},
+    } 
+  },
   context: {},
-} as unknown as H3Event;
+} as H3Event;
 
 describe('account/password/force.put handler', () => {
   beforeAll(async () => {
-    handler = (await import('../../../server/api/account/password/force.put.ts'))
-      .default as Handler;
+    const handlerModule = await import('../../../server/api/account/password/force.put.ts');
+    const importedHandler = handlerModule.default;
+    if (typeof importedHandler === 'function') {
+      handler = importedHandler as Handler;
+    } else {
+      throw new Error('Imported handler is not a function');
+    }
   });
 
   beforeEach(() => {
@@ -139,6 +178,10 @@ describe('account/password/force.put handler', () => {
     };
     mockResolveSessionUser.mockReturnValue(forcedResetUser);
     mockRequireSessionUser.mockReturnValue(forcedResetUser);
+    
+    // Setup auth API mocks
+    mockAuthApi.verifyPassword.mockResolvedValue(null);
+    mockAuthApi.setPassword.mockResolvedValue({});
   });
 
   it('updates password, clears reset flag, and records audit event', async () => {
@@ -157,8 +200,14 @@ describe('account/password/force.put handler', () => {
     expect(mockAssertMethod).toHaveBeenCalledWith(baseEvent, 'PUT');
     expect(mockRequireAccountUser).toHaveBeenCalledWith(baseEvent);
     expect(mockResolveSessionUser).not.toHaveBeenCalled();
-    expect(mockBcrypt.compare).toHaveBeenCalledWith('new-password', 'old-hash');
-    expect(mockBcrypt.hash).toHaveBeenCalledWith('new-password', 12);
+    expect(mockAuthApi.verifyPassword).toHaveBeenCalledWith({
+      body: { password: 'new-password' },
+      headers: {},
+    });
+    expect(mockAuthApi.setPassword).toHaveBeenCalledWith({
+      body: { newPassword: 'new-password' },
+      headers: {},
+    });
     expect(mockRecordAudit).toHaveBeenCalledWith(
       baseEvent,
       expect.objectContaining({
@@ -189,6 +238,7 @@ describe('account/password/force.put handler', () => {
       statusText: 'Bad Request',
       message: 'Password reset not required',
     });
-    expect(mockBcrypt.hash).not.toHaveBeenCalled();
+    expect(mockAuthApi.verifyPassword).not.toHaveBeenCalled();
+    expect(mockAuthApi.setPassword).not.toHaveBeenCalled();
   });
 });

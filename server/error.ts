@@ -1,4 +1,65 @@
 import type { H3Event, H3Error } from 'h3'
+import { recordAuditEventFromRequest } from '#server/utils/audit'
+
+type EventAuthContext = {
+  auth?: {
+    user?: {
+      id?: string | null
+      email?: string | null
+    } | null
+    apiKey?: {
+      id?: string | null
+    } | null
+  }
+}
+
+function getEventAuthContext(event: H3Event): EventAuthContext | null {
+  const ctx = event.context
+  if (!ctx || typeof ctx !== 'object' || !('auth' in ctx)) {
+    return null
+  }
+
+  const auth = ctx.auth
+  if (!auth || typeof auth !== 'object') {
+    return null
+  }
+
+  const userCandidate = 'user' in auth ? auth.user : null
+  const apiKeyCandidate = 'apiKey' in auth ? auth.apiKey : null
+
+  const normalized: EventAuthContext = {
+    auth: {},
+  }
+
+  if (userCandidate && typeof userCandidate === 'object') {
+    normalized.auth!.user = {
+      id: 'id' in userCandidate && typeof userCandidate.id === 'string' ? userCandidate.id : null,
+      email: 'email' in userCandidate && typeof userCandidate.email === 'string' ? userCandidate.email : null,
+    }
+  }
+
+  if (apiKeyCandidate && typeof apiKeyCandidate === 'object') {
+    normalized.auth!.apiKey = {
+      id: 'id' in apiKeyCandidate && typeof apiKeyCandidate.id === 'string' ? apiKeyCandidate.id : null,
+    }
+  }
+
+  return normalized
+}
+
+const PRIVILEGED_FAILURE_PATTERNS = [
+  /^\/api\/admin(?:\/|$)/,
+  /^\/api\/auth(?:\/|$)/,
+  /^\/api\/user\/2fa(?:\/|$)/,
+  /^\/api\/account\/(?:password|email|sessions|api-keys|ssh-keys)(?:\/|$)/,
+]
+
+function shouldAuditPrivilegedFailure(path: string, status: number): boolean {
+  if (status < 400) {
+    return false
+  }
+  return PRIVILEGED_FAILURE_PATTERNS.some(pattern => pattern.test(path))
+}
 
 export default async function errorHandler(
   error: H3Error | Error,
@@ -10,7 +71,7 @@ export default async function errorHandler(
   const isApiRoute = path.startsWith('/api/') || url.startsWith('/api/')
   
   const isH3Error = (e: H3Error | Error): e is H3Error => {
-    return 'status' in e
+    return 'statusCode' in e
   }
 
   const h3Error = isH3Error(error) ? error : null
@@ -19,7 +80,7 @@ export default async function errorHandler(
     path,
     url,
     isApiRoute,
-    status: h3Error?.status,
+    status: h3Error?.statusCode,
     message: error.message,
     accept: event.node.req.headers.accept,
     errorName: error.name,
@@ -31,9 +92,42 @@ export default async function errorHandler(
     return
   }
   
-  const status = h3Error?.status || 500
-  const statusText = h3Error?.statusText || 'Internal Server Error'
+  const status = h3Error?.statusCode || 500
+  const statusText = h3Error?.statusMessage || 'Internal Server Error'
   const message = error.message || 'An error occurred'
+
+  if (shouldAuditPrivilegedFailure(path, status)) {
+    try {
+      const authContext = getEventAuthContext(event)
+      const auth = authContext?.auth
+      const userId = auth?.user?.id ?? null
+      const userEmail = auth?.user?.email ?? null
+      const apiKeyId = auth?.apiKey?.id ?? null
+
+      const actor = userEmail
+        || userId
+        || getRequestIP(event)
+        || 'system'
+
+      await recordAuditEventFromRequest(event, {
+        actor,
+        actorType: userId ? 'user' : 'system',
+        action: 'security.request.denied',
+        targetType: 'settings',
+        targetId: path,
+        metadata: {
+          status,
+          statusText,
+          message,
+          method: event.method,
+          apiKeyId: apiKeyId ?? undefined,
+        },
+      })
+    }
+    catch (auditError) {
+      console.error('[Error Handler] Failed to write failure audit event:', auditError)
+    }
+  }
   
   console.log('[Error Handler] Returning JSON for API route:', { path, status, statusText })
   
@@ -62,4 +156,3 @@ export default async function errorHandler(
     },
   })
 }
-

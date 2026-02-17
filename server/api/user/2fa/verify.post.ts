@@ -8,18 +8,13 @@ export default defineEventHandler(async (event) => {
   const { user } = await requireAccountUser(event)
   const auth = getAuth()
 
-  const { code } = await readValidatedBodyWithLimit(event, twoFactorVerifySchema, BODY_SIZE_LIMITS.SMALL)
+  const { code, trustDevice } = await readValidatedBodyWithLimit(event, twoFactorVerifySchema, BODY_SIZE_LIMITS.SMALL)
 
   try {
-    const api = auth.api as typeof auth.api & {
-      verifyTOTP: (options: {
-        body: { code: string }
-        headers: Record<string, string>
-      }) => Promise<unknown>
-    }
-    await api.verifyTOTP({
+    await auth.api.verifyTOTP({
       body: {
         code,
+        trustDevice,
       },
       headers: normalizeHeadersForAuth(event.node.req.headers),
     })
@@ -41,9 +36,10 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
       throw createError({
-        status: error.status,
-        statusText: error.message || 'Invalid TOTP code',
+        statusCode,
+        statusMessage: error.message || 'Invalid TOTP code',
       })
     }
     throw createError({

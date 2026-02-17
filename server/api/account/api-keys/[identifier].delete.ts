@@ -2,6 +2,8 @@ import { useDrizzle, tables, eq, and, assertSqliteDatabase } from '#server/utils
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { requireAccountUser } from '#server/utils/security'
 import { requireRouteParam } from '#server/utils/http/params'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { APIError } from 'better-auth/api'
 
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'DELETE')
@@ -13,6 +15,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
   assertSqliteDatabase(db)
+  const auth = getAuth()
 
   const apiKey = db
     .select()
@@ -33,9 +36,21 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  db.delete(tables.apiKeys)
-    .where(eq(tables.apiKeys.id, apiKey.id))
-    .run()
+  try {
+    await auth.api.deleteApiKey({
+      body: { keyId: apiKey.id },
+      headers: normalizeHeadersForAuth(event.node.req.headers),
+    })
+  } catch (error) {
+    if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
+      throw createError({
+        statusCode,
+        statusMessage: error.message || 'Failed to delete API key',
+      })
+    }
+    throw error
+  }
 
   await recordAuditEventFromRequest(event, {
     actor: user.id,

@@ -8,6 +8,7 @@ definePageMeta({
 })
 
 const { t } = useI18n()
+const requestFetch = useRequestFetch()
 const toast = useToast()
 const showCreateModal = ref(false)
 const showKeyModal = ref(false)
@@ -25,7 +26,7 @@ const resetDeleteModal = () => {
 const { data, refresh } = await useAsyncData(
   'admin-api-keys',
   async () => {
-    const response = await $fetch('/api/admin/api-keys')
+    const response = await requestFetch('/api/admin/api-keys')
     return response
   },
 )
@@ -47,6 +48,11 @@ const sortedApiKeys = computed(() => {
   }
   return sorted
 })
+
+function isExpired(expiresAt: string | null | undefined): boolean {
+  if (!expiresAt) return false
+  return new Date(expiresAt).getTime() < Date.now()
+}
 
 const form = reactive({
   memo: '',
@@ -206,9 +212,9 @@ function copyToClipboard(text: string) {
                 <div class="flex-1 space-y-1">
                   <div class="flex items-center gap-2">
                     <code class="text-sm font-mono">{{ key.identifier }}</code>
-                    <UBadge v-if="key.expiresAt" :color="new Date(key.expiresAt) < new Date() ? 'error' : 'neutral'"
+                    <UBadge v-if="key.expiresAt" :color="isExpired(key.expiresAt) ? 'error' : 'neutral'"
                       size="xs" variant="soft">
-                      {{ new Date(key.expiresAt) < new Date() ? t('admin.api.expired') : t('common.active') }}
+                      {{ isExpired(key.expiresAt) ? t('admin.api.expired') : t('common.active') }}
                     </UBadge>
                   </div>
                   <p v-if="key.memo" class="text-sm text-muted-foreground">{{ key.memo }}</p>

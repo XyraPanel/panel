@@ -1,5 +1,5 @@
 import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables } from '#server/utils/drizzle'
+import { useDrizzle, tables, assertSqliteDatabase } from '#server/utils/drizzle'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
@@ -9,12 +9,15 @@ export default defineEventHandler(async (event) => {
 
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.API_KEYS, ADMIN_ACL_PERMISSIONS.READ)
   const db = useDrizzle()
+  assertSqliteDatabase(db)
 
-  const keys = await db
+  const keys = db
     .select({
       id: tables.apiKeys.id,
       identifier: tables.apiKeys.identifier,
+      start: tables.apiKeys.start,
       memo: tables.apiKeys.memo,
+      name: tables.apiKeys.name,
       lastUsedAt: tables.apiKeys.lastUsedAt,
       expiresAt: tables.apiKeys.expiresAt,
       createdAt: tables.apiKeys.createdAt,
@@ -23,10 +26,19 @@ export default defineEventHandler(async (event) => {
     .orderBy(tables.apiKeys.createdAt)
     .all()
 
-  const data = keys.map(key => ({
+  const data = keys.map((key: {
+    id: string
+    identifier: string | null
+    start: string | null
+    memo: string | null
+    name: string | null
+    lastUsedAt: Date | null
+    expiresAt: Date | null
+    createdAt: Date
+  }) => ({
     id: key.id,
-    identifier: key.identifier,
-    memo: key.memo,
+    identifier: key.identifier || key.start || key.id,
+    memo: key.memo || key.name || null,
     lastUsedAt: key.lastUsedAt?.toISOString() || null,
     expiresAt: key.expiresAt?.toISOString() || null,
     createdAt: key.createdAt.toISOString(),

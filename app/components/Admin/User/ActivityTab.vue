@@ -11,6 +11,7 @@ const props = defineProps<Props>()
 
 const { t } = useI18n()
 const toast = useToast()
+const requestFetch = useRequestFetch()
 const activityPage = ref(1)
 const expandedActivityEntries = ref<Set<string>>(new Set())
 
@@ -20,8 +21,7 @@ const {
   `admin-user-activity-${props.userId}`,
   async () => {
     const url = `/api/admin/users/${props.userId}/activity?page=${activityPage.value}&limit=${props.itemsPerPage}` as string
-    // @ts-expect-error - Nuxt typed routes cause deep type inference here
-    return await $fetch(url) as PaginatedActivityResponse
+    return await requestFetch<PaginatedActivityResponse>(url)
   },
   {
     default: () => ({ data: [], pagination: { page: 1, perPage: props.itemsPerPage, total: 0, totalPages: 0 } }),

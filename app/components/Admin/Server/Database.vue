@@ -12,20 +12,14 @@ const toast = useToast()
 const showCreateModal = ref(false)
 const isSubmitting = ref(false)
 
-const { data: databasesData, refresh, pending: databasesPending } = await useAsyncData<AdminServerDatabaseListResponse>(
-  `server-databases-${props.serverId}`,
-  async () => {
-    try {
-      const response = await $fetch<{ data: { databases?: AdminServerDatabase[] } }>(`/api/admin/servers/${props.serverId}`)
-      return { data: response?.data?.databases ?? [] } as AdminServerDatabaseListResponse
-    }
-    catch (error) {
-      console.error('Failed to load server databases', error)
-      return { data: [] } as AdminServerDatabaseListResponse
-    }
+const { data: databasesData, refresh, pending: databasesPending } = await useFetch<{ data?: { databases?: AdminServerDatabase[] } }>(
+  () => `/api/admin/servers/${props.serverId}`,
+  {
+    key: () => `server-databases-${props.serverId}`,
+    watch: [() => props.serverId],
   },
 )
-const databases = computed<AdminServerDatabase[]>(() => databasesData.value?.data ?? [])
+const databases = computed<AdminServerDatabase[]>(() => databasesData.value?.data?.databases ?? [])
 
 const createSchema = serverDatabaseCreateSchema
 

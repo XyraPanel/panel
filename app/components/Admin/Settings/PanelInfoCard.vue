@@ -9,7 +9,6 @@ const {
   error,
 } = await useFetch<{ data: PanelInformation } | null>('/api/admin/panel/information', {
   key: 'admin-panel-information',
-  server: false,
 })
 
 const info = computed<PanelInformation | null>(() => data.value?.data ?? null)
@@ -18,6 +17,28 @@ const releaseNotesOpen = ref(false)
 const releaseNotesLoading = ref(false)
 const releaseVersions = ref<Array<{ title: string; description: string; date?: string }>>([])
 const releaseNotesError = ref(false)
+type ReleaseData = { name?: string; tag_name?: string; body?: string; description?: string; markdown?: string; tag?: string; publishedAt?: string; createdAt?: string }
+
+function isReleaseData(value: unknown): value is ReleaseData {
+  return Boolean(value) && typeof value === 'object'
+}
+
+function isReleaseDataArray(value: unknown): value is ReleaseData[] {
+  return Array.isArray(value) && value.every(isReleaseData)
+}
+
+function normalizeReleasePayload(value: unknown): ReleaseData | ReleaseData[] | string | null {
+  if (typeof value === 'string' || value === null) {
+    return value
+  }
+  if (isReleaseDataArray(value)) {
+    return value
+  }
+  if (isReleaseData(value)) {
+    return value
+  }
+  return null
+}
 
 const detailRows = computed(() => {
   const panelInfo = info.value
@@ -83,15 +104,15 @@ async function openReleaseNotes(url: string) {
   releaseVersions.value = []
   releaseNotesError.value = false
   try {
-    type ReleaseData = { name?: string; tag_name?: string; body?: string; description?: string; markdown?: string; tag?: string; publishedAt?: string; createdAt?: string }
+    const fetchExternal = $fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>
     let data: ReleaseData | ReleaseData[] | string | null = null
     try {
-      data = await $fetch(url)
+      data = normalizeReleasePayload(await fetchExternal(url))
     }
     catch (err) {
       if (url.includes('/releases') && !url.includes('/latest')) {
         const latestUrl = url.endsWith('/') ? `${url}latest` : `${url}/latest`
-        data = await $fetch(latestUrl)
+        data = normalizeReleasePayload(await fetchExternal(latestUrl))
       } else {
         throw err
       }

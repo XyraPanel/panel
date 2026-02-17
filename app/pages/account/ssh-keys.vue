@@ -9,6 +9,7 @@ definePageMeta({
 
 const { t } = useI18n()
 const toast = useToast()
+const requestFetch = useRequestFetch()
 const isCreating = ref(false)
 const showCreateModal = ref(false)
 const showDeleteModal = ref(false)
@@ -50,7 +51,7 @@ type SshKeysResponse = {
 }
 
 const { data: keysData, refresh } = await useAsyncData('account-ssh-keys', async () => {
-  const response = await $fetch('/api/account/ssh-keys' as string, {
+  const response = await requestFetch('/api/account/ssh-keys' as string, {
     query: {
       page: currentPage.value,
       limit: itemsPerPage.value,
@@ -425,4 +426,3 @@ async function confirmDelete() {
     </div>
   </div>
 </template>
-

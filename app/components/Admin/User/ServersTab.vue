@@ -28,13 +28,6 @@ const {
 
 const servers = computed<AdminUserServerSummary[]>(() => serversData.value?.data ?? [])
 const serversPagination = computed(() => serversData.value?.pagination)
-
-function formatDate(value: string | null | undefined) {
-  if (!value)
-    return 'Unknown'
-
-  return new Date(value).toLocaleString()
-}
 </script>
 
 <template>
@@ -81,7 +74,10 @@ function formatDate(value: string | null | undefined) {
               <td class="px-3 py-2 text-xs text-muted-foreground">
                 {{ server.nodeName || 'Unassigned' }}
               </td>
-              <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDate(server.createdAt) }}</td>
+              <td class="px-3 py-2 text-xs text-muted-foreground">
+                <NuxtTime v-if="server.createdAt" :datetime="server.createdAt" />
+                <span v-else>Unknown</span>
+              </td>
             </tr>
           </tbody>
         </table>

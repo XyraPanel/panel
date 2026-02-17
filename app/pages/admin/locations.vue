@@ -9,10 +9,11 @@ definePageMeta({
 
 const { t } = useI18n()
 const toast = useToast()
+const requestFetch = useRequestFetch()
 
 const { data: locationsData, pending, error, refresh } = await useAsyncData(
   'admin-locations',
-  () => $fetch<{ data: LocationWithNodeCount[] }>('/api/admin/locations'),
+  () => requestFetch<{ data: LocationWithNodeCount[] }>('/api/admin/locations'),
 )
 
 const locations = computed(() => locationsData.value?.data ?? [])

@@ -43,6 +43,7 @@ const UButton = resolveComponent('UButton')
 const UBadge = resolveComponent('UBadge')
 const UDropdownMenu = resolveComponent('UDropdownMenu')
 const NuxtLink = resolveComponent('NuxtLink')
+const NuxtTime = resolveComponent('NuxtTime')
 const toast = useToast()
 const router = useRouter()
 
@@ -161,18 +162,6 @@ function getStatusColor(status: string | null): 'success' | 'warning' | 'error' 
   }
 }
 
-function formatDate(date: Date | string | null | undefined): string {
-  if (!date) {
-    return t('common.na')
-  }
-  const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
-}
-
 const columns = computed<TableColumn<AdminServerRow>[]>(() => [
   {
     accessorKey: 'name',
@@ -226,8 +215,11 @@ const columns = computed<TableColumn<AdminServerRow>[]>(() => [
     accessorKey: 'created_at',
     header: t('common.created'),
     cell: ({ row }) => {
-      const date = row.getValue('created_at') as Date | string
-      return h('span', { class: 'text-sm text-muted-foreground' }, formatDate(date))
+      const date = row.getValue('created_at') as Date | string | null | undefined
+      if (!date) {
+        return h('span', { class: 'text-sm text-muted-foreground' }, t('common.na'))
+      }
+      return h(NuxtTime, { class: 'text-sm text-muted-foreground', datetime: date, month: 'short', day: 'numeric', year: 'numeric' })
     },
   },
   {

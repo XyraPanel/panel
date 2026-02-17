@@ -13,6 +13,12 @@ export default defineNuxtRouteMiddleware((to) => {
     return
   }
 
+  const redirectPath = to.fullPath
+
+  if (typeof to.query.redirect === 'string' && to.query.redirect.startsWith('/auth/password/force')) {
+    return abortNavigation()
+  }
+
   if (to.path === '/auth/password/force') {
     return
   }
@@ -20,7 +26,7 @@ export default defineNuxtRouteMiddleware((to) => {
   return navigateTo({
     path: '/auth/password/force',
     query: {
-      redirect: to.fullPath,
+      redirect: redirectPath,
     },
   })
 })

@@ -10,10 +10,11 @@ definePageMeta({
 const { t } = useI18n()
 const toast = useToast()
 const router = useRouter()
+const requestFetch = useRequestFetch()
 
 const { data: nestsData, pending, error, refresh } = await useAsyncData(
   'admin-nests',
-  () => $fetch<{ data: NestWithEggCount[] }>('/api/admin/nests'),
+  () => requestFetch<{ data: NestWithEggCount[] }>('/api/admin/nests'),
 )
 
 const nests = computed(() => nestsData.value?.data ?? [])

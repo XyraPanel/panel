@@ -4,7 +4,6 @@ import type { FormSubmitEvent } from '@nuxt/ui'
 import type { StartupResponse } from '#shared/types/api'
 import type {
   Server,
-  StartupForm,
   EnvironmentEntry,
   EnvironmentInputValue,
 } from '#shared/types/server'
@@ -18,31 +17,20 @@ const toast = useToast()
 const isSubmitting = ref(false)
 
 const {
-  data: startupData,
+  data: startupResponse,
   pending: startupPending,
   refresh,
   error: startupError,
-} = await useAsyncData(
-  `server-startup-${props.server.id}`,
-  async () => {
-    try {
-      const response = await $fetch<{ data: { startup?: StartupResponse } }>(`/api/admin/servers/${props.server.id}`)
-      return response?.data?.startup ?? null
-    }
-    catch (error) {
-      console.error('Failed to load startup configuration', error)
-      return null
-    }
-  },
+} = await useFetch<{ data?: { startup?: StartupResponse } }>(
+  () => `/api/admin/servers/${props.server.id}`,
   {
-    default: () => null,
+    key: () => `server-startup-${props.server.id}`,
+    watch: [() => props.server.id],
+    default: () => ({}),
   },
 )
 
-const startup = computed(() => {
-  const data = startupData.value
-  return data && typeof data === 'object' && 'data' in data ? data.data : null
-})
+const startup = computed<StartupResponse['data'] | null>(() => startupResponse.value?.data?.startup?.data ?? null)
 
 const dockerImages = computed(() => {
   const images = startup.value?.dockerImages || {}
@@ -67,7 +55,7 @@ const schema = serverStartupSchema
 
 type FormSchema = z.infer<typeof schema>
 
-function createFormState(payload: StartupForm | null): FormSchema {
+function createFormState(payload: StartupResponse['data'] | null): FormSchema {
   const cleanEnvironment: Record<string, string> = {}
   if (payload?.environment) {
     for (const [key, value] of Object.entries(payload.environment)) {
@@ -117,28 +105,17 @@ function addEnvVar() {
 }
 
 async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
-  console.log('[Admin Startup] Form submit triggered!', {
-    serverId: props.server.id,
-    formData: event.data,
-    timestamp: new Date().toISOString(),
-  })
-
   if (isSubmitting.value) {
-    console.warn('[Admin Startup] Already submitting, ignoring duplicate submit')
     return
   }
 
   isSubmitting.value = true
 
   try {
-    console.log('[Admin Startup] Making PATCH request to:', `/api/admin/servers/${props.server.id}/startup`)
-    
-    const response = await $fetch(`/api/admin/servers/${props.server.id}/startup`, {
+    await $fetch(`/api/admin/servers/${props.server.id}/startup`, {
       method: 'patch',
       body: event.data,
     })
-    
-    console.log('[Admin Startup] PATCH request successful:', response)
 
     Object.assign(form, event.data)
 
@@ -151,7 +128,6 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
     await refresh()
   }
   catch (error) {
-    console.error('[Admin Startup] PATCH request failed:', error)
     const err = error as { data?: { message?: string } }
     toast.add({
       title: 'Error',
@@ -286,4 +262,3 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
     </template>
   </UForm>
 </template>
-

@@ -87,10 +87,9 @@ function getSqliteClient() {
   }
 
   sqlite = new Database(sqliteFilePath, {
-    verbose: process.env.NODE_ENV === 'development' ? console.log : undefined
+    verbose: process.env.DB_DEBUG_SQL === '1' ? console.log : undefined,
   })
   sqlite.pragma('foreign_keys = ON')
-  sqlite.pragma('journal_mode = WAL')
   return sqlite
 }
 

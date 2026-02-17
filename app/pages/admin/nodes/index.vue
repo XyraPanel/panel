@@ -10,6 +10,7 @@ definePageMeta({
 const { t } = useI18n()
 const toast = useToast()
 const requestURL = useRequestURL()
+const requestFetch = useRequestFetch()
 
 const panelOrigin = computed(() => requestURL.origin)
 
@@ -57,7 +58,7 @@ const {
   data: nodesResponse,
   pending,
   error,
-} = await useAsyncData('wings-nodes', () => $fetch<{ data: WingsNodeSummary[] }>('/api/wings/nodes'))
+} = await useAsyncData('wings-nodes', () => requestFetch<{ data: WingsNodeSummary[] }>('/api/wings/nodes'))
 
 const nodes = computed(() => nodesResponse.value?.data ?? [])
 
@@ -167,14 +168,6 @@ async function copyInstallCommand() {
     const message = error instanceof Error ? error.message : t('common.failedToCopy')
     toast.add({ title: t('common.failedToCopy'), description: message, color: 'error' })
   }
-}
-
-function formatUpdatedAt(value: string) {
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-  return date.toLocaleString()
 }
 
 function resetSystemModal() {
@@ -301,7 +294,10 @@ watch(
                         <code class="block truncate">{{ node.baseURL }}</code>
                         <span>{{ node.allowInsecure ? t('admin.nodes.tlsVerificationDisabled') :
                           t('admin.nodes.tlsVerificationEnforced') }}</span>
-                        <span>{{ t('admin.nodes.updated') }} {{ formatUpdatedAt(node.updatedAt) }}</span>
+                        <span>
+                          {{ t('admin.nodes.updated') }}
+                          <NuxtTime :datetime="node.updatedAt" />
+                        </span>
                       </div>
                       <div class="col-span-2">
                         <UBadge :color="node.hasToken ? 'neutral' : 'warning'"

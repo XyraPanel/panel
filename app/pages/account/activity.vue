@@ -11,22 +11,12 @@ definePageMeta({
 const { t } = useI18n()
 
 const currentPage = ref(1)
-const requestFetch = useRequestFetch() as (input: string, init?: Record<string, unknown>) => Promise<unknown>
 
 const { data: generalSettings } = await useFetch<{ paginationLimit: number }>('/api/admin/settings/general', {
   key: 'admin-settings-general',
   default: () => ({ paginationLimit: 25 }),
 })
 const itemsPerPage = computed(() => generalSettings.value?.paginationLimit ?? 25)
-
-async function fetchAccountActivity(page: number, limit: number): Promise<PaginatedAccountActivityResponse> {
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-  })
-  const result = await requestFetch(`/api/account/activity?${params.toString()}`) as unknown
-  return result as PaginatedAccountActivityResponse
-}
 
 const defaultActivityResponse = (): PaginatedAccountActivityResponse => ({
   data: [],
@@ -43,10 +33,14 @@ const {
   data: activityResponse,
   error,
   pending,
-} = await useAsyncData<PaginatedAccountActivityResponse>(
-  'account-activity',
-  () => fetchAccountActivity(currentPage.value, itemsPerPage.value),
+} = await useFetch<PaginatedAccountActivityResponse>(
+  '/api/account/activity',
   {
+    key: 'account-activity',
+    query: computed(() => ({
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+    })),
     default: defaultActivityResponse,
     watch: [currentPage, itemsPerPage],
   },

@@ -2,8 +2,10 @@ import { randomUUID } from 'node:crypto'
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
 import { createApiKeySchema } from '#shared/schema/account'
 import type { ApiKeyResponse } from '#shared/types/api'
-import { useDrizzle, tables } from '#server/utils/drizzle'
+import { useDrizzle, tables, assertSqliteDatabase } from '#server/utils/drizzle'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { APIError } from 'better-auth/api'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
 
 export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
   const accountContext = await requireAccountUser(event)
@@ -17,30 +19,34 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
 
   try {
     const db = useDrizzle()
+    assertSqliteDatabase(db)
     const now = new Date()
-    const apiKeyId = randomUUID()
+    const auth = getAuth()
     const apiKeyPermId = randomUUID()
 
-    const rawKey = `sk_${randomUUID()}`
+    let expiresIn: number | undefined
+    if (body.expiresAt) {
+      const expiresAtMs = new Date(body.expiresAt).getTime()
+      if (Number.isNaN(expiresAtMs) || expiresAtMs <= Date.now()) {
+        throw createError({
+          status: 400,
+          statusText: 'Bad Request',
+          message: 'expiresAt must be a valid future datetime',
+        })
+      }
+      expiresIn = Math.floor((expiresAtMs - Date.now()) / 1000)
+    }
 
-    await db.insert(tables.apiKeys)
-      .values({
-        id: apiKeyId,
-        userId: user.id,
+    const created = await auth.api.createApiKey({
+      body: {
         name: body.memo || 'API Key',
-        key: rawKey,
-        start: rawKey.slice(0, 6),
-        prefix: 'sk',
-        expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
-        createdAt: now,
-        updatedAt: now,
-        enabled: true,
-        rateLimitEnabled: true,
-        requestCount: 0,
-      })
-      .run()
+        ...(expiresIn ? { expiresIn } : {}),
+      },
+      headers: normalizeHeadersForAuth(event.node.req.headers),
+    })
+    const apiKeyId = created.id
 
-    await db.insert(tables.apiKeyMetadata)
+    db.insert(tables.apiKeyMetadata)
       .values({
         id: apiKeyPermId,
         apiKeyId: apiKeyId,
@@ -83,10 +89,17 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
         created_at: now.toISOString(),
       },
       meta: {
-        secret_token: rawKey,
+        secret_token: created.key,
       },
     }
   } catch (error) {
+    if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
+      throw createError({
+        statusCode,
+        statusMessage: error.message || 'Failed to create API key',
+      })
+    }
     console.error('Error creating API key:', error)
 
     if (error && typeof error === 'object' && 'status' in error) {

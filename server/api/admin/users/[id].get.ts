@@ -1,4 +1,4 @@
-import { useDrizzle, tables, eq, or } from '#server/utils/drizzle'
+import { useDrizzle, tables, eq, or, assertSqliteDatabase } from '#server/utils/drizzle'
 import { desc } from 'drizzle-orm'
 import { requireAdmin } from '#server/utils/security'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
+  assertSqliteDatabase(db)
 
   const user = db
     .select({
@@ -32,9 +33,9 @@ export default defineEventHandler(async (event) => {
       useTotp: tables.users.useTotp,
       totpAuthenticatedAt: tables.users.totpAuthenticatedAt,
       emailVerified: tables.users.emailVerified,
-      suspended: tables.users.suspended,
-      suspendedAt: tables.users.suspendedAt,
-      suspensionReason: tables.users.suspensionReason,
+      banned: tables.users.banned,
+      banReason: tables.users.banReason,
+      banExpires: tables.users.banExpires,
       passwordResetRequired: tables.users.passwordResetRequired,
       createdAt: tables.users.createdAt,
       updatedAt: tables.users.updatedAt,
@@ -150,15 +151,19 @@ export default defineEventHandler(async (event) => {
     return Number.isNaN(date.getTime()) ? null : date.toISOString()
   }
 
-  const parseMetadata = (value: string | null) => {
+  const isRecord = (value: unknown): value is Record<string, unknown> => {
+    return typeof value === 'object' && value !== null
+  }
+
+  const parseMetadata = (value: string | null): Record<string, unknown> => {
     if (!value) {
       return {}
     }
 
     try {
-      const parsed = JSON.parse(value)
-      if (parsed && typeof parsed === 'object') {
-        return parsed as Record<string, unknown>
+      const parsed: unknown = JSON.parse(value)
+      if (isRecord(parsed)) {
+        return parsed
       }
       return { value: parsed }
     }
@@ -190,9 +195,9 @@ export default defineEventHandler(async (event) => {
         twoFactorEnabled: Boolean(user.useTotp),
         emailVerified: Boolean(user.emailVerified),
         emailVerifiedAt: formatTimestamp(user.emailVerified),
-        suspended: Boolean(user.suspended),
-        suspendedAt: formatTimestamp(user.suspendedAt),
-        suspensionReason: user.suspensionReason ?? null,
+        suspended: Boolean(user.banned),
+        suspendedAt: formatTimestamp(user.banExpires),
+        suspensionReason: user.banReason ?? null,
         passwordResetRequired: Boolean(user.passwordResetRequired),
         createdAt: formatTimestamp(user.createdAt)!,
         updatedAt: formatTimestamp(user.updatedAt)!,
@@ -296,7 +301,7 @@ export default defineEventHandler(async (event) => {
         uniqueIps: (() => {
           const allIps = sessions
             .map(s => s.metadataIpAddress || s.sessionIpAddress)
-            .filter(Boolean) as string[]
+            .filter((ip): ip is string => typeof ip === 'string' && ip.length > 0)
           return [...new Set(allIps)]
         })(),
         activeSessions: sessions.filter(s => {

@@ -1,8 +1,8 @@
-import bcrypt from 'bcryptjs'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { APIError } from 'better-auth/api'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import type { UpdateEmailResponse } from '#shared/types/account'
 import { updateEmailSchema } from '#shared/schema/account'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
 import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 
 export default defineEventHandler(async (event): Promise<UpdateEmailResponse> => {
@@ -16,51 +16,57 @@ export default defineEventHandler(async (event): Promise<UpdateEmailResponse> =>
     BODY_SIZE_LIMITS.SMALL,
   )
 
-  const db = useDrizzle()
-  const userRow = db
-    .select()
-    .from(tables.users)
-    .where(eq(tables.users.id, user.id))
-    .get()
+  const auth = getAuth()
+  const headers = normalizeHeadersForAuth(event.node.req.headers)
 
-  if (!userRow) {
-    throw createError({ status: 404, message: 'User not found' })
-  }
-
-  const valid = await bcrypt.compare(body.password, userRow.password)
-
-  if (!valid) {
-    throw createError({ status: 400, message: 'Invalid password' })
-  }
-
-  const existing = db
-    .select()
-    .from(tables.users)
-    .where(eq(tables.users.email, body.email))
-    .get()
-
-  if (existing && existing.id !== user.id) {
-    throw createError({ status: 400, message: 'Email already in use' })
-  }
-  const oldEmail = userRow.email
-
-  db.update(tables.users)
-    .set({
-      email: body.email,
-      emailVerified: null,
-      updatedAt: new Date(),
+  try {
+    const verification = await auth.api.verifyPassword({
+      body: { password: body.password },
+      headers,
     })
-    .where(eq(tables.users.id, user.id))
-    .run()
+    if (!verification?.status) {
+      throw createError({ status: 400, message: 'Invalid password' })
+    }
+  }
+  catch (error) {
+    if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
+      throw createError({
+        statusCode,
+        statusMessage: error.message || 'Invalid password',
+      })
+    }
+    throw error
+  }
+
+  try {
+    await auth.api.changeEmail({
+      body: {
+        newEmail: body.email,
+        callbackURL: '/account/profile',
+      },
+      headers,
+    })
+  }
+  catch (error) {
+    if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
+      throw createError({
+        statusCode,
+        statusMessage: error.message || 'Failed to request email change',
+      })
+    }
+    throw error
+  }
 
   await recordAuditEventFromRequest(event, {
     actor: user.id,
     actorType: 'user',
-    action: 'account.email.update',
+    action: 'account.email.change_requested',
     targetType: 'user',
     targetId: user.id,
     metadata: {
-      oldEmail: oldEmail || null,
+      oldEmail: user.email || null,
       newEmail: body.email,
     },
   })

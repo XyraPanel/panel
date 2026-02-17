@@ -12,6 +12,7 @@ definePageMeta({
 const { t } = useI18n()
 const toast = useToast()
 const router = useRouter()
+const requestFetch = useRequestFetch()
 
 const currentStep = ref(1)
 const totalSteps = 6
@@ -43,17 +44,17 @@ const form = ref<Partial<CreateServerPayload>>({
 
 const { data: nestsData } = await useAsyncData(
   'admin-nests-for-server',
-  () => $fetch<{ data: Nest[] }>('/api/admin/nests'),
+  () => requestFetch<{ data: Nest[] }>('/api/admin/nests'),
 )
 
 const { data: nodesData } = await useAsyncData(
   'admin-nodes-for-server',
-  () => $fetch<{ data: NodeOption[] }>('/api/wings/nodes'),
+  () => requestFetch<{ data: NodeOption[] }>('/api/wings/nodes'),
 )
 
 const { data: usersData } = await useAsyncData(
   'admin-users-for-server',
-  () => $fetch<{ data: UserOption[] }>('/api/admin/users'),
+  () => requestFetch<{ data: UserOption[] }>('/api/admin/users'),
 )
 
 const authStore = useAuthStore()

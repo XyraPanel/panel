@@ -8,6 +8,7 @@ import type { GeneralSettingsFormInput } from '#shared/schema/admin/settings'
 
 const { t } = useI18n()
 const toast = useToast()
+const requestFetch = useRequestFetch()
 const isSubmitting = ref(false)
 
 const availableLocales = computed(() => {
@@ -49,11 +50,7 @@ type FormSchema = GeneralSettingsFormInput
 const { data: settings, refresh } = await useAsyncData(
   'admin-settings-general-form',
   async () => {
-    const response = await fetch('/api/admin/settings/general')
-    if (!response.ok) {
-      throw new Error(`Failed to fetch general settings: ${response.statusText}`)
-    }
-    return await response.json() as GeneralSettings
+    return await requestFetch<GeneralSettings>('/api/admin/settings/general')
   },
 )
 

@@ -21,32 +21,18 @@ const { data: generalSettings } = await useFetch<{ paginationLimit: number }>('/
 })
 const pageSize = computed(() => generalSettings.value?.paginationLimit ?? 25)
 
-const allocationsData = ref<AdminNodeAllocationsResponse | null>(null)
-const pending = ref(false)
-const requestFetch = useRequestFetch() as (input: string, init?: Record<string, unknown>) => Promise<unknown>
-
-const fetchAllocations: (nodeId: string) => Promise<AdminNodeAllocationsResponse> = async (nodeId) => {
-  const endpoint: string = `/api/admin/nodes/${nodeId}/allocations`
-  const result = await requestFetch(endpoint) as unknown
-  return result as AdminNodeAllocationsResponse
-}
-
-async function loadAllocations() {
-  pending.value = true
-  try {
-    const response = await fetchAllocations(props.nodeId)
-    allocationsData.value = response
-  } catch (error) {
-    console.error('Failed to load allocations:', error)
-    allocationsData.value = { data: [] }
-  } finally {
-    pending.value = false
-  }
-}
-
-await loadAllocations()
-
-const refresh = () => loadAllocations()
+const {
+  data: allocationsData,
+  pending,
+  refresh,
+} = await useAsyncData<AdminNodeAllocationsResponse>(
+  () => `admin-node-allocations-${props.nodeId}`,
+  () => ($fetch as (input: string, init?: Record<string, unknown>) => Promise<AdminNodeAllocationsResponse>)(`/api/admin/nodes/${props.nodeId}/allocations`),
+  {
+    default: () => ({ data: [] }),
+    watch: [() => props.nodeId],
+  },
+)
 
 const allocations = computed<Allocation[]>(() => allocationsData.value?.data ?? [])
 
@@ -160,7 +146,8 @@ async function createAllocations(event: FormSubmitEvent<CreateFormSchema>) {
       : ports.length
 
     if (estimatedCount > 10000) {
-      if (!confirm(t('admin.nodes.confirmCreateManyAllocations', { count: estimatedCount.toLocaleString() }))) {
+      const formattedCount = new Intl.NumberFormat().format(estimatedCount)
+      if (!confirm(t('admin.nodes.confirmCreateManyAllocations', { count: formattedCount }))) {
         isCreating.value = false
         return
       }

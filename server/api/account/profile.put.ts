@@ -1,7 +1,9 @@
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { useDrizzle, tables, eq, assertSqliteDatabase } from '#server/utils/drizzle'
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
 import { accountProfileUpdateSchema } from '#shared/schema/account'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { APIError } from 'better-auth/api'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
 
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT')
@@ -16,6 +18,9 @@ export default defineEventHandler(async (event) => {
   )
 
   const db = useDrizzle()
+  assertSqliteDatabase(db)
+  const auth = getAuth()
+  const headers = normalizeHeadersForAuth(event.node.req.headers)
 
   const currentUser = db
     .select({
@@ -51,7 +56,7 @@ export default defineEventHandler(async (event) => {
         })
       }
 
-      await db.update(tables.users)
+      db.update(tables.users)
         .set({
           username: body.username,
           updatedAt: new Date(),
@@ -73,33 +78,30 @@ export default defineEventHandler(async (event) => {
     }
 
     if (body.email !== undefined && body.email !== oldEmail) {
-      const existingUser = db
-        .select({ id: tables.users.id })
-        .from(tables.users)
-        .where(eq(tables.users.email, body.email))
-        .get()
-
-      if (existingUser && existingUser.id !== user.id) {
-        throw createError({
-          status: 409,
-          statusText: 'Conflict',
-          message: 'Email already in use',
+      try {
+        await auth.api.changeEmail({
+          body: {
+            newEmail: body.email,
+            callbackURL: '/account/profile',
+          },
+          headers,
         })
       }
-
-      await db.update(tables.users)
-        .set({
-          email: body.email,
-          emailVerified: null, 
-          updatedAt: new Date(),
-        })
-        .where(eq(tables.users.id, user.id))
-        .run()
+      catch (error) {
+        if (error instanceof APIError) {
+          const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
+          throw createError({
+            statusCode,
+            statusMessage: error.message || 'Failed to request email change',
+          })
+        }
+        throw error
+      }
 
       await recordAuditEventFromRequest(event, {
         actor: user.id,
         actorType: 'user',
-        action: 'account.email.update',
+        action: 'account.email.change_requested',
         targetType: 'user',
         targetId: user.id,
         metadata: {

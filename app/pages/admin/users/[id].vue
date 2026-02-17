@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
 import type { AdminUserProfilePayload } from '#shared/types/admin'
+import { authClient } from '~/utils/auth-client'
 
 definePageMeta({
   auth: true,
@@ -17,7 +17,7 @@ const isActionRunning = (key: string) => actionLoading.value === key
 
 const userId = computed(() => route.params.id as string)
 
-const { data, pending, error, refresh } = await useFetch<AdminUserProfilePayload>(
+const { data, pending, error, refresh } = await useFetch<{ data: AdminUserProfilePayload }>(
   () => `/api/admin/users/${userId.value}`,
   {
     immediate: true,
@@ -81,7 +81,7 @@ watch(error, (value) => {
   }
 })
 
-const profile = computed(() => data.value)
+const profile = computed(() => data.value?.data)
 const user = computed(() => profile.value?.user)
 
 const { data: generalSettings } = await useFetch<{ paginationLimit: number }>('/api/admin/settings/general', {
@@ -114,13 +114,6 @@ const tabItems = computed(() => [
   { label: `${t('admin.users.tabs.activity')} (${activityCount.value})`, value: 'activity', icon: 'i-lucide-activity' },
 ])
 
-function formatDate(value: string | null | undefined) {
-  if (!value)
-    return t('common.unknown')
-
-  return new Date(value).toLocaleString()
-}
-
 const isLoading = computed(() => pending.value && !profile.value)
 
 async function sendResetLink(notify = true) {
@@ -128,7 +121,7 @@ async function sendResetLink(notify = true) {
     return
 
   await runAction('reset-link', async () => {
-    return await $fetch<{ success: boolean }>(
+    return await $fetch<{ data: { success: boolean } }>(
       `/api/admin/users/${userId.value}/actions/reset-password`,
       {
         method: 'POST',
@@ -150,7 +143,7 @@ async function setTemporaryPassword() {
     return
 
   const response = await runAction('reset-temp', async () => {
-    return await $fetch<{ success: boolean; temporaryPassword: string }>(
+    return await $fetch<{ data: { success: boolean; temporaryPassword: string } }>(
       `/api/admin/users/${userId.value}/actions/reset-password`,
       {
         method: 'POST',
@@ -161,14 +154,15 @@ async function setTemporaryPassword() {
     )
   })
 
-  if (!response?.temporaryPassword)
+  const temporaryPassword = response?.data?.temporaryPassword
+  if (!temporaryPassword)
     return
 
   let copied = false
 
   if (import.meta.client && typeof navigator !== 'undefined' && navigator.clipboard) {
     try {
-      await navigator.clipboard.writeText(response.temporaryPassword)
+      await navigator.clipboard.writeText(temporaryPassword)
       copied = true
     }
     catch (error) {
@@ -177,14 +171,14 @@ async function setTemporaryPassword() {
   }
 
   if (!copied && import.meta.client && typeof window !== 'undefined')
-    window.prompt(t('admin.users.temporaryPasswordCopyPrompt'), response.temporaryPassword)
+    window.prompt(t('admin.users.temporaryPasswordCopyPrompt'), temporaryPassword)
 
   const baseMessage = t('admin.users.userMustUpdatePasswordOnNextLogin')
   toast.add({
     title: t('admin.users.temporaryPasswordGenerated'),
     description: copied
       ? `${t('admin.users.temporaryPasswordCopiedToClipboard')} ${baseMessage}`
-      : `${t('admin.users.temporaryPassword')}: ${response.temporaryPassword}\n${baseMessage}`,
+      : `${t('admin.users.temporaryPassword')}: ${temporaryPassword}\n${baseMessage}`,
     color: 'success',
   })
 }
@@ -194,7 +188,7 @@ async function disableTwoFactor() {
     return
 
   await runAction('disable-2fa', async () => {
-    return await $fetch<{ success: boolean }>(
+    return await $fetch<{ data: { success: boolean } }>(
       `/api/admin/users/${userId.value}/actions/disable-2fa`,
       {
         method: 'POST',
@@ -210,7 +204,7 @@ async function markEmailVerified() {
     return
 
   await runAction('email-verify', async () => {
-    return await $fetch<{ success: boolean }>(
+    return await $fetch<{ data: { success: boolean } }>(
       `/api/admin/users/${userId.value}/actions/email-verification`,
       {
         method: 'POST',
@@ -227,7 +221,7 @@ async function markEmailUnverified() {
     return
 
   await runAction('email-unverify', async () => {
-    return await $fetch<{ success: boolean }>(
+    return await $fetch<{ data: { success: boolean } }>(
       `/api/admin/users/${userId.value}/actions/email-verification`,
       {
         method: 'POST',
@@ -253,7 +247,7 @@ async function resendVerificationEmail() {
   }
 
   await runAction('email-resend', async () => {
-    return await $fetch<{ success: boolean }>(
+    return await $fetch<{ data: { success: boolean } }>(
       `/api/admin/users/${userId.value}/actions/email-verification`,
       {
         method: 'POST',
@@ -275,7 +269,7 @@ async function toggleSuspension() {
       return
 
     await runAction('unsuspend', async () => {
-      return await $fetch<{ success: boolean }>(
+      return await $fetch<{ data: { success: boolean } }>(
         `/api/admin/users/${userId.value}/actions/suspension`,
         {
           method: 'POST',
@@ -299,7 +293,7 @@ async function toggleSuspension() {
   }
 
   await runAction('suspend', async () => {
-    return await $fetch<{ success: boolean }>(
+    return await $fetch<{ data: { success: boolean } }>(
       `/api/admin/users/${userId.value}/actions/suspension`,
       {
         method: 'POST',
@@ -319,46 +313,33 @@ async function impersonateUser() {
     return
 
   const response = await runAction('impersonate', async () => {
-    return await $fetch<{ impersonateUrl: string; expiresAt: string }>(
-      `/api/admin/users/${userId.value}/actions/impersonate`,
-      {
-        method: 'POST',
-      },
-    )
+    const result = await authClient.admin.impersonateUser({
+      userId: userId.value,
+    })
+
+    if (result.error) {
+      throw new Error(result.error.message || t('admin.users.impersonationFailed'))
+    }
+
+    return result.data ?? { success: true }
   }, {
     refreshAfter: false,
   })
 
-  if (!response?.impersonateUrl)
+  if (!response)
     return
 
-  const impersonateUrl = response.impersonateUrl
-  let copied = false
+  await clearNuxtData()
+  await useAuthStore().syncSession({ disableCookieCache: true })
+  await refreshNuxtData()
 
-  if (import.meta.client && typeof navigator !== 'undefined' && navigator.clipboard) {
-    try {
-      await navigator.clipboard.writeText(impersonateUrl)
-      copied = true
-    }
-    catch (error) {
-      console.error('Failed to copy impersonation link to clipboard', error)
-    }
-  }
-
-  if (import.meta.client && typeof window !== 'undefined')
-    window.open(impersonateUrl, '_blank', 'noopener')
-
-  const expiresLabel = formatDate(response.expiresAt)
   toast.add({
-    title: t('admin.users.impersonationLinkReady'),
-    description: copied
-      ? t('admin.users.linkCopiedExpiresAt', { expiresAt: expiresLabel })
-      : t('admin.users.openedNewTabExpiresAt', { expiresAt: expiresLabel }),
+    title: t('admin.users.impersonationStarted'),
+    description: t('admin.users.impersonationRedirecting'),
     color: 'success',
   })
 
-  if (!copied && import.meta.client && typeof window !== 'undefined')
-    window.prompt(t('admin.users.impersonationLinkCopyIfNeeded'), impersonateUrl)
+  await navigateTo('/', { replace: true })
 }
 </script>
 
@@ -551,7 +532,10 @@ async function impersonateUser() {
               <template #description>
                 <p>{{ t('admin.users.accountSuspendedDescription') }}</p>
                 <p v-if="user?.suspensionReason" class="mt-2 text-xs text-muted-foreground">{{ t('common.reason') }}: {{ user.suspensionReason }}</p>
-                <p v-if="user?.suspendedAt" class="mt-1 text-xs text-muted-foreground">{{ t('admin.users.suspendedAt') }} {{ formatDate(user.suspendedAt) }}</p>
+                <p v-if="user?.suspendedAt" class="mt-1 text-xs text-muted-foreground">
+                  {{ t('admin.users.suspendedAt') }}
+                  <NuxtTime :datetime="user.suspendedAt" />
+                </p>
               </template>
             </UAlert>
             <UAlert v-if="requiresPasswordReset" color="warning" variant="soft" icon="i-lucide-alert-triangle">

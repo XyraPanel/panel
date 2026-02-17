@@ -62,7 +62,7 @@ const { t } = useI18n()
     </UAlert>
 
     <div class="flex flex-col rounded-md border border-default h-full">
-      <div class="grid grid-cols-[auto_minmax(0,1.5fr)_110px_140px_64px] items-center gap-3 border-b border-default bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground flex-shrink-0">
+      <div class="grid grid-cols-[auto_minmax(0,1.5fr)_110px_140px_64px] items-center gap-3 border-b border-default bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground shrink-0">
         <UCheckbox
           :model-value="props.allSelected"
           :indeterminate="props.indeterminateSelection"
@@ -114,7 +114,10 @@ const { t } = useI18n()
               {{ entry.type }}
             </span>
 
-            <span class="truncate text-right text-xs text-muted-foreground">{{ entry.modified }}</span>
+            <span class="truncate text-right text-xs text-muted-foreground">
+              <NuxtTime v-if="entry.modified" :datetime="entry.modified" />
+              <span v-else>Unknown</span>
+            </span>
 
             <UDropdownMenu
               :items="props.availableFileActions(entry).map(action => ({ 

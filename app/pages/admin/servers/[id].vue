@@ -18,59 +18,10 @@ const { data: serverData, pending, error } = await useFetch<{ data: AdminServerD
   {
     key: () => `admin-server-${serverId.value}`,
     watch: [serverId],
-    onResponse({ response }) {
-      console.log('[Server Detail] Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: response._data,
-        hasData: !!response._data,
-        hasDataData: !!response._data?.data,
-      })
-    },
-    onRequestError({ error }) {
-      console.error('[Server Detail] Request error:', error)
-    },
-    onResponseError({ response }) {
-      console.error('[Server Detail] Response error:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: response._data,
-      })
-    },
   },
 )
-const server = computed(() => {
-  const s = serverData.value?.data
-  console.log('[Server Detail] Computed server value:', {
-    hasServerData: !!serverData.value,
-    hasData: !!serverData.value?.data,
-    server: s,
-    serverKeys: s ? Object.keys(s) : [],
-  })
-  return s
-})
+const server = computed(() => serverData.value?.data ?? null)
 
-watch([serverData, error, server], ([data, err, srv]) => {
-  console.log('[Server Detail] Watch triggered:', {
-    hasData: !!data,
-    hasError: !!err,
-    hasServer: !!srv,
-    data: data,
-    error: err,
-    server: srv,
-  })
-  if (err) {
-    console.error('[Server Detail] Error loading server:', err)
-  }
-  if (data) {
-    console.log('[Server Detail] Server data received:', data)
-  }
-}, { immediate: true })
-
-function formatDate(date: string | Date | null) {
-  if (!date) return t('common.never')
-  return new Date(date).toLocaleString()
-}
 </script>
 
 <template>
@@ -92,14 +43,7 @@ function formatDate(date: string | Date | null) {
             <template #header>
               <h2 class="text-lg font-semibold">{{ t('admin.servers.serverDataNotAvailable') }}</h2>
             </template>
-            <div class="space-y-2 text-sm">
-              <p><strong>Pending:</strong> {{ pending }}</p>
-              <p><strong>Has Error:</strong> {{ !!error }}</p>
-              <p><strong>Has Server Data:</strong> {{ !!serverData }}</p>
-              <p><strong>Has Server:</strong> {{ !!server }}</p>
-              <p><strong>Server ID:</strong> {{ serverId }}</p>
-              <pre class="bg-gray-100 p-2 rounded text-xs overflow-auto">{{ JSON.stringify({ serverData, error, server }, null, 2) }}</pre>
-            </div>
+            <p class="text-sm text-muted-foreground">{{ t('common.unknown') }}</p>
           </UCard>
 
           <template v-else-if="server">
@@ -146,11 +90,17 @@ function formatDate(date: string | Date | null) {
                   </div>
                   <div>
                     <p class="text-sm text-muted-foreground">{{ t('common.created') }}</p>
-                    <p class="text-sm">{{ formatDate(server.createdAt) }}</p>
+                    <p class="text-sm">
+                      <NuxtTime v-if="server.createdAt" :datetime="server.createdAt" />
+                      <span v-else>{{ t('common.never') }}</span>
+                    </p>
                   </div>
                   <div>
                     <p class="text-sm text-muted-foreground">{{ t('common.updated') }}</p>
-                    <p class="text-sm">{{ formatDate(server.updatedAt) }}</p>
+                    <p class="text-sm">
+                      <NuxtTime v-if="server.updatedAt" :datetime="server.updatedAt" />
+                      <span v-else>{{ t('common.never') }}</span>
+                    </p>
                   </div>
                 </div>
               </div>

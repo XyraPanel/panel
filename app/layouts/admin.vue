@@ -188,17 +188,10 @@ const createDefaultSecuritySettings = (): SecuritySettings => ({
   queueRetryLimit: 3,
 })
 
-const requestFetch = useRequestFetch() as (input: string, init?: Record<string, unknown>) => Promise<unknown>
-
-async function fetchSecuritySettings(): Promise<SecuritySettings> {
-  const result = await requestFetch('/api/admin/settings/security') as unknown
-  return result as SecuritySettings
-}
-
-const { data: securitySettings } = await useAsyncData<SecuritySettings>(
-  'admin-layout-security-settings',
-  fetchSecuritySettings,
+const { data: securitySettings } = await useFetch<SecuritySettings>(
+  '/api/admin/settings/security',
   {
+    key: 'admin-layout-security-settings',
     default: () => createDefaultSecuritySettings(),
   },
 )
@@ -289,6 +282,7 @@ const navigateToSecuritySettings = () => {
 }
 
 const handleSignOut = async () => {
+  await clearNuxtData()
   await authStore.logout()
   await router.push('/auth/login')
 }

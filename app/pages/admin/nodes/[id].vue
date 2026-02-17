@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from 'vue'
 import { watchDebounced } from '@vueuse/core'
 
 import type {
@@ -12,6 +11,7 @@ import type {
 } from '#shared/types/admin'
 
 const route = useRoute()
+const requestFetch = useRequestFetch()
 
 definePageMeta({
   auth: true,
@@ -43,7 +43,7 @@ const isCreatingAllocations = ref(false)
 
 const { data: availableNodes } = await useAsyncData(
   'available-nodes',
-  () => $fetch<{ data: Array<{ id: string; name: string }> }>('/api/wings/nodes'),
+  () => requestFetch<{ data: Array<{ id: string; name: string }> }>('/api/wings/nodes'),
   { default: () => ({ data: [] }) },
 )
 
@@ -63,7 +63,7 @@ const allocationQuery = reactive({ page: 1, perPage: 25, search: '' })
 
 const { data: nodeResponse, pending, error, refresh: refreshNode } = await useAsyncData(
   () => `admin-node-${nodeId.value}`,
-  () => $fetch<{ data: AdminWingsNodeDetail }>(`/api/admin/wings/nodes/${nodeId.value}`),
+  () => requestFetch<{ data: AdminWingsNodeDetail }>(`/api/admin/wings/nodes/${nodeId.value}`),
   { watch: [nodeId] },
 )
 
@@ -75,7 +75,7 @@ const systemError = computed(() => nodeDetail.value?.systemError ?? null)
 
 const serverTable = await useAsyncData(
   () => `admin-node-${nodeId.value}-servers-${serverQuery.page}-${serverQuery.perPage}-${serverQuery.search}`,
-  () => $fetch<AdminWingsNodeServersPayload>(`/api/admin/wings/nodes/${nodeId.value}/servers`, {
+  () => requestFetch<AdminWingsNodeServersPayload>(`/api/admin/wings/nodes/${nodeId.value}/servers`, {
     query: { page: serverQuery.page, perPage: serverQuery.perPage, search: serverQuery.search || undefined },
   }),
   { immediate: false },
@@ -83,7 +83,7 @@ const serverTable = await useAsyncData(
 
 const allocationTable = await useAsyncData(
   () => `admin-node-${nodeId.value}-allocations-${allocationQuery.page}-${allocationQuery.perPage}-${allocationQuery.search}`,
-  () => $fetch<AdminWingsNodeAllocationsPayload>(`/api/admin/wings/nodes/${nodeId.value}/allocations`, {
+  () => requestFetch<AdminWingsNodeAllocationsPayload>(`/api/admin/wings/nodes/${nodeId.value}/allocations`, {
     query: { page: allocationQuery.page, perPage: allocationQuery.perPage, search: allocationQuery.search || undefined },
   }),
   { immediate: false },
@@ -100,19 +100,6 @@ const statusBadge = computed(() => {
 
   return { label: t('admin.nodes.online'), color: 'success' as const }
 })
-
-function formatDateTime(value?: string | null) {
-  if (!value) {
-    return t('common.unknown')
-  }
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) {
-    return value
-  }
-
-  return date.toLocaleString()
-}
 
 function formatMegabytes(value?: number | null) {
   if (!value || value <= 0) {
@@ -199,8 +186,6 @@ const systemMetrics = computed(() => {
 
   return metrics
 })
-
-const lastSeenDisplay = computed(() => formatDateTime(stats.value?.lastSeenAt))
 
 const serverRows = computed<AdminWingsNodeServerSummary[]>(() => serverTable.data.value?.data ?? [])
 const serverPagination = computed<AdminPaginatedMeta | undefined>(() => serverTable.data.value?.pagination)
@@ -536,7 +521,8 @@ async function handleCreateAllocations() {
       : ports.length
 
     if (estimatedCount > 10000) {
-      if (!confirm(t('admin.nodes.confirmCreateManyAllocations', { count: estimatedCount.toLocaleString() }))) {
+      const formattedCount = new Intl.NumberFormat().format(estimatedCount)
+      if (!confirm(t('admin.nodes.confirmCreateManyAllocations', { count: formattedCount }))) {
         isCreatingAllocations.value = false
         return
       }
@@ -650,7 +636,8 @@ async function handleCreateAllocations() {
                 </div>
                 <div class="flex items-center justify-between text-xs text-muted-foreground">
                   <span>{{ t('admin.nodes.lastSeen') }}</span>
-                  <span>{{ lastSeenDisplay }}</span>
+                  <NuxtTime v-if="stats?.lastSeenAt" :datetime="stats.lastSeenAt" />
+                  <span v-else>{{ t('common.unknown') }}</span>
                 </div>
               </div>
             </UCard>
@@ -738,8 +725,14 @@ async function handleCreateAllocations() {
                         }}</span>
                       <span v-else class="text-muted-foreground">N/A</span>
                     </td>
-                    <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(server.createdAt) }}</td>
-                    <td class="px-3 py-2 text-xs text-muted-foreground">{{ formatDateTime(server.updatedAt) }}</td>
+                    <td class="px-3 py-2 text-xs text-muted-foreground">
+                      <NuxtTime v-if="server.createdAt" :datetime="server.createdAt" />
+                      <span v-else>{{ t('common.unknown') }}</span>
+                    </td>
+                    <td class="px-3 py-2 text-xs text-muted-foreground">
+                      <NuxtTime v-if="server.updatedAt" :datetime="server.updatedAt" />
+                      <span v-else>{{ t('common.unknown') }}</span>
+                    </td>
                     <td class="px-3 py-2 text-right">
                       <UDropdownMenu :items="[
                         {

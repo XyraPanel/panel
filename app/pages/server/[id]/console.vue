@@ -41,17 +41,6 @@ const serverAddress = computed(() => {
   return `${primaryAllocation.value.ip}:${primaryAllocation.value.port}`
 })
 
-watch(server, (newServer) => {
-  if (import.meta.client && newServer) {
-    console.log('[Console] Server data loaded:', {
-      uuid: newServer.uuid,
-      hasAllocations: !!newServer.allocations,
-      primaryAllocation: newServer.allocations?.primary,
-      allAllocations: newServer.allocations,
-    })
-  }
-}, { immediate: true })
-
 const {
   connected,
   serverState,
@@ -223,24 +212,14 @@ function getStateIcon(state: string): string {
 }
 
 function handleCommand(command: string) {
-  console.log(`[Console] Command received from terminal:`, command)
-  console.log(`[Console] Connection state:`, {
-    connected: connected.value,
-    command: command,
-    trimmed: command.trim(),
-  })
-  
   if (!command.trim()) {
-    console.warn('[Console] Empty command, ignoring')
     return
   }
   
   if (!connected.value) {
-    console.warn('[Console] Not connected to WebSocket, ignoring command')
     return
   }
 
-  console.log(`[Console] Sending command to WebSocket`)
   sendCommand(command)
 }
 
@@ -362,7 +341,7 @@ function handleSearch() {
               </div>
             </template>
 
-            <div class="relative h-[500px] overflow-hidden rounded-md bg-black">
+            <div class="relative h-125 overflow-hidden rounded-md bg-black">
               <div class="absolute top-2 right-2 z-10 flex gap-2">
                 <UButton
                   icon="i-lucide-search"
@@ -500,7 +479,7 @@ function handleSearch() {
     </UPageBody>
 
     <template #right>
-      <UPageAside class="hidden lg:block lg:min-w-[22rem]">
+      <UPageAside class="hidden lg:block lg:min-w-88">
         <UCard>
           <template #header>
             <h3 class="text-sm font-semibold">{{ t('server.console.connected') }}</h3>

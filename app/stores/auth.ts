@@ -1,7 +1,8 @@
-import { computed } from 'vue'
 import { defineStore } from 'pinia'
 import type { SessionUser } from '#shared/types/auth'
 import { authClient } from '~/utils/auth-client'
+
+const EMPTY_PERMISSIONS: string[] = []
 
 export const useAuthStore = defineStore('auth', () => {
   const sessionRef = authClient.useSession()
@@ -24,7 +25,8 @@ export const useAuthStore = defineStore('auth', () => {
     return sessionUser as SessionUser
   })
 
-  const permissions = computed(() => user.value?.permissions ?? [])
+  const permissions = computed(() => user.value?.permissions ?? EMPTY_PERMISSIONS)
+  const permissionSet = computed(() => new Set(permissions.value))
   const isAdmin = computed(() => user.value?.role === 'admin')
   const isSuperUser = computed(() => isAdmin.value || Boolean(user.value?.remember))
   const displayName = computed(() => {
@@ -44,19 +46,21 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => authStatus.value === 'authenticated' && Boolean(user.value))
 
   function hasPermission(required: string | string[]) {
-    const values = permissions.value
+    if (isAdmin.value)
+      return true
+
+    const values = permissionSet.value
 
     if (Array.isArray(required)) {
-      return required.some(permission => values.includes(permission))
+      return required.some(permission => values.has(permission))
     }
 
-    return values.includes(required)
+    return values.has(required)
   }
 
   async function syncSession(options?: { disableCookieCache?: boolean }) {
     const query = options?.disableCookieCache ? { disableCookieCache: 'true' } : undefined
-    const fetchOptions = query ? { query } : undefined
-    await authClient.getSession({ fetchOptions })
+    await authClient.getSession(query ? { query } : undefined)
   }
 
   async function logout(options?: { revokeOthersFirst?: boolean }) {

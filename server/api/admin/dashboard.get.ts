@@ -1,11 +1,11 @@
-import { desc } from 'drizzle-orm'
+import { desc, eq, sql } from 'drizzle-orm'
+import type { H3Event } from 'h3'
 import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables } from '#server/utils/drizzle'
+import { useDrizzle, tables, assertSqliteDatabase } from '#server/utils/drizzle'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 import { listWingsNodes } from '#server/utils/wings/nodesStore'
 import { remotePaginateServers } from '#server/utils/wings/registry'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
 
 import type {
   DashboardResponse,
@@ -14,13 +14,32 @@ import type {
   DashboardIncident,
   DashboardOperation,
   NodeStatus,
-  NitroTasksResponse,
 } from '#shared/types/admin'
+
+type DashboardSection = 'full' | 'critical' | 'incidents'
+type ScheduledTaskPayload = { tasks?: string[] }
 
 function parseMetadata(raw: string | null): Record<string, unknown> | null {
   if (!raw) return null
-  try { return JSON.parse(raw) as Record<string, unknown> } 
+  try {
+    const parsed: unknown = JSON.parse(raw)
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return { raw: String(parsed) }
+    }
+    const normalized: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(parsed)) {
+      normalized[key] = value
+    }
+    return normalized
+  }
   catch { return { raw } }
+}
+
+function getHeaderValue(value: string | string[] | undefined, fallback = ''): string {
+  if (Array.isArray(value)) {
+    return value[0] ?? fallback
+  }
+  return value ?? fallback
 }
 
 function formatHelperRange(current: number, total: number, suffix: string): string {
@@ -28,38 +47,88 @@ function formatHelperRange(current: number, total: number, suffix: string): stri
   return `${current}/${total} ${suffix}`
 }
 
-async function fetchNitroTasks(event: Parameters<Parameters<typeof defineEventHandler>[0]>[0]): Promise<NitroTasksResponse> {
+function resolveSection(event: H3Event): DashboardSection {
+  const query = getQuery(event)
+  const section = Array.isArray(query.section) ? query.section[0] : query.section
+  if (section === 'critical') return 'critical'
+  if (section === 'incidents') return 'incidents'
+  return 'full'
+}
+
+function getEmptyDashboardResponse(): DashboardResponse {
+  return {
+    metrics: [],
+    nodes: [],
+    incidents: [],
+    operations: [],
+    generatedAt: new Date().toISOString(),
+  }
+}
+
+async function fetchNitroScheduleCount(event: H3Event): Promise<number> {
   try {
-    const host = event.node.req.headers.host || 'localhost'
-    const protocol = event.node.req.headers['x-forwarded-proto'] || 'http'
+    const host = getHeaderValue(event.node.req.headers.host, 'localhost')
+    const protocol = getHeaderValue(event.node.req.headers['x-forwarded-proto'], 'http')
+    const cookie = getHeaderValue(event.node.req.headers.cookie)
     const url = `${protocol}://${host}/api/admin/schedules/nitro-tasks`
+
     const response = await fetch(url, {
       headers: {
-        cookie: event.node.req.headers.cookie || '',
+        cookie,
       },
     })
 
     if (!response.ok) {
-      return { tasks: {}, scheduledTasks: [] }
+      return 0
     }
 
-    const payload = await response.json() as { data?: NitroTasksResponse } | NitroTasksResponse
-    return 'data' in payload && payload.data
-      ? payload.data
-      : (payload as NitroTasksResponse)
+    const payload: unknown = await response.json()
+    const scheduledTasks = extractScheduledTasks(payload)
+
+    return scheduledTasks.reduce(
+      (count: number, scheduledTask: ScheduledTaskPayload) => count + (scheduledTask.tasks?.length ?? 0),
+      0,
+    )
   }
-  catch (error) {
-    console.error('Failed to fetch Nitro tasks for dashboard:', error)
-    return { tasks: {}, scheduledTasks: [] }
+  catch {
+    return 0
   }
 }
 
-export default defineEventHandler(async (event): Promise<{ data: DashboardResponse }> => {
-  const session = await requireAdmin(event)
-  
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.DASHBOARD, ADMIN_ACL_PERMISSIONS.READ)
-  
+function extractScheduledTasks(payload: unknown): ScheduledTaskPayload[] {
+  const normalizeTasks = (value: unknown): ScheduledTaskPayload[] => {
+    if (!Array.isArray(value)) {
+      return []
+    }
+
+    return value
+      .filter(entry => entry && typeof entry === 'object')
+      .map((entry) => {
+        const tasks = 'tasks' in entry && Array.isArray(entry.tasks)
+          ? entry.tasks.filter((task: unknown): task is string => typeof task === 'string')
+          : undefined
+        return tasks ? { tasks } : {}
+      })
+  }
+
+  if (!payload || typeof payload !== 'object') {
+    return []
+  }
+
+  if ('scheduledTasks' in payload) {
+    return normalizeTasks(payload.scheduledTasks)
+  }
+
+  if ('data' in payload && payload.data && typeof payload.data === 'object' && 'scheduledTasks' in payload.data) {
+    return normalizeTasks(payload.data.scheduledTasks)
+  }
+
+  return []
+}
+
+async function fetchCriticalData(event: H3Event): Promise<Pick<DashboardResponse, 'metrics' | 'nodes' | 'operations'>> {
   const db = useDrizzle()
+  assertSqliteDatabase(db)
   const nodes = listWingsNodes()
 
   const nodeResults = await Promise.all(nodes.map(async (node): Promise<DashboardNode> => {
@@ -71,7 +140,8 @@ export default defineEventHandler(async (event): Promise<{ data: DashboardRespon
       const response = await remotePaginateServers(1, 1, node.id)
       serverCount = response.meta.total
       if (!node.maintenanceMode) status = 'online'
-    } catch (error) {
+    }
+    catch (error) {
       issue = error instanceof Error ? error.message : 'Failed to contact Wings node'
     }
 
@@ -95,48 +165,31 @@ export default defineEventHandler(async (event): Promise<{ data: DashboardRespon
   const unreachableNodes = nodeResults.filter(n => n.status === 'unknown').length
   const totalServers = nodeResults.reduce((sum, n) => sum + (n.serverCount ?? 0), 0)
 
-  const users = db.select({ id: tables.users.id, displayUsername: tables.users.displayUsername }).from(tables.users).all()
-  const usersMap = Object.fromEntries(users.map(u => [u.id, u.displayUsername]))
+  const userCounts = db.select({
+    totalUsers: sql<number>`count(*)`,
+  }).from(tables.users).get()
 
-  const userRows = db.select({ role: tables.users.role }).from(tables.users).all()
-  const totalUsers = userRows.length
-  const adminUsers = userRows.filter(u => u.role === 'admin').length
+  const adminUsersRow = db.select({
+    value: sql<number>`count(*)`,
+  }).from(tables.users).where(eq(tables.users.role, 'admin')).get()
 
   const scheduleRows = db.select({
     enabled: tables.serverSchedules.enabled,
     nextRunAt: tables.serverSchedules.nextRunAt,
   }).from(tables.serverSchedules).all()
 
-  const nitroTasks = await fetchNitroTasks(event)
-  const nitroScheduleCount = (nitroTasks.scheduledTasks ?? []).reduce((sum, sched) => sum + sched.tasks.length, 0)
-
-  const activeSchedules = scheduleRows.filter(s => s.enabled).length + nitroScheduleCount
-  const soonThreshold = new Date(Date.now() + 30 * 60 * 1000)
-  const dueSoonCount = scheduleRows.filter(s => s.enabled && s.nextRunAt && s.nextRunAt <= soonThreshold).length
-
-  const audits = db.select({
-    id: tables.auditEvents.id,
-    occurredAt: tables.auditEvents.occurredAt,
-    actor: tables.auditEvents.actor,
-    action: tables.auditEvents.action,
-    targetType: tables.auditEvents.targetType,
-    targetId: tables.auditEvents.targetId,
-    metadata: tables.auditEvents.metadata,
-  })
-    .from(tables.auditEvents)
-    .orderBy(desc(tables.auditEvents.occurredAt))
-    .limit(5)
-    .all()
-
-  const incidents: DashboardIncident[] = audits.map(event => ({
-    id: event.id,
-    occurredAt: event.occurredAt.toISOString(),
-    actor: event.actor,
-    actorUsername: usersMap[event.actor] ?? undefined,
-    action: event.action,
-    target: event.targetId ? `${event.targetType}#${event.targetId}` : event.targetType,
-    metadata: parseMetadata(event.metadata),
-  }))
+  const totalUsers = Number(userCounts?.totalUsers ?? 0)
+  const adminUsers = Number(adminUsersRow?.value ?? 0)
+  const activeServerSchedules = scheduleRows.filter(schedule => schedule.enabled).length
+  const nitroScheduleCount = await fetchNitroScheduleCount(event)
+  const activeSchedules = activeServerSchedules + nitroScheduleCount
+  const dueSoonThreshold = Date.now() + 30 * 60 * 1000
+  const dueSoonCount = scheduleRows.filter((schedule: { enabled: boolean | null; nextRunAt: Date | null }) => {
+    if (!schedule.enabled || !schedule.nextRunAt) {
+      return false
+    }
+    return schedule.nextRunAt.getTime() <= dueSoonThreshold
+  }).length
 
   const metrics: DashboardMetric[] = [
     {
@@ -169,12 +222,15 @@ export default defineEventHandler(async (event): Promise<{ data: DashboardRespon
       label: 'Active schedules',
       value: activeSchedules,
       icon: 'i-lucide-calendar-clock',
-      helper: dueSoonCount > 0 ? `${dueSoonCount} due within 30 min` : null,
+      helper: dueSoonCount > 0
+        ? `${dueSoonCount} due within 30 min`
+        : nitroScheduleCount > 0
+          ? `${nitroScheduleCount} panel task${nitroScheduleCount === 1 ? '' : 's'}`
+          : null,
     },
   ]
 
   const operations: DashboardOperation[] = []
-
   if (nodes.length === 0) operations.push({ key: 'connect-node', label: 'Connect a Wings node', detail: 'No Wings nodes are configured. Add a node to start provisioning servers.' })
   if (unreachableNodes > 0) operations.push({ key: 'resolve-nodes', label: 'Resolve unreachable nodes', detail: `${unreachableNodes} node${unreachableNodes === 1 ? '' : 's'} failed to respond to the remote API.` })
   if (totalServers === 0 && nodes.length > 0) operations.push({ key: 'provision-servers', label: 'Provision servers', detail: 'No servers are registered across your Wings nodes. Create a server from the Servers page.' })
@@ -182,25 +238,128 @@ export default defineEventHandler(async (event): Promise<{ data: DashboardRespon
   if (dueSoonCount > 0) operations.push({ key: 'review-schedules', label: 'Review upcoming schedules', detail: `${dueSoonCount} schedule${dueSoonCount === 1 ? '' : 's'} scheduled within 30 minutes.` })
   if (operations.length === 0) operations.push({ key: 'all-clear', label: 'All systems nominal', detail: 'Wings nodes and panel services are responding as expected.' })
 
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.dashboard.viewed',
-    targetType: 'settings',
-    targetId: null,
-    metadata: {
-      nodeCount: nodes.length,
-      totalServers,
-      totalUsers,
-    },
+  return {
+    metrics,
+    nodes: nodeResults,
+    operations,
+  }
+}
+
+async function fetchIncidents(): Promise<DashboardIncident[]> {
+  const db = useDrizzle()
+  assertSqliteDatabase(db)
+
+  const users = db.select({
+    id: tables.users.id,
+    email: tables.users.email,
+    displayUsername: tables.users.displayUsername,
+  }).from(tables.users).all()
+  const usersById = new Map(users.map((user: { id: string; email: string | null; displayUsername: string | null }) => [user.id, user] as const))
+  const usersByEmail = new Map(
+    users
+      .filter((user: { email: string | null }) => typeof user.email === 'string' && user.email.length > 0)
+      .map((user: { id: string; email: string | null; displayUsername: string | null }) => [user.email!.toLowerCase(), user] as const),
+  )
+
+  const audits = db.select({
+    id: tables.auditEvents.id,
+    occurredAt: tables.auditEvents.occurredAt,
+    actor: tables.auditEvents.actor,
+    action: tables.auditEvents.action,
+    targetType: tables.auditEvents.targetType,
+    targetId: tables.auditEvents.targetId,
+    metadata: tables.auditEvents.metadata,
   })
+    .from(tables.auditEvents)
+    .orderBy(desc(tables.auditEvents.occurredAt))
+    .limit(5)
+    .all()
+
+  return audits.map((event: {
+    id: string
+    occurredAt: Date
+    actor: string
+    action: string
+    targetType: string
+    targetId: string | null
+    metadata: string | null
+  }) => ({
+    ...(function resolveActor() {
+      const actorRaw = String(event.actor)
+      const byId = usersById.get(actorRaw)
+      if (byId) {
+        return {
+          actorUserId: byId.id,
+          actorEmail: byId.email ?? undefined,
+          actorUsername: byId.displayUsername ?? undefined,
+        }
+      }
+
+      if (actorRaw.includes('@')) {
+        const byEmail = usersByEmail.get(actorRaw.toLowerCase())
+        if (byEmail) {
+          return {
+            actorUserId: byEmail.id,
+            actorEmail: byEmail.email ?? undefined,
+            actorUsername: byEmail.displayUsername ?? undefined,
+          }
+        }
+      }
+
+      return {
+        actorUserId: undefined,
+        actorEmail: undefined,
+        actorUsername: undefined,
+      }
+    })(),
+    id: event.id,
+    occurredAt: event.occurredAt.toISOString(),
+    actor: event.actor,
+    action: event.action,
+    target: event.targetId ? `${event.targetType}#${event.targetId}` : event.targetType,
+    metadata: parseMetadata(event.metadata),
+  }))
+}
+
+export default defineEventHandler(async (event): Promise<{ data: DashboardResponse }> => {
+  await requireAdmin(event)
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.DASHBOARD, ADMIN_ACL_PERMISSIONS.READ)
+
+  const section = resolveSection(event)
+  if (section === 'critical') {
+    const critical = await fetchCriticalData(event)
+    return {
+      data: {
+        ...getEmptyDashboardResponse(),
+        metrics: critical.metrics,
+        nodes: critical.nodes,
+        operations: critical.operations,
+        generatedAt: new Date().toISOString(),
+      },
+    }
+  }
+
+  if (section === 'incidents') {
+    return {
+      data: {
+        ...getEmptyDashboardResponse(),
+        incidents: await fetchIncidents(),
+        generatedAt: new Date().toISOString(),
+      },
+    }
+  }
+
+  const [critical, incidents] = await Promise.all([
+    fetchCriticalData(event),
+    fetchIncidents(),
+  ])
 
   return {
     data: {
-      metrics,
-      nodes: nodeResults,
+      metrics: critical.metrics,
+      nodes: critical.nodes,
       incidents,
-      operations,
+      operations: critical.operations,
       generatedAt: new Date().toISOString(),
     },
   }

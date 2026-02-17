@@ -1,30 +1,54 @@
 import { betterAuth } from "better-auth"
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { admin, bearer, multiSession, customSession, captcha, username, twoFactor, apiKey } from "better-auth/plugins"
+import { admin } from 'better-auth/plugins/admin'
+import { bearer } from 'better-auth/plugins/bearer'
+import { multiSession } from 'better-auth/plugins/multi-session'
+import { customSession } from 'better-auth/plugins/custom-session'
+import { username } from 'better-auth/plugins/username'
+import { twoFactor } from 'better-auth/plugins/two-factor'
+import { captcha, apiKey } from 'better-auth/plugins'
 import type { AuthContext } from '@better-auth/core'
-import { useDrizzle, tables, eq, isPostgresDialect } from '#server/utils/drizzle'
-import type { Role } from '#shared/types/auth'
+import { useRuntimeConfig } from '#imports'
+import { useDrizzle, tables, eq, isPostgresDialect, assertSqliteDatabase } from '#server/utils/drizzle'
+import type { SqliteDatabase } from '#server/utils/drizzle'
 import bcrypt from 'bcryptjs'
 
-let authInstance: ReturnType<typeof betterAuth> | null = null
-
-const ADMIN_PANEL_PERMISSIONS = [
-  'admin.users.read',
-  'admin.servers.read',
-  'admin.nodes.read',
-  'admin.locations.read',
-  'admin.eggs.read',
-  'admin.mounts.read',
-  'admin.database-hosts.read',
-  'admin.activity.read',
-  'admin.settings.read',
-]
+let authInstance: ReturnType<typeof createAuth> | null = null
 
 interface CaptchaConfig {
   provider: 'cloudflare-turnstile' | 'google-recaptcha' | 'hcaptcha'
   secretKey: string
   minScore?: number
   siteKey?: string
+}
+
+interface ApiKeyRequestContext {
+  headers?: Headers | null
+}
+
+function assertSecretSecurity(isProduction: boolean, secret: string | undefined): void {
+  if (!isProduction) {
+    return
+  }
+
+  if (!secret || secret.length < 32) {
+    throw new Error('BETTER_AUTH_SECRET must be at least 32 characters in production.')
+  }
+
+  const weakSecretPatterns = [
+    'changeme',
+    'change-me',
+    'password',
+    'secret',
+    'xyrapanel',
+    'default',
+    'example',
+  ]
+
+  const normalizedSecret = secret.toLowerCase()
+  if (weakSecretPatterns.some(pattern => normalizedSecret.includes(pattern))) {
+    throw new Error('BETTER_AUTH_SECRET appears weak or default-like. Use a high-entropy random secret.')
+  }
 }
 
 function getCaptchaConfig(provider: string, runtimeConfig: ReturnType<typeof useRuntimeConfig>): CaptchaConfig | null {
@@ -67,9 +91,15 @@ function getCaptchaConfig(provider: string, runtimeConfig: ReturnType<typeof use
   }
 }
 
-async function getUserPermissionsAndRole(userId: string) {
+function useSyncDrizzle(): SqliteDatabase {
   const db = useDrizzle()
-  const dbUser = db
+  assertSqliteDatabase(db)
+  return db
+}
+
+async function getSessionProfile(userId: string) {
+  const db = useSyncDrizzle()
+  const user = db
     .select({
       id: tables.users.id,
       role: tables.users.role,
@@ -77,28 +107,28 @@ async function getUserPermissionsAndRole(userId: string) {
       passwordResetRequired: tables.users.passwordResetRequired,
       nameFirst: tables.users.nameFirst,
       nameLast: tables.users.nameLast,
+      username: tables.users.username,
     })
     .from(tables.users)
     .where(eq(tables.users.id, userId))
     .get()
 
-  if (!dbUser) {
+  if (!user) {
     return null
   }
 
-  const derivedRole: Role = dbUser.rootAdmin || dbUser.role === 'admin' ? 'admin' : 'user'
-  const permissions = derivedRole === 'admin' ? ADMIN_PANEL_PERMISSIONS : []
+  const name = [user.nameFirst, user.nameLast].filter(Boolean).join(' ') || user.username || null
 
   return {
-    role: derivedRole,
-    permissions,
-    passwordResetRequired: Boolean(dbUser.passwordResetRequired),
+    role: user.rootAdmin || user.role === 'admin' ? 'admin' : 'user',
+    passwordResetRequired: Boolean(user.passwordResetRequired),
+    name,
   }
 }
 
 function createAuth() {
   const runtimeConfig = useRuntimeConfig()
-  const db = useDrizzle()
+  const db = useSyncDrizzle()
   
   const isProduction = process.env.NODE_ENV === 'production'
   
@@ -122,6 +152,8 @@ function createAuth() {
       throw new Error('BETTER_AUTH_URL (authOrigin) is required in production. Set it in your environment variables.')
     }
   }
+
+  assertSecretSecurity(isProduction, secret)
   
   const trustedOrigins: string[] = []
   
@@ -226,7 +258,7 @@ function createAuth() {
           }).catch(error => console.error('[auth][email][delete-account]', error))
         },
         beforeDelete: async (user, _request) => {
-          const db = useDrizzle()
+          const db = useSyncDrizzle()
           const dbUser = db
             .select({
               rootAdmin: tables.users.rootAdmin,
@@ -266,7 +298,7 @@ function createAuth() {
       },
       resetPasswordTokenExpiresIn: 3600,
       onPasswordReset: async ({ user }, _request) => {
-        const db = useDrizzle()
+        const db = useSyncDrizzle()
         db.delete(tables.sessions)
           .where(eq(tables.sessions.userId, user.id))
           .run()
@@ -413,7 +445,6 @@ function createAuth() {
       disabled: false,
       level: isProduction ? 'error' : 'warn',
     },
-    hooks: undefined,
     plugins: [
       ...(captchaConfig ? [captcha({
         provider: captchaConfig.provider,
@@ -437,7 +468,7 @@ function createAuth() {
       }),
       apiKey({
         apiKeyHeaders: ['x-api-key'],
-        customAPIKeyGetter: (ctx) => {
+        customAPIKeyGetter: (ctx: ApiKeyRequestContext) => {
           const bearer = ctx.headers?.get('authorization')
           if (bearer?.startsWith('Bearer ')) {
             const token = bearer.slice(7).trim()
@@ -452,6 +483,12 @@ function createAuth() {
         disableKeyHashing: false,
         defaultKeyLength: 32,
         fallbackToDatabase: true,
+        keyExpiration: {
+          defaultExpiresIn: 60 * 60 * 24 * 90,
+          disableCustomExpiresTime: false,
+          minExpiresIn: 1,
+          maxExpiresIn: 90,
+        },
       }),
       bearer(),
       multiSession({
@@ -462,34 +499,17 @@ function createAuth() {
           return { user, session }
         }
 
-        const userData = await getUserPermissionsAndRole(user.id)
-        if (!userData) {
+        const profile = await getSessionProfile(user.id)
+        if (!profile) {
           return { user, session }
         }
-
-        const db = useDrizzle()
-        const dbUser = db
-          .select({
-            nameFirst: tables.users.nameFirst,
-            nameLast: tables.users.nameLast,
-            username: tables.users.username,
-          })
-          .from(tables.users)
-          .where(eq(tables.users.id, user.id))
-          .get()
-
-        const rawUser = user as Record<string, unknown>
-        const name = dbUser
-          ? [dbUser.nameFirst, dbUser.nameLast].filter(Boolean).join(' ') || dbUser.username
-          : user.name || (typeof rawUser.username === 'string' ? rawUser.username : null)
 
         return {
           user: {
             ...user,
-            role: userData.role,
-            permissions: userData.permissions,
-            passwordResetRequired: userData.passwordResetRequired,
-            name,
+            role: profile.role,
+            passwordResetRequired: profile.passwordResetRequired,
+            name: profile.name ?? user.name ?? null,
           },
           session,
         }

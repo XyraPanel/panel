@@ -1,10 +1,73 @@
 import { createError, sendRedirect, type H3Event } from 'h3';
 import type { AuthContext, ResolvedSessionUser } from '#shared/types/auth';
+import type { ApiKeyPermissions, PermissionAction } from '#shared/types/admin';
 import { getServerSession } from '#server/utils/session';
 import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
 import { requireSessionUser } from '#server/utils/auth/sessionUser';
 
 type EventContextWithAuth = H3Event['context'] & { auth?: AuthContext };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function isPermissionAction(value: unknown): value is PermissionAction {
+  return value === 'read' || value === 'write' || value === 'delete';
+}
+
+function parseApiKeyPermissions(value: unknown): ApiKeyPermissions {
+  let candidate: unknown = value;
+  if (typeof candidate === 'string') {
+    try {
+      candidate = JSON.parse(candidate);
+    } catch {
+      return {};
+    }
+  }
+
+  if (!isRecord(candidate)) {
+    return {};
+  }
+
+  const parsed: Record<string, PermissionAction[]> = {};
+  for (const [key, rawActions] of Object.entries(candidate)) {
+    if (!Array.isArray(rawActions)) {
+      continue;
+    }
+    const actions = rawActions.filter(isPermissionAction);
+    if (actions.length > 0) {
+      parsed[key] = actions;
+    }
+  }
+
+  return parsed as ApiKeyPermissions;
+}
+
+function parseApiKeyVerification(value: unknown): {
+  valid: boolean;
+  key: { id: string; userId: string; permissions: ApiKeyPermissions } | null;
+} {
+  if (!isRecord(value)) {
+    return { valid: false, key: null };
+  }
+
+  const valid = value.valid === true;
+  const keyValue = isRecord(value.key) ? value.key : null;
+  const key =
+    keyValue && typeof keyValue.id === 'string' && typeof keyValue.userId === 'string'
+      ? {
+          id: keyValue.id,
+          userId: keyValue.userId,
+          permissions: parseApiKeyPermissions(
+            keyValue.permissions
+            ?? keyValue.metadata
+            ?? null
+          ),
+        }
+      : null;
+
+  return { valid, key };
+};
 
 const PUBLIC_ASSET_PREFIXES = ['/_nuxt/', '/__nuxt_devtools__/', '/_ipx/', '/public/'];
 
@@ -30,11 +93,21 @@ const PUBLIC_API_PATTERNS = [
   /^\/api\/auth(?:\/|$)/,
   /^\/api\/account\/register(?:\/|$)/,
   /^\/api\/branding(?:\/|$)/,
-  /^\/api\/remote(?:\/|$)/,
   /^\/api\/application(?:\/|$)/,
   /^\/api\/_nuxt_icon(?:\/|$)/,
   /^\/api\/_nuxt(?:\/|$)/,
   /^\/api\/maintenance-status(?:\/|$)/,
+  // Remote daemon/SFTP endpoints: keep explicit allowlist to avoid exposing future routes by default.
+  /^\/api\/remote\/activity(?:\/|$)/,
+  /^\/api\/remote\/sftp\/auth(?:\/|$)/,
+  /^\/api\/remote\/servers(?:\/|$)/,
+  /^\/api\/remote\/servers\/reset(?:\/|$)/,
+  /^\/api\/remote\/servers\/[^/]+(?:\/|$)/,
+  /^\/api\/remote\/servers\/[^/]+\/archive(?:\/|$)/,
+  /^\/api\/remote\/servers\/[^/]+\/install(?:\/|$)/,
+  /^\/api\/remote\/servers\/[^/]+\/transfer\/[^/]+(?:\/|$)/,
+  /^\/api\/remote\/backups\/[^/]+(?:\/|$)/,
+  /^\/api\/remote\/backups\/[^/]+\/restore(?:\/|$)/,
 ];
 
 function isAssetPath(path: string): boolean {
@@ -126,30 +199,15 @@ export default defineEventHandler(async (event) => {
 
       const auth = getAuth();
       const headers = normalizeHeadersForAuth(event.node.req.headers);
-      const authApi = auth.api as typeof auth.api & {
-        verifyApiKey?: (options: {
-          body: { key: string };
-          headers?: Record<string, string>;
-        }) => Promise<{
-          valid: boolean;
-          key: { userId?: string; id?: string } | null;
-        }>;
-      };
 
       try {
-        if (typeof authApi.verifyApiKey !== 'function') {
-          throw createError({
-            status: 500,
-            statusText: 'API key verification unavailable',
-          });
-        }
-
-        const verification = await authApi.verifyApiKey({
+        const verification = parseApiKeyVerification(
+          await auth.api.verifyApiKey({
           body: { key: apiKeyValue },
           headers,
-        });
+        }));
 
-        if (!verification.valid || !verification.key?.userId) {
+        if (!verification.valid || !verification.key) {
           throw createError({
             status: 401,
             statusText: 'Unauthorized',
@@ -157,83 +215,30 @@ export default defineEventHandler(async (event) => {
           });
         }
 
-        const { useDrizzle, tables, eq } = await import('#server/utils/drizzle');
-        const db = useDrizzle();
-
-        const dbUser = db
-          .select({
-            id: tables.users.id,
-            username: tables.users.username,
-            email: tables.users.email,
-            role: tables.users.role,
-            rootAdmin: tables.users.rootAdmin,
-            passwordResetRequired: tables.users.passwordResetRequired,
-          })
-          .from(tables.users)
-          .where(eq(tables.users.id, verification.key.userId))
-          .get();
-
-        if (!dbUser) {
-          throw createError({
-            status: 401,
-            statusText: 'Unauthorized',
-            message: 'User not found',
-          });
-        }
-
         const resolvedUser: ResolvedSessionUser = {
-          id: dbUser.id,
-          username: dbUser.username || '',
-          email: dbUser.email || null,
-          role: dbUser.rootAdmin || dbUser.role === 'admin' ? 'admin' : 'user',
+          id: verification.key.userId,
+          username: verification.key.userId,
+          email: null,
+          role: 'user',
           name: null,
           image: null,
           permissions: [],
           remember: null,
-          passwordResetRequired: dbUser.passwordResetRequired || false,
+          passwordResetRequired: false,
         };
 
         ctx.auth = {
           session: null,
           user: resolvedUser,
+          apiKey: {
+            id: verification.key.id,
+            userId: verification.key.userId,
+            permissions: verification.key.permissions,
+          },
         };
-
-        try {
-          const { recordAuditEventFromRequest } = await import('#server/utils/audit');
-          recordAuditEventFromRequest(event, {
-            actor: verification.key.userId,
-            actorType: 'user',
-            action: 'account.api_key.used',
-            targetType: 'api_key',
-            targetId: verification.key.id,
-            metadata: {
-              endpoint: event.node.req.url,
-              method: event.method,
-            },
-          }).catch((err) => console.error('Failed to log API key usage:', err));
-        } catch (logError) {
-          console.error('Failed to import audit logging:', logError);
-        }
 
         return;
       } catch (error) {
-        try {
-          const { recordAuditEventFromRequest } = await import('#server/utils/audit');
-          recordAuditEventFromRequest(event, {
-            actor: 'unknown',
-            actorType: 'system',
-            action: 'account.api_key.invalid',
-            targetType: 'api_key',
-            metadata: {
-              endpoint: event.node.req.url,
-              method: event.method,
-              reason: error instanceof Error ? error.message : 'unknown_error',
-            },
-          }).catch((err) => console.error('Failed to log failed API key attempt:', err));
-        } catch (logError) {
-          console.error('Failed to import audit logging:', logError);
-        }
-
         if (error && typeof error === 'object' && 'status' in error) {
           throw error;
         }

@@ -58,10 +58,11 @@ definePageMeta({
 const { t } = useI18n()
 const toast = useToast()
 const serverId = computed(() => route.params.id as string)
+const requestFetch = useRequestFetch()
 
 const { data: schedulesData, pending, error, refresh: refreshSchedules } = await useAsyncData<{ data: ScheduleResponse[] }>(
   `server-${serverId.value}-schedules`,
-  () => $fetch<{ data: ScheduleResponse[] }>(`/api/client/servers/${serverId.value}/schedules`),
+  () => requestFetch<{ data: ScheduleResponse[] }>(`/api/client/servers/${serverId.value}/schedules`),
   {
     watch: [serverId],
   },
@@ -472,20 +473,6 @@ async function handleDeleteTask(taskId: string) {
   }
 }
 
-function formatDate(dateString: string | null): string {
-  if (!dateString) return t('server.schedules.notScheduled')
-
-  const date = new Date(dateString)
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  }).format(date)
-}
-
 function getStatusColor(enabled: boolean) {
   return enabled ? 'primary' : 'warning'
 }
@@ -629,7 +616,18 @@ function getStatusLabel(enabled: boolean) {
                     </UBadge>
                   </div>
                   <p class="text-xs text-muted-foreground">
-                    {{ t('server.schedules.nextRun') }}: {{ formatDate(item.nextRunAt) }}
+                    {{ t('server.schedules.nextRun') }}:
+                    <NuxtTime
+                      v-if="item.nextRunAt"
+                      :datetime="item.nextRunAt"
+                      month="short"
+                      day="numeric"
+                      year="numeric"
+                      hour="2-digit"
+                      minute="2-digit"
+                      time-zone-name="short"
+                    />
+                    <span v-else>{{ t('server.schedules.notScheduled') }}</span>
                   </p>
                 </div>
 
@@ -693,7 +691,19 @@ function getStatusLabel(enabled: boolean) {
                   <UIcon name="i-lucide-history" class="size-4 text-primary" />
                   <div>
                     <p class="text-[11px] uppercase tracking-wide text-muted-foreground/70">{{ t('server.schedules.last') }}</p>
-                    <p class="text-xs text-foreground">{{ formatDate(item.lastRunAt) }}</p>
+                    <p class="text-xs text-foreground">
+                      <NuxtTime
+                        v-if="item.lastRunAt"
+                        :datetime="item.lastRunAt"
+                        month="short"
+                        day="numeric"
+                        year="numeric"
+                        hour="2-digit"
+                        minute="2-digit"
+                        time-zone-name="short"
+                      />
+                      <span v-else>{{ t('server.schedules.notScheduled') }}</span>
+                    </p>
                   </div>
                 </div>
               </div>

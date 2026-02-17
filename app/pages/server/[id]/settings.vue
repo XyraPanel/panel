@@ -9,10 +9,11 @@ definePageMeta({
 
 const { t } = useI18n()
 const serverId = computed(() => route.params.id as string)
+const requestFetch = useRequestFetch()
 
 const { data: settingsData, pending, error } = await useAsyncData(
   `server-${serverId.value}-settings`,
-  () => $fetch<{ data: SettingsData }>(`/api/client/servers/${serverId.value}/settings`),
+  () => requestFetch<{ data: SettingsData }>(`/api/client/servers/${serverId.value}/settings`),
   {
     watch: [serverId],
   },

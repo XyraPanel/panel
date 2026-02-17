@@ -10,6 +10,7 @@ definePageMeta({
 const { t } = useI18n()
 const serverId = computed(() => route.params.id as string)
 const toast = useToast()
+const requestFetch = useRequestFetch()
 
 type ClientStartupResponse = {
   data: {
@@ -23,7 +24,7 @@ type ClientStartupResponse = {
 
 const { data: startupData, pending, error, refresh } = await useAsyncData(
   `server-${serverId.value}-startup`,
-  () => $fetch<ClientStartupResponse>(`/api/client/servers/${serverId.value}/startup`),
+  () => requestFetch<ClientStartupResponse>(`/api/client/servers/${serverId.value}/startup`),
   {
     watch: [serverId],
   },
@@ -101,7 +102,6 @@ async function saveVariable(variable: ServerStartupVariable) {
     await refresh()
   }
   catch (err) {
-    console.error('[Client Startup] Failed to update variable', err)
     toast.add({
       title: t('common.error'),
       description: (err as { data?: { message?: string } }).data?.message || t('server.startup.variableUpdateFailed'),
@@ -114,15 +114,7 @@ async function saveVariable(variable: ServerStartupVariable) {
 }
 
 async function updateDockerImage() {
-  console.log('[Client Startup] Update Docker Image clicked!', {
-    serverId: serverId.value,
-    currentImage: dockerImage.value,
-    selectedImage: selectedDockerImage.value,
-    timestamp: new Date().toISOString(),
-  })
-
   if (selectedDockerImage.value === dockerImage.value) {
-    console.warn('[Client Startup] No change - selected image is same as current')
     toast.add({
       title: t('server.startup.noChanges'),
       description: t('server.startup.noChangesDescription'),
@@ -132,14 +124,8 @@ async function updateDockerImage() {
   }
 
   const images = Object.values(dockerImages.value)
-  console.log('[Client Startup] Validating image against egg list:', {
-    selectedImage: selectedDockerImage.value,
-    validImages: images,
-    isValid: images.includes(selectedDockerImage.value),
-  })
 
   if (images.length > 0 && !images.includes(selectedDockerImage.value)) {
-    console.error('[Client Startup] Invalid image - not in egg list')
     toast.add({
       title: t('server.startup.invalidImage'),
       description: t('server.startup.invalidImageDescription'),
@@ -150,14 +136,10 @@ async function updateDockerImage() {
 
   isChangingDockerImage.value = true
   try {
-    console.log('[Client Startup] Making PUT request to:', `/api/client/servers/${serverId.value}/settings/docker-image`)
-    
-    const response = await $fetch(`/api/client/servers/${serverId.value}/settings/docker-image`, {
+    await $fetch(`/api/client/servers/${serverId.value}/settings/docker-image`, {
       method: 'PUT',
       body: { docker_image: selectedDockerImage.value },
     })
-    
-    console.log('[Client Startup] PUT request successful:', response)
 
     toast.add({
       title: t('server.startup.dockerImageUpdated'),
@@ -168,7 +150,6 @@ async function updateDockerImage() {
     await refresh()
   }
   catch (error) {
-    console.error('[Client Startup] PUT request failed:', error)
     const err = error as { data?: { message?: string } }
     toast.add({
       title: t('common.error'),
@@ -180,7 +161,6 @@ async function updateDockerImage() {
   }
   finally {
     isChangingDockerImage.value = false
-    console.log('[Client Startup] Docker image update complete')
   }
 }
 </script>

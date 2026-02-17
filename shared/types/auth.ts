@@ -52,6 +52,11 @@ export interface ExtendedSession {
 export interface AuthContext {
   session: Awaited<ReturnType<typeof import('~~/server/utils/session').getServerSession>>
   user: ResolvedSessionUser
+  apiKey?: {
+    id: string
+    userId: string
+    permissions: import('#shared/types/admin').ApiKeyPermissions
+  }
 }
 
 export interface UserSessionSummary {

@@ -26,13 +26,6 @@ const isSuspended = computed(() => Boolean(user.value?.suspended))
 const hasTwoFactor = computed(() => Boolean(user.value?.twoFactorEnabled))
 const requiresPasswordReset = computed(() => Boolean(user.value?.passwordResetRequired))
 
-function formatDate(value: string | null | undefined) {
-  if (!value)
-    return 'Unknown'
-
-  return new Date(value).toLocaleString()
-}
-
 function maskIp(ip: string) {
   if (!ip || ip === 'Unknown') return 'Unknown'
   return '**********'
@@ -102,11 +95,17 @@ function maskIp(ip: string) {
           </div>
           <div class="flex justify-between gap-3">
             <dt class="text-muted-foreground">Created</dt>
-            <dd class="font-medium">{{ formatDate(user?.createdAt) }}</dd>
+            <dd class="font-medium">
+              <NuxtTime v-if="user?.createdAt" :datetime="user.createdAt" />
+              <span v-else>Unknown</span>
+            </dd>
           </div>
           <div class="flex justify-between gap-3">
             <dt class="text-muted-foreground">Updated</dt>
-            <dd class="font-medium">{{ formatDate(user?.updatedAt) }}</dd>
+            <dd class="font-medium">
+              <NuxtTime v-if="user?.updatedAt" :datetime="user.updatedAt" />
+              <span v-else>Unknown</span>
+            </dd>
           </div>
         </dl>
 
@@ -133,7 +132,9 @@ function maskIp(ip: string) {
           </div>
           <div v-if="user?.emailVerifiedAt" class="flex justify-between gap-3">
             <dt class="text-muted-foreground">Email verified at</dt>
-            <dd class="font-medium">{{ formatDate(user.emailVerifiedAt) }}</dd>
+            <dd class="font-medium">
+              <NuxtTime :datetime="user.emailVerifiedAt" />
+            </dd>
           </div>
         </dl>
       </div>
@@ -150,7 +151,9 @@ function maskIp(ip: string) {
             </div>
             <div v-if="security.lastLogin" class="flex justify-between gap-3">
               <dt class="text-muted-foreground">Last login</dt>
-              <dd class="font-medium">{{ formatDate(security.lastLogin) }}</dd>
+              <dd class="font-medium">
+                <NuxtTime :datetime="security.lastLogin" />
+              </dd>
             </div>
             <div v-if="security.lastLoginIp" class="flex justify-between gap-3">
               <dt class="text-muted-foreground">Last login IP</dt>

@@ -1,4 +1,4 @@
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { useDrizzle, tables, eq, assertSqliteDatabase } from '#server/utils/drizzle'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
@@ -17,6 +17,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBodyWithLimit(event, disableTwoFactorActionSchema, BODY_SIZE_LIMITS.SMALL)
 
   const db = useDrizzle()
+  assertSqliteDatabase(db)
 
   const existing = db
     .select({
@@ -33,7 +34,7 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    await db.update(tables.users)
+    db.update(tables.users)
       .set({
         twoFactorEnabled: false,
         useTotp: false,
@@ -44,8 +45,12 @@ export default defineEventHandler(async (event) => {
       .where(eq(tables.users.id, userId))
       .run()
 
-    await db.delete(tables.twoFactor)
+    db.delete(tables.twoFactor)
       .where(eq(tables.twoFactor.userId, userId))
+      .run()
+
+    db.delete(tables.recoveryTokens)
+      .where(eq(tables.recoveryTokens.userId, userId))
       .run()
 
     await recordAuditEventFromRequest(event, {

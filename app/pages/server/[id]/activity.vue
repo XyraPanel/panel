@@ -1,11 +1,9 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
 import type { PaginatedServerActivityResponse, ServerActivityEvent } from '#shared/types/server'
 
 const { t } = useI18n()
 const route = useRoute()
 const toast = useToast()
-const requestFetch = useRequestFetch() as typeof $fetch
 
 definePageMeta({
   auth: true,
@@ -26,15 +24,6 @@ watch(serverId, () => {
   expandedEntries.value.clear()
 })
 
-async function fetchServerActivity(page: number, limit: number): Promise<PaginatedServerActivityResponse> {
-  const params = new URLSearchParams({
-    page: String(page),
-    limit: String(limit),
-  })
-  const url = `/api/client/servers/${serverId.value}/activity?${params.toString()}`
-  return await requestFetch(url) as PaginatedServerActivityResponse
-}
-
 const defaultResponse = (): PaginatedServerActivityResponse => ({
   data: [],
   pagination: {
@@ -50,10 +39,14 @@ const {
   data: activityResponse,
   pending,
   error,
-} = await useAsyncData<PaginatedServerActivityResponse>(
-  () => `server-${serverId.value}-activity`,
-  () => fetchServerActivity(currentPage.value, itemsPerPage.value),
+} = await useFetch<PaginatedServerActivityResponse>(
+  () => `/api/client/servers/${serverId.value}/activity`,
   {
+    key: () => `server-${serverId.value}-activity`,
+    query: computed(() => ({
+      page: currentPage.value,
+      limit: itemsPerPage.value,
+    })),
     default: defaultResponse,
     watch: [serverId, currentPage, itemsPerPage],
   },

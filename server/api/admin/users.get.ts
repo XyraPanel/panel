@@ -1,4 +1,4 @@
-import { useDrizzle, tables } from '#server/utils/drizzle'
+import { useDrizzle, tables, assertSqliteDatabase } from '#server/utils/drizzle'
 import { count, desc, inArray } from 'drizzle-orm'
 import { requireAdmin } from '#server/utils/security'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
@@ -12,11 +12,14 @@ export default defineEventHandler(async (event): Promise<AdminUsersPayload> => {
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ)
   
   const query = getQuery(event)
-  const page = Math.max(1, Number.parseInt(query.page as string ?? '1', 10))
-  const limit = Math.min(Math.max(1, Number.parseInt(query.limit as string ?? '50', 10)), 100)
+  const pageParam = Array.isArray(query.page) ? query.page[0] : query.page
+  const limitParam = Array.isArray(query.limit) ? query.limit[0] : query.limit
+  const page = Math.max(1, Number.parseInt(typeof pageParam === 'string' ? pageParam : '1', 10))
+  const limit = Math.min(Math.max(1, Number.parseInt(typeof limitParam === 'string' ? limitParam : '50', 10)), 100)
   const offset = (page - 1) * limit
 
   const db = useDrizzle()
+  assertSqliteDatabase(db)
 
   const totalResult = db
     .select({ count: count() })
@@ -89,7 +92,7 @@ export default defineEventHandler(async (event): Promise<AdminUsersPayload> => {
       role: user.rootAdmin ? 'admin' : 'user',
       createdAt: user.createdAt.toISOString(),
       rootAdmin: Boolean(user.rootAdmin),
-      suspended: Boolean(user.suspended),
+      suspended: Boolean(user.banned || user.suspended),
       emailVerified: Boolean(user.emailVerified),
       twoFactorEnabled: Boolean(user.useTotp),
       passwordResetRequired: Boolean(user.passwordResetRequired),

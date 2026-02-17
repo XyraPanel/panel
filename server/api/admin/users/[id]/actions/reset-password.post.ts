@@ -1,11 +1,12 @@
 import { randomBytes } from 'node:crypto'
 import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { useDrizzle, tables, eq, assertSqliteDatabase } from '#server/utils/drizzle'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { resetPasswordActionSchema } from '#shared/schema/admin/actions'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { APIError } from 'better-auth/api'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
@@ -29,6 +30,7 @@ export default defineEventHandler(async (event) => {
   const notify = body.notify
 
   const db = useDrizzle()
+  assertSqliteDatabase(db)
 
   const user = db
     .select({
@@ -81,12 +83,18 @@ export default defineEventHandler(async (event) => {
     }
 
     const temporaryPassword = body.password?.trim() || randomBytes(9).toString('base64url')
-    
-    const bcrypt = await import('bcryptjs')
-    const hashedPassword = await bcrypt.default.hash(temporaryPassword, 12)
-    await db.update(tables.users)
+    const headers = normalizeHeadersForAuth(event.node.req.headers)
+
+    await auth.api.setUserPassword({
+      body: {
+        userId,
+        newPassword: temporaryPassword,
+      },
+      headers,
+    })
+
+    db.update(tables.users)
       .set({
-        password: hashedPassword,
         passwordResetRequired: true,
         updatedAt: new Date(),
       })
@@ -115,6 +123,14 @@ export default defineEventHandler(async (event) => {
     }
   }
   catch (error) {
+    if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
+      throw createError({
+        statusCode,
+        statusMessage: error.message || 'Failed to reset password',
+      })
+    }
+
     const message = error instanceof Error ? error.message : 'Failed to reset password'
     throw createError({
       status: 500,
@@ -122,4 +138,3 @@ export default defineEventHandler(async (event) => {
     })
   }
 })
-

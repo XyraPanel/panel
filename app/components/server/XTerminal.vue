@@ -28,8 +28,7 @@ if (import.meta.client) {
     if (stored) {
       commandHistory = JSON.parse(stored)
     }
-  } catch (e) {
-    console.warn('[XTerminal] Failed to load command history:', e)
+  } catch {
   }
 }
 
@@ -37,8 +36,7 @@ function saveHistory() {
   if (import.meta.client) {
     try {
       localStorage.setItem(HISTORY_KEY, JSON.stringify(commandHistory))
-    } catch (e) {
-      console.warn('[XTerminal] Failed to save command history:', e)
+    } catch {
     }
   }
 }
@@ -184,56 +182,34 @@ onMounted(async () => {
 
   resizeObserverRef = resizeObserver
 
-  console.log(`[XTerminal] Terminal mounted, logs prop:`, {
-    isArray: Array.isArray(props.logs),
-    length: props.logs?.length || 0,
-    type: typeof props.logs,
-    value: props.logs,
-    firstFew: Array.isArray(props.logs) ? props.logs.slice(0, 3) : 'not an array',
-  })
-  
   if (Array.isArray(props.logs)) {
     lastProcessedLogCount = props.logs.length
     if (props.logs.length > 0) {
-      console.log(`[XTerminal] Initializing with ${props.logs.length} existing logs`)
       props.logs.forEach((log, index) => {
         if (typeof log !== 'string') {
-          console.error(`[XTerminal] Log ${index} is not a string:`, typeof log, log)
           return
         }
         writeToTerminal(log + '\r\n')
-        if (index < 3) {
-          console.log(`[XTerminal]   Initial log ${index + 1}:`, log.substring(0, 100))
-        }
       })
-      console.log(`[XTerminal] Finished writing ${props.logs.length} logs to terminal`)
-    } else {
-      console.log(`[XTerminal] No logs to initialize (empty array)`)
     }
-  } else {
-    console.log(`[XTerminal] Logs prop is not an array:`, typeof props.logs)
+  }
+  else {
     lastProcessedLogCount = 0
   }
 })
 
 watch(() => props.logs, (newLogs) => {
   if (!terminal) {
-    console.warn('[XTerminal] Terminal not initialized, cannot write logs')
     return
   }
 
   if (!Array.isArray(newLogs)) {
-    console.error('[XTerminal] Logs is not an array!', typeof newLogs, newLogs)
     return
   }
 
   const newLength = newLogs.length
   const newLogCount = newLength - lastProcessedLogCount
-  
-  if (import.meta.dev && newLogCount > 0) {
-    console.log(`[XTerminal] Detected ${newLogCount} new log(s), writing instantly (total: ${newLength}, last processed: ${lastProcessedLogCount})`)
-  }
-  
+
   if (newLogCount > 0) {
     const logsToWrite = newLogs.slice(lastProcessedLogCount)
     logsToWrite.forEach((log) => {
@@ -243,13 +219,9 @@ watch(() => props.logs, (newLogs) => {
     })
     lastProcessedLogCount = newLength
   } else if (newLogCount < 0 && newLength === 0) {
-    console.log('[XTerminal] Logs array cleared to empty, clearing terminal')
     terminal?.clear()
     lastProcessedLogCount = 0
   } else if (newLogCount < 0 && newLength > 0) {
-    if (import.meta.dev) {
-      console.log(`[XTerminal] Logs decreased from ${lastProcessedLogCount} to ${newLength}, resetting counter`)
-    }
     lastProcessedLogCount = newLength
   }
 }, { immediate: true, flush: 'sync' })

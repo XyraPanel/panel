@@ -1,8 +1,10 @@
 import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { useDrizzle, tables, eq, assertSqliteDatabase } from '#server/utils/drizzle'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { APIError } from 'better-auth/api'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
@@ -18,8 +20,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
+  assertSqliteDatabase(db)
+  const auth = getAuth()
 
-  const key = await db
+  const key = db
     .select()
     .from(tables.apiKeys)
     .where(eq(tables.apiKeys.id, keyId))
@@ -32,9 +36,21 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await db.delete(tables.apiKeys)
-    .where(eq(tables.apiKeys.id, keyId))
-    .run()
+  try {
+    await auth.api.deleteApiKey({
+      body: { keyId },
+      headers: normalizeHeadersForAuth(event.node.req.headers),
+    })
+  } catch (error) {
+    if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
+      throw createError({
+        statusCode,
+        statusMessage: error.message || 'Failed to delete API key',
+      })
+    }
+    throw error
+  }
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

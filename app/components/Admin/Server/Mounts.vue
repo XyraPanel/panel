@@ -17,29 +17,26 @@ const {
   pending: mountsPending,
   refresh,
   error: mountsError,
-} = await useAsyncData(`server-mounts-${props.serverId}`, async () => {
-  try {
-    const response = await $fetch<{ data: { mounts?: Mount[] } }>(`/api/admin/servers/${props.serverId}`)
-    return { data: response?.data?.mounts ?? [] } as { data: Mount[] }
-  }
-  catch (error) {
-    console.error('Failed to load server mounts', error)
-    return { data: [] } as { data: Mount[] }
-  }
-})
-const serverMounts = computed(() => mountsResponse.value?.data ?? [])
+} = await useFetch<{ data?: { mounts?: Mount[] } }>(
+  () => `/api/admin/servers/${props.serverId}`,
+  {
+    key: () => `server-mounts-${props.serverId}`,
+    watch: [() => props.serverId],
+  },
+)
+const serverMounts = computed<Mount[]>(() => mountsResponse.value?.data?.mounts ?? [])
 
 const {
   data: availableMountsResponse,
   pending: availablePending,
   error: availableError,
-} = await useFetch('/api/admin/mounts', {
+} = await useFetch<{ data: Mount[] }>('/api/admin/mounts', {
   key: 'admin-mounts-list',
-  onResponseError({ response }) {
-    console.error('Failed to load mounts', response._data)
-  },
+  default: () => ({ data: [] }),
 })
-const availableMounts = computed(() => (availableMountsResponse.value as { data: Mount[] } | null)?.data ?? [])
+const availableMounts = computed(() => availableMountsResponse.value?.data ?? [])
+const mountsErrorMessage = computed(() => mountsError.value?.message ?? 'Unknown error')
+const availableErrorMessage = computed(() => availableError.value?.message ?? 'Unknown error')
 
 const attachSchema = attachMountSchema
 
@@ -133,7 +130,7 @@ async function handleDetach(mountId: string, mountName: string) {
 
     <UAlert v-else-if="mountsError" color="error" icon="i-lucide-alert-triangle">
       <template #title>Unable to load mounts</template>
-      <template #description>{{ (mountsError as Error).message }}</template>
+      <template #description>{{ mountsErrorMessage }}</template>
     </UAlert>
 
     <div v-else-if="serverMounts.length === 0" class="rounded-lg border border-default p-8 text-center">
@@ -189,7 +186,7 @@ async function handleDetach(mountId: string, mountName: string) {
 
           <UAlert v-if="availableError" color="error" icon="i-lucide-alert-triangle">
             <template #title>Failed to load available mounts</template>
-            <template #description>{{ (availableError as Error).message }}</template>
+            <template #description>{{ availableErrorMessage }}</template>
           </UAlert>
         </UForm>
 

@@ -1,6 +1,4 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { storeToRefs } from 'pinia'
 import { authClient } from '~/utils/auth-client'
 import type { AccountSessionsResponse, UserSessionSummary } from '#shared/types/auth'
 
@@ -12,9 +10,6 @@ definePageMeta({
 
 const { t } = useI18n()
 const currentPage = ref(1)
-const sessions = ref<UserSessionSummary[]>([])
-const sessionsError = ref<string | null>(null)
-const currentSessionToken = ref<string | null>(null)
 const updatingSessions = ref(false)
 const sortOrder = ref<'newest' | 'oldest'>('newest')
 
@@ -24,30 +19,34 @@ const { data: generalSettings } = await useFetch<{ paginationLimit: number }>('/
 })
 const itemsPerPage = computed(() => generalSettings.value?.paginationLimit ?? 25)
 
-const hasSessions = computed(() => sessions.value.length > 0)
 const toast = useToast()
-
-const authStore = useAuthStore()
-const { status } = storeToRefs(authStore)
 
 const {
   data: sessionsResponse,
   pending: sessionsPending,
   error: sessionsFetchError,
-  execute: fetchSessions,
-  refresh: refreshSessions,
-} = useLazyAsyncData('account-sessions', () => 
-  $fetch<AccountSessionsResponse>('/api/account/sessions', {
-    query: {
-      page: currentPage.value,
-      limit: itemsPerPage.value,
-    },
-  })
-, {
+} = await useFetch<AccountSessionsResponse>('/api/account/sessions', {
+  key: 'account-sessions',
+  query: computed(() => ({
+    page: currentPage.value,
+    limit: itemsPerPage.value,
+  })),
+  default: () => ({ data: [], currentToken: null, pagination: { page: 1, perPage: itemsPerPage.value, total: 0, totalPages: 0 } }),
   watch: [currentPage, itemsPerPage],
 })
 
+const sessions = computed<UserSessionSummary[]>(() => sessionsResponse.value?.data ?? [])
+const currentSessionToken = computed<string | null>(() => sessionsResponse.value?.currentToken ?? null)
+const hasSessions = computed(() => sessions.value.length > 0)
 const sessionsPagination = computed(() => (sessionsResponse.value as { pagination?: { page: number; perPage: number; total: number; totalPages: number } } | null)?.pagination)
+const sessionsError = computed<string | null>(() => {
+  const err = sessionsFetchError.value
+  if (!err) {
+    return null
+  }
+
+  return err instanceof Error ? err.message : t('account.sessions.unableToLoadSessions')
+})
 
 const sortOptions = [
   { label: t('common.newest'), value: 'newest' },
@@ -63,48 +62,6 @@ const sortedSessions = computed(() => {
   }
   return sorted
 })
-
-watch(sessionsResponse, (response) => {
-  if (!response)
-    return
-
-  sessions.value = response.data
-  currentSessionToken.value = response.currentToken
-})
-
-watch(sessionsFetchError, (err) => {
-  if (!err) {
-    sessionsError.value = null
-    return
-  }
-
-  const message = err instanceof Error ? err.message : t('account.sessions.unableToLoadSessions')
-  sessionsError.value = message
-})
-
-watch(status, async (newStatus) => {
-  if (newStatus === 'authenticated') {
-    if (!sessionsResponse.value && !sessionsPending.value) {
-      await fetchSessions()
-    }
-  }
-
-  if (newStatus === 'unauthenticated') {
-    sessions.value = []
-    currentSessionToken.value = null
-    sessionsError.value = t('account.sessions.signInToView')
-  }
-}, { immediate: true })
-
-onMounted(async () => {
-  if (status.value === 'authenticated' && !sessionsResponse.value && !sessionsPending.value) {
-    await fetchSessions()
-  }
-})
-
-async function loadSessions() {
-  await refreshSessions()
-}
 
 const expandedSessions = ref<Set<string>>(new Set())
 
@@ -197,7 +154,7 @@ async function handleSignOut(token: string) {
             return
           }
 
-          await loadSessions()
+          await refreshNuxtData('account-sessions')
           toast.add({
             title: t('account.sessions.sessionRevokedTitle'),
             description: t('account.sessions.sessionRevokedDescription'),
@@ -220,7 +177,7 @@ async function handleSignOut(token: string) {
       return
     }
 
-    await loadSessions()
+    await refreshNuxtData('account-sessions')
     toast.add({
       title: t('account.sessions.sessionRevokedTitle'),
       description: t('account.sessions.sessionRevokedDescription'),
@@ -252,7 +209,7 @@ async function handleSignOutAll(includeCurrent = false) {
     if (typeof authClient.revokeOtherSessions === 'function') {
       try {
         await authClient.revokeOtherSessions()
-        await loadSessions()
+        await refreshNuxtData('account-sessions')
         toast.add({
           title: t('account.sessions.sessionsRevokedTitle'),
           description: t('account.sessions.sessionsRevokedDescription'),
@@ -269,7 +226,7 @@ async function handleSignOutAll(includeCurrent = false) {
       query: { includeCurrent: 'false' },
     })
 
-    await loadSessions()
+    await refreshNuxtData('account-sessions')
     toast.add({
       title: t('account.sessions.sessionsRevokedTitle'),
       description: result.revoked > 0

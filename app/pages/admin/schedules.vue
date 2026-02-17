@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue'
 import type { AdminScheduleResponse } from '#shared/types/admin'
 
 definePageMeta({
@@ -9,33 +8,13 @@ definePageMeta({
 })
 
 const { t: tFetch } = useI18n()
-async function fetchSchedules(): Promise<{ data: AdminScheduleResponse[] }> {
-  const response = await fetch('/api/admin/schedules')
-  if (!response.ok) {
-    throw new Error(tFetch('admin.schedules.failedToFetchSchedules', { statusText: response.statusText }))
-  }
-  return await response.json()
-}
-
 const {
   data: schedulesResponse,
   pending: schedulesPending,
   error: schedulesError,
-  refresh: refreshSchedules,
-} = await useLazyAsyncData('admin-schedules', fetchSchedules)
-
-let refreshInterval: ReturnType<typeof setInterval> | null = null
-
-onMounted(() => {
-  refreshInterval = setInterval(() => {
-    refreshSchedules()
-  }, 30000)
-})
-
-onUnmounted(() => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval)
-  }
+} = await useFetch<{ data: AdminScheduleResponse[] }>('/api/admin/schedules', {
+  key: 'admin-schedules',
+  default: () => ({ data: [] }),
 })
 
 const schedules = computed<AdminScheduleResponse[]>(() => {

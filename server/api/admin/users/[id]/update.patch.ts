@@ -1,6 +1,6 @@
 import { APIError } from 'better-auth/api'
 import { z } from 'zod'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { useDrizzle, tables, eq, assertSqliteDatabase } from '#server/utils/drizzle'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { auth, normalizeHeadersForAuth } from '#server/utils/auth'
@@ -36,6 +36,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     const db = useDrizzle()
+    assertSqliteDatabase(db)
     const now = new Date()
 
     let userRecord = db
@@ -57,7 +58,7 @@ export default defineEventHandler(async (event) => {
 
     if (email !== undefined) {
       if (userRecord.email !== email) {
-        await db.update(tables.users)
+        db.update(tables.users)
           .set({
             email,
             emailVerified: null,
@@ -71,18 +72,14 @@ export default defineEventHandler(async (event) => {
     }
 
     const headers = normalizeHeadersForAuth(event.node.req.headers)
-    const adminAuthApi = auth.api as typeof auth.api & {
-      setRole: (options: { body: { userId: string; role: string | string[] }; headers: Record<string, string> }) => Promise<unknown>
-      setUserPassword: (options: { body: { userId: string; newPassword: string }; headers: Record<string, string> }) => Promise<unknown>
-    }
 
     if (role !== undefined && userRecord.role !== role) {
-      await adminAuthApi.setRole({
+      await auth.api.setRole({
         body: { userId: id, role },
         headers,
       })
 
-      await db.update(tables.users)
+      db.update(tables.users)
         .set({
           role,
           updatedAt: now,
@@ -94,12 +91,12 @@ export default defineEventHandler(async (event) => {
     }
 
     if (password) {
-      await adminAuthApi.setUserPassword({
+      await auth.api.setUserPassword({
         body: { userId: id, newPassword: password },
         headers,
       })
 
-      await db.update(tables.users)
+      db.update(tables.users)
         .set({
           passwordResetRequired: false,
           updatedAt: now,
@@ -139,7 +136,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (Object.keys(updates).length > 1) {
-      await db.update(tables.users)
+      db.update(tables.users)
         .set(updates)
         .where(eq(tables.users.id, id))
         .run()
@@ -185,9 +182,10 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
       throw createError({
-        status: error.status,
-        statusText: error.message || 'Failed to update user',
+        statusCode,
+        statusMessage: error.message || 'Failed to update user',
       })
     }
     throw createError({

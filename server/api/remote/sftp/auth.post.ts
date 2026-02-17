@@ -1,16 +1,21 @@
 import { type H3Event } from 'h3'
 import { eq } from 'drizzle-orm'
-import { useDrizzle, tables } from '#server/utils/drizzle'
+import { useDrizzle, tables, assertSqliteDatabase } from '#server/utils/drizzle'
 import { listServerSubusers } from '#server/utils/subusers'
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { recordAuditEvent } from '#server/utils/audit'
-import bcrypt from 'bcryptjs'
+import { APIError } from 'better-auth/api'
+import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
 import type { SftpAuthResponse } from '#shared/types/api'
 import { remoteSftpAuthSchema } from '#shared/schema/wings'
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 const MAX_ATTEMPTS = 5
 const RATE_LIMIT_WINDOW = 60000
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object'
+}
 
 function checkRateLimit(ip: string): boolean {
   const now = Date.now()
@@ -31,6 +36,7 @@ function checkRateLimit(ip: string): boolean {
 
 export default defineEventHandler(async (event: H3Event) => {
   const db = useDrizzle()
+  assertSqliteDatabase(db)
   const body = await readValidatedBodyWithLimit(event, remoteSftpAuthSchema, BODY_SIZE_LIMITS.SMALL)
   const clientIp = getRequestIP(event) || body.ip || 'unknown'
 
@@ -89,13 +95,38 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   if (type === 'password') {
-    const isValidPassword = await bcrypt.compare(credential, user.password)
-    if (!isValidPassword) {
-      throw createError({
-        status: 401,
-        statusText: 'Unauthorized',
-        message: 'Invalid SFTP credentials',
+    const auth = getAuth()
+    try {
+      const signInResult = await auth.api.signInUsername({
+        body: {
+          username: userIdentifier,
+          password: credential,
+          rememberMe: false,
+        },
+        headers: normalizeHeadersForAuth(event.node.req.headers),
       })
+
+      if (!isRecord(signInResult) || typeof signInResult.token !== 'string' || signInResult.token.length === 0) {
+        throw createError({
+          status: 401,
+          statusText: 'Unauthorized',
+          message: 'Invalid SFTP credentials',
+        })
+      }
+
+      db.delete(tables.sessions)
+        .where(eq(tables.sessions.sessionToken, signInResult.token))
+        .run()
+    }
+    catch (error) {
+      if (error instanceof APIError) {
+        throw createError({
+          status: 401,
+          statusText: 'Unauthorized',
+          message: 'Invalid SFTP credentials',
+        })
+      }
+      throw error
     }
   }
   else if (type === 'public_key') {
@@ -110,7 +141,7 @@ export default defineEventHandler(async (event: H3Event) => {
         throw new Error('Invalid key data')
       }
 
-      const validKeyData = keyData as string
+      const validKeyData = keyData
       const keyType = cleanKey[0]
 
       const sshKey = db
@@ -119,7 +150,7 @@ export default defineEventHandler(async (event: H3Event) => {
         .where(eq(tables.sshKeys.userId, user.id))
         .limit(1)
         .all()
-        .find((key) => {
+        .find((key: { publicKey: string }) => {
           const storedParts = key.publicKey.trim().split(/\s+/)
           if (storedParts.length < 2)
             return false

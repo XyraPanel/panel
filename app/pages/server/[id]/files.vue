@@ -12,7 +12,6 @@ const { t } = useI18n()
 const toast = useToast()
 const serverId = computed(() => route.params.id as string)
 const clientApiBase = computed(() => `/api/client/servers/${serverId.value}`)
-const requestFetch = useRequestFetch() as typeof $fetch
 
 const selectedFile = ref<ServerFileListItem | null>(null)
 const editorValue = ref('')
@@ -25,7 +24,7 @@ let currentFileRequest: AbortController | null = null
 
 const filesManager = useServerFilesManager({
   clientApiBase,
-  requestFetch,
+  requestFetch: $fetch,
   toast,
   t,
   selectedFile,

@@ -56,7 +56,7 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
       name: entry.name,
       type: entry.isDirectory ? 'directory' : 'file',
       size: entry.isDirectory ? t('common.na') : formatBytes(entry.size),
-      modified: formatDate(entry.modified),
+      modified: entry.modified,
       path: entry.path,
       mode: entry.mode,
     }))
@@ -122,14 +122,6 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
     return `${value.toFixed(value >= 10 ? 0 : 1)} ${units[exponent]}`
   }
 
-  function formatDate(value: string) {
-    if (!value)
-      return 'Unknown'
-
-    const date = new Date(value)
-    return Number.isNaN(date.getTime()) ? 'Unknown' : date.toLocaleString()
-  }
-
   function normalizeDirectoryPath(input: string): string {
     if (!input)
       return '/'
@@ -191,7 +183,7 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
   watch(currentDirectory, () => {
     clearSelection()
     if (directoryEntries.value.length === 0 || lastRequestedDirectory.value !== currentDirectory.value)
-      fetchDirectory(currentDirectory.value)
+      void fetchDirectory(currentDirectory.value)
   })
 
   watch(hasSelection, (value) => {
@@ -502,7 +494,7 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
       directoryEntries.value = response.data.entries
     }
     catch (error) {
-      directoryError.value = error as Error
+      directoryError.value = toError(error)
       toast.add({ color: 'error', title: t('common.error'), description: error instanceof Error ? error.message : t('server.files.failedToLoad') })
     }
     finally {
@@ -675,8 +667,12 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
   }
 
   async function handleFileUpload(event: Event) {
-    const input = event.target as HTMLInputElement | null
-    const files = input?.files
+    const target = event.target
+    if (!(target instanceof HTMLInputElement))
+      return
+
+    const input = target
+    const files = input.files
 
     if (!input || !files || files.length === 0)
       return
@@ -729,7 +725,7 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
     }
   }
 
-  fetchDirectory(currentDirectory.value, { force: true })
+  void fetchDirectory(currentDirectory.value, { force: true })
 
   return {
     rootDirectory,
@@ -809,3 +805,6 @@ export function useServerFilesManager(options: UseServerFilesManagerOptions) {
     handleDownload,
   }
 }
+  function toError(value: unknown): Error {
+    return value instanceof Error ? value : new Error(String(value))
+  }

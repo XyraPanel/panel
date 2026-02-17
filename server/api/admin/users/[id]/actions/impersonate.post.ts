@@ -1,10 +1,58 @@
-import { randomBytes, createHash, randomUUID } from 'node:crypto'
-import { sql } from 'drizzle-orm'
+import { appendResponseHeader, splitCookiesString } from 'h3'
+import { APIError } from 'better-auth/api'
 import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
+import { useDrizzle, tables, eq, assertSqliteDatabase } from '#server/utils/drizzle'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { auth, normalizeHeadersForAuth } from '#server/utils/auth'
+
+function extractSetCookieStrings(headers?: Headers | null): string[] {
+  if (!headers)
+    return []
+
+  const cookies: string[] = []
+  const withGetSetCookie = headers as Headers & { getSetCookie?: () => string[] }
+  if (typeof withGetSetCookie.getSetCookie === 'function') {
+    cookies.push(...withGetSetCookie.getSetCookie.call(headers))
+  }
+
+  if (!cookies.length) {
+    const withRaw = headers as Headers & { raw?: () => Record<string, string[] | undefined> }
+    if (typeof withRaw.raw === 'function') {
+      const rawCookies = withRaw.raw.call(headers)?.['set-cookie']
+      if (Array.isArray(rawCookies))
+        cookies.push(...rawCookies)
+    }
+  }
+
+  if (!cookies.length) {
+    const singleHeader = headers.get('set-cookie')
+    if (singleHeader)
+      cookies.push(...splitCookiesString(singleHeader))
+  }
+
+  return cookies
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
+
+function extractHeaders(value: unknown): Headers | undefined {
+  if (!isRecord(value))
+    return undefined
+
+  const candidate = value.headers
+  return candidate instanceof Headers ? candidate : undefined
+}
+
+function extractResponsePayload(value: unknown): unknown {
+  if (!isRecord(value))
+    return value
+
+  return 'response' in value ? value.response : value
+}
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
@@ -20,11 +68,11 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
+  assertSqliteDatabase(db)
   const user = db
     .select({
       id: tables.users.id,
       username: tables.users.username,
-      suspended: tables.users.suspended,
       banned: tables.users.banned,
     })
     .from(tables.users)
@@ -35,21 +83,22 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' })
   }
 
-  if (user.suspended || user.banned) {
-    throw createError({ status: 400, statusText: 'Bad Request', message: 'Cannot impersonate a suspended or banned user' })
+  if (user.banned) {
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Cannot impersonate a banned user' })
   }
 
   try {
-    const token = randomBytes(32).toString('base64url')
-    const tokenHash = createHash('sha256').update(token).digest('hex')
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
-    const now = new Date()
-    const tokenId = randomUUID()
+    const impersonateResponse = await auth.api.impersonateUser({
+      body: { userId },
+      headers: normalizeHeadersForAuth(event.node.req.headers),
+      returnHeaders: true,
+    })
 
-    await db.run(sql`
-      INSERT INTO user_impersonation_tokens (id, user_id, issued_by, token_hash, expires_at, created_at)
-      VALUES (${tokenId}, ${userId}, ${session.user.id}, ${tokenHash}, ${expiresAt.getTime()}, ${now.getTime()})
-    `)
+    const responseHeaders = extractHeaders(impersonateResponse)
+    const setCookies = extractSetCookieStrings(responseHeaders)
+    for (const cookieString of setCookies) {
+      appendResponseHeader(event, 'set-cookie', cookieString)
+    }
 
     await recordAuditEventFromRequest(event, {
       actor: session.user.email || session.user.id,
@@ -59,28 +108,32 @@ export default defineEventHandler(async (event) => {
       targetId: userId,
       metadata: {
         username: user.username,
-        impersonationTokenId: tokenId,
-        expiresAt: expiresAt.toISOString(),
       },
     })
 
-    const runtimeConfig = useRuntimeConfig()
-    const requestUrl = getRequestURL(event)
-    const baseUrl = runtimeConfig.public?.panelBaseUrl || requestUrl.origin
+    const responsePayload = extractResponsePayload(impersonateResponse)
+    const responseData = isRecord(responsePayload) ? responsePayload : {}
 
     return {
       data: {
+        ...responseData,
         success: true,
-        impersonateUrl: `${baseUrl}/auth/impersonate?token=${token}`,
-        expiresAt: expiresAt.toISOString(),
       },
     }
   }
   catch (error) {
+    if (error instanceof APIError) {
+      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
+      throw createError({
+        statusCode,
+        statusMessage: error.message || 'Failed to impersonate user',
+      })
+    }
+
     const message = error instanceof Error ? error.message : 'Failed to impersonate user'
     throw createError({
-      status: 500,
-      statusText: message,
+      statusCode: 500,
+      statusMessage: message,
     })
   }
 })

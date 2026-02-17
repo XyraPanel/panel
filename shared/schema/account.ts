@@ -202,6 +202,7 @@ export const passwordResetPerformSchema = z.object({
 
 export const twoFactorVerifySchema = z.object({
   code: z.string().trim().min(1, 'TOTP code is required'),
+  trustDevice: z.boolean().optional(),
 })
 
 export const twoFactorRecoverySchema = z.object({
@@ -210,6 +211,7 @@ export const twoFactorRecoverySchema = z.object({
 
 export const twoFactorEnableSchema = z.object({
   password: z.string().min(1, 'Password is required to enable 2FA'),
+  issuer: z.string().trim().min(1).max(191).optional(),
 })
 
 export const twoFactorDisableSchema = z.object({

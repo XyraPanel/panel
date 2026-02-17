@@ -15,6 +15,7 @@ definePageMeta({
 
 const { t } = useI18n()
 const toast = useToast()
+const runtimeConfig = useRuntimeConfig()
 const isMounted = ref(false)
 
 onMounted(() => {
@@ -113,8 +114,12 @@ async function handlePasswordSubmit(event: FormSubmitEvent<PasswordFormSchema>) 
 const twoFactorError = ref<string | null>(null)
 const totpSetup = ref<TotpSetupResponse | null>(null)
 const verificationCode = ref('')
+const trustDevice = ref(true)
 const verifyingToken = ref(false)
-const enableForm = reactive({ password: '' })
+const enableForm = reactive({
+  password: '',
+  issuer: String(runtimeConfig.public?.appName || '').trim(),
+})
 const disableForm = reactive({ password: '' })
 const disableSubmitting = ref(false)
 const enableSubmitting = ref(false)
@@ -170,7 +175,10 @@ async function beginTotpSetup() {
   try {
     const setup = await $fetch<TotpSetupResponse>('/api/user/2fa/enable', {
       method: 'POST',
-      body: { password: enableForm.password },
+      body: {
+        password: enableForm.password,
+        issuer: enableForm.issuer.trim() || undefined,
+      },
     })
     totpSetup.value = setup
     enableForm.password = ''
@@ -212,7 +220,10 @@ async function verifyTotp() {
   try {
     await $fetch('/api/user/2fa/verify', {
       method: 'POST',
-      body: { code: verificationCode.value.trim() },
+      body: {
+        code: verificationCode.value.trim(),
+        trustDevice: trustDevice.value,
+      },
     })
 
     totpSetup.value = null
@@ -411,6 +422,15 @@ async function disableTotp() {
                     {{ t('account.security.twoFactor.confirmPasswordToStart') }}
                   </template>
                 </UFormField>
+                <UFormField :label="t('account.security.twoFactor.authenticatorIssuerOptional')" name="issuer">
+                  <UInput
+                    v-model="enableForm.issuer"
+                    :placeholder="t('account.security.twoFactor.authenticatorIssuerPlaceholder')"
+                    icon="i-lucide-app-window"
+                    class="w-full"
+                    :disabled="enableSubmitting"
+                  />
+                </UFormField>
                 <UButton
                   type="submit"
                   color="primary"
@@ -469,6 +489,11 @@ async function disableTotp() {
                   >
                     {{ t('account.security.twoFactor.verifyAndEnable') }}
                   </UButton>
+                  <UCheckbox
+                    v-model="trustDevice"
+                    :label="t('account.security.twoFactor.trustDevice30Days')"
+                    :disabled="verifyingToken"
+                  />
                   <div>
                     <h3 class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('account.security.twoFactor.recoveryTokens') }}</h3>
                     <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
