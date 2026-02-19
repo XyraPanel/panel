@@ -5,63 +5,44 @@ import { backupManager } from '#server/utils/backup-manager'
 import { recordAuditEvent } from '#server/utils/audit'
 import { debugLog, debugError } from '#server/utils/logger'
 
+function parseCronField(field: string): number | null {
+  if (!field || field === '*' || field.startsWith('*/')) return null
+  const val = parseInt(field)
+  return isNaN(val) ? null : val
+}
+
 function parseNextRun(cronExpression: string): Date {
   const now = new Date()
-  const [minute = '*', hour = '*', day = '*', month = '*', weekday = '*'] = cronExpression.trim().split(/\s+/)
-  
+  const parts = cronExpression.trim().split(/\s+/)
+  const [mf = '*', hf = '*', df = '*', monf = '*', wdf = '*'] = parts
+
+  const targetMinute = parseCronField(mf)
+  const targetHour = parseCronField(hf)
+  const targetDay = parseCronField(df)
+  const targetMonth = parseCronField(monf)
+  const targetWeekday = parseCronField(wdf)
+
   const nextRun = new Date(now)
   nextRun.setSeconds(0)
   nextRun.setMilliseconds(0)
-  
-  const targetMinute = minute === '*' ? null : parseInt(minute)
-  const targetHour = hour === '*' ? null : parseInt(hour)
-  const targetDay = day === '*' ? null : parseInt(day)
-  const targetMonth = month === '*' ? null : parseInt(month)
-  const targetWeekday = weekday === '*' ? null : parseInt(weekday)
-  
-  let found = false
-  let attempts = 0
-  const maxAttempts = 366
-  
-  while (!found && attempts < maxAttempts) {
-    attempts++
-    
-    if (targetMinute !== null) {
-      nextRun.setMinutes(targetMinute)
-    } else {
-      nextRun.setMinutes(nextRun.getMinutes() + 1)
-    }
-    
-    if (targetHour !== null) {
-      nextRun.setHours(targetHour)
-    }
-    
-    if (targetDay !== null) {
-      nextRun.setDate(targetDay)
-    }
-    
-    if (targetMonth !== null) {
-      nextRun.setMonth(targetMonth - 1)
-    }
-    
-    if (nextRun > now) {
-      const matchesMinute = targetMinute === null || nextRun.getMinutes() === targetMinute
-      const matchesHour = targetHour === null || nextRun.getHours() === targetHour
-      const matchesDay = targetDay === null || nextRun.getDate() === targetDay
-      const matchesMonth = targetMonth === null || nextRun.getMonth() === targetMonth - 1
-      const matchesWeekday = targetWeekday === null || nextRun.getDay() === targetWeekday
-      
-      if (matchesMinute && matchesHour && matchesDay && matchesMonth && matchesWeekday) {
-        found = true
-      } else {
-        nextRun.setMinutes(nextRun.getMinutes() + 1)
-      }
-    } else {
-      nextRun.setMinutes(nextRun.getMinutes() + 1)
-    }
+  nextRun.setMinutes(nextRun.getMinutes() + 1)
+
+  for (let i = 0; i < 60 * 24 * 366; i++) {
+    const ok
+      = (targetMinute === null || nextRun.getMinutes() === targetMinute)
+      && (targetHour === null || nextRun.getHours() === targetHour)
+      && (targetDay === null || nextRun.getDate() === targetDay)
+      && (targetMonth === null || nextRun.getMonth() === targetMonth - 1)
+      && (targetWeekday === null || nextRun.getDay() === targetWeekday)
+    if (ok) return nextRun
+    nextRun.setMinutes(nextRun.getMinutes() + 1)
   }
-  
-  return nextRun
+
+  const fallback = new Date(now)
+  fallback.setMinutes(fallback.getMinutes() + 1)
+  fallback.setSeconds(0)
+  fallback.setMilliseconds(0)
+  return fallback
 }
 
 export default defineTask({

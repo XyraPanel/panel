@@ -40,7 +40,6 @@ export default defineTask({
             updatedAt: new Date(),
           })
           .where(eq(tables.servers.id, payload.serverId))
-          .run()
       } catch (dbError) {
         debugError('[Server Provision Task] Failed to update server status:', dbError)
       }

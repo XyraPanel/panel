@@ -93,7 +93,7 @@ export default async function errorHandler(
   }
   
   const status = h3Error?.statusCode || 500
-  const statusText = h3Error?.statusMessage || 'Internal Server Error'
+  const statusText = h3Error?.statusMessage || (h3Error as H3Error & { statusText?: string })?.statusText || 'Internal Server Error'
   const message = error.message || 'An error occurred'
 
   if (shouldAuditPrivilegedFailure(path, status)) {

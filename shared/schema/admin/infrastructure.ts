@@ -1,8 +1,8 @@
 import { z } from 'zod'
 
 export const createLocationSchema = z.object({
-  short: z.string().min(1).max(60),
-  long: z.string().min(1).max(191).optional(),
+  short: z.string().trim().min(1).max(60),
+  long: z.string().trim().max(191).optional(),
 })
 
 export const updateLocationSchema = createLocationSchema.partial()

@@ -150,7 +150,8 @@ function redirectToLogin(event: H3Event, requestUrl: string) {
 
 export default defineEventHandler(async (event) => {
   const requestUrl = event.node.req.url ?? '/';
-  const path = event.path ?? requestUrl.split('?')[0] ?? '/';
+  const rawPath = event.path ?? requestUrl;
+  const path = rawPath.split('?')[0] ?? '/';
 
   if (!path || isAssetPath(path)) {
     return;

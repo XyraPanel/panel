@@ -1,4 +1,4 @@
-import { pgTable, text, integer, boolean, timestamp, uniqueIndex, primaryKey, index } from 'drizzle-orm/pg-core'
+import { pgTable, text, integer, bigint, boolean, timestamp, uniqueIndex, primaryKey, index } from 'drizzle-orm/pg-core'
 
 export const users = pgTable(
   'users',
@@ -376,7 +376,7 @@ export const serverBackups = pgTable(
   },
   table => [
     uniqueIndex('server_backups_uuid_unique').on(table.uuid),
-    uniqueIndex('server_backups_server_id_index').on(table.serverId),
+    index('server_backups_server_id_index').on(table.serverId),
   ],
 )
 
@@ -611,7 +611,7 @@ export const rateLimit = pgTable('rate_limit', {
   id: text('id').primaryKey(),
   key: text('key').notNull().unique(),
   count: integer('count').notNull().default(0),
-  lastRequest: integer('last_request').notNull(),
+  lastRequest: bigint('last_request', { mode: 'number' }).notNull(),
 }, (table) => [
   index('rate_limit_key_index').on(table.key),
   index('rate_limit_last_request_index').on(table.lastRequest),

@@ -112,7 +112,7 @@ export const createAdminServerSchema = z.object({
   ownerId: z.string().uuid(),
   eggId: z.string().uuid(),
   nestId: z.string().uuid().optional(),
-  nodeId: z.string().uuid(),
+  nodeId: z.string().min(1),
   allocationId: z.string().uuid(),
   additionalAllocations: z.array(z.string().uuid()).optional(),
   memory: z.number().int().positive(),
