@@ -21,7 +21,6 @@ export default defineEventHandler(async (event) => {
   const allocations = await db.select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.nodeId, nodeId))
-    .all()
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

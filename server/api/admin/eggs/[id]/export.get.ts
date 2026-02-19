@@ -17,11 +17,10 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const egg = await db
+  const [egg] = await db
     .select()
     .from(tables.eggs)
     .where(eq(tables.eggs.id, eggId))
-    .get()
 
   if (!egg) {
     throw createError({ status: 404, statusText: 'Egg not found' })
@@ -31,7 +30,6 @@ export default defineEventHandler(async (event) => {
     .select()
     .from(tables.eggVariables)
     .where(eq(tables.eggVariables.eggId, eggId))
-    .all()
 
   const exportData = {
     _comment: 'DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY XYRAPANEL',

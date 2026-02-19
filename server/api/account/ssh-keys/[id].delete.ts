@@ -20,7 +20,6 @@ export default defineEventHandler(async (event) => {
       eq(tables.sshKeys.id, id),
       eq(tables.sshKeys.userId, user.id),
     ))
-    .get()
 
   if (!key) {
     throw createError({ status: 404, statusText: 'SSH key not found' })
@@ -38,9 +37,8 @@ export default defineEventHandler(async (event) => {
     },
   })
 
-  db.delete(tables.sshKeys)
+  await db.delete(tables.sshKeys)
     .where(eq(tables.sshKeys.id, id))
-    .run()
 
   return {
     success: true,

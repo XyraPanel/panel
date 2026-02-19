@@ -1,24 +1,31 @@
 import { requireAdmin } from '#server/utils/security'
-import { SETTINGS_KEYS, getSetting } from '#server/utils/settings'
+import { SETTINGS_KEYS, getSettings } from '#server/utils/settings'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import type { SecuritySettings } from '#shared/types/admin'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
 
-  const enforceTwoFactor = await getSetting(SETTINGS_KEYS.ENFORCE_TWO_FACTOR) === 'true'
-  const maintenanceMode = await getSetting(SETTINGS_KEYS.MAINTENANCE_MODE) === 'true'
-  const announcementEnabled = await getSetting(SETTINGS_KEYS.ANNOUNCEMENT_ENABLED) === 'true'
+  const s = await getSettings([
+    SETTINGS_KEYS.ENFORCE_TWO_FACTOR,
+    SETTINGS_KEYS.MAINTENANCE_MODE,
+    SETTINGS_KEYS.MAINTENANCE_MESSAGE,
+    SETTINGS_KEYS.ANNOUNCEMENT_ENABLED,
+    SETTINGS_KEYS.ANNOUNCEMENT_MESSAGE,
+    SETTINGS_KEYS.SESSION_TIMEOUT_MINUTES,
+    SETTINGS_KEYS.QUEUE_CONCURRENCY,
+    SETTINGS_KEYS.QUEUE_RETRY_LIMIT,
+  ])
 
   const data: SecuritySettings = {
-    enforceTwoFactor,
-    maintenanceMode,
-    maintenanceMessage: (await getSetting(SETTINGS_KEYS.MAINTENANCE_MESSAGE)) ?? '',
-    announcementEnabled,
-    announcementMessage: (await getSetting(SETTINGS_KEYS.ANNOUNCEMENT_MESSAGE)) ?? '',
-    sessionTimeoutMinutes: parseInt((await getSetting(SETTINGS_KEYS.SESSION_TIMEOUT_MINUTES)) ?? '60', 10),
-    queueConcurrency: parseInt((await getSetting(SETTINGS_KEYS.QUEUE_CONCURRENCY)) ?? '4', 10),
-    queueRetryLimit: parseInt((await getSetting(SETTINGS_KEYS.QUEUE_RETRY_LIMIT)) ?? '5', 10),
+    enforceTwoFactor: s[SETTINGS_KEYS.ENFORCE_TWO_FACTOR] === 'true',
+    maintenanceMode: s[SETTINGS_KEYS.MAINTENANCE_MODE] === 'true',
+    maintenanceMessage: s[SETTINGS_KEYS.MAINTENANCE_MESSAGE] ?? '',
+    announcementEnabled: s[SETTINGS_KEYS.ANNOUNCEMENT_ENABLED] === 'true',
+    announcementMessage: s[SETTINGS_KEYS.ANNOUNCEMENT_MESSAGE] ?? '',
+    sessionTimeoutMinutes: parseInt(s[SETTINGS_KEYS.SESSION_TIMEOUT_MINUTES] ?? '60', 10),
+    queueConcurrency: parseInt(s[SETTINGS_KEYS.QUEUE_CONCURRENCY] ?? '4', 10),
+    queueRetryLimit: parseInt(s[SETTINGS_KEYS.QUEUE_RETRY_LIMIT] ?? '5', 10),
   }
 
   await recordAuditEventFromRequest(event, {

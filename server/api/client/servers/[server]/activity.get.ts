@@ -1,5 +1,6 @@
 import { desc, eq, sql } from 'drizzle-orm'
 import type { PaginatedServerActivityResponse, ServerActivityEvent } from '#shared/types/server'
+import type { ActorType, TargetType } from '#shared/types/audit'
 import { useDrizzle, tables } from '#server/utils/drizzle'
 import { getServerWithAccess } from '#server/utils/server-helpers'
 import { requireServerPermission } from '#server/utils/permission-middleware'
@@ -47,11 +48,13 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
   const offset = (page - 1) * limit
 
   const db = useDrizzle()
-  const [{ count }] = await db
+  const countRows = await db
     .select({ count: sql<number>`count(*)` })
     .from(tables.auditEvents)
     .where(eq(tables.auditEvents.targetId, server.id))
     .limit(1)
+
+  const count = countRows[0]?.count ?? 0
 
   const rows = await db
     .select({
@@ -69,15 +72,14 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
     .orderBy(desc(tables.auditEvents.occurredAt))
     .limit(limit)
     .offset(offset)
-    .all()
 
   const data: ServerActivityEvent[] = rows.map(row => ({
     id: row.id,
     occurredAt: row.occurredAt instanceof Date ? row.occurredAt.toISOString() : new Date(row.occurredAt).toISOString(),
     actor: row.actor,
-    actorType: row.actorType,
+    actorType: row.actorType as ActorType,
     action: row.action,
-    targetType: row.targetType,
+    targetType: row.targetType as TargetType,
     targetId: row.targetId,
     metadata: parseMetadata(row.metadata),
   }))
@@ -89,7 +91,7 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
     data,
     pagination: {
       page,
-      perPage: limit,
+      limit,
       total,
       totalPages,
     },

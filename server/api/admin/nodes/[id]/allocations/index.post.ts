@@ -71,14 +71,13 @@ export default defineEventHandler(async (event) => {
 
   for (const ipAddr of ipAddresses) {
     for (const port of portNumbers) {
-      const existing = await db.select()
+      const [existing] = await db.select()
         .from(tables.serverAllocations)
         .where(and(
           eq(tables.serverAllocations.nodeId, nodeId),
           eq(tables.serverAllocations.ip, ipAddr),
           eq(tables.serverAllocations.port, port),
         ))
-        .get()
 
       if (existing) {
         skipped.push({ ip: ipAddr, port })
@@ -99,7 +98,6 @@ export default defineEventHandler(async (event) => {
             createdAt: now,
             updatedAt: now,
           })
-          .run()
 
         created.push({ id, ip: ipAddr, port })
       } catch (error) {

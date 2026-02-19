@@ -36,7 +36,6 @@ export default defineEventHandler(async (event) => {
         .select()
         .from(tables.eggs)
         .where(eq(tables.eggs.id, server.eggId))
-        .get()
     : null
 
   if (egg?.dockerImages) {
@@ -68,7 +67,6 @@ export default defineEventHandler(async (event) => {
       updatedAt: new Date(),
     })
     .where(eq(tables.servers.id, server.id))
-    .run()
 
   await invalidateServerCaches({
     id: server.id,

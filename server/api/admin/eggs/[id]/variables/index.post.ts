@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const egg = await db.select().from(tables.eggs).where(eq(tables.eggs.id, eggId)).get()
+  const [egg] = await db.select().from(tables.eggs).where(eq(tables.eggs.id, eggId))
   if (!egg) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found' })
   }

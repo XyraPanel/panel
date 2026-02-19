@@ -32,6 +32,20 @@ function toIsoTimestamp(value: unknown): string {
   return new Date().toISOString()
 }
 
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallback
+  }
+  if (typeof value === 'bigint') {
+    return Number(value)
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isNaN(parsed) ? fallback : parsed
+  }
+  return fallback
+}
+
 export default defineEventHandler(async (event): Promise<AdminWingsNodeServersPayload> => {
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
@@ -62,12 +76,11 @@ export default defineEventHandler(async (event): Promise<AdminWingsNodeServersPa
     )
     : nodeFilter
 
-  const totalRow = db.select({ count: sql<number>`COUNT(*)` })
+  const [totalRow] = await db.select({ count: sql<number>`COUNT(*)` })
     .from(tables.servers)
     .where(whereClause)
-    .get()
 
-  const rows = db.select({
+  const rows = await db.select({
     id: tables.servers.id,
     uuid: tables.servers.uuid,
     identifier: tables.servers.identifier,
@@ -80,13 +93,12 @@ export default defineEventHandler(async (event): Promise<AdminWingsNodeServersPa
     .from(tables.servers)
     .leftJoin(
       tables.serverAllocations,
-      sql`${tables.serverAllocations.serverId} = ${tables.servers.id} AND ${tables.serverAllocations.isPrimary} = 1`,
+      sql`${tables.serverAllocations.serverId} = ${tables.servers.id} AND ${tables.serverAllocations.isPrimary} = true`,
     )
     .where(whereClause)
     .orderBy(desc(tables.servers.updatedAt))
     .limit(perPage)
     .offset(offset)
-    .all()
 
   const data: AdminWingsNodeServerSummary[] = rows.map(row => ({
     id: row.id,
@@ -100,7 +112,7 @@ export default defineEventHandler(async (event): Promise<AdminWingsNodeServersPa
       : null,
   }))
 
-  const total = totalRow?.count ?? 0
+  const total = toNumber(totalRow?.count, 0)
   const pagination: AdminPaginatedMeta = {
     page,
     perPage,

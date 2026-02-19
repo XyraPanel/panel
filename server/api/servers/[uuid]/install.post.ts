@@ -32,23 +32,21 @@ export default defineEventHandler(async (event) => {
 
   if (body.successful) {
 
-    db.update(tables.servers)
+    await db.update(tables.servers)
       .set({
         status: null,
         installedAt: now,
         updatedAt: now,
       })
       .where(eq(tables.servers.id, server.id))
-      .run()
   } else {
 
-    db.update(tables.servers)
+    await db.update(tables.servers)
       .set({
         status: 'install_failed',
         updatedAt: now,
       })
       .where(eq(tables.servers.id, server.id))
-      .run()
   }
 
   await recordAuditEventFromRequest(event, {

@@ -2,6 +2,7 @@ import { getServerWithAccess } from '#server/utils/server-helpers'
 import { listServerDatabases } from '#server/utils/databases'
 import { requireServerPermission } from '#server/utils/permission-middleware'
 import { requireAccountUser } from '#server/utils/security'
+import { useDrizzle, tables } from '#server/utils/drizzle'
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event)
@@ -23,8 +24,14 @@ export default defineEventHandler(async (event) => {
 
   const databases = await listServerDatabases(server.id)
 
+  const db = useDrizzle()
+  const [databaseHost] = await db.select({ id: tables.databaseHosts.id })
+    .from(tables.databaseHosts)
+    .limit(1)
+
   return {
     object: 'list',
+    hostAvailable: Boolean(databaseHost),
     data: databases.map(database => ({
       object: 'server_database',
       attributes: {

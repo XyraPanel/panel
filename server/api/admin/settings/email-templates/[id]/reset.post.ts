@@ -35,13 +35,20 @@ export default defineEventHandler(async (event) => {
     const db = useDrizzle()
     const now = new Date()
 
-    db.update(tables.emailTemplates)
+    const updated = await db.update(tables.emailTemplates)
       .set({
         htmlContent: defaultTemplates[id],
         updatedAt: now,
       })
       .where(eq(tables.emailTemplates.templateId, id))
-      .run()
+      .returning({ templateId: tables.emailTemplates.templateId })
+
+    if (updated.length === 0) {
+      throw createError({
+        status: 404,
+        statusText: `Template "${id}" not found`,
+      })
+    }
 
     await recordAuditEventFromRequest(event, {
       actor: session.user.email || session.user.id,
@@ -62,6 +69,10 @@ export default defineEventHandler(async (event) => {
     }
   }
   catch (err) {
+    if (err && typeof err === 'object' && ('statusCode' in err || 'status' in err)) {
+      throw err
+    }
+
     throw createError({
       status: 500,
       statusText: `Failed to reset template: ${err instanceof Error ? err.message : 'Unknown error'}`,

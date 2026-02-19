@@ -89,21 +89,19 @@ async function buildProvisioningContext(
 ): Promise<ServerProvisioningContext> {
   const db = useDrizzle()
 
-  const server = await db
+  const [server] = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.id, config.serverId))
-    .get()
 
   if (!server) {
     throw new Error('Server not found')
   }
 
-  const limits = await db
+  const [limits] = await db
     .select()
     .from(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, config.serverId))
-    .get()
 
   if (!limits) {
     debugError(`[Server Provisioning] Server ${config.serverId} has no limits configured!`)
@@ -111,21 +109,19 @@ async function buildProvisioningContext(
   }
   
 
-  const egg = await db
+  const [egg] = await db
     .select()
     .from(tables.eggs)
     .where(eq(tables.eggs.id, config.eggId))
-    .get()
 
   if (!egg) {
     throw new Error('Egg not found')
   }
 
-  const allocation = await db
+  const [allocation] = await db
     .select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.id, config.allocationId))
-    .get()
 
   if (!allocation) {
     throw new Error('Primary allocation not found')
@@ -136,28 +132,24 @@ async function buildProvisioningContext(
         .select()
         .from(tables.serverAllocations)
         .where(inArray(tables.serverAllocations.id, config.additionalAllocationIds))
-        .all()
     : []
 
   const eggVariables = await db
     .select()
     .from(tables.eggVariables)
     .where(eq(tables.eggVariables.eggId, config.eggId))
-    .all()
 
   const mounts = config.mountIds?.length
     ? await db
         .select()
         .from(tables.mounts)
         .where(inArray(tables.mounts.id, config.mountIds))
-        .all()
     : []
 
-  const node = await db
+  const [node] = await db
     .select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, config.nodeId))
-    .get()
 
   if (!node) {
     throw new Error('Node not found')
@@ -275,7 +267,6 @@ export async function provisionServerOnWings(
       updatedAt: now,
     })
     .where(eq(tables.servers.id, config.serverId))
-    .run()
 
   try {
     await client.createServer(config.serverUuid, {
@@ -292,7 +283,6 @@ export async function provisionServerOnWings(
         updatedAt: new Date(),
       })
       .where(eq(tables.servers.id, config.serverId))
-      .run()
   } catch (error) {
     await db
       .update(tables.servers)
@@ -301,7 +291,6 @@ export async function provisionServerOnWings(
         updatedAt: new Date(),
       })
       .where(eq(tables.servers.id, config.serverId))
-      .run()
 
     debugWarn('Server installation failed, keeping server on Wings for file access:', {
       serverUuid: config.serverUuid,
@@ -315,21 +304,19 @@ export async function provisionServerOnWings(
 export async function triggerServerInstallation(serverUuid: string): Promise<void> {
   const db = useDrizzle()
 
-  const server = await db
+  const [server] = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.uuid, serverUuid))
-    .get()
 
   if (!server) {
     throw new Error('Server not found')
   }
 
-  const node = await db
+  const [node] = await db
     .select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, server.nodeId!))
-    .get()
 
   if (!node) {
     throw new Error('Node not found')
@@ -357,21 +344,19 @@ export async function checkInstallationStatus(serverUuid: string): Promise<{
 }> {
   const db = useDrizzle()
 
-  const server = await db
+  const [server] = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.uuid, serverUuid))
-    .get()
 
   if (!server) {
     throw new Error('Server not found')
   }
 
-  const node = await db
+  const [node] = await db
     .select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, server.nodeId!))
-    .get()
 
   if (!node) {
     throw new Error('Node not found')

@@ -17,11 +17,11 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const existing = await db
+  const [existing] = await db
     .select()
     .from(tables.databaseHosts)
     .where(eq(tables.databaseHosts.id, hostId))
-    .get()
+    .limit(1)
 
   if (!existing) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Database host not found' })
@@ -31,7 +31,6 @@ export default defineEventHandler(async (event) => {
     .select({ id: tables.serverDatabases.id })
     .from(tables.serverDatabases)
     .where(eq(tables.serverDatabases.databaseHostId, hostId))
-    .all()
 
   if (databasesCount.length > 0) {
     throw createError({
@@ -41,7 +40,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await db.delete(tables.databaseHosts).where(eq(tables.databaseHosts.id, hostId)).run()
+  await db.delete(tables.databaseHosts).where(eq(tables.databaseHosts.id, hostId))
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

@@ -71,7 +71,6 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
     .orderBy(desc(tables.auditEvents.occurredAt))
     .limit(limit)
     .offset(offset)
-    .all()
 
   const data: ServerActivityEvent[] = rows.map((row) => ({
     id: row.id,

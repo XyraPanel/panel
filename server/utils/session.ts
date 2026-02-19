@@ -2,6 +2,16 @@ import type { H3Event } from 'h3'
 import type { ServerSessionUser } from '#shared/types/auth'
 import { normalizeHeadersForAuth, auth } from '#server/utils/auth'
 
+export async function verifySessionToken(token: string): Promise<ReturnType<typeof getSessionUser>> {
+  const session = await auth.api.getSession({
+    headers: normalizeHeadersForAuth({
+      authorization: `Bearer ${token}`,
+      cookie: token,
+    }),
+  })
+  return getSessionUser(session)
+}
+
 type SessionType = Awaited<ReturnType<typeof auth.api.getSession>>
 
 export async function getServerSession(event: H3Event): Promise<SessionType | null> {

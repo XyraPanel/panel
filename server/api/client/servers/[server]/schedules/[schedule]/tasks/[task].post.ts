@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
   )
 
   const db = useDrizzle()
-  const schedule = db
+  const [schedule] = await db
     .select()
     .from(tables.serverSchedules)
     .where(
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverSchedules.serverId, server.id)
       )
     )
-    .get()
+    .limit(1)
 
   if (!schedule) {
     throw createError({
@@ -55,7 +55,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const task = db
+  const [task] = await db
     .select()
     .from(tables.serverScheduleTasks)
     .where(
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverScheduleTasks.scheduleId, scheduleId)
       )
     )
-    .get()
+    .limit(1)
 
   if (!task) {
     throw createError({
@@ -82,16 +82,15 @@ export default defineEventHandler(async (event) => {
   if (body.time_offset !== undefined) updates.timeOffset = body.time_offset
   if (body.continue_on_failure !== undefined) updates.continueOnFailure = body.continue_on_failure
 
-  db.update(tables.serverScheduleTasks)
+  await db.update(tables.serverScheduleTasks)
     .set(updates)
     .where(eq(tables.serverScheduleTasks.id, taskId))
-    .run()
 
-  const updated = db
+  const [updated] = await db
     .select()
     .from(tables.serverScheduleTasks)
     .where(eq(tables.serverScheduleTasks.id, taskId))
-    .get()
+    .limit(1)
 
   await invalidateScheduleCaches({ serverId: server.id, scheduleId })
 

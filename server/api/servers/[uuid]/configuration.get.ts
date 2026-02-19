@@ -24,40 +24,37 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const [limits] = db.select()
+  const limitsRows = await db.select()
     .from(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, server.id))
     .limit(1)
-    .all()
+
+  const limits = limitsRows[0]
 
   let primaryAllocation = null
   if (server.allocationId) {
-    const [alloc] = db.select()
+    const allocRows = await db.select()
       .from(tables.serverAllocations)
       .where(eq(tables.serverAllocations.id, server.allocationId))
       .limit(1)
-      .all()
-    primaryAllocation = alloc
+    primaryAllocation = allocRows[0] ?? null
   }
 
-  const allocations = db.select()
+  const allocations = await db.select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.serverId, server.id))
-    .all()
 
-  const envVars = db.select()
+  const envVars = await db.select()
     .from(tables.serverStartupEnv)
     .where(eq(tables.serverStartupEnv.serverId, server.id))
-    .all()
 
   let egg = null
   if (server.eggId) {
-    const [eggData] = db.select()
+    const eggRows = await db.select()
       .from(tables.eggs)
       .where(eq(tables.eggs.id, server.eggId))
       .limit(1)
-      .all()
-    egg = eggData
+    egg = eggRows[0] ?? null
   }
 
   const environment: Record<string, string> = {}

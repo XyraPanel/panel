@@ -25,11 +25,11 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
   )
 
   const db = useDrizzle()
-  const server = await db
+  const [server] = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.id, serverId))
-    .get()
+    .limit(1)
 
   if (!server) {
     throw createError({ status: 404, statusText: 'Server not found' })

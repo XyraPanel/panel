@@ -25,11 +25,10 @@ export default defineEventHandler(async (event) => {
   })
 
   const db = useDrizzle()
-  const backup = db.select()
+  const backup = await db.select()
     .from(tables.serverBackups)
     .where(eq(tables.serverBackups.uuid, backupUuid))
-    .limit(1)
-    .all()[0]
+    .limit(1)[0]
 
   if (!backup || backup.serverId !== server.id) {
     throw createError({
@@ -45,11 +44,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const node = db.select()
+  const node = await db.select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, server.nodeId))
     .limit(1)
-    .get()
   
   if (!node) {
     throw createError({

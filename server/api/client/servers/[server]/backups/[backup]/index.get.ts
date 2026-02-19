@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   })
 
   const db = useDrizzle()
-  const [backup] = db.select()
+  const [backup] = await db.select()
     .from(tables.serverBackups)
     .where(
       and(
@@ -32,7 +32,6 @@ export default defineEventHandler(async (event) => {
       )
     )
     .limit(1)
-    .all()
 
   if (!backup) {
     throw createError({

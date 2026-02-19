@@ -19,11 +19,13 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const server = db
+  const serverRows = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.id, serverId))
-    .get()
+    .limit(1)
+
+  const [server] = serverRows
 
   if (!server) {
     throw createError({
@@ -39,11 +41,10 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const allocations = db
+  const allocations = await db
     .select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.serverId, server.id))
-    .all()
 
   const primaryAllocation = allocations.find(a => a.isPrimary)
   if (!primaryAllocation) {

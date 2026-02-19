@@ -21,11 +21,12 @@ export default defineEventHandler(async (event) => {
   const { ipAlias } = body
 
   const db = useDrizzle()
-  const allocation = await db.select()
+  const allocationRows = await db.select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.id, allocationId))
     .limit(1)
-    .get()
+
+  const allocation = allocationRows[0]
 
   if (!allocation) {
     throw createError({
@@ -40,7 +41,6 @@ export default defineEventHandler(async (event) => {
       updatedAt: new Date(),
     })
     .where(eq(tables.serverAllocations.id, allocationId))
-    .run()
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

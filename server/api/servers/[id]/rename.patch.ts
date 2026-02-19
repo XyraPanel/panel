@@ -30,7 +30,6 @@ export default defineEventHandler(async (event) => {
       updatedAt: new Date(),
     })
     .where(eq(tables.servers.id, server.id))
-    .run()
 
   await invalidateServerCaches({
     id: server.id,

@@ -13,7 +13,6 @@ export async function getNodeResourceUsage(nodeId: string): Promise<NodeResource
     .from(tables.serverLimits)
     .innerJoin(tables.servers, eq(tables.serverLimits.serverId, tables.servers.id))
     .where(eq(tables.servers.nodeId, nodeId))
-    .all()
 
   return {
     memory: usageRows.reduce((total, row) => total + toNumber(row.memory), 0),

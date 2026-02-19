@@ -24,7 +24,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const server = db.select({
+  const [server] = await db.select({
     id: tables.servers.id,
     uuid: tables.servers.uuid,
     name: tables.servers.name,
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
   })
     .from(tables.servers)
     .where(eq(tables.servers.id, serverId))
-    .get()
+    .limit(1)
 
   if (!server) {
     throw createError({ status: 404, statusText: 'Server not found' })
@@ -54,12 +54,11 @@ export default defineEventHandler(async (event) => {
     }
 
     const { provisionServerOnWings } = await import('#server/utils/server-provisioning')
-    
-    const allocations = db
+
+    const allocations = await db
       .select()
       .from(tables.serverAllocations)
-      .where(eq(tables.serverAllocations.serverId, server.id!))
-      .all()
+      .where(eq(tables.serverAllocations.serverId, server.id))
 
     const primaryAllocation = allocations.find(a => a.isPrimary)
 
@@ -98,10 +97,10 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  const node = db.select()
+  const [node] = await db.select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, server.nodeId))
-    .get()
+    .limit(1)
 
   if (!node) {
     throw createError({ status: 404, statusText: 'Node not found' })

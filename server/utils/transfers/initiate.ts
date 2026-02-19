@@ -17,7 +17,7 @@ export async function initiateServerTransfer(serverId: string, targetNodeId: str
   const db = useDrizzle()
   const now = new Date()
 
-  const server = db
+  const serverRows = await db
     .select({
       id: tables.servers.id,
       uuid: tables.servers.uuid,
@@ -28,7 +28,9 @@ export async function initiateServerTransfer(serverId: string, targetNodeId: str
     })
     .from(tables.servers)
     .where(eq(tables.servers.id, serverId))
-    .get()
+    .limit(1)
+
+  const server = serverRows[0]
 
   if (!server) {
     throw new TransferError('Server not found', 404)
@@ -42,31 +44,37 @@ export async function initiateServerTransfer(serverId: string, targetNodeId: str
     throw new TransferError('Server is already on the requested node', 400)
   }
 
-  const activeTransfer = db
+  const activeTransferRows = await db
     .select({ id: tables.serverTransfers.id })
     .from(tables.serverTransfers)
     .where(and(eq(tables.serverTransfers.serverId, serverId), eq(tables.serverTransfers.archived, false)))
-    .get()
+    .limit(1)
+
+  const activeTransfer = activeTransferRows[0]
 
   if (activeTransfer) {
     throw new TransferError('A transfer is already in progress for this server', 409)
   }
 
-  const targetNode = db
+  const targetNodeRows = await db
     .select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, targetNodeId))
-    .get()
+    .limit(1)
+
+  const targetNode = targetNodeRows[0]
 
   if (!targetNode) {
     throw new TransferError('Target node not found', 404)
   }
 
-  const serverLimits = db
+  const serverLimitsRows = await db
     .select()
     .from(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, serverId))
-    .get()
+    .limit(1)
+
+  const serverLimits = serverLimitsRows[0]
 
   if (!serverLimits) {
     throw new TransferError('Server limits not configured', 422)
@@ -91,11 +99,10 @@ export async function initiateServerTransfer(serverId: string, targetNodeId: str
 
   const newAllocationId = await resolveTargetAllocation(targetNodeId, options.allocationId)
 
-  const existingAllocations = db
+  const existingAllocations = await db
     .select({ id: tables.serverAllocations.id, isPrimary: tables.serverAllocations.isPrimary })
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.serverId, serverId))
-    .all()
 
   const oldAdditionalAllocations = existingAllocations
     .filter((allocation) => allocation.id !== server.allocationId)
@@ -103,7 +110,7 @@ export async function initiateServerTransfer(serverId: string, targetNodeId: str
 
   const requestedAdditionalAllocations = normalizeIdArray(options.additionalAllocationIds)
 
-  const newAdditionalAllocations = validateAdditionalAllocations(db, {
+  const newAdditionalAllocations = await validateAdditionalAllocations(db, {
     nodeId: targetNodeId,
     allocationIds: requestedAdditionalAllocations,
   })
@@ -111,10 +118,10 @@ export async function initiateServerTransfer(serverId: string, targetNodeId: str
   const transferId = randomUUID()
   const originalStatus = server.status
 
-  db.transaction((tx) => {
+  await db.transaction(async (tx) => {
     const allocationUpdates = [newAllocationId, ...newAdditionalAllocations]
 
-    tx.insert(tables.serverTransfers)
+    await tx.insert(tables.serverTransfers)
       .values({
         id: transferId,
         serverId,
@@ -129,31 +136,28 @@ export async function initiateServerTransfer(serverId: string, targetNodeId: str
         createdAt: now,
         updatedAt: now,
       })
-      .run()
 
     if (allocationUpdates.length > 0) {
-      tx.update(tables.serverAllocations)
+      await tx.update(tables.serverAllocations)
         .set({
           serverId,
           isPrimary: false,
           updatedAt: now,
         })
         .where(inArray(tables.serverAllocations.id, allocationUpdates))
-        .run()
     }
 
-    tx.update(tables.servers)
+    await tx.update(tables.servers)
       .set({
         status: 'transferring',
         updatedAt: now,
       })
       .where(eq(tables.servers.id, serverId))
-      .run()
   })
 
   try {
-    const sourceNodeConnection = resolveNodeConnection(server.nodeId)
-    const targetNodeConnection = resolveNodeConnection(targetNodeId)
+    const sourceNodeConnection = await resolveNodeConnection(server.nodeId)
+    const targetNodeConnection = await resolveNodeConnection(targetNodeId)
 
     const destinationUrl = `${targetNode.scheme}://${targetNode.fqdn}:${targetNode.daemonListen}/api/transfers`
     const transferJwt = await generateWingsJWT(
@@ -187,7 +191,7 @@ export async function initiateServerTransfer(serverId: string, targetNodeId: str
     })
   }
   catch (error) {
-    rollbackTransfer(db, {
+    await rollbackTransfer(db, {
       transferId,
       serverId,
       allocationIds: [newAllocationId, ...newAdditionalAllocations],
@@ -216,11 +220,13 @@ async function resolveTargetAllocation(nodeId: string, requestedAllocationId?: s
   const now = new Date()
 
   if (requestedAllocationId) {
-    const allocation = db
+    const allocationRows = await db
       .select()
       .from(tables.serverAllocations)
       .where(eq(tables.serverAllocations.id, requestedAllocationId))
-      .get()
+      .limit(1)
+
+    const allocation = allocationRows[0]
 
     if (!allocation || allocation.nodeId !== nodeId) {
       throw new TransferError('Specified allocation does not belong to the target node', 422)
@@ -233,53 +239,50 @@ async function resolveTargetAllocation(nodeId: string, requestedAllocationId?: s
     return allocation.id
   }
 
-  const available = db
+  const availableRows = await db
     .select({ id: tables.serverAllocations.id })
     .from(tables.serverAllocations)
     .where(and(eq(tables.serverAllocations.nodeId, nodeId), isNull(tables.serverAllocations.serverId)))
     .limit(1)
-    .get()
+
+  const available = availableRows[0]
 
   if (!available) {
     throw new TransferError('No available allocations on target node', 422)
   }
 
-  db.update(tables.serverAllocations)
+  await db.update(tables.serverAllocations)
     .set({ updatedAt: now })
     .where(eq(tables.serverAllocations.id, available.id))
-    .run()
 
   return available.id
 }
 
-function rollbackTransfer(
+async function rollbackTransfer(
   db: ReturnType<typeof useDrizzle>,
   context: { transferId: string; serverId: string; allocationIds: string[]; originalStatus: string | null },
-) {
+): Promise<void> {
   const rollbackTime = new Date()
 
-  db.transaction((tx) => {
-    tx.delete(tables.serverTransfers)
+  await db.transaction(async (tx) => {
+    await tx.delete(tables.serverTransfers)
       .where(eq(tables.serverTransfers.id, context.transferId))
-      .run()
 
     if (context.allocationIds.length > 0) {
-      tx.update(tables.serverAllocations)
+      await tx.update(tables.serverAllocations)
         .set({
           serverId: null,
           updatedAt: rollbackTime,
         })
         .where(inArray(tables.serverAllocations.id, context.allocationIds))
-        .run()
     }
 
-    tx.update(tables.servers)
+    await tx.update(tables.servers)
       .set({
         status: context.originalStatus,
         updatedAt: rollbackTime,
       })
       .where(eq(tables.servers.id, context.serverId))
-      .run()
   })
 }
 
@@ -297,17 +300,17 @@ function normalizeIdArray(value: unknown): string[] {
   return []
 }
 
-function validateAdditionalAllocations(
+async function validateAdditionalAllocations(
   db: ReturnType<typeof useDrizzle>,
   context: { nodeId: string; allocationIds: string[] },
-): string[] {
+): Promise<string[]> {
   if (context.allocationIds.length === 0) {
     return []
   }
 
   const uniqueIds = Array.from(new Set(context.allocationIds))
 
-  const rows = db
+  const rows = await db
     .select({
       id: tables.serverAllocations.id,
       nodeId: tables.serverAllocations.nodeId,
@@ -315,7 +318,6 @@ function validateAdditionalAllocations(
     })
     .from(tables.serverAllocations)
     .where(inArray(tables.serverAllocations.id, uniqueIds))
-    .all()
 
   if (rows.length !== uniqueIds.length) {
     throw new TransferError('One or more additional allocations were not found', 422)

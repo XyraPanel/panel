@@ -19,17 +19,16 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const existing = await db
+  const [existing] = await db
     .select()
     .from(tables.eggVariables)
     .where(eq(tables.eggVariables.id, varId))
-    .get()
 
   if (!existing || existing.eggId !== eggId) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Variable not found' })
   }
 
-  await db.delete(tables.eggVariables).where(eq(tables.eggVariables.id, varId)).run()
+  await db.delete(tables.eggVariables).where(eq(tables.eggVariables.id, varId))
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

@@ -34,6 +34,20 @@ function toIsoTimestamp(value: unknown): string {
   return new Date().toISOString()
 }
 
+function toNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : fallback
+  }
+  if (typeof value === 'bigint') {
+    return Number(value)
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isNaN(parsed) ? fallback : parsed
+  }
+  return fallback
+}
+
 export default defineEventHandler(async (event) => {
   const { id } = event.context.params ?? {}
   if (!id || typeof id !== 'string') {
@@ -43,29 +57,26 @@ export default defineEventHandler(async (event) => {
   await requireAdmin(event)
 
   const db = useDrizzle()
-  const node = getWingsNode(id)
+  const node = await getWingsNode(id)
 
-  const serversTotalRow = db.select({ count: sql<number>`COUNT(*)` })
+  const [serversTotalRow] = await db.select({ count: sql<number>`COUNT(*)` })
     .from(tables.servers)
     .where(eq(tables.servers.nodeId, id))
-    .get()
 
-  const allocationsTotalRow = db.select({ count: sql<number>`COUNT(*)` })
+  const [allocationsTotalRow] = await db.select({ count: sql<number>`COUNT(*)` })
     .from(tables.serverAllocations)
     .innerJoin(tables.servers, eq(tables.serverAllocations.serverId, tables.servers.id))
     .where(eq(tables.servers.nodeId, id))
-    .get()
 
-  const resourceTotals = db.select({
+  const [resourceTotals] = await db.select({
     memory: sql<number>`COALESCE(SUM(${tables.serverLimits.memory}), 0)`,
     disk: sql<number>`COALESCE(SUM(${tables.serverLimits.disk}), 0)`,
   })
     .from(tables.serverLimits)
     .innerJoin(tables.servers, eq(tables.serverLimits.serverId, tables.servers.id))
     .where(eq(tables.servers.nodeId, id))
-    .get()
 
-  const recentServersRows = db.select({
+  const recentServersRows = await db.select({
     id: tables.servers.id,
     uuid: tables.servers.uuid,
     identifier: tables.servers.identifier,
@@ -78,14 +89,13 @@ export default defineEventHandler(async (event) => {
     .from(tables.servers)
     .leftJoin(
       tables.serverAllocations,
-      sql`${tables.serverAllocations.serverId} = ${tables.servers.id} AND ${tables.serverAllocations.isPrimary} = 1`,
+      sql`${tables.serverAllocations.serverId} = ${tables.servers.id} AND ${tables.serverAllocations.isPrimary} = true`,
     )
     .where(eq(tables.servers.nodeId, id))
     .orderBy(desc(tables.servers.updatedAt))
     .limit(5)
-    .all()
 
-  const allocationRows = db.select({
+  const allocationRows = await db.select({
     id: tables.serverAllocations.id,
     ip: tables.serverAllocations.ip,
     ipAlias: tables.serverAllocations.ipAlias,
@@ -100,7 +110,6 @@ export default defineEventHandler(async (event) => {
     .where(eq(tables.servers.nodeId, id))
     .orderBy(desc(tables.serverAllocations.isPrimary), desc(tables.serverAllocations.createdAt))
     .limit(25)
-    .all()
 
   const recentServers: AdminWingsNodeServerSummary[] = recentServersRows.map(row => ({
     id: row.id,
@@ -132,7 +141,7 @@ export default defineEventHandler(async (event) => {
   }
   catch (error) {
     if (isH3Error(error)) {
-      systemError = error.message || error.statusText || 'Failed to reach Wings node'
+      systemError = error.message || error.statusMessage || 'Failed to reach Wings node'
     }
     else if (error instanceof Error) {
       systemError = error.message
@@ -145,11 +154,11 @@ export default defineEventHandler(async (event) => {
   const payload: AdminWingsNodeDetail = {
     node,
     stats: {
-      serversTotal: serversTotalRow?.count ?? 0,
-      allocationsTotal: allocationsTotalRow?.count ?? 0,
+      serversTotal: toNumber(serversTotalRow?.count, 0),
+      allocationsTotal: toNumber(allocationsTotalRow?.count, 0),
       maintenanceMode: node.maintenanceMode,
-      memoryProvisioned: resourceTotals?.memory ?? 0,
-      diskProvisioned: resourceTotals?.disk ?? 0,
+      memoryProvisioned: toNumber(resourceTotals?.memory, 0),
+      diskProvisioned: toNumber(resourceTotals?.disk, 0),
       lastSeenAt: node.lastSeenAt,
     },
     recentServers,

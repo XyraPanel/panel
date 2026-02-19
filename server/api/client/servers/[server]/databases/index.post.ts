@@ -1,20 +1,20 @@
+import { randomUUID, randomBytes } from 'node:crypto'
 import { getServerWithAccess } from '#server/utils/server-helpers'
 import { useDrizzle, tables, eq } from '#server/utils/drizzle'
-import { randomBytes } from 'crypto'
+import { sql } from 'drizzle-orm'
 import { invalidateServerCaches } from '#server/utils/serversStore'
 import { requireServerPermission } from '#server/utils/permission-middleware'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { requireAccountUser } from '#server/utils/security'
+import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
+import { provisionDatabase } from '#server/utils/database-provisioner'
+import { createServerDatabaseSchema } from '#shared/schema/server/operations'
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event)
   const serverId = getRouterParam(event, 'server')
 
   if (!serverId) {
-    throw createError({
-      status: 400,
-      message: 'Server identifier is required',
-    })
+    throw createError({ status: 400, message: 'Server identifier is required' })
   }
 
   const { server } = await getServerWithAccess(serverId, accountContext.session)
@@ -22,101 +22,88 @@ export default defineEventHandler(async (event) => {
   await requireServerPermission(event, {
     serverId: server.id,
     requiredPermissions: ['server.database.create'],
+    allowOwner: true,
+    allowAdmin: true,
   })
 
-  const body = await readBody(event)
-  const { database, remote } = body
-
-  if (!database) {
-    throw createError({
-      status: 400,
-      message: 'Database name is required',
-    })
-  }
+  const body = await readValidatedBodyWithLimit(event, createServerDatabaseSchema, BODY_SIZE_LIMITS.SMALL)
 
   const db = useDrizzle()
-  const existingDatabases = db.select()
+
+  const serverDbRows = await db
+    .select({ serverDbCount: sql<number>`count(*)` })
     .from(tables.serverDatabases)
     .where(eq(tables.serverDatabases.serverId, server.id))
-    .all()
 
-  if (server.databaseLimit && existingDatabases.length >= server.databaseLimit) {
-    throw createError({
-      status: 403,
-      message: 'Database limit reached',
-    })
+  if (server.databaseLimit && Number(serverDbRows[0]?.serverDbCount ?? 0) >= server.databaseLimit) {
+    throw createError({ status: 403, message: 'Server database limit reached' })
   }
 
-  const [databaseHost] = db.select()
+  const [databaseHost] = await db.select()
     .from(tables.databaseHosts)
     .limit(1)
-    .all()
 
   if (!databaseHost) {
-    throw createError({
-      status: 500,
-      message: 'No database host configured',
-    })
+    throw createError({ status: 500, message: 'No database host configured' })
   }
 
-  const databaseId = `db_${Date.now()}`
-  const username = `s${server.id.substring(0, 8)}_${database}`.substring(0, 32)
-  const password = randomBytes(16).toString('hex')
+  if (databaseHost.maxDatabases && databaseHost.maxDatabases > 0) {
+    const hostDbRows = await db
+      .select({ hostDbCount: sql<number>`count(*)` })
+      .from(tables.serverDatabases)
+      .where(eq(tables.serverDatabases.databaseHostId, databaseHost.id))
+    if (Number(hostDbRows[0]?.hostDbCount ?? 0) >= databaseHost.maxDatabases) {
+      throw createError({ status: 503, message: 'Database host has reached its maximum database limit' })
+    }
+  }
+
+  const databaseId = randomUUID()
+  const safeName = body.name.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 48)
+  const dbName = `s${server.id.substring(0, 8)}_${safeName}`
+  const username = `u${server.id.substring(0, 8)}_${safeName}`.substring(0, 32)
+  const password = randomBytes(24).toString('hex')
+  const remote = body.remote || '%'
   const now = new Date()
 
-  try {
-    db.insert(tables.serverDatabases)
-      .values({
-        id: databaseId,
-        serverId: server.id,
-        databaseHostId: databaseHost.id,
-        name: `s${server.id}_${database}`,
-        username,
-        password,
-        remote: remote || '%',
-        maxConnections: 0,
-        createdAt: now,
-        updatedAt: now,
-      })
-      .run()
+  await provisionDatabase(databaseHost, dbName, username, password, remote)
 
-    await invalidateServerCaches({ id: server.id, uuid: server.uuid, identifier: server.identifier })
+  await db.insert(tables.serverDatabases).values({
+    id: databaseId,
+    serverId: server.id,
+    databaseHostId: databaseHost.id,
+    name: dbName,
+    username,
+    password,
+    remote,
+    maxConnections: null,
+    status: 'ready',
+    createdAt: now,
+    updatedAt: now,
+  })
 
-    await recordAuditEventFromRequest(event, {
-      actor: accountContext.user.id,
-      actorType: 'user',
-      action: 'server.database.create',
-      targetType: 'server',
-      targetId: server.id,
-      metadata: {
-        databaseId,
-        databaseName: `s${server.id}_${database}`,
-        username,
-        remote: remote || '%',
-      },
-    })
+  await invalidateServerCaches({ id: server.id, uuid: server.uuid, identifier: server.identifier })
 
-    return {
-      object: 'server_database',
-      attributes: {
-        id: databaseId,
-        host_id: databaseHost.id,
-        name: `s${server.id}_${database}`,
-        username,
-        remote: remote || '%',
-        max_connections: 0,
-        created_at: now,
-        updated_at: now,
-      },
-      meta: {
-        password,
-      },
-    }
-  } catch (error) {
-    console.error('Failed to create database:', error)
-    throw createError({
-      status: 500,
-      message: 'Failed to create database',
-    })
+  await recordAuditEventFromRequest(event, {
+    actor: accountContext.user.id,
+    actorType: 'user',
+    action: 'server.database.created',
+    targetType: 'server',
+    targetId: server.id,
+    metadata: { databaseId, databaseName: dbName, username, remote },
+  })
+
+  return {
+    object: 'server_database',
+    attributes: {
+      id: databaseId,
+      host_id: databaseHost.id,
+      name: dbName,
+      username,
+      remote,
+      max_connections: null,
+      created_at: now.toISOString(),
+      updated_at: now.toISOString(),
+    },
+    meta: { password },
   }
 })

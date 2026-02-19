@@ -18,11 +18,11 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const node = await db
+  const [node] = await db
     .select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, nodeId))
-    .get()
+    .limit(1)
 
   if (!node) {
     throw createError({ status: 404, statusText: 'Node not found' })
@@ -54,7 +54,6 @@ export default defineEventHandler(async (event) => {
           updatedAt: new Date(),
         })
         .where(eq(tables.wingsNodes.id, nodeId))
-        .run()
 
       await recordAuditEventFromRequest(event, {
         actor: session.user.email || session.user.id,

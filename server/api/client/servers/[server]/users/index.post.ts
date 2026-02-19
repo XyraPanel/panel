@@ -39,7 +39,6 @@ export default defineEventHandler(async (event) => {
     .select()
     .from(tables.users)
     .where(eq(tables.users.email, body.email))
-    .get()
 
   if (!targetUser) {
     throw createError({
@@ -57,7 +56,6 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverSubusers.userId, targetUser.id)
       )
     )
-    .get()
 
   if (existing) {
     throw createError({
@@ -69,7 +67,7 @@ export default defineEventHandler(async (event) => {
   const subuserId = randomUUID()
   const now = new Date()
 
-  db.insert(tables.serverSubusers)
+  await db.insert(tables.serverSubusers)
     .values({
       id: subuserId,
       serverId: server.id,
@@ -78,13 +76,11 @@ export default defineEventHandler(async (event) => {
       createdAt: now,
       updatedAt: now,
     })
-    .run()
 
   const subuser = db
     .select()
     .from(tables.serverSubusers)
     .where(eq(tables.serverSubusers.id, subuserId))
-    .get()
 
   await invalidateServerSubusersCache(server.id, [targetUser.id])
 

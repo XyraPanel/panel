@@ -22,11 +22,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
-  const nodeRow = db
+  const nodeRows = await db
     .select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.uuid, id))
-    .get()
+
+  const [nodeRow] = nodeRows
 
   if (!nodeRow) {
     throw createError({ status: 404, statusText: 'Node not found' })
@@ -65,7 +66,7 @@ export default defineEventHandler(async (event) => {
   const panelUrl = panelConfig?.baseUrl || requestOrigin || ''
   
   try {
-    const configuration = getWingsNodeConfigurationById(nodeRow.id, panelUrl)
+    const configuration = await getWingsNodeConfigurationById(nodeRow.id, panelUrl)
 
     await recordAuditEventFromRequest(event, {
       actor: nodeRow.uuid,

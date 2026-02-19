@@ -22,33 +22,34 @@ export default defineEventHandler(async (event: H3Event) => {
   )
   const { successful } = body
 
-  const backup = db
+  const backupRows = await db
     .select()
     .from(tables.serverBackups)
     .where(eq(tables.serverBackups.uuid, backupId))
     .limit(1)
-    .get()
+
+  const backup = backupRows[0]
 
   if (!backup) {
     throw createError({ status: 404, statusText: 'Backup not found' })
   }
 
-  const server = db
+  const serverRows = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.id, backup.serverId))
     .limit(1)
-    .get()
+
+  const server = serverRows[0]
 
   if (server) {
 
-    db.update(tables.servers)
+    await db.update(tables.servers)
       .set({
         status: successful ? null : 'restore_failed',
         updatedAt: new Date(),
       })
       .where(eq(tables.servers.id, server.id))
-      .run()
   }
 
   await recordAuditEventFromRequest(event, {

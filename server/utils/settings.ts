@@ -80,25 +80,15 @@ export async function getAllSettings(): Promise<Record<string, string>> {
 
 export async function setSetting(key: SettingKey, value: string): Promise<void> {
   const db = useDrizzle()
-  const existing = await db.query.settings.findFirst({
-    where: (s, { eq }) => eq(s.key, key),
-    columns: { key: true }
-  })
-
-  if (existing) {
-    await db.update(tables.settings)
-      .set({ value })
-      .where(eq(tables.settings.key, key))
-  } else {
-    await db.insert(tables.settings)
-      .values({ key, value })
-  }
+  await db.insert(tables.settings)
+    .values({ key, value })
+    .onConflictDoUpdate({ target: tables.settings.key, set: { value } })
 }
 
 export async function setSettings(settings: Record<SettingKey, string>): Promise<void> {
-  for (const [key, value] of Object.entries(settings)) {
-    await setSetting(key as SettingKey, value)
-  }
+  await Promise.all(
+    Object.entries(settings).map(([key, value]) => setSetting(key as SettingKey, value)),
+  )
 }
 
 export async function deleteSetting(key: SettingKey): Promise<void> {

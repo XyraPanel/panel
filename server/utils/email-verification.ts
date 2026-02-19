@@ -15,18 +15,16 @@ export async function createEmailVerificationToken(userId: string): Promise<{ to
   const expiresAt = new Date(now.getTime() + EMAIL_VERIFICATION_EXPIRATION_MS)
   const identifier = buildIdentifier(userId)
 
-  db.delete(tables.verificationTokens)
+  await db.delete(tables.verificationTokens)
     .where(lt(tables.verificationTokens.expires, now))
-    .run()
 
-  db.delete(tables.verificationTokens)
+  await db.delete(tables.verificationTokens)
     .where(eq(tables.verificationTokens.identifier, identifier))
-    .run()
 
   const rawToken = generateRawToken()
   const storedToken = hashToken(rawToken)
 
-  db.insert(tables.verificationTokens)
+  await db.insert(tables.verificationTokens)
     .values({
       id: randomUUID(),
       identifier,
@@ -37,19 +35,18 @@ export async function createEmailVerificationToken(userId: string): Promise<{ to
       createdAt: now,
       updatedAt: now,
     })
-    .run()
 
   return { token: rawToken, expiresAt }
 }
 
-export function consumeEmailVerificationToken(rawToken: string): { userId: string } | null {
+export async function consumeEmailVerificationToken(rawToken: string): Promise<{ userId: string } | null> {
   if (!rawToken || rawToken.length === 0) {
     return null
   }
 
   const db = useDrizzle()
   const storedToken = hashToken(rawToken)
-  const record = db
+  const [record] = await db
     .select({
       identifier: tables.verificationTokens.identifier,
       token: tables.verificationTokens.token,
@@ -57,7 +54,7 @@ export function consumeEmailVerificationToken(rawToken: string): { userId: strin
     })
     .from(tables.verificationTokens)
     .where(eq(tables.verificationTokens.token, storedToken))
-    .get()
+    .limit(1)
 
   if (!record) {
     return null
@@ -77,15 +74,13 @@ export function consumeEmailVerificationToken(rawToken: string): { userId: strin
   )
 
   if (expiresAt <= new Date()) {
-    db.delete(tables.verificationTokens)
+    await db.delete(tables.verificationTokens)
       .where(deleteCondition)
-      .run()
     return null
   }
 
-  db.delete(tables.verificationTokens)
+  await db.delete(tables.verificationTokens)
     .where(deleteCondition)
-    .run()
 
   return { userId }
 }

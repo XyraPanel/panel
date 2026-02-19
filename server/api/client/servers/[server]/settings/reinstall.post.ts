@@ -1,10 +1,10 @@
 import { requireAccountUser } from '#server/utils/security'
-import { getServerWithAccess, getNodeForServer } from '#server/utils/server-helpers'
-import { createWingsClient } from '#server/utils/wings/client'
+import { getServerWithAccess } from '#server/utils/server-helpers'
 import { useDrizzle, tables, eq } from '#server/utils/drizzle'
 import { requireServerPermission } from '#server/utils/permission-middleware'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { recordServerActivity } from '#server/utils/server-activity'
+import { getWingsClientForServer } from '#server/utils/wings-client'
 
 export default defineEventHandler(async (event) => {
   const { user, session } = await requireAccountUser(event)
@@ -32,14 +32,13 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
-  db.update(tables.servers)
+  await db.update(tables.servers)
     .set({
       status: 'installing',
       installedAt: null,
       updatedAt: new Date(),
     })
     .where(eq(tables.servers.id, server.id))
-    .run()
 
   await Promise.all([
     recordAuditEventFromRequest(event, {
@@ -61,27 +60,9 @@ export default defineEventHandler(async (event) => {
     }),
   ])
 
-  const node = await getNodeForServer(server.nodeId)
-
   try {
-    const wingsClient = createWingsClient({
-      fqdn: node.fqdn,
-      scheme: node.scheme,
-      daemonListen: node.daemonListen,
-      tokenId: node.tokenIdentifier,
-      tokenSecret: node.tokenSecret,
-    })
-
-    const response = await fetch(`${wingsClient}/servers/${server.uuid}/reinstall`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to trigger reinstall')
-    }
+    const { client } = await getWingsClientForServer(server.uuid)
+    await client.reinstallServer(server.uuid)
 
     return {
       data: {

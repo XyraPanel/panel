@@ -1,10 +1,11 @@
 import { getServerWithAccess } from '#server/utils/server-helpers'
 import { useDrizzle, tables, eq, and } from '#server/utils/drizzle'
-import { randomBytes } from 'crypto'
+import { randomBytes } from 'node:crypto'
 import { invalidateServerCaches } from '#server/utils/serversStore'
 import { requireServerPermission } from '#server/utils/permission-middleware'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { requireAccountUser } from '#server/utils/security'
+import { rotateUserPassword } from '#server/utils/database-provisioner'
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event)
@@ -26,7 +27,7 @@ export default defineEventHandler(async (event) => {
   })
 
   const db = useDrizzle()
-  const [database] = db.select()
+  const [database] = await db.select()
     .from(tables.serverDatabases)
     .where(
       and(
@@ -35,7 +36,6 @@ export default defineEventHandler(async (event) => {
       )
     )
     .limit(1)
-    .all()
 
   if (!database) {
     throw createError({
@@ -44,12 +44,22 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const newPassword = randomBytes(16).toString('hex')
+  const newPassword = randomBytes(24).toString('hex')
 
-  db.update(tables.serverDatabases)
-    .set({ password: newPassword })
+  const [host] = await db.select()
+    .from(tables.databaseHosts)
+    .where(eq(tables.databaseHosts.id, database.databaseHostId))
+    .limit(1)
+
+  if (!host) {
+    throw createError({ status: 500, message: 'Database host not found' })
+  }
+
+  await rotateUserPassword(host, database.username, database.remote, newPassword)
+
+  await db.update(tables.serverDatabases)
+    .set({ password: newPassword, updatedAt: new Date() })
     .where(eq(tables.serverDatabases.id, databaseId))
-    .run()
 
   await recordAuditEventFromRequest(event, {
     actor: accountContext.user.email || accountContext.user.id,

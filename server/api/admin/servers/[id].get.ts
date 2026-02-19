@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, message: 'Server not found' })
   }
 
-  const result = db
+  const [result] = await db
     .select({
       server: tables.servers,
       owner: tables.users,
@@ -39,7 +39,6 @@ export default defineEventHandler(async (event) => {
     .leftJoin(tables.nests, eq(tables.servers.nestId, tables.nests.id))
     .leftJoin(tables.serverAllocations, eq(tables.servers.allocationId, tables.serverAllocations.id))
     .where(eq(tables.servers.id, foundServer.id))
-    .get()
 
   if (!result) {
     throw createError({ status: 404, message: 'Server not found' })
@@ -47,30 +46,26 @@ export default defineEventHandler(async (event) => {
 
   const { server, owner, node, egg, nest, allocation } = result
 
-  const limits = db
+  const [limits] = await db
     .select()
     .from(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, server.id))
-    .get()
 
-  const allocations = db
+  const allocations = await db
     .select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.serverId, server.id))
-    .all()
 
-  const databases = db
+  const databases = await db
     .select()
     .from(tables.serverDatabases)
     .where(eq(tables.serverDatabases.serverId, server.id))
-    .all()
 
-  const mounts = db
+  const mounts = await db
     .select()
     .from(tables.mounts)
     .innerJoin(tables.mountServer, eq(tables.mounts.id, tables.mountServer.mountId))
     .where(eq(tables.mountServer.serverId, server.id))
-    .all()
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

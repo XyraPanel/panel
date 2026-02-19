@@ -28,11 +28,10 @@ export default defineEventHandler(async (event) => {
   })
 
   const db = useDrizzle()
-  const backup = db.select()
+  const backup = await db.select()
     .from(tables.serverBackups)
     .where(eq(tables.serverBackups.uuid, backupUuid))
     .limit(1)
-    .all()
     .at(0)
 
   if (!backup || backup.serverId !== server.id) {

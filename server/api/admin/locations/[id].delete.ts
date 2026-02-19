@@ -17,11 +17,12 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const existing = await db
+  const existingRows = await db
     .select()
     .from(tables.locations)
     .where(eq(tables.locations.id, locationId))
-    .get()
+
+  const existing = existingRows[0]
 
   if (!existing) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Location not found' })
@@ -31,7 +32,6 @@ export default defineEventHandler(async (event) => {
     .select({ id: tables.wingsNodes.id })
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.locationId, locationId))
-    .all()
 
   if (nodesCount.length > 0) {
     throw createError({
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await db.delete(tables.locations).where(eq(tables.locations.id, locationId)).run()
+  await db.delete(tables.locations).where(eq(tables.locations.id, locationId))
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

@@ -38,7 +38,6 @@ export default defineEventHandler(async (event) => {
       eq(tables.serverDatabases.id, databaseId),
       eq(tables.serverDatabases.serverId, server.id),
     ))
-    .get()
 
   if (!database) {
     throw createError({ status: 404, statusText: 'Database not found' })

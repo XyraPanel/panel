@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
   const normalizedValue = value ?? ''
 
   const db = useDrizzle()
-  const [eggVariable] = db.select()
+  const eggVariableRows = await db.select()
     .from(tables.eggVariables)
     .where(
       and(
@@ -38,7 +38,8 @@ export default defineEventHandler(async (event) => {
       )
     )
     .limit(1)
-    .all()
+
+  const [eggVariable] = eggVariableRows
 
   if (!eggVariable) {
     throw createError({
@@ -54,7 +55,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const [existingVar] = db.select()
+  const existingVarRows = await db.select()
     .from(tables.serverEnvironmentVariables)
     .where(
       and(
@@ -63,20 +64,20 @@ export default defineEventHandler(async (event) => {
       )
     )
     .limit(1)
-    .all()
+
+  const [existingVar] = existingVarRows
 
   const now = new Date()
 
   if (existingVar) {
-    db.update(tables.serverEnvironmentVariables)
+    await db.update(tables.serverEnvironmentVariables)
       .set({
         value: normalizedValue,
         updatedAt: now,
       })
       .where(eq(tables.serverEnvironmentVariables.id, existingVar.id))
-      .run()
   } else {
-    db.insert(tables.serverEnvironmentVariables)
+    await db.insert(tables.serverEnvironmentVariables)
       .values({
         id: `env_${Date.now()}`,
         serverId: server.id,
@@ -85,7 +86,6 @@ export default defineEventHandler(async (event) => {
         createdAt: now,
         updatedAt: now,
       })
-      .run()
   }
 
   await recordServerActivity({

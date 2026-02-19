@@ -11,7 +11,6 @@ export async function listServerStartupVariables(serverId: string): Promise<Serv
     .from(tables.serverStartupEnv)
     .where(eq(tables.serverStartupEnv.serverId, serverId))
     .orderBy(tables.serverStartupEnv.key)
-    .all()
 
   return variables.map((row) => ({
     id: row.id,

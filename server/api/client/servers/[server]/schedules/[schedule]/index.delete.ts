@@ -34,7 +34,6 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverSchedules.serverId, server.id)
       )
     )
-    .get()
 
   if (!schedule) {
     throw createError({
@@ -43,9 +42,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  db.delete(tables.serverSchedules)
+  await db.delete(tables.serverSchedules)
     .where(eq(tables.serverSchedules.id, scheduleId))
-    .run()
 
   await recordAuditEventFromRequest(event, {
     actor: accountContext.user.email || accountContext.user.id,

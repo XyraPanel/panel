@@ -1,4 +1,4 @@
-import { eq, sql } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import type { PanelServerDetails, ServerAllocationSummary } from '#shared/types/server'
 import { getServerWithAccess } from '#server/utils/server-helpers'
 import { useDrizzle, tables } from '#server/utils/drizzle'
@@ -34,11 +34,15 @@ export default defineEventHandler(async (event) => {
     .from(tables.servers)
     .leftJoin(
       tables.serverAllocations,
-      sql`${tables.serverAllocations.serverId} = ${tables.servers.id} AND ${tables.serverAllocations.isPrimary} = 1`,
+      and(
+        eq(tables.serverAllocations.serverId, tables.servers.id),
+        eq(tables.serverAllocations.isPrimary, true),
+      ),
     )
     .where(eq(tables.servers.id, server.id))
     .limit(1)
-    .get()
+
+  const [primaryAllocationResult] = primaryAllocationRow
 
   const allAllocations = await listServerAllocations(server.id)
   const additionalAllocations = allAllocations.filter(allocation => !allocation.isPrimary)
@@ -49,8 +53,10 @@ export default defineEventHandler(async (event) => {
     description: allocation.notes ?? '',
   })
 
-  const primaryAllocation = primaryAllocationRow?.ip && primaryAllocationRow?.port
-    ? { ip: primaryAllocationRow.ip, port: primaryAllocationRow.port, notes: primaryAllocationRow.notes }
+  const primaryAllocation = primaryAllocationResult
+    && primaryAllocationResult.ip !== null
+    && primaryAllocationResult.port !== null
+    ? { ip: primaryAllocationResult.ip, port: primaryAllocationResult.port, notes: primaryAllocationResult.notes }
     : null
 
   let actualStatus = server.status ?? null
@@ -70,21 +76,21 @@ export default defineEventHandler(async (event) => {
   }
 
   const nodeRow = server.nodeId
-    ? await db
+    ? (await db
       .select({ id: tables.wingsNodes.id, name: tables.wingsNodes.name })
       .from(tables.wingsNodes)
       .where(eq(tables.wingsNodes.id, server.nodeId))
       .limit(1)
-      .get()
+    )[0] ?? null
     : null
 
   const ownerRow = server.ownerId
-    ? await db
+    ? (await db
       .select({ id: tables.users.id, username: tables.users.username })
       .from(tables.users)
       .where(eq(tables.users.id, server.ownerId))
       .limit(1)
-      .get()
+    )[0] ?? null
     : null
 
   const userPermissions = await permissionManager.getUserPermissions(user.id)

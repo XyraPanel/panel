@@ -29,11 +29,12 @@ export default defineEventHandler(async (event) => {
 
   const { cpu, memory, swap, disk, io, threads, oomDisabled, databaseLimit, allocationLimit, backupLimit } = body
 
-  const [existingLimits] = db.select()
+  const existingLimitsRows = await db.select()
     .from(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, serverId))
     .limit(1)
-    .all()
+
+  const existingLimits = existingLimitsRows[0]
 
   const updateData = {
     cpu: typeof cpu === 'number' ? cpu : (existingLimits?.cpu ?? 0),
@@ -49,13 +50,12 @@ export default defineEventHandler(async (event) => {
   }
 
   if (existingLimits) {
-    db.update(tables.serverLimits)
+    await db.update(tables.serverLimits)
       .set(updateData)
       .where(eq(tables.serverLimits.serverId, serverId))
-      .run()
   } else {
     const now = new Date()
-    db.insert(tables.serverLimits)
+    await db.insert(tables.serverLimits)
       .values({
         serverId,
         cpu: cpu ?? 0,
@@ -73,7 +73,6 @@ export default defineEventHandler(async (event) => {
         createdAt: now,
         updatedAt: now,
       })
-      .run()
   }
 
   const serverUpdates: Record<string, unknown> = {}
@@ -83,10 +82,9 @@ export default defineEventHandler(async (event) => {
   if (backupLimit !== undefined) serverUpdates.backupLimit = backupLimit
 
   if (Object.keys(serverUpdates).length > 0) {
-    db.update(tables.servers)
+    await db.update(tables.servers)
       .set(serverUpdates)
       .where(eq(tables.servers.id, serverId))
-      .run()
   }
 
   await invalidateServerCaches({

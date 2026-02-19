@@ -327,11 +327,35 @@ function resolveTokenParts(inputToken?: string) {
 
 export async function createWingsNode(input: CreateWingsNodeInput): Promise<StoredWingsNode> {
   const db = useDrizzle()
-  const id = input.id?.trim() || await generateNodeId(input.name)
+  const requestedId = input.id?.trim()
+  const id = requestedId || await generateNodeId(input.name)
 
   const now = new Date()
 
   const { sanitized, scheme, fqdn, daemonListen } = parseBaseUrl(input.baseURL)
+
+  if (requestedId) {
+    const existingById = await db
+      .select({ id: tables.wingsNodes.id })
+      .from(tables.wingsNodes)
+      .where(eq(tables.wingsNodes.id, requestedId))
+      .limit(1)
+
+    if (existingById[0]) {
+      throw new Error(`A Wings node with id \"${requestedId}\" already exists`)
+    }
+  }
+
+  const existingByBaseUrl = await db
+    .select({ id: tables.wingsNodes.id })
+    .from(tables.wingsNodes)
+    .where(eq(tables.wingsNodes.baseUrl, sanitized))
+    .limit(1)
+
+  if (existingByBaseUrl[0]) {
+    throw new Error(`A Wings node with base URL \"${sanitized}\" already exists (id: ${existingByBaseUrl[0].id})`)
+  }
+
   const token = resolveTokenParts(input.apiToken)
 
   const record = {

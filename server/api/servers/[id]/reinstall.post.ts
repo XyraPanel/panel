@@ -47,13 +47,12 @@ export default defineEventHandler(async (event) => {
     
     console.log('[Reinstall] Wings accepted reinstall request, updating status to installing')
 
-    db.update(tables.servers)
+    await db.update(tables.servers)
       .set({
         status: 'installing',
         updatedAt: new Date(),
       })
       .where(eq(tables.servers.id, server.id))
-      .run()
     
     console.log('[Reinstall] Server status updated to installing')
   }

@@ -3,6 +3,14 @@ import { getWingsClientForServer } from '#server/utils/wings-client'
 import { requireServerPermission } from '#server/utils/permission-middleware'
 import { requireAccountUser } from '#server/utils/security'
 
+function isMissingWingsServer(error: unknown): boolean {
+  if (!(error instanceof Error))
+    return false
+
+  const message = error.message.toLowerCase()
+  return message.includes('404') && message.includes('requested resource does not exist on this instance')
+}
+
 function sanitizeDirectoryPath(value?: string): string {
   if (!value)
     return '/'
@@ -48,7 +56,22 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { client } = await getWingsClientForServer(server.uuid as string)
-    const files = await client.listFiles(server.uuid as string, directory)
+    let files = await client.listFiles(server.uuid as string, directory)
+
+    if (
+      files.length === 0
+      && typeof server.identifier === 'string'
+      && server.identifier.length > 0
+      && server.identifier !== server.uuid
+    ) {
+      // Some Wings setups can still key servers by short identifier; retry once.
+      try {
+        files = await client.listFiles(server.identifier, directory)
+      }
+      catch {
+        // Keep the original successful empty result.
+      }
+    }
 
     const entries = files.map((file) => ({
         name: file.name,
@@ -72,7 +95,61 @@ export default defineEventHandler(async (event) => {
     }
   }
   catch (error) {
-    console.error('Failed to list files via Wings:', error)
+    if (!isMissingWingsServer(error)) {
+      console.error('Failed to list files via Wings:', error)
+    }
+
+    if (isMissingWingsServer(error) && typeof server.identifier === 'string' && server.identifier !== server.uuid) {
+      try {
+        const { client } = await getWingsClientForServer(server.uuid as string)
+        const files = await client.listFiles(server.identifier, directory)
+
+        const entries = files.map((file) => ({
+          name: file.name,
+          path: joinPath(directory, file.name),
+          size: file.size,
+          mode: file.mode,
+          modeBits: file.mode_bits,
+          mime: file.mimetype,
+          created: file.created,
+          modified: file.modified,
+          isDirectory: Boolean(file.directory),
+          isFile: Boolean(file.file),
+          isSymlink: Boolean(file.symlink),
+        }))
+
+        return {
+          data: {
+            directory,
+            entries,
+          },
+        }
+      }
+      catch (fallbackError) {
+        if (!isMissingWingsServer(fallbackError)) {
+          console.error('Failed to list files via Wings using server identifier fallback:', fallbackError)
+        }
+      }
+    }
+
+    if (isMissingWingsServer(error)) {
+      return {
+        data: {
+          directory,
+          entries: [],
+          unavailable: true,
+          message: 'Server is not available on the assigned Wings node',
+          diagnostics: {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            serverUuid: server.uuid,
+            serverIdentifier: server.identifier,
+            nodeId: server.nodeId,
+            serverStatus: server.status,
+          },
+        },
+      }
+    }
+
     throw createError({
       status: 500,
       message: 'Failed to list files',

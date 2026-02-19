@@ -39,7 +39,6 @@ export default defineEventHandler(async (event) => {
       eq(tables.serverSchedules.id, scheduleId),
       eq(tables.serverSchedules.serverId, server.id),
     ))
-    .get()
 
   if (!schedule) {
     throw createError({ status: 404, statusText: 'Schedule not found' })

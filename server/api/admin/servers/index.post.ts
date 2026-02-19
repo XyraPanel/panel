@@ -23,22 +23,22 @@ export default defineEventHandler(async (event) => {
   const db = useDrizzle()
   const now = new Date()
 
-  const egg = await db.select().from(tables.eggs).where(eq(tables.eggs.id, body.eggId)).get()
+  const [egg] = await db.select().from(tables.eggs).where(eq(tables.eggs.id, body.eggId))
   if (!egg) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found' })
   }
 
-  const node = await db.select().from(tables.wingsNodes).where(eq(tables.wingsNodes.id, body.nodeId)).get()
+  const [node] = await db.select().from(tables.wingsNodes).where(eq(tables.wingsNodes.id, body.nodeId))
   if (!node) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Node not found' })
   }
 
-  const owner = await db.select().from(tables.users).where(eq(tables.users.id, body.ownerId)).get()
+  const [owner] = await db.select().from(tables.users).where(eq(tables.users.id, body.ownerId))
   if (!owner) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Owner not found' })
   }
 
-  const allocation = await db.select({
+  const [allocation] = await db.select({
     id: tables.serverAllocations.id,
     nodeId: tables.serverAllocations.nodeId,
     serverId: tables.serverAllocations.serverId,
@@ -47,7 +47,6 @@ export default defineEventHandler(async (event) => {
   })
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.id, body.allocationId))
-    .get()
 
   if (!allocation) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Allocation not found' })
@@ -198,7 +197,6 @@ export default defineEventHandler(async (event) => {
             updatedAt: new Date() as Date,
           })
           .where(eq(tables.servers.id, serverId))
-          .run()
         
         console.log('[Server Creation] Updated server status to install_failed:', serverUuid)
       } catch (dbError) {

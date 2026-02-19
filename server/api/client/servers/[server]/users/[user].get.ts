@@ -39,7 +39,6 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverSubusers.serverId, server.id)
       )
     )
-    .get()
 
   if (!result) {
     throw createError({

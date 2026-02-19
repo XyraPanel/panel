@@ -8,7 +8,7 @@ import type { CreateApiKeyResponse } from '#shared/types/admin'
 import { createAdminApiKeySchema } from '#shared/schema/admin/api-keys'
 import type { AdminApiKeyPermissionAction } from '#shared/schema/admin/api-keys'
 import { APIError } from 'better-auth/api'
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { getAuth } from '#server/utils/auth'
 type PermissionAction = AdminApiKeyPermissionAction
 
 export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyResponse }> => {
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
         ...(expiresIn ? { expiresIn } : {}),
         permissions,
       },
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+      request: toWebRequest(event),
     })
   } catch (error) {
     if (error instanceof APIError) {

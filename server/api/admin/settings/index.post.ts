@@ -17,16 +17,16 @@ export default defineEventHandler(async (event) => {
       await db
         .delete(tables.settings)
         .where(eq(tables.settings.key, key))
-        .run()
       deletedKeys.push(key)
       continue
     }
 
-    const existing = await db
+    const existingRows = await db
       .select()
       .from(tables.settings)
       .where(eq(tables.settings.key, key))
-      .get()
+
+    const existing = existingRows[0]
 
     const stringValue = String(value)
 
@@ -36,13 +36,11 @@ export default defineEventHandler(async (event) => {
         .update(tables.settings)
         .set({ value: stringValue })
         .where(eq(tables.settings.key, key))
-        .run()
     } else {
 
       await db
         .insert(tables.settings)
         .values({ key, value: stringValue })
-        .run()
     }
     updatedKeys.push(key)
   }

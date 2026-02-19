@@ -36,7 +36,6 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverSchedules.serverId, server.id)
       )
     )
-    .get()
 
   if (!schedule) {
     throw createError({
@@ -53,7 +52,6 @@ export default defineEventHandler(async (event) => {
       .from(tables.serverScheduleTasks)
       .where(eq(tables.serverScheduleTasks.scheduleId, scheduleId))
       .orderBy(tables.serverScheduleTasks.sequenceId)
-      .all()
 
     if (tasks.length === 0) {
       throw createError({

@@ -22,6 +22,19 @@ export class WingsClient {
   private timeout: number = 10000
   private maxRetries = 1
 
+  private normalizeDirectoryForWings(directory: string): string {
+    const normalized = directory
+      .trim()
+      .replace(/\\/g, '/')
+      .replace(/\/{2,}/g, '/')
+
+    if (normalized === '/' || normalized.length === 0) {
+      return ''
+    }
+
+    return normalized.replace(/^\/+/, '').replace(/\/+$/, '')
+  }
+
   constructor(node: WingsNode) {
     this.baseUrl = `${node.scheme}://${node.fqdn}:${node.daemonListen}`
     this.encryptedToken = node.token
@@ -168,7 +181,9 @@ export class WingsClient {
     serverUuid: string,
     directory: string = '/'
   ): Promise<WingsFileObject[]> {
-    const params = new URLSearchParams({ directory })
+    const params = new URLSearchParams({
+      directory: this.normalizeDirectoryForWings(directory),
+    })
     return this.request<WingsFileObject[]>(
       `/api/servers/${serverUuid}/files/list-directory?${params}`
     )
@@ -524,7 +539,7 @@ export async function getWingsClientForServer(
   const { useDrizzle, tables, eq, or } = await import('./drizzle')
   const db = useDrizzle()
 
-  const server = db
+  const serverRows = await db
     .select()
     .from(tables.servers)
     .where(
@@ -534,17 +549,21 @@ export async function getWingsClientForServer(
         eq(tables.servers.id, serverIdentifier),
       ),
     )
-    .get()
+    .limit(1)
+
+  const server = serverRows[0]
 
   if (!server) {
     throw new Error('Server not found')
   }
 
-  const node = db
+  const nodeRows = await db
     .select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, server.nodeId!))
-    .get()
+    .limit(1)
+
+  const node = nodeRows[0]
 
   if (!node) {
     throw new Error('Node not found')

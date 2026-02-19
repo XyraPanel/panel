@@ -33,14 +33,16 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const schedule = await db
+  const scheduleRows = await db
     .select()
     .from(tables.serverSchedules)
     .where(and(
       eq(tables.serverSchedules.id, scheduleId),
       eq(tables.serverSchedules.serverId, server.id),
     ))
-    .get()
+    .limit(1)
+
+  const schedule = scheduleRows[0]
 
   if (!schedule) {
     throw createError({ status: 404, statusText: 'Schedule not found' })

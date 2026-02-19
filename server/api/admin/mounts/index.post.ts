@@ -20,7 +20,6 @@ export default defineEventHandler(async (event) => {
     const nodes = await db.select({ id: tables.wingsNodes.id })
       .from(tables.wingsNodes)
       .where(inArray(tables.wingsNodes.id, body.nodeIds))
-      .all()
 
     if (nodes.length !== body.nodeIds.length) {
       throw createError({ status: 400, statusText: 'Bad Request', message: 'One or more nodes were not found' })
@@ -31,7 +30,6 @@ export default defineEventHandler(async (event) => {
     const eggs = await db.select({ id: tables.eggs.id })
       .from(tables.eggs)
       .where(inArray(tables.eggs.id, body.eggIds))
-      .all()
 
     if (eggs.length !== body.eggIds.length) {
       throw createError({ status: 400, statusText: 'Bad Request', message: 'One or more eggs were not found' })

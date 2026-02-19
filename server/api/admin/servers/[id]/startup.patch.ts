@@ -59,16 +59,14 @@ export default defineEventHandler(async (event) => {
   if (Object.keys(serverUpdates).length > 1) {
     
     try {
-      db.update(tables.servers)
+      await db.update(tables.servers)
         .set(serverUpdates)
         .where(eq(tables.servers.id, serverId))
-        .run()
       
-      const [updated] = db.select()
+      const [updated] = await db.select()
         .from(tables.servers)
         .where(eq(tables.servers.id, serverId))
         .limit(1)
-        .all()
       
       if (!updated) {
         throw new Error('Server not found after update')
@@ -96,25 +94,23 @@ export default defineEventHandler(async (event) => {
   }
 
   if (environment !== undefined) {
-    db.delete(tables.serverStartupEnv)
+    await db.delete(tables.serverStartupEnv)
       .where(eq(tables.serverStartupEnv.serverId, serverId))
-      .run()
 
     const envEntries = Object.entries(environment)
 
-    for (const [key, value] of envEntries) {
-      const id = randomUUID()
-      const stringValue = String(value ?? '')
-      db.insert(tables.serverStartupEnv)
-        .values({
-          id,
-          serverId,
-          key,
-          value: stringValue,
-          createdAt: now,
-          updatedAt: now,
-        })
-        .run()
+    if (envEntries.length > 0) {
+      await db.insert(tables.serverStartupEnv)
+        .values(
+          envEntries.map(([key, value]) => ({
+            id: randomUUID(),
+            serverId,
+            key,
+            value: String(value ?? ''),
+            createdAt: now,
+            updatedAt: now,
+          }))
+        )
     }
   }
 

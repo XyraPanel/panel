@@ -4,7 +4,7 @@ import { getServerWithAccess } from '#server/utils/server-helpers'
 import { requireServerPermission } from '#server/utils/permission-middleware'
 import { getNodeForServer } from '#server/utils/server-helpers'
 import { resolveNodeConnection } from '#server/utils/wings/nodesStore'
-import { recordServerActivity } from '#server/utils/server-activity'
+import { getWingsClientForServer } from '#server/utils/wings-client'
 import type { Permission } from '#shared/types/server'
 
 interface WebSocketToken {
@@ -12,7 +12,27 @@ interface WebSocketToken {
   socket: string
 }
 
-export default defineEventHandler(async (event): Promise<WebSocketToken> => {
+interface WebSocketUnavailable {
+  unavailable: true
+  message: string
+  diagnostics: {
+    error: string
+    serverUuid: string
+    serverIdentifier: string | null
+    nodeId: string | null
+    serverStatus: string | null
+  }
+}
+
+function isMissingWingsServer(error: unknown): boolean {
+  if (!(error instanceof Error))
+    return false
+
+  const message = error.message.toLowerCase()
+  return message.includes('404') && message.includes('requested resource does not exist on this instance')
+}
+
+export default defineEventHandler(async (event): Promise<WebSocketToken | WebSocketUnavailable> => {
   const id = getRouterParam(event, 'server')
   if (!id || typeof id !== 'string') {
     throw createError({
@@ -34,8 +54,34 @@ export default defineEventHandler(async (event): Promise<WebSocketToken> => {
     allowAdmin: true,
   })
 
+  try {
+    const { client } = await getWingsClientForServer(server.uuid as string)
+    await client.getServerDetails(server.uuid as string)
+  }
+  catch (error) {
+    if (isMissingWingsServer(error)) {
+      return {
+        unavailable: true,
+        message: 'Server is not available on the assigned Wings node',
+        diagnostics: {
+          error: error instanceof Error ? error.message : 'Unknown error',
+          serverUuid: server.uuid,
+          serverIdentifier: server.identifier ?? null,
+          nodeId: server.nodeId ?? null,
+          serverStatus: server.status ?? null,
+        },
+      }
+    }
+
+    throw createError({
+      status: 502,
+      statusText: 'Failed to prepare websocket session',
+      message: error instanceof Error ? error.message : 'Failed to prepare websocket session',
+    })
+  }
+
   const node = await getNodeForServer(server.nodeId)
-  const { connection: nodeConnection } = resolveNodeConnection(node.id)
+  const { connection: nodeConnection } = await resolveNodeConnection(node.id)
 
   if (!nodeConnection) {
     throw createError({
@@ -63,13 +109,6 @@ export default defineEventHandler(async (event): Promise<WebSocketToken> => {
 
   const protocol = node.scheme === 'https' ? 'wss' : 'ws'
   const socketUrl = `${protocol}://${node.fqdn}:${node.daemonListen}/api/servers/${server.uuid}/ws`
-
-  await recordServerActivity({
-    event,
-    actorId: user.id,
-    action: 'server.websocket.token_issued',
-    server: { id: server.id, uuid: server.uuid },
-  })
 
   const response: WebSocketToken = {
     token,

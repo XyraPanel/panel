@@ -46,11 +46,11 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  setSettings(updates as Record<typeof SETTINGS_KEYS[keyof typeof SETTINGS_KEYS], string>)
+  await setSettings(updates as Record<typeof SETTINGS_KEYS[keyof typeof SETTINGS_KEYS], string>)
 
-  for (const key of deletions) {
-    deleteSetting(key as typeof SETTINGS_KEYS[keyof typeof SETTINGS_KEYS])
-  }
+  await Promise.all(
+    deletions.map(key => deleteSetting(key as typeof SETTINGS_KEYS[keyof typeof SETTINGS_KEYS])),
+  )
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

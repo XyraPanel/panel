@@ -25,7 +25,6 @@ export default defineEventHandler(async (event) => {
     .select({ id: tables.users.id, username: tables.users.username })
     .from(tables.users)
     .where(eq(tables.users.id, userId))
-    .get()
 
   if (!targetUser) {
     throw createError({ status: 404, statusText: 'User not found' })
@@ -44,7 +43,6 @@ export default defineEventHandler(async (event) => {
         eq(tables.apiKeys.userId, userId)
       )
     )
-    .get()
 
   if (!apiKey) {
     throw createError({ status: 404, statusText: 'API key not found' })
@@ -52,7 +50,6 @@ export default defineEventHandler(async (event) => {
 
   await db.delete(tables.apiKeys)
     .where(eq(tables.apiKeys.id, apiKey.id))
-    .run()
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

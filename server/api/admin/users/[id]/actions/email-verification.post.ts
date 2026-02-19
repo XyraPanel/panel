@@ -32,7 +32,6 @@ export default defineEventHandler(async (event) => {
     })
     .from(tables.users)
     .where(eq(tables.users.id, userId))
-    .get()
 
   if (!user) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' })
@@ -48,7 +47,6 @@ export default defineEventHandler(async (event) => {
             updatedAt: now,
           })
           .where(eq(tables.users.id, userId))
-          .run()
         break
       }
       case 'mark-unverified': {
@@ -58,7 +56,6 @@ export default defineEventHandler(async (event) => {
             updatedAt: new Date(),
           })
           .where(eq(tables.users.id, userId))
-          .run()
         break
       }
       case 'resend-link': {

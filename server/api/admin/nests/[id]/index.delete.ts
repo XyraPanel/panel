@@ -17,11 +17,10 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const existing = await db
+  const [existing] = await db
     .select()
     .from(tables.nests)
     .where(eq(tables.nests.id, nestId))
-    .get()
 
   if (!existing) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Nest not found' })
@@ -31,7 +30,6 @@ export default defineEventHandler(async (event) => {
     .select({ id: tables.eggs.id })
     .from(tables.eggs)
     .where(eq(tables.eggs.nestId, nestId))
-    .all()
 
   if (eggsCount.length > 0) {
     throw createError({
@@ -41,7 +39,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  await db.delete(tables.nests).where(eq(tables.nests.id, nestId)).run()
+  await db.delete(tables.nests).where(eq(tables.nests.id, nestId))
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

@@ -17,11 +17,10 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const nest = await db
+  const [nest] = await db
     .select()
     .from(tables.nests)
     .where(eq(tables.nests.id, nestId))
-    .get()
 
   if (!nest) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Nest not found' })
@@ -32,7 +31,6 @@ export default defineEventHandler(async (event) => {
     .from(tables.eggs)
     .where(eq(tables.eggs.nestId, nestId))
     .orderBy(tables.eggs.name)
-    .all()
 
   const data = {
     nest: {

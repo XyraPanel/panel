@@ -38,11 +38,12 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const db = useDrizzle()
 
-  const server = db
+  const serverRows = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.uuid, uuid))
-    .get()
+
+  const server = serverRows[0]
 
   if (!server) {
     throw createError({ status: 404, statusText: 'Server not found' })
@@ -56,11 +57,10 @@ export default defineEventHandler(async (event: H3Event) => {
     })
   }
 
-  const allAllocations = db
+  const allAllocations = await db
     .select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.serverId, server.id))
-    .all()
 
   const primaryAllocation = allAllocations.find(a => a.isPrimary)
 
@@ -73,26 +73,29 @@ export default defineEventHandler(async (event: H3Event) => {
     })
   }
 
-  const limits = db
+  const limitsRows = await db
     .select()
     .from(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, server.id))
-    .get()
+    .limit(1)
+
+  const limits = limitsRows[0]
 
 
-  const egg = server.eggId
-    ? db
+  let egg = null
+  if (server.eggId) {
+    const eggRows = await db
         .select()
         .from(tables.eggs)
         .where(eq(tables.eggs.id, server.eggId))
-        .get()
-    : null
+        .limit(1)
+    egg = eggRows[0] ?? null
+  }
 
-  const envVars = db
+  const envVars = await db
     .select()
     .from(tables.serverStartupEnv)
     .where(eq(tables.serverStartupEnv.serverId, server.id))
-    .all()
 
   const serverEnvMap = new Map<string, string>()
   for (const envVar of envVars) {
@@ -104,11 +107,10 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   if (egg?.id) {
-    const eggVariables = db
+    const eggVariables = await db
       .select()
       .from(tables.eggVariables)
       .where(eq(tables.eggVariables.eggId, egg.id))
-      .all()
 
     for (const eggVar of eggVariables) {
       const value = serverEnvMap.get(eggVar.envVariable) ?? eggVar.defaultValue ?? ''
@@ -394,13 +396,8 @@ export default defineEventHandler(async (event: H3Event) => {
     configs,
   }
 
-  const response = {
+  return {
     settings,
     process_configuration: processConfiguration,
-  }
-
-
-  return {
-    data: response,
   }
 })

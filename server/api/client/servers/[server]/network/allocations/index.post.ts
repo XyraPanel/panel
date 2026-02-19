@@ -26,10 +26,9 @@ export default defineEventHandler(async (event) => {
   })
 
   const db = useDrizzle()
-  const existingAllocations = db.select()
+  const existingAllocations = await db.select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.serverId, server.id))
-    .all()
 
   if (server.allocationLimit && existingAllocations.length >= server.allocationLimit) {
     throw createError({
@@ -38,10 +37,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const availableAllocations = db.select()
+  const availableAllocations = await db.select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.nodeId, server.nodeId!))
-    .all()
     .filter(alloc => !alloc.serverId)
 
   if (availableAllocations.length === 0) {
@@ -63,13 +61,12 @@ export default defineEventHandler(async (event) => {
   const now = new Date()
   const allocationId = allocation.id
 
-  db.update(tables.serverAllocations)
+  await db.update(tables.serverAllocations)
     .set({
       serverId: server.id,
       updatedAt: now,
     })
     .where(eq(tables.serverAllocations.id, allocation.id))
-    .run()
 
   await recordServerActivity({
     event,

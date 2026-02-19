@@ -26,12 +26,11 @@ export async function getNodeIdFromAuth(event: H3Event): Promise<string> {
   const { tokenId, token } = parsed
 
   const db = useDrizzle()
-  const node = db
+  const [node] = await db
     .select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.tokenIdentifier, tokenId))
     .limit(1)
-    .get()
 
   if (!node) {
     throw createError({
@@ -39,6 +38,11 @@ export async function getNodeIdFromAuth(event: H3Event): Promise<string> {
       statusText: 'Forbidden',
       message: 'You are not authorized to access this resource.',
     })
+  }
+
+  const combinedToken = `${tokenId}.${token}`
+  if (typeof node.apiToken === 'string' && node.apiToken.includes('.') && constantTimeCompare(combinedToken, node.apiToken)) {
+    return node.id
   }
 
   try {
@@ -52,6 +56,11 @@ export async function getNodeIdFromAuth(event: H3Event): Promise<string> {
       })
     }
   } catch {
+    // Compatibility fallback for legacy plain tokenSecret rows.
+    if (typeof node.tokenSecret === 'string' && node.tokenSecret.length > 0 && constantTimeCompare(token, node.tokenSecret)) {
+      return node.id
+    }
+
     throw createError({
       status: 403,
       statusText: 'Forbidden',

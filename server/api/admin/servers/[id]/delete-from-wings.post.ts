@@ -20,11 +20,11 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const server = db
+  const [server] = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.id, id))
-    .get()
+    .limit(1)
 
   if (!server) {
     throw createError({

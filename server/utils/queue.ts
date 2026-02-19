@@ -90,11 +90,11 @@ class SimpleQueue {
     const { getWingsClientForServer } = await import('./wings-client')
     const db = useDrizzle()
 
-    const server = db
+    const [server] = await db
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.id, data.serverId))
-      .get()
+      .limit(1)
 
     if (!server) {
       throw new Error('Server not found')
@@ -102,11 +102,11 @@ class SimpleQueue {
 
     const { client } = await getWingsClientForServer(server.uuid)
 
-    const limits = db
+    const [limits] = await db
       .select()
       .from(tables.serverLimits)
       .where(eq(tables.serverLimits.serverId, server.id))
-      .get()
+      .limit(1)
 
     const config = {
       uuid: server.uuid,

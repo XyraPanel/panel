@@ -21,13 +21,13 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const allocation = db.select()
+  const [allocation] = await db.select()
     .from(tables.serverAllocations)
     .where(and(
       eq(tables.serverAllocations.id, allocationId),
       eq(tables.serverAllocations.nodeId, nodeId),
     ))
-    .get()
+    .limit(1)
 
   if (!allocation) {
     throw createError({ status: 404, statusText: 'Allocation not found' })
@@ -40,9 +40,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  db.delete(tables.serverAllocations)
+  await db.delete(tables.serverAllocations)
     .where(eq(tables.serverAllocations.id, allocationId))
-    .run()
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

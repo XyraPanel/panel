@@ -24,11 +24,10 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const egg = await db
+  const [egg] = await db
     .select()
     .from(tables.eggs)
     .where(eq(tables.eggs.id, eggId))
-    .get()
 
   if (!egg) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found' })
@@ -60,13 +59,11 @@ export default defineEventHandler(async (event) => {
   await db.update(tables.eggs)
     .set(updates)
     .where(eq(tables.eggs.id, eggId))
-    .run()
 
-  const updatedEgg = await db
+  const [updatedEgg] = await db
     .select()
     .from(tables.eggs)
     .where(eq(tables.eggs.id, eggId))
-    .get()
 
   if (!updatedEgg) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found after update' })

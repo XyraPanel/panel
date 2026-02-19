@@ -3,6 +3,7 @@ import { useDrizzle, tables, eq } from '#server/utils/drizzle'
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { getWingsClientForServer } from '#server/utils/wings-client'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
@@ -18,11 +19,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
-  const [server] = db.select()
+  const [server] = await db.select()
     .from(tables.servers)
     .where(eq(tables.servers.id, serverId))
     .limit(1)
-    .all()
 
   if (!server) {
     throw createError({
@@ -38,29 +38,9 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const [node] = db.select()
-    .from(tables.wingsNodes)
-    .where(eq(tables.wingsNodes.id, server.nodeId))
-    .limit(1)
-    .all()
-
-  if (!node) {
-    throw createError({
-      status: 404,
-      message: 'Server node not found',
-    })
-  }
-
   try {
-
-    const baseUrl = `${node.scheme}://${node.fqdn}:${node.daemonListen}`
-    await fetch(`${baseUrl}/api/servers/${server.uuid}/reinstall`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${node.tokenIdentifier}.${node.tokenSecret}`,
-        'Accept': 'application/json',
-      },
-    })
+    const { client } = await getWingsClientForServer(server.uuid)
+    await client.reinstallServer(server.uuid)
 
     await recordAuditEventFromRequest(event, {
       actor: session.user.email || session.user.id,

@@ -13,23 +13,18 @@ export default defineEventHandler(async (event: H3Event) => {
 
   await getNodeIdFromAuth(event)
 
-  const backup = db
+  const [backup] = await db
     .select()
     .from(tables.serverBackups)
     .where(eq(tables.serverBackups.uuid, backupId))
     .limit(1)
-    .get()
 
   if (!backup) {
     throw createError({ status: 404, statusText: 'Backup not found' })
   }
 
-  const response: BackupRemoteUploadResponse = {
+  return {
     parts: [],
     part_size: 5 * 1024 * 1024 * 1024,
-  }
-
-  return {
-    data: response,
   }
 })

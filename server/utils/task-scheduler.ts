@@ -18,63 +18,44 @@ export class TaskScheduler {
   private runningTasks = new Map<string, boolean>()
   private isProcessingQueue = false
 
+  private parseCronField(field: string): number | null {
+    if (!field || field === '*' || field.startsWith('*/')) return null
+    const val = parseInt(field)
+    return isNaN(val) ? null : val
+  }
+
   private parseNextRun(cronExpression: string, lastRun?: Date): Date {
-    const now = lastRun ? new Date(lastRun.getTime() + 60000) : new Date()
-    const [minute = '*', hour = '*', day = '*', month = '*', weekday = '*'] = cronExpression.trim().split(/\s+/)
-    
-    const nextRun = new Date(now)
+    const base = lastRun ? new Date(lastRun.getTime() + 60000) : new Date()
+    const parts = cronExpression.trim().split(/\s+/)
+    const [mf = '*', hf = '*', df = '*', monf = '*', wdf = '*'] = parts
+
+    const targetMinute = this.parseCronField(mf)
+    const targetHour = this.parseCronField(hf)
+    const targetDay = this.parseCronField(df)
+    const targetMonth = this.parseCronField(monf)
+    const targetWeekday = this.parseCronField(wdf)
+
+    const nextRun = new Date(base)
     nextRun.setSeconds(0)
     nextRun.setMilliseconds(0)
-    
-    const targetMinute = minute === '*' ? null : parseInt(minute)
-    const targetHour = hour === '*' ? null : parseInt(hour)
-    const targetDay = day === '*' ? null : parseInt(day)
-    const targetMonth = month === '*' ? null : parseInt(month)
-    const targetWeekday = weekday === '*' ? null : parseInt(weekday)
-    
-    let found = false
-    let attempts = 0
-    const maxAttempts = 366
-    
-    while (!found && attempts < maxAttempts) {
-      attempts++
-      
-      if (targetMinute !== null) {
-        nextRun.setMinutes(targetMinute)
-      } else {
-        nextRun.setMinutes(nextRun.getMinutes() + 1)
-      }
-      
-      if (targetHour !== null) {
-        nextRun.setHours(targetHour)
-      }
-      
-      if (targetDay !== null) {
-        nextRun.setDate(targetDay)
-      }
-      
-      if (targetMonth !== null) {
-        nextRun.setMonth(targetMonth - 1)
-      }
-      
-      if (nextRun > now) {
-        const matchesMinute = targetMinute === null || nextRun.getMinutes() === targetMinute
-        const matchesHour = targetHour === null || nextRun.getHours() === targetHour
-        const matchesDay = targetDay === null || nextRun.getDate() === targetDay
-        const matchesMonth = targetMonth === null || nextRun.getMonth() === targetMonth - 1
-        const matchesWeekday = targetWeekday === null || nextRun.getDay() === targetWeekday
-        
-        if (matchesMinute && matchesHour && matchesDay && matchesMonth && matchesWeekday) {
-          found = true
-        } else {
-          nextRun.setMinutes(nextRun.getMinutes() + 1)
-        }
-      } else {
-        nextRun.setMinutes(nextRun.getMinutes() + 1)
-      }
+    nextRun.setMinutes(nextRun.getMinutes() + 1)
+
+    for (let i = 0; i < 60 * 24 * 366; i++) {
+      const ok
+        = (targetMinute === null || nextRun.getMinutes() === targetMinute)
+        && (targetHour === null || nextRun.getHours() === targetHour)
+        && (targetDay === null || nextRun.getDate() === targetDay)
+        && (targetMonth === null || nextRun.getMonth() === targetMonth - 1)
+        && (targetWeekday === null || nextRun.getDay() === targetWeekday)
+      if (ok) return nextRun
+      nextRun.setMinutes(nextRun.getMinutes() + 1)
     }
-    
-    return nextRun
+
+    const fallback = new Date(base)
+    fallback.setMinutes(fallback.getMinutes() + 1)
+    fallback.setSeconds(0)
+    fallback.setMilliseconds(0)
+    return fallback
   }
 
   private isCronDue(cronExpression: string, now: Date): boolean {
@@ -89,6 +70,11 @@ export class TaskScheduler {
     const equals = (token: string | undefined, value: number) => {
       if (!token || token === '*') {
         return true
+      }
+
+      if (token.startsWith('*/')) {
+        const step = Number.parseInt(token.slice(2), 10)
+        return !Number.isNaN(step) && step > 0 && value % step === 0
       }
 
       const parsed = Number.parseInt(token, 10)
@@ -115,31 +101,31 @@ export class TaskScheduler {
     const executedAt = new Date()
     
     try {
-      const task = await this.db
+      const [task] = await this.db
         .select()
         .from(tables.serverScheduleTasks)
         .where(eq(tables.serverScheduleTasks.id, taskId))
-        .get()
+        .limit(1)
 
       if (!task) {
         throw new Error('Task not found')
       }
 
-      const schedule = await this.db
+      const [schedule] = await this.db
         .select()
         .from(tables.serverSchedules)
         .where(eq(tables.serverSchedules.id, scheduleId))
-        .get()
+        .limit(1)
 
       if (!schedule) {
         throw new Error('Schedule not found')
       }
 
-      const server = await this.db
+      const [server] = await this.db
         .select()
         .from(tables.servers)
         .where(eq(tables.servers.id, schedule.serverId))
-        .get()
+        .limit(1)
 
       if (!server) {
         throw new Error('Server not found')
@@ -209,11 +195,11 @@ export class TaskScheduler {
     let scheduleSuccess = true
 
     try {
-      const schedule = await this.db
+      const [schedule] = await this.db
         .select()
         .from(tables.serverSchedules)
         .where(eq(tables.serverSchedules.id, scheduleId))
-        .get()
+        .limit(1)
 
       if (!schedule) {
         throw new Error('Schedule not found')
@@ -228,7 +214,6 @@ export class TaskScheduler {
         .from(tables.serverScheduleTasks)
         .where(eq(tables.serverScheduleTasks.scheduleId, scheduleId))
         .orderBy(tables.serverScheduleTasks.sequenceId)
-        .all()
 
       for (const task of tasks) {
         if (task.timeOffset > 0) {
@@ -255,7 +240,6 @@ export class TaskScheduler {
           updatedAt: new Date(),
         })
         .where(eq(tables.serverSchedules.id, scheduleId))
-        .run()
 
       return {
         scheduleId,
@@ -281,7 +265,6 @@ export class TaskScheduler {
         .select()
         .from(tables.serverSchedules)
         .where(eq(tables.serverSchedules.enabled, true))
-        .all()
 
       for (const schedule of schedules) {
         if (this.isCronDue(schedule.cron, now)) {
@@ -349,11 +332,11 @@ export class TaskScheduler {
       })
     }
 
-    const server = await this.db
+    const [server] = await this.db
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.id, serverId))
-      .get()
+      .limit(1)
 
     return {
       id: scheduleId,
@@ -379,11 +362,11 @@ export class TaskScheduler {
   }
 
   async deleteSchedule(scheduleId: string, userId?: string): Promise<void> {
-    const schedule = await this.db
+    const [schedule] = await this.db
       .select()
       .from(tables.serverSchedules)
       .where(eq(tables.serverSchedules.id, scheduleId))
-      .get()
+      .limit(1)
 
     if (!schedule) {
       throw new Error('Schedule not found')
@@ -392,12 +375,10 @@ export class TaskScheduler {
     await this.db
       .delete(tables.serverScheduleTasks)
       .where(eq(tables.serverScheduleTasks.scheduleId, scheduleId))
-      .run()
 
     await this.db
       .delete(tables.serverSchedules)
       .where(eq(tables.serverSchedules.id, scheduleId))
-      .run()
 
     if (userId) {
       await recordAuditEvent({
@@ -412,11 +393,11 @@ export class TaskScheduler {
   }
 
   async getSchedule(scheduleId: string): Promise<ScheduleInfo | null> {
-    const schedule = await this.db
+    const [schedule] = await this.db
       .select()
       .from(tables.serverSchedules)
       .where(eq(tables.serverSchedules.id, scheduleId))
-      .get()
+      .limit(1)
 
     if (!schedule) {
       return null
@@ -427,13 +408,12 @@ export class TaskScheduler {
       .from(tables.serverScheduleTasks)
       .where(eq(tables.serverScheduleTasks.scheduleId, scheduleId))
       .orderBy(tables.serverScheduleTasks.sequenceId)
-      .all()
 
-    const server = await this.db
+    const [server] = await this.db
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.id, schedule.serverId))
-      .get()
+      .limit(1)
 
     return {
       id: schedule.id,
@@ -465,7 +445,7 @@ export class TaskScheduler {
       query.where(eq(tables.serverSchedules.serverId, serverId))
     }
     
-    const schedules = await query.orderBy(tables.serverSchedules.createdAt).all()
+    const schedules = await query.orderBy(tables.serverSchedules.createdAt)
     
     const results: ScheduleInfo[] = []
     for (const schedule of schedules) {
@@ -479,11 +459,11 @@ export class TaskScheduler {
   }
 
   async toggleSchedule(scheduleId: string, enabled: boolean, userId?: string): Promise<void> {
-    const schedule = await this.db
+    const [schedule] = await this.db
       .select()
       .from(tables.serverSchedules)
       .where(eq(tables.serverSchedules.id, scheduleId))
-      .get()
+      .limit(1)
 
     if (!schedule) {
       throw new Error('Schedule not found')
@@ -496,7 +476,6 @@ export class TaskScheduler {
         updatedAt: new Date(),
       })
       .where(eq(tables.serverSchedules.id, scheduleId))
-      .run()
 
     if (userId) {
       await recordAuditEvent({

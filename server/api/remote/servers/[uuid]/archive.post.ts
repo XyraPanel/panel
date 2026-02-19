@@ -18,12 +18,13 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const { successful } = await readValidatedBodyWithLimit(event, remoteServerArchiveStatusSchema, BODY_SIZE_LIMITS.SMALL)
 
-  const server = db
+  const serverRows = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.uuid, uuid))
     .limit(1)
-    .get()
+
+  const server = serverRows[0]
 
   if (!server) {
     throw createError({ status: 404, statusText: 'Server not found' })
@@ -34,13 +35,12 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   if (successful) {
-    db.update(tables.servers)
+    await db.update(tables.servers)
       .set({
         status: 'archived',
         updatedAt: new Date(),
       })
       .where(eq(tables.servers.id, server.id))
-      .run()
   }
 
   await recordAuditEvent({

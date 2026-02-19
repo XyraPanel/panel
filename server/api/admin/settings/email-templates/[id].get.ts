@@ -15,11 +15,13 @@ export default defineEventHandler(async (event) => {
 
   try {
     const db = useDrizzle()
-    const template = db
+    const templateRows = await db
       .select()
       .from(tables.emailTemplates)
       .where(eq(tables.emailTemplates.templateId, id))
-      .get() as { htmlContent: string; updatedAt: Date } | undefined
+      .limit(1)
+
+    const [template] = templateRows as { htmlContent: string; updatedAt: Date }[]
 
     if (!template) {
       throw createError({
@@ -47,7 +49,7 @@ export default defineEventHandler(async (event) => {
     }
   }
   catch (err) {
-    if (err instanceof Error && 'status' in err) {
+    if (err && typeof err === 'object' && ('statusCode' in err || 'status' in err)) {
       throw err
     }
     throw createError({

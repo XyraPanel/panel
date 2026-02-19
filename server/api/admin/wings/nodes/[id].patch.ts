@@ -75,7 +75,7 @@ export default defineEventHandler(async (event): Promise<UpdateWingsNodeResponse
   const body = await readUpdatePayload(event)
 
   try {
-    const updatedNode = updateWingsNode(id, body)
+    const updatedNode = await updateWingsNode(id, body)
 
     console.info('[admin][wings:nodes:update]', {
       nodeId: id,

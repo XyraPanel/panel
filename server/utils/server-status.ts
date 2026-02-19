@@ -6,14 +6,24 @@ import { buildServerStatusCacheKey } from './cache-keys'
 
 const SERVER_STATUS_CACHE_TTL = 5
 
+function isMissingWingsServerError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  const message = error.message.toLowerCase()
+  return message.includes('404') && message.includes('requested resource does not exist on this instance')
+}
+
 async function fetchServerStatus(serverUuid: string): Promise<ServerStatus> {
   const db = useDrizzle()
-  
-  const server = await db
+
+  const serverRows = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.uuid, serverUuid))
-    .get()
+
+  const [server] = serverRows
 
   if (!server) {
     throw new Error('Server not found')
@@ -40,7 +50,9 @@ async function fetchServerStatus(serverUuid: string): Promise<ServerStatus> {
       utilization: details.utilization,
     }
   } catch (error) {
-    console.error(`Failed to get status for server ${serverUuid}:`, error)
+    if (!isMissingWingsServerError(error)) {
+      console.error(`Failed to get status for server ${serverUuid}:`, error)
+    }
 
     let errorMessage = 'Unknown error'
     if (error instanceof WingsAuthError) {
@@ -91,7 +103,6 @@ export async function updateServerStatus(serverUuid: string): Promise<void> {
       updatedAt: new Date(),
     })
     .where(eq(tables.servers.uuid, serverUuid))
-    .run()
 }
 
 export async function getMultipleServerStatuses(serverUuids: string[]): Promise<ServerStatus[]> {
@@ -127,14 +138,13 @@ export async function getMultipleServerStatuses(serverUuids: string[]): Promise<
 
 export async function refreshAllServerStatuses(): Promise<void> {
   const db = useDrizzle()
-  
+
   const servers = await db
     .select({ uuid: tables.servers.uuid })
     .from(tables.servers)
-    .all()
 
   const serverUuids = servers.map(s => s.uuid)
-  
+
   const batchSize = 5
   for (let i = 0; i < serverUuids.length; i += batchSize) {
     const batch = serverUuids.slice(i, i + batchSize)

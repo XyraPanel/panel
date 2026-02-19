@@ -6,63 +6,45 @@ import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
 import { clientUpdateScheduleSchema } from '#shared/schema/server/operations'
 
+function parseCronField(field: string): number | null {
+  if (!field || field === '*' || field.startsWith('*/')) return null
+  const val = parseInt(field)
+  return isNaN(val) ? null : val
+}
+
 function calculateNextRun(cronExpression: string): Date {
   const now = new Date()
-  const [minute = '*', hour = '*', day = '*', month = '*', weekday = '*'] = cronExpression.split(' ')
-  
+  const parts = cronExpression.trim().split(/\s+/)
+  const [minuteField = '*', hourField = '*', dayField = '*', monthField = '*', weekdayField = '*'] = parts
+
+  const targetMinute = parseCronField(minuteField)
+  const targetHour = parseCronField(hourField)
+  const targetDay = parseCronField(dayField)
+  const targetMonth = parseCronField(monthField)
+  const targetWeekday = parseCronField(weekdayField)
+
   const nextRun = new Date(now)
   nextRun.setSeconds(0)
   nextRun.setMilliseconds(0)
-  
-  const targetMinute = minute === '*' ? null : parseInt(minute)
-  const targetHour = hour === '*' ? null : parseInt(hour)
-  const targetDay = day === '*' ? null : parseInt(day)
-  const targetMonth = month === '*' ? null : parseInt(month)
-  const targetWeekday = weekday === '*' ? null : parseInt(weekday)
-  
-  let found = false
-  let attempts = 0
-  const maxAttempts = 366
-  
-  while (!found && attempts < maxAttempts) {
-    attempts++
-    
-    if (targetMinute !== null) {
-      nextRun.setMinutes(targetMinute)
-    } else {
-      nextRun.setMinutes(nextRun.getMinutes() + 1)
-    }
-    
-    if (targetHour !== null) {
-      nextRun.setHours(targetHour)
-    }
-    
-    if (targetDay !== null) {
-      nextRun.setDate(targetDay)
-    }
-    
-    if (targetMonth !== null) {
-      nextRun.setMonth(targetMonth - 1)
-    }
-    
-    if (nextRun > now) {
-      const matchesMinute = targetMinute === null || nextRun.getMinutes() === targetMinute
-      const matchesHour = targetHour === null || nextRun.getHours() === targetHour
-      const matchesDay = targetDay === null || nextRun.getDate() === targetDay
-      const matchesMonth = targetMonth === null || nextRun.getMonth() === targetMonth - 1
-      const matchesWeekday = targetWeekday === null || nextRun.getDay() === targetWeekday
-      
-      if (matchesMinute && matchesHour && matchesDay && matchesMonth && matchesWeekday) {
-        found = true
-      } else {
-        nextRun.setMinutes(nextRun.getMinutes() + 1)
-      }
-    } else {
-      nextRun.setMinutes(nextRun.getMinutes() + 1)
-    }
+  nextRun.setMinutes(nextRun.getMinutes() + 1)
+
+  for (let i = 0; i < 60 * 24 * 366; i++) {
+    const ok
+      = (targetMinute === null || nextRun.getMinutes() === targetMinute)
+      && (targetHour === null || nextRun.getHours() === targetHour)
+      && (targetDay === null || nextRun.getDate() === targetDay)
+      && (targetMonth === null || nextRun.getMonth() === targetMonth - 1)
+      && (targetWeekday === null || nextRun.getDay() === targetWeekday)
+
+    if (ok) return nextRun
+    nextRun.setMinutes(nextRun.getMinutes() + 1)
   }
-  
-  return nextRun
+
+  const fallback = new Date(now)
+  fallback.setMinutes(fallback.getMinutes() + 1)
+  fallback.setSeconds(0)
+  fallback.setMilliseconds(0)
+  return fallback
 }
 
 type ServerScheduleUpdate = typeof tables.serverSchedules.$inferInsert
@@ -89,7 +71,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBodyWithLimit(event, clientUpdateScheduleSchema, BODY_SIZE_LIMITS.SMALL)
 
   const db = useDrizzle()
-  const schedule = db
+  const [schedule] = await db
     .select()
     .from(tables.serverSchedules)
     .where(
@@ -98,7 +80,7 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverSchedules.serverId, server.id)
       )
     )
-    .get()
+    .limit(1)
 
   if (!schedule) {
     throw createError({
@@ -128,13 +110,12 @@ export default defineEventHandler(async (event) => {
   await db.update(tables.serverSchedules)
     .set(updates)
     .where(eq(tables.serverSchedules.id, scheduleId))
-    .run()
 
-  const updated = await db
+  const [updated] = await db
     .select()
     .from(tables.serverSchedules)
     .where(eq(tables.serverSchedules.id, scheduleId))
-    .get()
+    .limit(1)
 
   await invalidateScheduleCaches({ serverId: server.id, scheduleId })
 
@@ -152,7 +133,6 @@ export default defineEventHandler(async (event) => {
     .from(tables.serverScheduleTasks)
     .where(eq(tables.serverScheduleTasks.scheduleId, scheduleId))
     .orderBy(tables.serverScheduleTasks.sequenceId)
-    .all()
 
   return {
     data: {

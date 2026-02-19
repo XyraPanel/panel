@@ -10,7 +10,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const body = await readValidatedBodyWithLimit(event, createWingsNodeSchema, BODY_SIZE_LIMITS.MEDIUM)
 
   try {
-    const node = createWingsNode(body)
+    const node = await createWingsNode(body)
 
     await recordAuditEventFromRequest(event, {
       actor: session?.user?.id ?? 'admin',
@@ -29,6 +29,13 @@ export default defineEventHandler(async (event: H3Event) => {
   }
   catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unable to create node'
-    throw createError({ status: 400, statusText: message })
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'Unable to create node',
+      message,
+      data: {
+        message,
+      },
+    })
   }
 })

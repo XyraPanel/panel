@@ -20,10 +20,10 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const node = db.select()
+  const [node] = await db.select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, nodeId))
-    .get()
+    .limit(1)
 
   if (!node) {
     throw createError({ status: 404, statusText: 'Node not found' })
@@ -73,14 +73,14 @@ export default defineEventHandler(async (event) => {
 
   for (const ip of ipAddresses) {
     for (const port of ports) {
-      const existing = db.select()
+      const [existing] = await db.select()
         .from(tables.serverAllocations)
         .where(and(
           eq(tables.serverAllocations.nodeId, nodeId),
           eq(tables.serverAllocations.ip, ip),
           eq(tables.serverAllocations.port, port),
         ))
-        .get()
+        .limit(1)
 
       if (existing) {
         continue
@@ -110,7 +110,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  db.insert(tables.serverAllocations).values(allocationsToCreate).run()
+  await db.insert(tables.serverAllocations).values(allocationsToCreate)
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

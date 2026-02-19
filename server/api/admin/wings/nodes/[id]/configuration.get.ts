@@ -1,7 +1,7 @@
 import { requireAdmin } from '#server/utils/security'
 import { getWingsNodeConfigurationById } from '#server/utils/wings/nodesStore'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { useRuntimeConfig } from '#imports'
+import { useRuntimeConfig, getRequestURL } from '#imports'
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event)
@@ -11,12 +11,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const runtimeConfig = useRuntimeConfig()
-  const panelConfig = (runtimeConfig.public?.app ?? {}) as { baseUrl?: string }
-  const requestOrigin = typeof event.node.req.headers.origin === 'string' ? event.node.req.headers.origin : ''
-  const panelUrl = panelConfig.baseUrl || requestOrigin || ''
+  const panelConfig = (runtimeConfig.public?.panel ?? {}) as { baseUrl?: string }
+  const requestUrl = getRequestURL(event)
+  const panelUrl = panelConfig.baseUrl || `${requestUrl.protocol}//${requestUrl.host}`
 
   try {
-    const configuration = getWingsNodeConfigurationById(id, panelUrl)
+    const configuration = await getWingsNodeConfigurationById(id, panelUrl)
 
     await recordAuditEventFromRequest(event, {
       actor: session.user.email || session.user.id,

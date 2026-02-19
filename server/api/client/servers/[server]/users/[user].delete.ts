@@ -36,7 +36,6 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverSubusers.serverId, server.id)
       )
     )
-    .get()
 
   if (!subuser) {
     throw createError({
@@ -45,9 +44,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  db.delete(tables.serverSubusers)
+  await db.delete(tables.serverSubusers)
     .where(eq(tables.serverSubusers.id, subuserId))
-    .run()
 
   await recordServerActivity({
     event,

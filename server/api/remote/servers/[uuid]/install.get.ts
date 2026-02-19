@@ -18,11 +18,11 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const db = useDrizzle()
 
-  const server = db
+  const [server] = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.uuid, uuid))
-    .get()
+    .limit(1)
 
   if (!server) {
     throw createError({ status: 404, statusText: 'Server not found' })
@@ -44,11 +44,11 @@ export default defineEventHandler(async (event: H3Event) => {
     })
   }
 
-  const egg = db
+  const [egg] = await db
     .select()
     .from(tables.eggs)
     .where(eq(tables.eggs.id, server.eggId))
-    .get()
+    .limit(1)
 
   if (!egg) {
     throw createError({
@@ -58,13 +58,9 @@ export default defineEventHandler(async (event: H3Event) => {
     })
   }
 
-  const payload: InstallScriptResponse = {
+  return {
     container_image: egg.scriptContainer || 'alpine:3.4',
     entrypoint: egg.scriptEntry || 'ash',
     script: egg.scriptInstall || '',
-  }
-
-  return {
-    data: payload,
   }
 })

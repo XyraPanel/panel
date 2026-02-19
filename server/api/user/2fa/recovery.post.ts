@@ -15,7 +15,6 @@ export default defineEventHandler(async (event) => {
     .select()
     .from(tables.recoveryTokens)
     .where(eq(tables.recoveryTokens.userId, userId))
-    .all()
 
   let matchedTokenId: string | null = null
 
@@ -37,18 +36,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const now = new Date()
-  db.update(tables.recoveryTokens)
+  await db.update(tables.recoveryTokens)
     .set({ usedAt: now })
     .where(eq(tables.recoveryTokens.id, matchedTokenId))
-    .run()
 
-  db.update(tables.users)
+  await db.update(tables.users)
     .set({
       totpAuthenticatedAt: now,
       updatedAt: now,
     })
     .where(eq(tables.users.id, userId))
-    .run()
 
   await recordAuditEventFromRequest(event, {
     actor: user.email || user.id,

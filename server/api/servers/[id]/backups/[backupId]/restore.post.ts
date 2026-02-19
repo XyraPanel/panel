@@ -36,7 +36,6 @@ export default defineEventHandler(async (event) => {
       eq(tables.serverBackups.id, backupId),
       eq(tables.serverBackups.serverId, server.id),
     ))
-    .get()
 
   if (!backup) {
     throw createError({ status: 404, statusText: 'Backup not found' })

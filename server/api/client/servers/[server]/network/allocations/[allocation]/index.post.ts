@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
   const { notes } = body
 
   const db = useDrizzle()
-  const [allocation] = db.select()
+  const [allocation] = await db.select()
     .from(tables.serverAllocations)
     .where(
       and(
@@ -44,7 +44,6 @@ export default defineEventHandler(async (event) => {
       )
     )
     .limit(1)
-    .all()
 
   if (!allocation) {
     throw createError({
@@ -53,13 +52,12 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  db.update(tables.serverAllocations)
+  await db.update(tables.serverAllocations)
     .set({
       notes: notes || null,
       updatedAt: new Date(),
     })
     .where(eq(tables.serverAllocations.id, allocationId))
-    .run()
 
   await recordServerActivity({
     event,

@@ -22,12 +22,13 @@ export default defineEventHandler(async (event: H3Event) => {
     BODY_SIZE_LIMITS.SMALL,
   )
 
-  const backup = db
+  const backupRows = await db
     .select()
     .from(tables.serverBackups)
     .where(eq(tables.serverBackups.uuid, backupId))
     .limit(1)
-    .get()
+
+  const backup = backupRows[0]
 
   if (!backup) {
     throw createError({ status: 404, statusText: 'Backup not found' })
@@ -42,18 +43,19 @@ export default defineEventHandler(async (event: H3Event) => {
     updatedAt: new Date(),
   }
 
-  db.update(tables.serverBackups)
+  await db.update(tables.serverBackups)
     .set(updates)
     .where(eq(tables.serverBackups.id, backup.id))
-    .run()
+
   await invalidateServerBackupsCache(backup.serverId)
 
-  const server = db
+  const serverRows = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.id, backup.serverId))
     .limit(1)
-    .get()
+
+  const server = serverRows[0]
 
   await recordAuditEventFromRequest(event, {
     actor: 'wings',

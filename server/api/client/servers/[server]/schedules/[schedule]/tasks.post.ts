@@ -39,7 +39,6 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverSchedules.serverId, server.id)
       )
     )
-    .get()
 
   if (!schedule) {
     throw createError({
@@ -58,7 +57,6 @@ export default defineEventHandler(async (event) => {
     .select()
     .from(tables.serverScheduleTasks)
     .where(eq(tables.serverScheduleTasks.scheduleId, scheduleId))
-    .all()
 
   const nextSequenceId = existingTasks.length > 0
     ? Math.max(...existingTasks.map(t => t.sequenceId)) + 1
@@ -67,7 +65,7 @@ export default defineEventHandler(async (event) => {
   const taskId = randomUUID()
   const now = new Date()
 
-  db.insert(tables.serverScheduleTasks)
+  await db.insert(tables.serverScheduleTasks)
     .values({
       id: taskId,
       scheduleId,
@@ -80,13 +78,12 @@ export default defineEventHandler(async (event) => {
       createdAt: now,
       updatedAt: now,
     })
-    .run()
+    
 
   const task = db
     .select()
     .from(tables.serverScheduleTasks)
     .where(eq(tables.serverScheduleTasks.id, taskId))
-    .get()
 
   await invalidateScheduleCaches({ serverId: server.id, scheduleId })
 

@@ -28,13 +28,12 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  db.update(tables.servers)
+  await db.update(tables.servers)
     .set({
       status: body.state === 'running' ? null : body.state,
       updatedAt: new Date(),
     })
     .where(eq(tables.servers.id, server.id))
-    .run()
 
   await recordAuditEventFromRequest(event, {
     actor: user.id,

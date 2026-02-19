@@ -31,11 +31,12 @@ export default defineEventHandler(async (event) => {
   )
 
   const db = useDrizzle()
-  const [egg] = db.select()
+  const eggRows = await db.select()
     .from(tables.eggs)
     .where(eq(tables.eggs.id, server.eggId!))
     .limit(1)
-    .all()
+
+  const [egg] = eggRows
 
   if (!egg) {
     throw createError({
@@ -71,14 +72,13 @@ export default defineEventHandler(async (event) => {
 
   const oldImage = server.dockerImage || server.image
 
-  db.update(tables.servers)
+  await db.update(tables.servers)
     .set({
       dockerImage: docker_image,
       image: docker_image, 
       updatedAt: new Date(),
     })
     .where(eq(tables.servers.id, server.id))
-    .run()
 
   await Promise.all([
     recordAuditEventFromRequest(event, {

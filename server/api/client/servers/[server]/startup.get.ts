@@ -27,19 +27,17 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const egg = server.eggId
+  const [egg] = await (server.eggId
     ? db
         .select()
         .from(tables.eggs)
         .where(eq(tables.eggs.id, server.eggId))
-        .get()
-    : null
+    : Promise.resolve([null]))
 
-  const envVars = db
+  const envVars = await db
     .select()
     .from(tables.serverStartupEnv)
     .where(eq(tables.serverStartupEnv.serverId, server.id))
-    .all()
 
   const serverEnvMap = new Map<string, string>()
   for (const envVar of envVars) {
@@ -55,11 +53,10 @@ export default defineEventHandler(async (event) => {
   const variables: ServerStartupVariable[] = []
 
   if (egg?.id) {
-    const eggVariables = db
+    const eggVariables = await db
       .select()
       .from(tables.eggVariables)
       .where(eq(tables.eggVariables.eggId, egg.id))
-      .all()
 
     for (const eggVar of eggVariables) {
       const variableValue = serverEnvMap.get(eggVar.envVariable) ?? eggVar.defaultValue ?? ''

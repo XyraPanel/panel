@@ -20,11 +20,13 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const server = db
+  const serverRows = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.id, id))
-    .get()
+    .limit(1)
+
+  const [server] = serverRows
 
   if (!server) {
     throw createError({
@@ -37,8 +39,7 @@ export default defineEventHandler(async (event) => {
   const { client } = await getWingsClientForServer(server.uuid)
 
   try {
-
-    await client.updateServer(server.uuid, {})
+    await client.syncServer(server.uuid)
 
     await recordAuditEventFromRequest(event, {
       actor: session.user.email || session.user.id,

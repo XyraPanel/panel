@@ -14,15 +14,15 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
-  const node = findWingsNode(id)
+  const node = await findWingsNode(id)
   if (!node) {
     throw createError({ status: 404, statusText: 'Node not found' })
   }
 
   const runtimeConfig = useRuntimeConfig()
-  const publicAppConfig = (runtimeConfig.public?.app ?? {}) as { baseUrl?: string }
+  const publicPanelConfig = (runtimeConfig.public?.panel ?? {}) as { baseUrl?: string }
   const requestUrl = getRequestURL(event)
-  const panelUrl = publicAppConfig.baseUrl
+  const panelUrl = publicPanelConfig.baseUrl
     || `${requestUrl.protocol}//${requestUrl.host}`
 
   const encryptionKeyAvailable = !!(process.env.WINGS_ENCRYPTION_KEY 
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
     || process.env.AUTH_SECRET)
 
   try {
-    const configuration = getWingsNodeConfigurationById(id, panelUrl)
+    const configuration = await getWingsNodeConfigurationById(id, panelUrl)
     
     await recordAuditEventFromRequest(event, {
       actor: session.user.email || session.user.id,

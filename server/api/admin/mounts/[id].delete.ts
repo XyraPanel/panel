@@ -21,13 +21,12 @@ export default defineEventHandler(async (event) => {
     .select()
     .from(tables.mounts)
     .where(eq(tables.mounts.id, mountId))
-    .get()
 
   if (!existing) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Mount not found' })
   }
 
-  await db.delete(tables.mounts).where(eq(tables.mounts.id, mountId)).run()
+  await db.delete(tables.mounts).where(eq(tables.mounts.id, mountId))
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

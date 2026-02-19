@@ -21,11 +21,10 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBodyWithLimit(event, updateEggVariableSchema, BODY_SIZE_LIMITS.SMALL)
   const db = useDrizzle()
 
-  const existing = await db
+  const [existing] = await db
     .select()
     .from(tables.eggVariables)
     .where(eq(tables.eggVariables.id, varId))
-    .get()
 
   if (!existing || existing.eggId !== eggId) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Variable not found' })
@@ -43,13 +42,16 @@ export default defineEventHandler(async (event) => {
   if (body.userEditable !== undefined) updates.userEditable = body.userEditable
   if (body.rules !== undefined) updates.rules = body.rules
 
-  await db.update(tables.eggVariables).set(updates).where(eq(tables.eggVariables.id, varId)).run()
+  await db.update(tables.eggVariables).set(updates).where(eq(tables.eggVariables.id, varId))
 
-  const updated = await db
+  const [updated] = await db
     .select()
     .from(tables.eggVariables)
     .where(eq(tables.eggVariables.id, varId))
-    .get()
+
+  if (!updated) {
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Variable not found after update' })
+  }
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
@@ -59,24 +61,24 @@ export default defineEventHandler(async (event) => {
     targetId: eggId,
     metadata: {
       variableId: varId,
-      variableName: updated!.name,
+      variableName: updated.name,
       updatedFields: Object.keys(body),
     },
   })
 
   return {
     data: {
-      id: updated!.id,
-      eggId: updated!.eggId,
-      name: updated!.name,
-      description: updated!.description,
-      envVariable: updated!.envVariable,
-      defaultValue: updated!.defaultValue,
-      userViewable: Boolean(updated!.userViewable),
-      userEditable: Boolean(updated!.userEditable),
-      rules: updated!.rules,
-      createdAt: new Date(updated!.createdAt).toISOString(),
-      updatedAt: new Date(updated!.updatedAt).toISOString(),
+      id: updated.id,
+      eggId: updated.eggId,
+      name: updated.name,
+      description: updated.description,
+      envVariable: updated.envVariable,
+      defaultValue: updated.defaultValue,
+      userViewable: Boolean(updated.userViewable),
+      userEditable: Boolean(updated.userEditable),
+      rules: updated.rules,
+      createdAt: new Date(updated.createdAt).toISOString(),
+      updatedAt: new Date(updated.updatedAt).toISOString(),
     },
   }
 })

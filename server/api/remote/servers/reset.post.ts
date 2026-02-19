@@ -9,7 +9,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const nodeId = await getNodeIdFromAuth(event)
 
-  const stuckServers = db
+  const stuckServers = await db
     .select()
     .from(tables.servers)
     .where(
@@ -18,12 +18,11 @@ export default defineEventHandler(async (event: H3Event) => {
         inArray(tables.servers.status, ['installing', 'restoring_backup']),
       ),
     )
-    .all()
 
   if (stuckServers.length > 0) {
     const serverIds = stuckServers.map(s => s.id)
 
-    db.update(tables.servers)
+    await db.update(tables.servers)
       .set({ status: null })
       .where(
         and(
@@ -31,7 +30,6 @@ export default defineEventHandler(async (event: H3Event) => {
           inArray(tables.servers.id, serverIds),
         ),
       )
-      .run()
 
     for (const server of stuckServers) {
       await recordAuditEventFromRequest(event, {

@@ -14,11 +14,12 @@ export class BackupManager {
       return null
     }
 
-    return this.db
+    const [row] = await this.db
       .select({ email: tables.users.email, username: tables.users.username })
       .from(tables.users)
       .where(eq(tables.users.id, ownerId))
-      .get()
+      .limit(1)
+    return row ?? null
   }
 
   async createBackup(serverUuid: string, options: CreateBackupOptions = {}): Promise<BackupInfo> {
@@ -93,7 +94,6 @@ export class BackupManager {
           updatedAt: new Date(),
         })
         .where(eq(tables.serverBackups.id, backupId))
-        .run()
       await invalidateServerBackupsCache(server.id as string)
 
       throw error
@@ -103,14 +103,14 @@ export class BackupManager {
   async deleteBackup(serverUuid: string, backupUuid: string, options: BackupManagerOptions = {}): Promise<void> {
     const { client, server } = await getWingsClientForServer(serverUuid)
     
-    const backup = await this.db
+    const [backup] = await this.db
       .select()
       .from(tables.serverBackups)
       .where(and(
         eq(tables.serverBackups.serverId, server.id as string),
         eq(tables.serverBackups.uuid, backupUuid)
       ))
-      .get()
+      .limit(1)
 
     if (!backup) {
       throw new Error('Backup not found')
@@ -125,7 +125,6 @@ export class BackupManager {
     await this.db
       .delete(tables.serverBackups)
       .where(eq(tables.serverBackups.id, backup.id))
-      .run()
     await invalidateServerBackupsCache(server.id as string)
 
     if (!options.skipAudit && options.userId) {
@@ -152,14 +151,14 @@ export class BackupManager {
   ): Promise<void> {
     const { client, server } = await getWingsClientForServer(serverUuid)
     
-    const backup = await this.db
+    const [backup] = await this.db
       .select()
       .from(tables.serverBackups)
       .where(and(
         eq(tables.serverBackups.serverId, server.id as string),
         eq(tables.serverBackups.uuid, backupUuid)
       ))
-      .get()
+      .limit(1)
 
     if (!backup) {
       throw new Error('Backup not found')
@@ -195,7 +194,6 @@ export class BackupManager {
       .from(tables.serverBackups)
       .where(eq(tables.serverBackups.serverId, server.id as string))
       .orderBy(tables.serverBackups.createdAt)
-      .all()
 
     return backups.map(backup => ({
       id: backup.id,
@@ -216,14 +214,14 @@ export class BackupManager {
   async getBackup(serverUuid: string, backupUuid: string): Promise<BackupInfo | null> {
     const { server } = await getWingsClientForServer(serverUuid)
     
-    const backup = await this.db
+    const [backup] = await this.db
       .select()
       .from(tables.serverBackups)
       .where(and(
         eq(tables.serverBackups.serverId, server.id as string),
         eq(tables.serverBackups.uuid, backupUuid)
       ))
-      .get()
+      .limit(1)
 
     if (!backup) {
       return null
@@ -248,14 +246,14 @@ export class BackupManager {
   async lockBackup(serverUuid: string, backupUuid: string, options: BackupManagerOptions = {}): Promise<void> {
     const { server } = await getWingsClientForServer(serverUuid)
     
-    const backup = await this.db
+    const [backup] = await this.db
       .select()
       .from(tables.serverBackups)
       .where(and(
         eq(tables.serverBackups.serverId, server.id as string),
         eq(tables.serverBackups.uuid, backupUuid)
       ))
-      .get()
+      .limit(1)
 
     if (!backup) {
       throw new Error('Backup not found')
@@ -268,7 +266,6 @@ export class BackupManager {
         updatedAt: new Date(),
       })
       .where(eq(tables.serverBackups.id, backup.id))
-      .run()
     await invalidateServerBackupsCache(server.id as string)
 
     if (!options.skipAudit && options.userId) {
@@ -289,14 +286,14 @@ export class BackupManager {
   async unlockBackup(serverUuid: string, backupUuid: string, options: BackupManagerOptions = {}): Promise<void> {
     const { server } = await getWingsClientForServer(serverUuid)
     
-    const backup = await this.db
+    const [backup] = await this.db
       .select()
       .from(tables.serverBackups)
       .where(and(
         eq(tables.serverBackups.serverId, server.id as string),
         eq(tables.serverBackups.uuid, backupUuid)
       ))
-      .get()
+      .limit(1)
 
     if (!backup) {
       throw new Error('Backup not found')
@@ -309,7 +306,6 @@ export class BackupManager {
         updatedAt: new Date(),
       })
       .where(eq(tables.serverBackups.id, backup.id))
-      .run()
     await invalidateServerBackupsCache(server.id as string)
 
     if (!options.skipAudit && options.userId) {
@@ -355,7 +351,6 @@ export class BackupManager {
               updatedAt: new Date(),
             })
             .where(eq(tables.serverBackups.id, dbBackup.id))
-            .run()
           
           synced++
         } else {

@@ -4,9 +4,10 @@ import { getServerSession } from '#server/utils/session'
 import type { ServerAccessOptions as SharedServerAccessOptions, ServerRequestContext as SharedServerRequestContext } from '#shared/types/server'
 import { resolveSessionUser } from '#server/utils/auth/sessionUser'
 import { findServerByIdentifier } from '#server/utils/serversStore'
-import { tables } from '#server/utils/drizzle'
+import { useDrizzle, tables, and, eq } from '#server/utils/drizzle'
 import { getUserPermissions } from '#server/utils/permissions'
 import { resolveNodeConnection } from '#server/utils/wings/nodesStore'
+import { normalizePermissionPayload } from '#server/utils/jwt'
 import type { StoredWingsNode } from '#shared/types/wings'
 
 type ServerRequestContext = SharedServerRequestContext<typeof tables.servers.$inferSelect>
@@ -65,7 +66,7 @@ export async function resolveServerRequest(
   let subuserPermissions: string[] | null = null
 
   if (!isAdmin && !isOwner) {
-    const subuser = db
+    const subuserRows = await db
       .select({ permissions: tables.serverSubusers.permissions })
       .from(tables.serverSubusers)
       .where(and(
@@ -73,7 +74,8 @@ export async function resolveServerRequest(
         eq(tables.serverSubusers.userId, user.id || ''),
       ))
       .limit(1)
-      .get()
+
+    const subuser = subuserRows[0]
 
     if (!subuser) {
       throw createError({ status: 403, statusText: 'Forbidden' })
@@ -128,7 +130,7 @@ export async function resolveServerRequest(
       throw createError({ status: 500, statusText: 'Server has no assigned node' })
     }
 
-    const resolved = resolveNodeConnection(queryNodeIdRaw && typeof queryNodeIdRaw === 'string' && queryNodeIdRaw.length > 0 ? queryNodeIdRaw : server.nodeId)
+    const resolved = await resolveNodeConnection(queryNodeIdRaw && typeof queryNodeIdRaw === 'string' && queryNodeIdRaw.length > 0 ? queryNodeIdRaw : server.nodeId)
     node = resolved.stored
     nodeConnection = {
       tokenId: resolved.connection.tokenId,

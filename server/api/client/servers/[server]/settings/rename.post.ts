@@ -31,14 +31,13 @@ export default defineEventHandler(async (event) => {
   )
 
   const db = useDrizzle()
-  db.update(tables.servers)
+  await db.update(tables.servers)
     .set({
       name,
       description: description || server.description,
       updatedAt: new Date(),
     })
     .where(eq(tables.servers.id, server.id))
-    .run()
 
   const newDescription = description ?? server.description ?? null
 

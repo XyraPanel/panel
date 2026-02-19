@@ -15,11 +15,12 @@ export class ServerManager {
       return null
     }
 
-    return this.db
+    const [row] = await this.db
       .select({ email: tables.users.email, username: tables.users.username })
       .from(tables.users)
       .where(eq(tables.users.id, ownerId))
-      .get()
+      .limit(1)
+    return row ?? null
   }
 
   private async waitForServerDeletion(client: WingsClient, serverUuid: string): Promise<void> {
@@ -74,18 +75,17 @@ export class ServerManager {
           updatedAt: new Date(),
         })
         .where(eq(tables.servers.id, config.serverId))
-        .run()
 
       throw error
     }
   }
 
   async deleteServer(serverUuid: string, options: ServerManagerOptions = {}): Promise<void> {
-    const server = await this.db
+    const [server] = await this.db
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.uuid, serverUuid))
-      .get()
+      .limit(1)
 
     if (!server) {
       throw new Error('Server not found')
@@ -99,7 +99,6 @@ export class ServerManager {
           updatedAt: new Date(),
         })
         .where(eq(tables.servers.uuid, serverUuid))
-        .run()
 
       const { client } = await getWingsClientForServer(serverUuid)
       await client.deleteServer(serverUuid)
@@ -109,7 +108,6 @@ export class ServerManager {
       await this.db
         .delete(tables.servers)
         .where(eq(tables.servers.uuid, serverUuid))
-        .run()
 
       if (!options.skipAudit && options.userId) {
         await recordAuditEvent({
@@ -129,7 +127,6 @@ export class ServerManager {
           updatedAt: new Date(),
         })
         .where(eq(tables.servers.uuid, serverUuid))
-        .run()
 
       if (error instanceof WingsConnectionError) {
         console.warn(`Wings unavailable during server deletion: ${serverUuid}`, error)
@@ -179,7 +176,6 @@ export class ServerManager {
         updatedAt: now,
       })
       .where(eq(tables.servers.uuid, serverUuid))
-      .run()
 
     try {
       await client.reinstallServer(serverUuid)
@@ -193,7 +189,6 @@ export class ServerManager {
           updatedAt: new Date(),
         })
         .where(eq(tables.servers.uuid, serverUuid))
-        .run()
 
       const owner = await this.getServerOwnerContact(server.ownerId as string | undefined)
       if (owner?.email) {
@@ -223,18 +218,17 @@ export class ServerManager {
           updatedAt: new Date(),
         })
         .where(eq(tables.servers.uuid, serverUuid))
-        .run()
 
       throw error
     }
   }
 
   async suspendServer(serverUuid: string, options: ServerManagerOptions = {}): Promise<void> {
-    const server = await this.db
+    const [server] = await this.db
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.uuid, serverUuid))
-      .get()
+      .limit(1)
 
     if (!server) {
       throw new Error('Server not found')
@@ -253,7 +247,6 @@ export class ServerManager {
         updatedAt: new Date(),
       })
       .where(eq(tables.servers.uuid, serverUuid))
-      .run()
 
     const owner = await this.getServerOwnerContact(server.ownerId as string | undefined)
     if (owner?.email) {
@@ -278,11 +271,11 @@ export class ServerManager {
   }
 
   async unsuspendServer(serverUuid: string, options: ServerManagerOptions = {}): Promise<void> {
-    const server = await this.db
+    const [server] = await this.db
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.uuid, serverUuid))
-      .get()
+      .limit(1)
 
     if (!server) {
       throw new Error('Server not found')
@@ -295,7 +288,6 @@ export class ServerManager {
         updatedAt: new Date(),
       })
       .where(eq(tables.servers.uuid, serverUuid))
-      .run()
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({
@@ -310,11 +302,11 @@ export class ServerManager {
   }
 
   async getServerWithStatus(serverUuid: string) {
-    const server = await this.db
+    const [server] = await this.db
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.uuid, serverUuid))
-      .get()
+      .limit(1)
 
     if (!server) {
       throw new Error('Server not found')

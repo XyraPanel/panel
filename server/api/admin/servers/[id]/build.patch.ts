@@ -36,11 +36,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const serverId = server.id
-  const [existingLimits] = db.select()
+  const existingLimitsRows = await db.select()
     .from(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, serverId))
     .limit(1)
-    .all()
+
+  const existingLimits = existingLimitsRows[0]
 
   const updateData = {
     cpu: typeof cpu === 'number' ? cpu : (existingLimits?.cpu ?? 100),
@@ -59,13 +60,6 @@ export default defineEventHandler(async (event) => {
     await db.update(tables.serverLimits)
       .set(updateData)
       .where(eq(tables.serverLimits.serverId, serverId))
-      .run()
-    
-    const [_updated] = db.select()
-      .from(tables.serverLimits)
-      .where(eq(tables.serverLimits.serverId, serverId))
-      .limit(1)
-      .all()
   } else {
     const now = new Date()
     await db.insert(tables.serverLimits)
@@ -86,20 +80,12 @@ export default defineEventHandler(async (event) => {
         createdAt: now,
         updatedAt: now,
       })
-      .run()
-    
-    const [_inserted] = db.select()
-      .from(tables.serverLimits)
-      .where(eq(tables.serverLimits.serverId, serverId))
-      .limit(1)
-      .all()
   }
 
   if (oomDisabled !== undefined) {
     await db.update(tables.servers)
       .set({ oomDisabled: Boolean(oomDisabled) })
       .where(eq(tables.servers.id, serverId))
-      .run()
   }
 
   await invalidateServerCaches({

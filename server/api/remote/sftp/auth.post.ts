@@ -211,13 +211,9 @@ export default defineEventHandler(async (event: H3Event) => {
     },
   })
 
-  const response: SftpAuthResponse = {
+  return {
     server: server.uuid,
     user: user.username,
     permissions,
-  }
-
-  return {
-    data: response,
   }
 })

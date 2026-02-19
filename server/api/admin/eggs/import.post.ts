@@ -41,11 +41,10 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
 
   const db = useDrizzle()
 
-  const nest = await db
+  const [nest] = await db
     .select()
     .from(tables.nests)
     .where(eq(tables.nests.id, nestId))
-    .get()
 
   if (!nest) {
     throw createError({ status: 404, statusText: 'Nest not found' })
@@ -86,7 +85,7 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
     copyScriptFrom: null,
     createdAt: now,
     updatedAt: now,
-  }).run()
+  })
 
   if (eggData.variables && eggData.variables.length > 0) {
     const variableValues = eggData.variables.map(variable => ({

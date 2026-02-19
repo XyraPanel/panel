@@ -39,7 +39,6 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverSubusers.serverId, server.id)
       )
     )
-    .get()
 
   if (!subuser) {
     throw createError({
@@ -49,13 +48,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const now = new Date()
-  db.update(tables.serverSubusers)
+  await db.update(tables.serverSubusers)
     .set({
       permissions: JSON.stringify(body.permissions),
       updatedAt: now,
     })
     .where(eq(tables.serverSubusers.id, subuserId))
-    .run()
 
   await recordServerActivity({
     event,
@@ -76,7 +74,6 @@ export default defineEventHandler(async (event) => {
     .from(tables.serverSubusers)
     .leftJoin(tables.users, eq(tables.serverSubusers.userId, tables.users.id))
     .where(eq(tables.serverSubusers.id, subuserId))
-    .get()
 
   await invalidateServerSubusersCache(server.id, [subuser.userId])
 

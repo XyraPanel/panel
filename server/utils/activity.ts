@@ -2,14 +2,14 @@ import { randomUUID } from 'node:crypto'
 import { useDrizzle, tables } from '#server/utils/drizzle'
 import type { LogActivityOptions } from '#shared/types/audit'
 
-export function logActivity(options: LogActivityOptions): void {
+export async function logActivity(options: LogActivityOptions): Promise<void> {
   const { actor, actorType, action, targetType, targetId, metadata } = options
 
   try {
     const db = useDrizzle()
     const now = new Date()
 
-    db.insert(tables.auditEvents).values({
+    await db.insert(tables.auditEvents).values({
       id: randomUUID(),
       occurredAt: now,
       actor,
@@ -19,7 +19,7 @@ export function logActivity(options: LogActivityOptions): void {
       targetId: targetId || null,
       metadata: metadata ? JSON.stringify(metadata) : null,
       createdAt: now,
-    }).run()
+    })
   }
   catch (error) {
 

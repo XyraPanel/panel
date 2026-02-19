@@ -41,7 +41,8 @@ export default defineEventHandler(async (event) => {
     .from(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, server.id))
     .limit(1)
-    .get()
+
+  const [limitsResult] = limitsRow
 
   const response: SettingsData = {
     server: {
@@ -52,18 +53,18 @@ export default defineEventHandler(async (event) => {
       description: server.description,
       suspended: Boolean(server.suspended),
     },
-    limits: limitsRow
+    limits: limitsResult
       ? {
-          cpu: limitsRow.cpu,
-          memory: limitsRow.memory,
-          disk: limitsRow.disk,
-          swap: limitsRow.swap,
-          io: limitsRow.io,
-          threads: limitsRow.threads ?? null,
-          oomDisabled: limitsRow.oomDisabled ?? true,
-          databaseLimit: limitsRow.databaseLimit ?? null,
-          allocationLimit: limitsRow.allocationLimit ?? null,
-          backupLimit: limitsRow.backupLimit ?? null,
+          cpu: limitsResult.cpu,
+          memory: limitsResult.memory,
+          disk: limitsResult.disk,
+          swap: limitsResult.swap,
+          io: limitsResult.io,
+          threads: limitsResult.threads ?? null,
+          oomDisabled: limitsResult.oomDisabled ?? true,
+          databaseLimit: limitsResult.databaseLimit ?? null,
+          allocationLimit: limitsResult.allocationLimit ?? null,
+          backupLimit: limitsResult.backupLimit ?? null,
         }
       : null,
   }

@@ -23,9 +23,11 @@ export default defineEventHandler(async (event) => {
     .select()
     .from(tables.locations)
     .where(eq(tables.locations.id, locationId))
-    .get()
+    .limit(1)
 
-  if (!existing) {
+  const existingRow = existing[0]
+
+  if (!existingRow) {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Location not found' })
   }
 
@@ -40,13 +42,14 @@ export default defineEventHandler(async (event) => {
     .update(tables.locations)
     .set(updates)
     .where(eq(tables.locations.id, locationId))
-    .run()
 
-  const updated = await db
+  const updatedRows = await db
     .select()
     .from(tables.locations)
     .where(eq(tables.locations.id, locationId))
-    .get()
+    .limit(1)
+
+  const updated = updatedRows[0]
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

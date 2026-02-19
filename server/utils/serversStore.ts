@@ -17,7 +17,7 @@ export async function findServerByIdentifier(id: string) {
   return withCache(cacheKey, async () => {
     const db = useDrizzle()
 
-    const rows = db
+    const rows = await db
       .select()
       .from(tables.servers)
       .where(
@@ -28,7 +28,6 @@ export async function findServerByIdentifier(id: string) {
         ),
       )
       .limit(1)
-      .all()
 
     return rows[0] ?? null
   }, { ttl: SERVER_CACHE_TTL })
@@ -40,13 +39,13 @@ export async function getServerLimits(serverId: string) {
   return withCache(cacheKey, async () => {
     const db = useDrizzle()
 
-    return db
+    const rows = await db
       .select()
       .from(tables.serverLimits)
       .where(eq(tables.serverLimits.serverId, serverId))
       .limit(1)
-      .all()
-      .at(0) ?? null
+
+    return rows[0] ?? null
   }, { ttl: SERVER_LIMITS_CACHE_TTL })
 }
 
@@ -58,11 +57,10 @@ export async function listServerAllocations(serverId: string): Promise<ServerAll
   const data = await withCache<ServerAllocationRow[] | { data?: ServerAllocationRow[] }>(cacheKey, async () => {
     const db = useDrizzle()
 
-    return db
+    return await db
       .select()
       .from(tables.serverAllocations)
       .where(eq(tables.serverAllocations.serverId, serverId))
-      .all()
   }, { ttl: SERVER_ALLOCATIONS_CACHE_TTL })
 
   if (Array.isArray(data)) {
@@ -83,11 +81,10 @@ export async function listServerStartupEnv(serverId: string) {
   return withCache(cacheKey, async () => {
     const db = useDrizzle()
 
-    return db
+    return await db
       .select()
       .from(tables.serverStartupEnv)
       .where(eq(tables.serverStartupEnv.serverId, serverId))
-      .all()
   }, { ttl: SERVER_STARTUP_ENV_CACHE_TTL })
 }
 
@@ -97,12 +94,11 @@ export async function listServerScheduleTasks(scheduleId: string) {
   return withCache(cacheKey, async () => {
     const db = useDrizzle()
 
-    return db
+    return await db
       .select()
       .from(tables.serverScheduleTasks)
       .where(eq(tables.serverScheduleTasks.scheduleId, scheduleId))
       .orderBy(tables.serverScheduleTasks.sequenceId)
-      .all()
   }, { ttl: SERVER_SCHEDULE_TASKS_CACHE_TTL })
 }
 
@@ -115,12 +111,11 @@ export async function listAuditEvents(options: AuditQueryOptions = {}) {
   const db = useDrizzle()
   const limit = options.limit ?? 50
 
-  return db
+  return await db
     .select()
     .from(tables.auditEvents)
     .orderBy(desc(tables.auditEvents.occurredAt))
     .limit(limit)
-    .all()
 }
 
 function collectServerCacheKeys(server: Partial<Pick<ServerRecord, 'id' | 'uuid' | 'identifier'>>) {

@@ -22,11 +22,12 @@ export default defineEventHandler(async (event) => {
   const force = query.force === 'true' || query.force === '1'
 
   const db = useDrizzle()
-  const [server] = db.select()
+  const serverRows = await db.select()
     .from(tables.servers)
     .where(eq(tables.servers.id, serverId))
     .limit(1)
-    .all()
+
+  const server = serverRows[0]
 
   if (!server) {
     throw createError({
@@ -57,47 +58,37 @@ export default defineEventHandler(async (event) => {
     console.log(`Force deleting server ${server.uuid} from panel (skipping Wings node)`)
   }
 
-  db.update(tables.servers)
+  await db.update(tables.servers)
     .set({ allocationId: null })
     .where(eq(tables.servers.id, serverId))
-    .run()
 
-  db.delete(tables.serverLimits)
+  await db.delete(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, serverId))
-    .run()
 
-  db.update(tables.serverAllocations)
+  await db.update(tables.serverAllocations)
     .set({ serverId: null, isPrimary: false })
     .where(eq(tables.serverAllocations.serverId, serverId))
-    .run()
 
-  db.delete(tables.serverStartupEnv)
+  await db.delete(tables.serverStartupEnv)
     .where(eq(tables.serverStartupEnv.serverId, serverId))
-    .run()
 
-  db.delete(tables.serverSchedules)
+  await db.delete(tables.serverSchedules)
     .where(eq(tables.serverSchedules.serverId, serverId))
-    .run()
 
-  db.delete(tables.serverDatabases)
+  await db.delete(tables.serverDatabases)
     .where(eq(tables.serverDatabases.serverId, serverId))
-    .run()
 
-  db.delete(tables.serverSubusers)
+  await db.delete(tables.serverSubusers)
     .where(eq(tables.serverSubusers.serverId, serverId))
-    .run()
 
-  db.delete(tables.serverBackups)
+  await db.delete(tables.serverBackups)
     .where(eq(tables.serverBackups.serverId, serverId))
-    .run()
 
-  db.delete(tables.mountServer)
+  await db.delete(tables.mountServer)
     .where(eq(tables.mountServer.serverId, serverId))
-    .run()
 
-  db.delete(tables.servers)
+  await db.delete(tables.servers)
     .where(eq(tables.servers.id, serverId))
-    .run()
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

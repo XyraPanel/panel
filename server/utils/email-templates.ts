@@ -18,11 +18,16 @@ export async function getTemplate(name: string): Promise<{ html: string; subject
   }
 
   const db = useDrizzle()
-  const dbTemplate = db
-    .select()
+  const templateRows = await db
+    .select({
+      htmlContent: tables.emailTemplates.htmlContent,
+      subject: tables.emailTemplates.subject,
+    })
     .from(tables.emailTemplates)
     .where(eq(tables.emailTemplates.templateId, name))
-    .get() as { htmlContent: string; subject: string } | undefined
+    .limit(1)
+
+  const [dbTemplate] = templateRows
 
   if (dbTemplate) {
     const result = { html: dbTemplate.htmlContent, subject: dbTemplate.subject }

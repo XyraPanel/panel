@@ -5,7 +5,7 @@ import type { ApiKeyResponse } from '#shared/types/api'
 import { useDrizzle, tables } from '#server/utils/drizzle'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { APIError } from 'better-auth/api'
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth'
+import { getAuth } from '#server/utils/auth'
 
 export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
   const accountContext = await requireAccountUser(event)
@@ -41,7 +41,7 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
         name: body.memo || 'API Key',
         ...(expiresIn ? { expiresIn } : {}),
       },
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+      request: toWebRequest(event),
     })
     const apiKeyId = created.id
 

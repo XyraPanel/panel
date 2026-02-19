@@ -43,52 +43,52 @@ export default defineEventHandler(async (event: H3Event) => {
     const db = useDrizzle()
     const offset = page * perPage
 
-    const servers = db
+    const servers = await db
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.nodeId, nodeId))
       .limit(perPage)
       .offset(offset)
-      .all()
+      
 
-    const total = db
-      .select({ count: sql`count(*)` })
+    const [total] = await db
+      .select({ count: sql<number>`count(*)` })
       .from(tables.servers)
       .where(eq(tables.servers.nodeId, nodeId))
-      .get()
+      .limit(1)
 
     const totalCount = Number(total?.count ?? 0)
 
     const serverConfigs = await Promise.all(servers.map(async (server) => {
       try {
-        const allAllocations = db
+        const allAllocations = await db
           .select()
           .from(tables.serverAllocations)
           .where(eq(tables.serverAllocations.serverId, server.id))
-          .all()
 
         const primaryAllocation = allAllocations.find(a => a.isPrimary)
         const allocations = allAllocations
 
-        const limits = db
+        const [limits] = await db
           .select()
           .from(tables.serverLimits)
           .where(eq(tables.serverLimits.serverId, server.id))
-          .get()
+          .limit(1)
 
-        const egg = server.eggId
-          ? db
-              .select()
-              .from(tables.eggs)
-              .where(eq(tables.eggs.id, server.eggId))
-              .get()
-          : null
+        let egg: typeof tables.eggs.$inferSelect | null = null
+        if (server.eggId) {
+          const [eggRow] = await db
+            .select()
+            .from(tables.eggs)
+            .where(eq(tables.eggs.id, server.eggId))
+            .limit(1)
+          egg = eggRow ?? null
+        }
 
-        const envVars = db
+        const envVars = await db
           .select()
           .from(tables.serverStartupEnv)
           .where(eq(tables.serverStartupEnv.serverId, server.id))
-          .all()
 
         const serverEnvMap = new Map<string, string>()
         for (const envVar of envVars) {
@@ -100,11 +100,10 @@ export default defineEventHandler(async (event: H3Event) => {
         }
 
         if (egg?.id) {
-          const eggVariables = db
+          const eggVariables = await db
             .select()
             .from(tables.eggVariables)
             .where(eq(tables.eggVariables.eggId, egg.id))
-            .all()
 
           for (const eggVar of eggVariables) {
             const value = serverEnvMap.get(eggVar.envVariable) ?? eggVar.defaultValue ?? ''
@@ -218,15 +217,12 @@ export default defineEventHandler(async (event: H3Event) => {
     return {
       data: serverConfigs,
       meta: {
-        pagination: {
-          total: totalCount,
-          count: servers.length,
-          per_page: perPage,
-          current_page: page,
-          total_pages: totalPages,
-          from: totalCount > 0 ? from : 0,
-          to: totalCount > 0 ? to : 0,
-        },
+        current_page: page,
+        from: totalCount > 0 ? from : 0,
+        last_page: totalPages,
+        per_page: perPage,
+        to: totalCount > 0 ? to : 0,
+        total: totalCount,
       },
     }
   }

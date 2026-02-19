@@ -4,6 +4,7 @@ import { invalidateServerCaches } from '#server/utils/serversStore'
 import { requireServerPermission } from '#server/utils/permission-middleware'
 import { recordAuditEventFromRequest } from '#server/utils/audit'
 import { requireAccountUser } from '#server/utils/security'
+import { deprovisionDatabase } from '#server/utils/database-provisioner'
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event)
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
   })
 
   const db = useDrizzle()
-  const [database] = db.select()
+  const [database] = await db.select()
     .from(tables.serverDatabases)
     .where(
       and(
@@ -34,7 +35,6 @@ export default defineEventHandler(async (event) => {
       )
     )
     .limit(1)
-    .all()
 
   if (!database) {
     throw createError({
@@ -43,9 +43,17 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  db.delete(tables.serverDatabases)
+  const [host] = await db.select()
+    .from(tables.databaseHosts)
+    .where(eq(tables.databaseHosts.id, database.databaseHostId))
+    .limit(1)
+
+  if (host) {
+    await deprovisionDatabase(host, database.name, database.username, database.remote)
+  }
+
+  await db.delete(tables.serverDatabases)
     .where(eq(tables.serverDatabases.id, databaseId))
-    .run()
 
   await recordAuditEventFromRequest(event, {
     actor: accountContext.user.email || accountContext.user.id,

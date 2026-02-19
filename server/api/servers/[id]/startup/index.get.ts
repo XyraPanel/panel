@@ -24,13 +24,15 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const egg = server.eggId
-    ? db
+  let egg = null
+  if (server.eggId) {
+    const eggRows = await db
         .select()
         .from(tables.eggs)
         .where(eq(tables.eggs.id, server.eggId))
-        .get()
-    : null
+        .limit(1)
+    egg = eggRows[0] ?? null
+  }
 
   let dockerImages: Record<string, string> = {}
   if (egg?.dockerImages) {
@@ -48,11 +50,10 @@ export default defineEventHandler(async (event) => {
     dockerImages = { [egg.name || 'Default']: egg.dockerImage }
   }
 
-  const envRows = db
+  const envRows = await db
     .select()
     .from(tables.serverStartupEnv)
     .where(eq(tables.serverStartupEnv.serverId, server.id))
-    .all()
 
   const serverEnvMap = new Map<string, string>()
   for (const envRow of envRows) {
@@ -62,11 +63,10 @@ export default defineEventHandler(async (event) => {
   const environment: Record<string, string> = {}
 
   if (egg?.id) {
-    const eggVariables = db
+    const eggVariables = await db
       .select()
       .from(tables.eggVariables)
       .where(eq(tables.eggVariables.eggId, egg.id))
-      .all()
 
     for (const eggVar of eggVariables) {
       const value = serverEnvMap.get(eggVar.envVariable) ?? eggVar.defaultValue ?? ''

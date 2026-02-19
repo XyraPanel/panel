@@ -25,11 +25,10 @@ export default defineEventHandler(async (event) => {
   })
 
   const db = useDrizzle()
-  const backup = db.select()
+  const backup = await db.select()
     .from(tables.serverBackups)
     .where(eq(tables.serverBackups.uuid, backupUuid))
     .limit(1)
-    .all()
     .at(0)
 
   if (!backup || backup.serverId !== server.id) {
@@ -41,10 +40,9 @@ export default defineEventHandler(async (event) => {
 
   const newLockStatus = !backup.isLocked
 
-  db.update(tables.serverBackups)
+  await db.update(tables.serverBackups)
     .set({ isLocked: !backup.isLocked })
     .where(eq(tables.serverBackups.uuid, backupUuid))
-    .run()
 
   await recordAuditEventFromRequest(event, {
     actor: accountContext.user.email || accountContext.user.id,

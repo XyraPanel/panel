@@ -20,11 +20,11 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle()
 
-  const server = await db
+  const [server] = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.id, serverId))
-    .get()
+    .limit(1)
 
   if (!server) {
     throw createError({
@@ -44,7 +44,6 @@ export default defineEventHandler(async (event) => {
           updatedAt: new Date(),
         })
         .where(eq(tables.servers.id, serverId))
-        .run()
     }
 
     await recordAuditEventFromRequest(event, {

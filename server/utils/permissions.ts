@@ -131,11 +131,11 @@ async function resolveUserPermissions(
 ): Promise<Array<keyof typeof PERMISSIONS>> {
   const db = useDrizzle()
 
-  const server = await db
+  const [server] = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.id, serverId))
-    .get()
+    .limit(1)
 
   if (!server) {
     return []
@@ -145,7 +145,7 @@ async function resolveUserPermissions(
     return resolveServerOwnerPermissions()
   }
 
-  const subuser = await db
+  const [subuser] = await db
     .select()
     .from(tables.serverSubusers)
     .where(
@@ -154,7 +154,7 @@ async function resolveUserPermissions(
         eq(tables.serverSubusers.userId, userId)
       )
     )
-    .get()
+    .limit(1)
 
   if (!subuser) {
     return []

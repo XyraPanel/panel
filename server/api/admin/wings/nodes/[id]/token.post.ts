@@ -16,14 +16,14 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ status: 400, statusText: 'Missing node id' })
   }
 
-  const existing = findWingsNode(id)
+  const existing = await findWingsNode(id)
   if (!existing) {
     throw createError({ status: 404, statusText: 'Node not found' })
   }
 
   try {
-    ensureNodeHasToken(id)
-    const row = requireNodeRow(id)
+    await ensureNodeHasToken(id)
+    const row = await requireNodeRow(id)
 
     if (!row.tokenSecret || row.tokenSecret.trim().length === 0) {
       throw createError({
@@ -82,7 +82,7 @@ export default defineEventHandler(async (event: H3Event) => {
     }
   }
   catch (error: unknown) {
-    if (error && typeof error === 'object' && 'status' in error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error
     }
     

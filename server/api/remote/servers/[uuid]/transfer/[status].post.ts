@@ -20,18 +20,19 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const successful = status === 'success'
 
-  const server = db
+  const serverRows = await db
     .select()
     .from(tables.servers)
     .where(eq(tables.servers.uuid, uuid))
     .limit(1)
-    .get()
+
+  const server = serverRows[0]
 
   if (!server) {
     throw createError({ status: 404, statusText: 'Server not found' })
   }
 
-  const transfer = db
+  const transferRows = await db
     .select()
     .from(tables.serverTransfers)
     .where(and(
@@ -39,7 +40,9 @@ export default defineEventHandler(async (event: H3Event) => {
       eq(tables.serverTransfers.archived, false),
     ))
     .orderBy(tables.serverTransfers.createdAt)
-    .get()
+    .limit(1)
+
+  const transfer = transferRows[0]
 
   if (!transfer) {
     throw createError({
@@ -54,28 +57,26 @@ export default defineEventHandler(async (event: H3Event) => {
   const newAdditionalAllocations = parseAllocationList(transfer.newAdditionalAllocations)
 
   if (successful) {
-    db.transaction((tx) => {
+    await db.transaction(async (tx) => {
       const allocationsToRelease = [transfer.oldAllocation, ...oldAdditionalAllocations]
 
       if (allocationsToRelease.length > 0) {
-        tx.update(tables.serverAllocations)
+        await tx.update(tables.serverAllocations)
           .set({ serverId: null, updatedAt: now })
           .where(inArray(tables.serverAllocations.id, allocationsToRelease))
-          .run()
       }
 
       const assignments = [transfer.newAllocation, ...newAdditionalAllocations]
       if (assignments.length > 0) {
-        tx.update(tables.serverAllocations)
+        await tx.update(tables.serverAllocations)
           .set({ serverId: server.id, updatedAt: now })
           .where(and(
             inArray(tables.serverAllocations.id, assignments),
             eq(tables.serverAllocations.nodeId, transfer.newNode),
           ))
-          .run()
       }
 
-      tx.update(tables.servers)
+      await tx.update(tables.servers)
         .set({
           status: null,
           nodeId: transfer.newNode,
@@ -83,33 +84,28 @@ export default defineEventHandler(async (event: H3Event) => {
           updatedAt: now,
         })
         .where(eq(tables.servers.id, server.id))
-        .run()
 
-      tx.update(tables.serverTransfers)
+      await tx.update(tables.serverTransfers)
         .set({ successful: true, archived: true, updatedAt: now })
         .where(eq(tables.serverTransfers.id, transfer.id))
-        .run()
     })
   }
   else {
-    db.transaction((tx) => {
+    await db.transaction(async (tx) => {
       const allocationsToRelease = [transfer.newAllocation, ...newAdditionalAllocations]
       if (allocationsToRelease.length > 0) {
-        tx.update(tables.serverAllocations)
+        await tx.update(tables.serverAllocations)
           .set({ serverId: null, updatedAt: now })
           .where(inArray(tables.serverAllocations.id, allocationsToRelease))
-          .run()
       }
 
-      tx.update(tables.servers)
+      await tx.update(tables.servers)
         .set({ status: 'transfer_failed', updatedAt: now })
         .where(eq(tables.servers.id, server.id))
-        .run()
 
-      tx.update(tables.serverTransfers)
+      await tx.update(tables.serverTransfers)
         .set({ successful: false, archived: true, updatedAt: now })
         .where(eq(tables.serverTransfers.id, transfer.id))
-        .run()
     })
   }
 

@@ -19,11 +19,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
-  const [server] = db.select()
+  const serverRows = await db.select()
     .from(tables.servers)
     .where(eq(tables.servers.id, serverId))
     .limit(1)
-    .all()
+
+  const server = serverRows[0]
 
   if (!server) {
     throw createError({
@@ -41,17 +42,17 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  db.update(tables.servers)
+  await db.update(tables.servers)
     .set({ suspended: true })
     .where(eq(tables.servers.id, serverId))
-    .run()
 
   if (server.nodeId) {
-    const [node] = db.select()
+    const nodeRows = await db.select()
       .from(tables.wingsNodes)
       .where(eq(tables.wingsNodes.id, server.nodeId))
       .limit(1)
-      .all()
+
+    const node = nodeRows[0]
 
     if (node) {
       try {
@@ -62,10 +63,9 @@ export default defineEventHandler(async (event) => {
       catch (error) {
         const err = error as Error
 
-        db.update(tables.servers)
+        await db.update(tables.servers)
           .set({ suspended: false })
           .where(eq(tables.servers.id, serverId))
-          .run()
 
         throw createError({
           status: 500,

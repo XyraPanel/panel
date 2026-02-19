@@ -37,7 +37,6 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverSchedules.serverId, server.id)
       )
     )
-    .get()
 
   if (!schedule) {
     throw createError({
@@ -55,7 +54,6 @@ export default defineEventHandler(async (event) => {
         eq(tables.serverScheduleTasks.scheduleId, scheduleId)
       )
     )
-    .get()
 
   if (!task) {
     throw createError({
@@ -64,9 +62,8 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  db.delete(tables.serverScheduleTasks)
+  await db.delete(tables.serverScheduleTasks)
     .where(eq(tables.serverScheduleTasks.id, taskId))
-    .run()
 
   await invalidateScheduleCaches({ serverId: server.id, scheduleId })
 

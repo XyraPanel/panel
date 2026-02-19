@@ -33,11 +33,10 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle()
-  const currentAllocations = db
+  const currentAllocations = await db
     .select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.serverId, server.id))
-    .all()
 
   if (currentAllocations.length >= server.allocationLimit) {
     throw createError({
@@ -53,7 +52,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const primaryAllocation = currentAllocations.find(a => a.isPrimary)
+  const primaryAllocation = currentAllocations.find(a => a.id === server.allocationId)
   if (!primaryAllocation) {
     throw createError({
       status: 400,
@@ -61,7 +60,7 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  const allocation = db
+  const [allocation] = await db
     .select()
     .from(tables.serverAllocations)
     .where(
@@ -72,7 +71,6 @@ export default defineEventHandler(async (event) => {
       )
     )
     .limit(1)
-    .get()
 
   if (!allocation) {
     throw createError({
@@ -81,19 +79,18 @@ export default defineEventHandler(async (event) => {
     })
   }
 
-  db.update(tables.serverAllocations)
+  await db.update(tables.serverAllocations)
     .set({
       serverId: server.id,
       updatedAt: new Date(),
     })
     .where(eq(tables.serverAllocations.id, allocation.id))
-    .run()
 
-  const updated = db
+  const [updated] = await db
     .select()
     .from(tables.serverAllocations)
     .where(eq(tables.serverAllocations.id, allocation.id))
-    .get()
+    .limit(1)
 
   if (!updated) {
     throw createError({
