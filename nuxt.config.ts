@@ -373,6 +373,9 @@ icons: [
     public: {
       appName: process.env.APP_NAME || 'XyraPanel',
       debug: process.env.DEBUG === 'true',
+      panel: {
+        baseUrl: process.env.NUXT_PUBLIC_PANEL_BASE_URL || process.env.NUXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000',
+      },
       turnstile: {
         siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY || '',
       },

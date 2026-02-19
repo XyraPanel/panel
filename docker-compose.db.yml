@@ -1,0 +1,35 @@
+# Local development only — spins up PostgreSQL and Redis for the panel.
+# Not for production use. Run with: pnpm db:docker:up
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: xyra-postgres-dev
+    environment:
+      POSTGRES_USER: ${DB_USER:-xyra}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_DB: ${DB_NAME:-xyrapanel}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata-dev:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-xyra}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: xyra-redis-dev
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata-dev:
