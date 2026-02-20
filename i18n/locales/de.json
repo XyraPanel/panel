@@ -620,6 +620,8 @@
       "failedToLoad": "Failed to load databases",
       "noDatabases": "No databases",
       "noDatabasesDescription": "Create a database to get started.",
+      "noHostTitle": "No database host configured",
+      "noHostDescription": "This server cannot create databases because no database host has been configured. Please contact an administrator to set one up.",
       "name": "Name",
       "host": "Host",
       "username": "Username",
@@ -892,7 +894,16 @@
       "noAdditionalAllocations": "No additional allocations",
       "requestAdditionalPorts": "Request additional ports from your administrator if needed.",
       "ip": "IP",
-      "noPrimaryAllocationAvailable": "No primary allocation available"
+      "noPrimaryAllocationAvailable": "No primary allocation available",
+      "makePrimary": "Make Primary",
+      "primaryUpdated": "Primary allocation updated",
+      "primaryUpdatedDescription": "Port {port} on {ip} is now the primary allocation.",
+      "failedToSetPrimary": "Failed to set primary allocation",
+      "allocationLimitReached": "Allocation limit reached",
+      "createAllocation": "Add Allocation",
+      "allocationCreated": "Allocation created",
+      "allocationCreatedDescription": "A new port has been assigned to your server.",
+      "failedToCreateAllocation": "Failed to create allocation"
     },
     "status": {
       "nodeUnderMaintenance": "Node Under Maintenance",
