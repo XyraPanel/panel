@@ -19,6 +19,10 @@ RUN NODE_OPTIONS="--max-old-space-size=6144" pnpm build
 # Production
 FROM node:22-alpine AS runner
 
+LABEL org.opencontainers.image.source="https://github.com/XyraPanel/panel"
+LABEL org.opencontainers.image.description="XyraPanel — open-source game server management panel"
+LABEL org.opencontainers.image.licenses="MIT"
+
 WORKDIR /app
 
 RUN npm install pm2@5.4.3 -g
