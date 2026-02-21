@@ -209,7 +209,34 @@ vite: {
     '/api/admin/**': {
       security: {
         rateLimiter: {
-          tokensPerInterval: 60,
+          tokensPerInterval: 300,
+          interval: 60000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/wings/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 300,
+          interval: 60000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/servers/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 300,
+          interval: 60000,
+          throwError: true,
+        },
+      },
+    },
+    '/api/client/**': {
+      security: {
+        rateLimiter: {
+          tokensPerInterval: 300,
           interval: 60000,
           throwError: true,
         },
@@ -294,8 +321,9 @@ icons: [
       periodicSyncForUpdates: 3600,
     },
     workbox: {
-      globPatterns: ['**/*.{js,css,html,png,svg,ico,woff,woff2}'],
-      navigateFallback: '/',
+      globPatterns: ['**/*.{js,css,png,svg,ico,woff,woff2}'],
+      navigateFallback: null,
+      navigateFallbackDenylist: [/.*/],
       cleanupOutdatedCaches: true,
       maximumFileSizeToCacheInBytes: 15 * 1024 * 1024,
     },

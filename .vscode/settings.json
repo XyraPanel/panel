@@ -28,6 +28,7 @@
     "utils",
     "test",
     "deps",
-    "pages"
+    "pages",
+    "docker"
   ]
 }

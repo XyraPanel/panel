@@ -20,6 +20,7 @@ logs
 .DS_Store
 .fleet
 .idea
+.vscode/sftp.json
 
 # Drizzle snapshots
 server/database/migrations/meta/*_snapshot.json

@@ -28,9 +28,8 @@ module.exports = {
       merge_logs: true,
       time: true,             // Prefix logs with timestamp (good for forensics)
       
-      // Ensure logs go to stdout/stderr for Docker logging drivers
-      out_file: '/dev/stdout',
-      error_file: '/dev/stderr',
+      out_file: '/opt/xyrapanel/.pm2/logs/xyrapanel-out.log',
+      error_file: '/opt/xyrapanel/.pm2/logs/xyrapanel-error.log',
     },
   ],
 }
