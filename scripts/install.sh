@@ -269,6 +269,9 @@ else
     "$PNPM_BIN" install --frozen-lockfile
   fi
   log_success "Dependencies installed"
+  log_step "Generating PWA assets"
+  "$PNPM_BIN" run generate-pwa-assets
+  log_success "PWA assets generated"
   log_step "Building panel ${DIM}(takes a few minutes — uses swap)${RESET}"
   NODE_OPTIONS="--max-old-space-size=4096" "$PNPM_BIN" build
   echo "$GIT_HASH" > "$BUILD_HASH_FILE"
