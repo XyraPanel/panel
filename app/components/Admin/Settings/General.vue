@@ -38,11 +38,9 @@ const schema = computed(() =>
       .refine((val) => availableLocales.value.some((locale) => locale.code === val), {
         message: t('admin.settings.generalSettings.languageInvalid'),
       }),
-    timezone: z
-      .string()
-      .refine((val) => timezoneEnumValues.includes(val as TimezoneValue), {
-        message: t('admin.settings.generalSettings.timezoneInvalid'),
-      }),
+    timezone: z.string().refine((val) => timezoneEnumValues.includes(val as TimezoneValue), {
+      message: t('admin.settings.generalSettings.timezoneInvalid'),
+    }),
   }),
 );
 
