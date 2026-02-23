@@ -565,7 +565,7 @@ export default defineNuxtConfig({
     blockAiBots: true, // Block AI bots from crawling !
   },
   experimental: {
-    buildCache: true
+    buildCache: true,
   },
   nitro: {
     preset: 'node-server',
