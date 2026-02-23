@@ -1,5 +1,5 @@
-import { taskScheduler } from '#server/utils/task-scheduler'
+import { taskScheduler } from '#server/utils/task-scheduler';
 
 export default defineNitroPlugin(() => {
-  taskScheduler.startScheduler()
-})
+  taskScheduler.startScheduler();
+});

@@ -1,10 +1,13 @@
-import { useDrizzle, tables, eq, inArray } from '#server/utils/drizzle'
-import { getWingsClient } from '#server/utils/wings-client'
-import { debugError, debugWarn } from '#server/utils/logger'
-import type { WingsClient } from '#server/utils/wings-client'
-import type { WingsNode } from '#shared/types/wings-client'
-import type { WingsServerConfiguration } from '#shared/types/wings-config'
-import type { ServerProvisioningConfig, ServerProvisioningContext as SharedServerProvisioningContext } from '#shared/types/server'
+import { useDrizzle, tables, eq, inArray } from '#server/utils/drizzle';
+import { getWingsClient } from '#server/utils/wings-client';
+import { debugError, debugWarn } from '#server/utils/logger';
+import type { WingsClient } from '#server/utils/wings-client';
+import type { WingsNode } from '#shared/types/wings-client';
+import type { WingsServerConfiguration } from '#shared/types/wings-config';
+import type {
+  ServerProvisioningConfig,
+  ServerProvisioningContext as SharedServerProvisioningContext,
+} from '#shared/types/server';
 
 type ServerProvisioningContext = SharedServerProvisioningContext<
   typeof tables.servers.$inferSelect,
@@ -15,54 +18,53 @@ type ServerProvisioningContext = SharedServerProvisioningContext<
   typeof tables.eggVariables.$inferSelect,
   typeof tables.mounts.$inferSelect,
   WingsNode
->
+>;
 
 function buildEnvironmentVariables(
   context: ServerProvisioningContext,
-  overrides?: Record<string, string>
+  overrides?: Record<string, string>,
 ): Record<string, string> {
-  const environment: Record<string, string> = {}
+  const environment: Record<string, string> = {};
 
   for (const eggVar of context.eggVariables) {
-    const envKey = eggVar.envVariable
-    const userValue = overrides?.[envKey]
-    const defaultValue = eggVar.defaultValue
+    const envKey = eggVar.envVariable;
+    const userValue = overrides?.[envKey];
+    const defaultValue = eggVar.defaultValue;
 
     if (userValue !== undefined) {
-      environment[envKey] = String(userValue)
+      environment[envKey] = String(userValue);
     } else if (defaultValue) {
-      environment[envKey] = defaultValue
+      environment[envKey] = defaultValue;
     }
   }
 
-  environment.SERVER_MEMORY = String(context.limits.memory ?? 512)
-  environment.SERVER_IP = context.allocation.ip
-  environment.SERVER_PORT = String(context.allocation.port)
+  environment.SERVER_MEMORY = String(context.limits.memory ?? 512);
+  environment.SERVER_IP = context.allocation.ip;
+  environment.SERVER_PORT = String(context.allocation.port);
 
-  return environment
+  return environment;
 }
 
 function buildAllocationsConfig(
-  context: ServerProvisioningContext
+  context: ServerProvisioningContext,
 ): WingsServerConfiguration['allocations'] {
-  const mappings: Record<string, number[]> = {}
-  const primaryIp = context.allocation.ip ?? '0.0.0.0'
-  const primaryPort = context.allocation.port
+  const mappings: Record<string, number[]> = {};
+  const primaryIp = context.allocation.ip ?? '0.0.0.0';
+  const primaryPort = context.allocation.port;
   if (!mappings[primaryIp]) {
-    mappings[primaryIp] = []
+    mappings[primaryIp] = [];
   }
-  mappings[primaryIp].push(primaryPort)
+  mappings[primaryIp].push(primaryPort);
 
   for (const allocation of context.additionalAllocations) {
-    const allocationIp = allocation.ip
+    const allocationIp = allocation.ip;
     if (!allocationIp) {
-      continue
+      continue;
     }
 
-    const ports = (mappings[allocationIp] ??= [])
-    ports.push(allocation.port)
+    const ports = (mappings[allocationIp] ??= []);
+    ports.push(allocation.port);
   }
-
 
   return {
     force_outgoing_ip: false,
@@ -71,60 +73,56 @@ function buildAllocationsConfig(
       port: primaryPort,
     },
     mappings,
-  }
+  };
 }
 
-function buildMountsConfig(
-  context: ServerProvisioningContext
-): WingsServerConfiguration['mounts'] {
-  return context.mounts.map(mount => ({
+function buildMountsConfig(context: ServerProvisioningContext): WingsServerConfiguration['mounts'] {
+  return context.mounts.map((mount) => ({
     source: mount.source,
     target: mount.target,
     read_only: mount.readOnly ?? false,
-  }))
+  }));
 }
 
 async function buildProvisioningContext(
-  config: ServerProvisioningConfig
+  config: ServerProvisioningConfig,
 ): Promise<ServerProvisioningContext> {
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   const [server] = await db
     .select()
     .from(tables.servers)
-    .where(eq(tables.servers.id, config.serverId))
+    .where(eq(tables.servers.id, config.serverId));
 
   if (!server) {
-    throw new Error('Server not found')
+    throw new Error('Server not found');
   }
 
   const [limits] = await db
     .select()
     .from(tables.serverLimits)
-    .where(eq(tables.serverLimits.serverId, config.serverId))
+    .where(eq(tables.serverLimits.serverId, config.serverId));
 
   if (!limits) {
-    debugError(`[Server Provisioning] Server ${config.serverId} has no limits configured!`)
-    throw new Error(`Server limits not found for server ${config.serverId}. The server was likely created without proper limits. Please update the server via the admin panel.`)
+    debugError(`[Server Provisioning] Server ${config.serverId} has no limits configured!`);
+    throw new Error(
+      `Server limits not found for server ${config.serverId}. The server was likely created without proper limits. Please update the server via the admin panel.`,
+    );
   }
-  
 
-  const [egg] = await db
-    .select()
-    .from(tables.eggs)
-    .where(eq(tables.eggs.id, config.eggId))
+  const [egg] = await db.select().from(tables.eggs).where(eq(tables.eggs.id, config.eggId));
 
   if (!egg) {
-    throw new Error('Egg not found')
+    throw new Error('Egg not found');
   }
 
   const [allocation] = await db
     .select()
     .from(tables.serverAllocations)
-    .where(eq(tables.serverAllocations.id, config.allocationId))
+    .where(eq(tables.serverAllocations.id, config.allocationId));
 
   if (!allocation) {
-    throw new Error('Primary allocation not found')
+    throw new Error('Primary allocation not found');
   }
 
   const additionalAllocations = config.additionalAllocationIds?.length
@@ -132,27 +130,24 @@ async function buildProvisioningContext(
         .select()
         .from(tables.serverAllocations)
         .where(inArray(tables.serverAllocations.id, config.additionalAllocationIds))
-    : []
+    : [];
 
   const eggVariables = await db
     .select()
     .from(tables.eggVariables)
-    .where(eq(tables.eggVariables.eggId, config.eggId))
+    .where(eq(tables.eggVariables.eggId, config.eggId));
 
   const mounts = config.mountIds?.length
-    ? await db
-        .select()
-        .from(tables.mounts)
-        .where(inArray(tables.mounts.id, config.mountIds))
-    : []
+    ? await db.select().from(tables.mounts).where(inArray(tables.mounts.id, config.mountIds))
+    : [];
 
   const [node] = await db
     .select()
     .from(tables.wingsNodes)
-    .where(eq(tables.wingsNodes.id, config.nodeId))
+    .where(eq(tables.wingsNodes.id, config.nodeId));
 
   if (!node) {
-    throw new Error('Node not found')
+    throw new Error('Node not found');
   }
 
   const wingsNode: WingsNode = {
@@ -164,7 +159,7 @@ async function buildProvisioningContext(
     daemonBase: node.daemonBase,
     tokenId: node.tokenIdentifier,
     token: node.tokenSecret,
-  }
+  };
 
   return {
     wingsNode,
@@ -175,34 +170,34 @@ async function buildProvisioningContext(
     additionalAllocations,
     eggVariables,
     mounts,
-  }
+  };
 }
 
 export async function waitForServerInstall(client: WingsClient, serverUuid: string): Promise<void> {
-  const maxRetries = 60
-  const delayMs = 5000
+  const maxRetries = 60;
+  const delayMs = 5000;
 
   for (let attempt = 0; attempt < maxRetries; attempt++) {
-    const details = await client.getServerDetails(serverUuid)
+    const details = await client.getServerDetails(serverUuid);
 
     if (details.state === 'running' || details.state === 'offline') {
-      return
+      return;
     }
 
-    await new Promise(resolve => setTimeout(resolve, delayMs))
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
   }
 
-  throw new Error('Server install timed out while waiting for Wings')
+  throw new Error('Server install timed out while waiting for Wings');
 }
 
 export async function buildWingsServerConfig(
-  config: ServerProvisioningConfig
+  config: ServerProvisioningConfig,
 ): Promise<{ context: ServerProvisioningContext; payload: WingsServerConfiguration }> {
-  const context = await buildProvisioningContext(config)
+  const context = await buildProvisioningContext(config);
 
-  const environment = buildEnvironmentVariables(context, config.environment)
-  const allocations = buildAllocationsConfig(context)
-  const mounts = buildMountsConfig(context)
+  const environment = buildEnvironmentVariables(context, config.environment);
+  const allocations = buildAllocationsConfig(context);
+  const mounts = buildMountsConfig(context);
 
   const wingsConfig: WingsServerConfiguration = {
     uuid: config.serverUuid,
@@ -237,27 +232,29 @@ export async function buildWingsServerConfig(
       file_denylist: [],
     },
     container: {
-      image: config.dockerImageOverride || context.server.dockerImage || context.egg.dockerImage || 'ghcr.io/pterodactyl/yolks:latest',
+      image:
+        config.dockerImageOverride ||
+        context.server.dockerImage ||
+        context.egg.dockerImage ||
+        'ghcr.io/pterodactyl/yolks:latest',
       registry: config.dockerCredentials?.registry,
       username: config.dockerCredentials?.username,
       password: config.dockerCredentials?.password,
       image_pull_policy: config.dockerCredentials?.imagePullPolicy,
     },
-  }
+  };
 
-  return { context, payload: wingsConfig }
+  return { context, payload: wingsConfig };
 }
 
-export async function provisionServerOnWings(
-  config: ServerProvisioningConfig
-): Promise<void> {
-  const db = useDrizzle()
+export async function provisionServerOnWings(config: ServerProvisioningConfig): Promise<void> {
+  const db = useDrizzle();
 
-  const { context } = await buildWingsServerConfig(config)
+  const { context } = await buildWingsServerConfig(config);
 
-  const client = getWingsClient(context.wingsNode)
+  const client = getWingsClient(context.wingsNode);
 
-  const now = new Date().toISOString()
+  const now = new Date().toISOString();
 
   await db
     .update(tables.servers)
@@ -266,14 +263,14 @@ export async function provisionServerOnWings(
       installedAt: null,
       updatedAt: now,
     })
-    .where(eq(tables.servers.id, config.serverId))
+    .where(eq(tables.servers.id, config.serverId));
 
   try {
     await client.createServer(config.serverUuid, {
       start_on_completion: config.startOnCompletion ?? true,
-    })
+    });
 
-    await waitForServerInstall(client, config.serverUuid)
+    await waitForServerInstall(client, config.serverUuid);
 
     await db
       .update(tables.servers)
@@ -282,7 +279,7 @@ export async function provisionServerOnWings(
         installedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(tables.servers.id, config.serverId))
+      .where(eq(tables.servers.id, config.serverId));
   } catch (error) {
     await db
       .update(tables.servers)
@@ -290,36 +287,36 @@ export async function provisionServerOnWings(
         status: 'install_failed',
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(tables.servers.id, config.serverId))
+      .where(eq(tables.servers.id, config.serverId));
 
     debugWarn('Server installation failed, keeping server on Wings for file access:', {
       serverUuid: config.serverUuid,
       error: error instanceof Error ? error.message : String(error),
-    })
+    });
 
-    throw error
+    throw error;
   }
 }
 
 export async function triggerServerInstallation(serverUuid: string): Promise<void> {
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   const [server] = await db
     .select()
     .from(tables.servers)
-    .where(eq(tables.servers.uuid, serverUuid))
+    .where(eq(tables.servers.uuid, serverUuid));
 
   if (!server) {
-    throw new Error('Server not found')
+    throw new Error('Server not found');
   }
 
   const [node] = await db
     .select()
     .from(tables.wingsNodes)
-    .where(eq(tables.wingsNodes.id, server.nodeId!))
+    .where(eq(tables.wingsNodes.id, server.nodeId!));
 
   if (!node) {
-    throw new Error('Node not found')
+    throw new Error('Node not found');
   }
 
   const wingsNode: WingsNode = {
@@ -331,35 +328,35 @@ export async function triggerServerInstallation(serverUuid: string): Promise<voi
     daemonBase: node.daemonBase,
     tokenId: node.tokenIdentifier,
     token: node.tokenSecret,
-  }
+  };
 
-  const client = getWingsClient(wingsNode)
+  const client = getWingsClient(wingsNode);
 
-  await client.reinstallServer(serverUuid)
+  await client.reinstallServer(serverUuid);
 }
 
 export async function checkInstallationStatus(serverUuid: string): Promise<{
-  status: string
-  installing: boolean
+  status: string;
+  installing: boolean;
 }> {
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   const [server] = await db
     .select()
     .from(tables.servers)
-    .where(eq(tables.servers.uuid, serverUuid))
+    .where(eq(tables.servers.uuid, serverUuid));
 
   if (!server) {
-    throw new Error('Server not found')
+    throw new Error('Server not found');
   }
 
   const [node] = await db
     .select()
     .from(tables.wingsNodes)
-    .where(eq(tables.wingsNodes.id, server.nodeId!))
+    .where(eq(tables.wingsNodes.id, server.nodeId!));
 
   if (!node) {
-    throw new Error('Node not found')
+    throw new Error('Node not found');
   }
 
   const wingsNode: WingsNode = {
@@ -371,16 +368,16 @@ export async function checkInstallationStatus(serverUuid: string): Promise<{
     daemonBase: node.daemonBase,
     tokenId: node.tokenIdentifier,
     token: node.tokenSecret,
-  }
+  };
 
-  const client = getWingsClient(wingsNode)
+  const client = getWingsClient(wingsNode);
 
-  const details = await client.getServerDetails(serverUuid)
+  const details = await client.getServerDetails(serverUuid);
 
-  const installing = server.status === 'installing'
+  const installing = server.status === 'installing';
 
   return {
     status: details.state,
     installing,
-  }
+  };
 }

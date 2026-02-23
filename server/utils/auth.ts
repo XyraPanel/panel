@@ -1,37 +1,37 @@
-import { betterAuth } from "better-auth"
-import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { admin } from 'better-auth/plugins/admin'
-import { bearer } from 'better-auth/plugins/bearer'
-import { multiSession } from 'better-auth/plugins/multi-session'
-import { customSession } from 'better-auth/plugins/custom-session'
-import { username } from 'better-auth/plugins/username'
-import { twoFactor } from 'better-auth/plugins/two-factor'
-import { captcha, apiKey } from 'better-auth/plugins'
-import type { AuthContext } from '@better-auth/core'
-import { useRuntimeConfig } from '#imports'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
-import bcrypt from 'bcryptjs'
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { admin } from 'better-auth/plugins/admin';
+import { bearer } from 'better-auth/plugins/bearer';
+import { multiSession } from 'better-auth/plugins/multi-session';
+import { customSession } from 'better-auth/plugins/custom-session';
+import { username } from 'better-auth/plugins/username';
+import { twoFactor } from 'better-auth/plugins/two-factor';
+import { captcha, apiKey } from 'better-auth/plugins';
+import type { AuthContext } from '@better-auth/core';
+import { useRuntimeConfig } from '#imports';
+import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import bcrypt from 'bcryptjs';
 
-let authInstance: ReturnType<typeof createAuth> | null = null
+let authInstance: ReturnType<typeof createAuth> | null = null;
 
 interface CaptchaConfig {
-  provider: 'cloudflare-turnstile' | 'google-recaptcha' | 'hcaptcha'
-  secretKey: string
-  minScore?: number
-  siteKey?: string
+  provider: 'cloudflare-turnstile' | 'google-recaptcha' | 'hcaptcha';
+  secretKey: string;
+  minScore?: number;
+  siteKey?: string;
 }
 
 interface ApiKeyRequestContext {
-  headers?: Headers | null
+  headers?: Headers | null;
 }
 
 function assertSecretSecurity(isProduction: boolean, secret: string | undefined): void {
   if (!isProduction) {
-    return
+    return;
   }
 
   if (!secret || secret.length < 32) {
-    throw new Error('BETTER_AUTH_SECRET must be at least 32 characters in production.')
+    throw new Error('BETTER_AUTH_SECRET must be at least 32 characters in production.');
   }
 
   const weakSecretPatterns = [
@@ -42,17 +42,22 @@ function assertSecretSecurity(isProduction: boolean, secret: string | undefined)
     'xyrapanel',
     'default',
     'example',
-  ]
+  ];
 
-  const normalizedSecret = secret.toLowerCase()
-  if (weakSecretPatterns.some(pattern => normalizedSecret.includes(pattern))) {
-    throw new Error('BETTER_AUTH_SECRET appears weak or default-like. Use a high-entropy random secret.')
+  const normalizedSecret = secret.toLowerCase();
+  if (weakSecretPatterns.some((pattern) => normalizedSecret.includes(pattern))) {
+    throw new Error(
+      'BETTER_AUTH_SECRET appears weak or default-like. Use a high-entropy random secret.',
+    );
   }
 }
 
-function getCaptchaConfig(provider: string, runtimeConfig: ReturnType<typeof useRuntimeConfig>): CaptchaConfig | null {
-  const normalizedProvider = provider.toLowerCase()
-  
+function getCaptchaConfig(
+  provider: string,
+  runtimeConfig: ReturnType<typeof useRuntimeConfig>,
+): CaptchaConfig | null {
+  const normalizedProvider = provider.toLowerCase();
+
   switch (normalizedProvider) {
     case 'turnstile':
     case 'cloudflare-turnstile':
@@ -60,10 +65,10 @@ function getCaptchaConfig(provider: string, runtimeConfig: ReturnType<typeof use
         return {
           provider: 'cloudflare-turnstile',
           secretKey: runtimeConfig.turnstile.secretKey,
-        }
+        };
       }
-      return null
-      
+      return null;
+
     case 'recaptcha':
     case 'google-recaptcha':
       if (runtimeConfig.recaptcha?.secretKey) {
@@ -71,32 +76,32 @@ function getCaptchaConfig(provider: string, runtimeConfig: ReturnType<typeof use
           provider: 'google-recaptcha',
           secretKey: runtimeConfig.recaptcha.secretKey,
           minScore: runtimeConfig.recaptcha?.minScore || 0.5,
-        }
+        };
       }
-      return null
-      
+      return null;
+
     case 'hcaptcha':
       if (runtimeConfig.hcaptcha?.secretKey) {
         return {
           provider: 'hcaptcha',
           secretKey: runtimeConfig.hcaptcha.secretKey,
           siteKey: runtimeConfig.hcaptcha?.siteKey,
-        }
+        };
       }
-      return null
-      
+      return null;
+
     default:
-      return null
+      return null;
   }
 }
 
 function useAuthDb() {
-  return useDrizzle()
+  return useDrizzle();
 }
 
 async function getSessionProfile(userId: string) {
-  const db = useAuthDb()
-  
+  const db = useAuthDb();
+
   const result = await db
     .select({
       id: tables.users.id,
@@ -109,91 +114,98 @@ async function getSessionProfile(userId: string) {
     })
     .from(tables.users)
     .where(eq(tables.users.id, userId))
-    .limit(1)
+    .limit(1);
 
-  const user = result[0]
+  const user = result[0];
 
   if (!user) {
-    return null
+    return null;
   }
 
-  const name = [user.nameFirst, user.nameLast].filter(Boolean).join(' ') || user.username || null
+  const name = [user.nameFirst, user.nameLast].filter(Boolean).join(' ') || user.username || null;
 
   return {
     role: user.rootAdmin || user.role === 'admin' ? 'admin' : 'user',
     passwordResetRequired: Boolean(user.passwordResetRequired),
     name,
-  }
+  };
 }
 
 function createAuth() {
-  const runtimeConfig = useRuntimeConfig()
-  const db = useAuthDb()
-  
-  const isProduction = process.env.NODE_ENV === 'production'
-  
-  const baseURL = runtimeConfig.authOrigin 
-    || process.env.BETTER_AUTH_URL
-    || process.env.AUTH_ORIGIN
-    || process.env.NUXT_AUTH_ORIGIN
-    || process.env.NUXT_PUBLIC_APP_URL
-    || process.env.APP_URL
-    || undefined
-  
-  const secret = runtimeConfig.authSecret || process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET || undefined
-  const captchaProvider = (process.env.CAPTCHA_PROVIDER || 'turnstile').toLowerCase()
-  const captchaConfig = getCaptchaConfig(captchaProvider, runtimeConfig)
-  
+  const runtimeConfig = useRuntimeConfig();
+  const db = useAuthDb();
+
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  const baseURL =
+    runtimeConfig.authOrigin ||
+    process.env.BETTER_AUTH_URL ||
+    process.env.AUTH_ORIGIN ||
+    process.env.NUXT_AUTH_ORIGIN ||
+    process.env.NUXT_PUBLIC_APP_URL ||
+    process.env.APP_URL ||
+    undefined;
+
+  const secret =
+    runtimeConfig.authSecret ||
+    process.env.BETTER_AUTH_SECRET ||
+    process.env.AUTH_SECRET ||
+    undefined;
+  const captchaProvider = (process.env.CAPTCHA_PROVIDER || 'turnstile').toLowerCase();
+  const captchaConfig = getCaptchaConfig(captchaProvider, runtimeConfig);
+
   if (isProduction) {
     if (!secret) {
-      throw new Error('BETTER_AUTH_SECRET is required in production. Set it in your environment variables.')
+      throw new Error(
+        'BETTER_AUTH_SECRET is required in production. Set it in your environment variables.',
+      );
     }
     if (!baseURL) {
-      throw new Error('BETTER_AUTH_URL (authOrigin) is required in production. Set it in your environment variables.')
+      throw new Error(
+        'BETTER_AUTH_URL (authOrigin) is required in production. Set it in your environment variables.',
+      );
     }
   }
 
-  assertSecretSecurity(isProduction, secret)
-  
-  const trustedOrigins: string[] = []
-  
+  assertSecretSecurity(isProduction, secret);
+
+  const trustedOrigins: string[] = [];
+
   if (baseURL) {
-    trustedOrigins.push(baseURL)
+    trustedOrigins.push(baseURL);
   }
-  
+
   if (!isProduction) {
     if (!trustedOrigins.includes('http://localhost:3000')) {
-      trustedOrigins.push('http://localhost:3000')
+      trustedOrigins.push('http://localhost:3000');
     }
   }
-  
+
   if (process.env.BETTER_AUTH_TRUSTED_ORIGINS) {
-    const additionalOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS
-      .split(',')
-      .map(origin => origin.trim())
+    const additionalOrigins = process.env.BETTER_AUTH_TRUSTED_ORIGINS.split(',')
+      .map((origin) => origin.trim())
       .filter(Boolean)
-      .filter(origin => !trustedOrigins.includes(origin)) 
-    trustedOrigins.push(...additionalOrigins)
+      .filter((origin) => !trustedOrigins.includes(origin));
+    trustedOrigins.push(...additionalOrigins);
   }
 
   if (process.env.NUXT_SECURITY_CORS_ORIGIN) {
-    const corsOrigins = process.env.NUXT_SECURITY_CORS_ORIGIN
-      .split(',')
-      .map(origin => origin.trim())
+    const corsOrigins = process.env.NUXT_SECURITY_CORS_ORIGIN.split(',')
+      .map((origin) => origin.trim())
       .filter(Boolean)
-      .filter(origin => !trustedOrigins.includes(origin))
-    trustedOrigins.push(...corsOrigins)
+      .filter((origin) => !trustedOrigins.includes(origin));
+    trustedOrigins.push(...corsOrigins);
   }
-  
-  const appUrl = process.env.NUXT_PUBLIC_APP_URL || process.env.APP_URL
+
+  const appUrl = process.env.NUXT_PUBLIC_APP_URL || process.env.APP_URL;
   if (appUrl && appUrl !== baseURL && !trustedOrigins.includes(appUrl)) {
-    trustedOrigins.push(appUrl)
+    trustedOrigins.push(appUrl);
   }
-  
+
   const ipAddressHeaders = process.env.BETTER_AUTH_IP_HEADER
     ? [process.env.BETTER_AUTH_IP_HEADER]
-    : ['cf-connecting-ip', 'x-forwarded-for', 'x-real-ip']
-  
+    : ['cf-connecting-ip', 'x-forwarded-for', 'x-real-ip'];
+
   const adapterSchema = {
     user: tables.users,
     session: tables.sessions,
@@ -203,7 +215,7 @@ function createAuth() {
     apikey: tables.apiKeys,
     twoFactor: tables.twoFactor,
     jwks: tables.jwks,
-  }
+  };
 
   return betterAuth({
     database: drizzleAdapter(db, {
@@ -226,7 +238,7 @@ function createAuth() {
         enabled: true,
         updateEmailWithoutVerification: false,
         sendChangeEmailConfirmation: async ({ user, newEmail, url }, _request) => {
-          const { sendEmail } = await import('#server/utils/email')
+          const { sendEmail } = await import('#server/utils/email');
           void sendEmail({
             to: user.email,
             subject: 'Confirm Email Change',
@@ -237,13 +249,13 @@ function createAuth() {
               <p><a href="${url}">Confirm Email Change</a></p>
               <p>If you didn't request this change, please ignore this email.</p>
             `,
-          }).catch(error => console.error('[auth][email][change-email-confirmation]', error))
+          }).catch((error) => console.error('[auth][email][change-email-confirmation]', error));
         },
       },
       deleteUser: {
         enabled: true,
         sendDeleteAccountVerification: async ({ user, url }, _request) => {
-          const { sendEmail } = await import('#server/utils/email')
+          const { sendEmail } = await import('#server/utils/email');
           void sendEmail({
             to: user.email,
             subject: 'Confirm Account Deletion',
@@ -255,11 +267,11 @@ function createAuth() {
               <p><a href="${url}" style="color: #ef4444; font-weight: bold;">Delete My Account</a></p>
               <p>If you didn't request this, please ignore this email and secure your account.</p>
             `,
-          }).catch(error => console.error('[auth][email][delete-account]', error))
+          }).catch((error) => console.error('[auth][email][delete-account]', error));
         },
         beforeDelete: async (user, _request) => {
-          const db = useAuthDb()
-          
+          const db = useAuthDb();
+
           const result = await db
             .select({
               rootAdmin: tables.users.rootAdmin,
@@ -267,14 +279,14 @@ function createAuth() {
             })
             .from(tables.users)
             .where(eq(tables.users.id, user.id))
-            .limit(1)
+            .limit(1);
 
-          const dbUser = result[0]
-          
+          const dbUser = result[0];
+
           if (dbUser?.rootAdmin || dbUser?.role === 'admin') {
             throw new (await import('better-auth/api')).APIError('BAD_REQUEST', {
               message: 'Admin accounts cannot be deleted',
-            })
+            });
           }
         },
       },
@@ -287,28 +299,29 @@ function createAuth() {
       enabled: true,
       password: {
         hash: async (password: string) => {
-          return await bcrypt.hash(password, 12)
+          return await bcrypt.hash(password, 12);
         },
         verify: async ({ hash, password }: { hash: string; password: string }) => {
-          return await bcrypt.compare(password, hash)
+          return await bcrypt.compare(password, hash);
         },
       },
       sendResetPassword: async ({ user, token }, _request) => {
-        const { sendPasswordResetEmail, resolvePanelBaseUrl } = await import('#server/utils/email')
-        const resetBaseUrl = `${resolvePanelBaseUrl()}/auth/password/reset`
-        void sendPasswordResetEmail(user.email, token, resetBaseUrl)
-          .catch(error => console.error('[auth][email][password-reset]', error))
+        const { sendPasswordResetEmail, resolvePanelBaseUrl } = await import('#server/utils/email');
+        const resetBaseUrl = `${resolvePanelBaseUrl()}/auth/password/reset`;
+        void sendPasswordResetEmail(user.email, token, resetBaseUrl).catch((error) =>
+          console.error('[auth][email][password-reset]', error),
+        );
       },
       resetPasswordTokenExpiresIn: 3600,
       onPasswordReset: async ({ user }, _request) => {
-        const db = useAuthDb()
-        
-        await db.delete(tables.sessions)
-          .where(eq(tables.sessions.userId, user.id))
-        
-        await db.update(tables.users)
+        const db = useAuthDb();
+
+        await db.delete(tables.sessions).where(eq(tables.sessions.userId, user.id));
+
+        await db
+          .update(tables.users)
           .set({ passwordResetRequired: false })
-          .where(eq(tables.users.id, user.id))
+          .where(eq(tables.users.id, user.id));
       },
     },
     session: {
@@ -338,15 +351,16 @@ function createAuth() {
       autoSignInAfterVerification: true,
       expiresIn: 60 * 60 * 24,
       sendVerificationEmail: async ({ user, token }, _request) => {
-        const { sendEmailVerificationEmail } = await import('#server/utils/email')
-        const rawUser = user as Record<string, unknown>
-        const username = typeof rawUser.username === 'string' ? rawUser.username : user.name || null
+        const { sendEmailVerificationEmail } = await import('#server/utils/email');
+        const rawUser = user as Record<string, unknown>;
+        const username =
+          typeof rawUser.username === 'string' ? rawUser.username : user.name || null;
         void sendEmailVerificationEmail({
           to: user.email,
           token,
           expiresAt: new Date(Date.now() + 60 * 60 * 24 * 1000),
           username,
-        }).catch(error => console.error('[auth][email][verify-email]', error))
+        }).catch((error) => console.error('[auth][email][verify-email]', error));
       },
     },
     trustedOrigins,
@@ -394,49 +408,49 @@ function createAuth() {
     onAPIError: {
       throw: false,
       onError: (error: unknown, ctx: AuthContext) => {
-        const maybeRequest = 'request' in ctx ? (ctx as { request?: unknown }).request : undefined
-        const request = maybeRequest instanceof Request ? maybeRequest : undefined
-        const isProduction = process.env.NODE_ENV === 'production'
-        let path = 'unknown'
+        const maybeRequest = 'request' in ctx ? (ctx as { request?: unknown }).request : undefined;
+        const request = maybeRequest instanceof Request ? maybeRequest : undefined;
+        const isProduction = process.env.NODE_ENV === 'production';
+        let path = 'unknown';
         if (request?.url) {
           try {
-            path = new URL(request.url).pathname
-          }
-          catch {
-            path = request.url
+            path = new URL(request.url).pathname;
+          } catch {
+            path = request.url;
           }
         }
-        const isAuthPath = path.startsWith('/api/auth')
+        const isAuthPath = path.startsWith('/api/auth');
 
         if (path.startsWith('/api/auth/sign-in')) {
-          const maybeBody = 'body' in ctx ? (ctx as { body?: unknown }).body : undefined
-          const identifier = (maybeBody && typeof maybeBody === 'object')
-            ? ((maybeBody as { email?: string }).email || (maybeBody as { username?: string }).username || null)
-            : null
-          const headers = request?.headers
+          const maybeBody = 'body' in ctx ? (ctx as { body?: unknown }).body : undefined;
+          const identifier =
+            maybeBody && typeof maybeBody === 'object'
+              ? (maybeBody as { email?: string }).email ||
+                (maybeBody as { username?: string }).username ||
+                null
+              : null;
+          const headers = request?.headers;
           const ip = headers
-            ? ipAddressHeaders
-              .map(header => headers.get(header))
-              .find(value => Boolean(value))
-            : null
-          const reason = error instanceof Error ? error.message : String(error)
+            ? ipAddressHeaders.map((header) => headers.get(header)).find((value) => Boolean(value))
+            : null;
+          const reason = error instanceof Error ? error.message : String(error);
           console.warn('[auth][sign-in-failed]', {
             path,
             method: request?.method || 'UNKNOWN',
             identifier,
             ip: ip?.split(',')[0]?.trim() || null,
             reason,
-          })
+          });
         }
 
         if (isProduction) {
           if (isAuthPath) {
-            return
+            return;
           }
 
-          const errorName = error instanceof Error ? error.name : 'UnknownError'
+          const errorName = error instanceof Error ? error.name : 'UnknownError';
           if (errorName === 'APIError' || errorName === 'ValidationError') {
-            return
+            return;
           }
         }
       },
@@ -446,12 +460,16 @@ function createAuth() {
       level: isProduction ? 'error' : 'warn',
     },
     plugins: [
-      ...(captchaConfig ? [captcha({
-        provider: captchaConfig.provider,
-        secretKey: captchaConfig.secretKey,
-        ...(captchaConfig.minScore && { minScore: captchaConfig.minScore }),
-        ...(captchaConfig.siteKey && { siteKey: captchaConfig.siteKey }),
-      })] : []),
+      ...(captchaConfig
+        ? [
+            captcha({
+              provider: captchaConfig.provider,
+              secretKey: captchaConfig.secretKey,
+              ...(captchaConfig.minScore && { minScore: captchaConfig.minScore }),
+              ...(captchaConfig.siteKey && { siteKey: captchaConfig.siteKey }),
+            }),
+          ]
+        : []),
       username({
         minUsernameLength: 3,
         maxUsernameLength: 30,
@@ -464,20 +482,21 @@ function createAuth() {
         defaultRole: 'user',
         impersonationSessionDuration: 60 * 60,
         defaultBanReason: 'No reason provided',
-        bannedUserMessage: 'You have been banned from this application. Please contact support if you believe this is an error.',
+        bannedUserMessage:
+          'You have been banned from this application. Please contact support if you believe this is an error.',
       }),
       apiKey({
         apiKeyHeaders: ['x-api-key'],
         customAPIKeyGetter: (ctx: ApiKeyRequestContext) => {
-          const bearer = ctx.headers?.get('authorization')
+          const bearer = ctx.headers?.get('authorization');
           if (bearer?.startsWith('Bearer ')) {
-            const token = bearer.slice(7).trim()
+            const token = bearer.slice(7).trim();
             if (token) {
-              return token
+              return token;
             }
           }
-          const headerKey = ctx.headers?.get('x-api-key')
-          return headerKey || null
+          const headerKey = ctx.headers?.get('x-api-key');
+          return headerKey || null;
         },
         enableSessionForAPIKeys: true,
         disableKeyHashing: false,
@@ -496,12 +515,12 @@ function createAuth() {
       }),
       customSession(async ({ user, session }) => {
         if (!user?.id) {
-          return { user, session }
+          return { user, session };
         }
 
-        const profile = await getSessionProfile(user.id)
+        const profile = await getSessionProfile(user.id);
         if (!profile) {
-          return { user, session }
+          return { user, session };
         }
 
         return {
@@ -512,30 +531,32 @@ function createAuth() {
             name: profile.name ?? user.name ?? null,
           },
           session,
-        }
+        };
       }),
     ],
-  })
+  });
 }
 
 export function getAuth() {
   if (!authInstance) {
-    authInstance = createAuth()
+    authInstance = createAuth();
   }
-  return authInstance
+  return authInstance;
 }
 
-export const auth = getAuth()
+export const auth = getAuth();
 
 /**
  * Normalizes H3 event headers to a format compatible with Better Auth API.
  */
-export function normalizeHeadersForAuth(headers: Record<string, string | string[] | undefined>): Record<string, string> {
-  const normalized: Record<string, string> = {}
+export function normalizeHeadersForAuth(
+  headers: Record<string, string | string[] | undefined>,
+): Record<string, string> {
+  const normalized: Record<string, string> = {};
   for (const [key, value] of Object.entries(headers)) {
     if (value) {
-      normalized[key] = Array.isArray(value) ? value[0]! : value
+      normalized[key] = Array.isArray(value) ? value[0]! : value;
     }
   }
-  return normalized
+  return normalized;
 }

@@ -1,34 +1,40 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import type { AdminUserProfilePayload } from '#shared/types/admin'
+import { computed } from 'vue';
+import type { AdminUserProfilePayload } from '#shared/types/admin';
 
 interface Props {
-  profile: AdminUserProfilePayload | undefined
+  profile: AdminUserProfilePayload | undefined;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const user = computed(() => props.profile?.user)
-const stats = computed(() => props.profile?.stats ?? {
-  serverCount: 0,
-  apiKeyCount: 0,
-})
-const security = computed(() => props.profile?.security ?? {
-  sessions: [],
-  lastLogin: null,
-  lastLoginIp: null,
-  uniqueIps: [],
-  activeSessions: 0,
-  securityEvents: [],
-})
+const user = computed(() => props.profile?.user);
+const stats = computed(
+  () =>
+    props.profile?.stats ?? {
+      serverCount: 0,
+      apiKeyCount: 0,
+    },
+);
+const security = computed(
+  () =>
+    props.profile?.security ?? {
+      sessions: [],
+      lastLogin: null,
+      lastLoginIp: null,
+      uniqueIps: [],
+      activeSessions: 0,
+      securityEvents: [],
+    },
+);
 
-const isSuspended = computed(() => Boolean(user.value?.suspended))
-const hasTwoFactor = computed(() => Boolean(user.value?.twoFactorEnabled))
-const requiresPasswordReset = computed(() => Boolean(user.value?.passwordResetRequired))
+const isSuspended = computed(() => Boolean(user.value?.suspended));
+const hasTwoFactor = computed(() => Boolean(user.value?.twoFactorEnabled));
+const requiresPasswordReset = computed(() => Boolean(user.value?.passwordResetRequired));
 
 function maskIp(ip: string) {
-  if (!ip || ip === 'Unknown') return 'Unknown'
-  return '**********'
+  if (!ip || ip === 'Unknown') return 'Unknown';
+  return '**********';
 }
 </script>
 
@@ -39,13 +45,37 @@ function maskIp(ip: string) {
         <div class="flex flex-wrap items-start justify-between gap-2">
           <div>
             <h2 class="text-lg font-semibold">Profile overview</h2>
-            <p class="text-xs text-muted-foreground">Consolidated account metadata, status, and metrics.</p>
+            <p class="text-xs text-muted-foreground">
+              Consolidated account metadata, status, and metrics.
+            </p>
           </div>
           <div class="flex flex-wrap items-center gap-2">
-            <UBadge v-if="user?.rootAdmin" size="sm" color="error" variant="subtle" class="uppercase">Root admin</UBadge>
-            <UBadge :color="user?.role === 'admin' ? 'error' : 'primary'" size="sm" variant="subtle" class="uppercase">{{ user?.role?.toUpperCase() }}</UBadge>
-            <UBadge v-if="isSuspended" size="sm" color="error" variant="solid" class="uppercase">Suspended</UBadge>
-            <UBadge v-if="requiresPasswordReset" size="sm" color="warning" variant="subtle" class="uppercase">Reset required</UBadge>
+            <UBadge
+              v-if="user?.rootAdmin"
+              size="sm"
+              color="error"
+              variant="subtle"
+              class="uppercase"
+              >Root admin</UBadge
+            >
+            <UBadge
+              :color="user?.role === 'admin' ? 'error' : 'primary'"
+              size="sm"
+              variant="subtle"
+              class="uppercase"
+              >{{ user?.role?.toUpperCase() }}</UBadge
+            >
+            <UBadge v-if="isSuspended" size="sm" color="error" variant="solid" class="uppercase"
+              >Suspended</UBadge
+            >
+            <UBadge
+              v-if="requiresPasswordReset"
+              size="sm"
+              color="warning"
+              variant="subtle"
+              class="uppercase"
+              >Reset required</UBadge
+            >
           </div>
         </div>
       </template>
@@ -178,12 +208,7 @@ function maskIp(ip: string) {
                 :delay-duration="0"
                 :text="ip"
               >
-                <UBadge
-                  size="xs"
-                  variant="subtle"
-                  color="neutral"
-                  class="font-mono cursor-help"
-                >
+                <UBadge size="xs" variant="subtle" color="neutral" class="font-mono cursor-help">
                   {{ maskIp(ip) }}
                 </UBadge>
               </UTooltip>

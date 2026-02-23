@@ -1,31 +1,31 @@
-import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { getWingsClient, WingsConnectionError, WingsAuthError } from '#server/utils/wings-client'
-import type { WingsNode } from '#shared/types/wings-client'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAdmin } from '#server/utils/security';
+import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import { getWingsClient, WingsConnectionError, WingsAuthError } from '#server/utils/wings-client';
+import type { WingsNode } from '#shared/types/wings-client';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NODES, ADMIN_ACL_PERMISSIONS.READ)
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NODES, ADMIN_ACL_PERMISSIONS.READ);
 
-  const nodeId = getRouterParam(event, 'id')
+  const nodeId = getRouterParam(event, 'id');
   if (!nodeId) {
-    throw createError({ status: 400, statusText: 'Node ID is required' })
+    throw createError({ status: 400, statusText: 'Node ID is required' });
   }
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   const [node] = await db
     .select()
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, nodeId))
-    .limit(1)
+    .limit(1);
 
   if (!node) {
-    throw createError({ status: 404, statusText: 'Node not found' })
+    throw createError({ status: 404, statusText: 'Node not found' });
   }
 
   const wingsNode: WingsNode = {
@@ -37,23 +37,23 @@ export default defineEventHandler(async (event) => {
     daemonBase: node.daemonBase,
     tokenId: node.tokenIdentifier,
     token: node.tokenSecret,
-  }
+  };
 
-  const client = getWingsClient(wingsNode)
+  const client = getWingsClient(wingsNode);
 
   try {
-    const isConnected = await client.testConnection()
-    
+    const isConnected = await client.testConnection();
+
     if (isConnected) {
-      const systemInfo = await client.getSystemInfo()
-      
+      const systemInfo = await client.getSystemInfo();
+
       await db
         .update(tables.wingsNodes)
         .set({
           lastSeenAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(tables.wingsNodes.id, nodeId))
+        .where(eq(tables.wingsNodes.id, nodeId));
 
       await recordAuditEventFromRequest(event, {
         actor: session.user.email || session.user.id,
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
         metadata: {
           fqdn: node.fqdn,
         },
-      })
+      });
 
       return {
         data: {
@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
           message: 'Successfully connected to Wings daemon',
           systemInfo,
         },
-      }
+      };
     } else {
       await recordAuditEventFromRequest(event, {
         actor: session.user.email || session.user.id,
@@ -85,7 +85,7 @@ export default defineEventHandler(async (event) => {
           fqdn: node.fqdn,
           reason: 'connection_failed',
         },
-      })
+      });
 
       return {
         data: {
@@ -93,22 +93,22 @@ export default defineEventHandler(async (event) => {
           connected: false,
           message: 'Failed to connect to Wings daemon',
         },
-      }
+      };
     }
   } catch (error) {
-    console.error('Wings connection test failed:', error)
+    console.error('Wings connection test failed:', error);
 
-    let errorMessage = 'Unknown connection error'
-    let errorType = 'unknown'
+    let errorMessage = 'Unknown connection error';
+    let errorType = 'unknown';
 
     if (error instanceof WingsAuthError) {
-      errorMessage = 'Authentication failed - check node tokens'
-      errorType = 'auth'
+      errorMessage = 'Authentication failed - check node tokens';
+      errorType = 'auth';
     } else if (error instanceof WingsConnectionError) {
-      errorMessage = error.message
-      errorType = 'connection'
+      errorMessage = error.message;
+      errorType = 'connection';
     } else if (error instanceof Error) {
-      errorMessage = error.message
+      errorMessage = error.message;
     }
 
     await recordAuditEventFromRequest(event, {
@@ -122,7 +122,7 @@ export default defineEventHandler(async (event) => {
         errorType,
         errorMessage,
       },
-    })
+    });
 
     return {
       data: {
@@ -131,6 +131,6 @@ export default defineEventHandler(async (event) => {
         message: errorMessage,
         errorType,
       },
-    }
+    };
   }
-})
+});

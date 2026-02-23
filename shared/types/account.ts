@@ -1,99 +1,99 @@
-import type { BaseActivityEvent } from './audit'
+import type { BaseActivityEvent } from './audit';
 
 export interface UpdateEmailPayload {
-  email: string
-  password: string
+  email: string;
+  password: string;
 }
 
 export interface UpdateEmailResponse {
-  success: boolean
+  success: boolean;
 }
 
 export interface AccountActivityItem extends BaseActivityEvent {
-  target: string | null
+  target: string | null;
 }
 
 export interface AccountActivityResponse {
-  data: AccountActivityItem[]
-  generatedAt: string
+  data: AccountActivityItem[];
+  generatedAt: string;
 }
 
 export interface PaginatedAccountActivityResponse {
-  data: AccountActivityItem[]
+  data: AccountActivityItem[];
   pagination: {
-    page: number
-    perPage: number
-    total: number
-    totalPages: number
-  }
-  generatedAt: string
+    page: number;
+    perPage: number;
+    total: number;
+    totalPages: number;
+  };
+  generatedAt: string;
 }
 export interface SSHKeyManagerOptions {
-  userId?: string
-  skipAudit?: boolean
+  userId?: string;
+  skipAudit?: boolean;
 }
 
 export interface SSHKeyInfo {
-  id: string
-  userId: string
-  name: string
-  fingerprint: string
-  publicKey: string
-  createdAt: Date
-  updatedAt: Date
+  id: string;
+  userId: string;
+  name: string;
+  fingerprint: string;
+  publicKey: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface CreateSSHKeyOptions extends SSHKeyManagerOptions {
-  name: string
-  publicKey: string
+  name: string;
+  publicKey: string;
 }
 
 export interface TotpSetupResponse {
-  secret: string
-  uri: string
-  recoveryTokens: string[]
+  secret: string;
+  uri: string;
+  recoveryTokens: string[];
 }
 
 export interface TotpVerifyRequest {
-  code: string
-  trustDevice?: boolean
+  code: string;
+  trustDevice?: boolean;
 }
 
 export interface TotpEnableRequest {
-  password: string
-  issuer?: string
+  password: string;
+  issuer?: string;
 }
 
 export interface TotpDisableRequest {
-  password: string
+  password: string;
 }
 
 export interface RecoveryTokenRequest {
-  token: string
+  token: string;
 }
 
 export interface TotpResponse {
-  success: boolean
-  message: string
+  success: boolean;
+  message: string;
 }
 
 export interface PasswordRequestBody {
-  identity: string
+  identity: string;
 }
 
 export interface PasswordResetBody {
-  token: string
-  newPassword: string
+  token: string;
+  newPassword: string;
 }
 
 export interface PasswordForceBody {
-  newPassword: string
-  confirmPassword?: string
+  newPassword: string;
+  confirmPassword?: string;
 }
 
 export interface PasswordUpdateResponse {
-  success: boolean
-  revokedSessions: number
-  signedOut?: boolean
-  message?: string
+  success: boolean;
+  revokedSessions: number;
+  signedOut?: boolean;
+  message?: string;
 }

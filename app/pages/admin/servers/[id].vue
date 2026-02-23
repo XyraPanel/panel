@@ -1,27 +1,27 @@
 <script setup lang="ts">
-import type { AdminServerDetails } from '#shared/types/server'
+import type { AdminServerDetails } from '#shared/types/server';
 
-const { t } = useI18n()
-const route = useRoute()
+const { t } = useI18n();
+const route = useRoute();
 
 definePageMeta({
   auth: true,
   adminTitle: 'Server details',
   adminSubtitle: 'Manage server configuration and resources',
-})
+});
 
-const serverId = computed(() => route.params.id as string)
-const tab = ref<'overview' | 'build' | 'startup' | 'database' | 'mounts' | 'manage'>('overview')
+const serverId = computed(() => route.params.id as string);
+const tab = ref<'overview' | 'build' | 'startup' | 'database' | 'mounts' | 'manage'>('overview');
 
-const { data: serverData, pending, error } = await useFetch<{ data: AdminServerDetails }>(
-  () => `/api/admin/servers/${serverId.value}`,
-  {
-    key: () => `admin-server-${serverId.value}`,
-    watch: [serverId],
-  },
-)
-const server = computed(() => serverData.value?.data ?? null)
-
+const {
+  data: serverData,
+  pending,
+  error,
+} = await useFetch<{ data: AdminServerDetails }>(() => `/api/admin/servers/${serverId.value}`, {
+  key: () => `admin-server-${serverId.value}`,
+  watch: [serverId],
+});
+const server = computed(() => serverData.value?.data ?? null);
 </script>
 
 <template>
@@ -54,8 +54,8 @@ const server = computed(() => serverData.value?.data ?? null)
                 <p class="text-xs text-muted-foreground">{{ server.identifier }}</p>
               </div>
               <div class="flex flex-wrap gap-2">
-                <UButton 
-                  icon="i-lucide-external-link" 
+                <UButton
+                  icon="i-lucide-external-link"
                   size="xs"
                   variant="ghost"
                   :to="`/server/${server.identifier}/console`"
@@ -65,14 +65,39 @@ const server = computed(() => serverData.value?.data ?? null)
               </div>
             </header>
 
-            <UTabs v-model="tab" variant="link" :items="[
-              { label: t('admin.servers.tabs.overview'), value: 'overview', icon: 'i-lucide-layout-dashboard' },
-              { label: t('admin.servers.tabs.build'), value: 'build', icon: 'i-lucide-wrench' },
-              { label: t('admin.servers.tabs.startup'), value: 'startup', icon: 'i-lucide-rocket' },
-              { label: t('admin.servers.tabs.database'), value: 'database', icon: 'i-lucide-database' },
-              { label: t('admin.servers.tabs.mounts'), value: 'mounts', icon: 'i-lucide-folder-tree' },
-              { label: t('admin.servers.tabs.manage'), value: 'manage', icon: 'i-lucide-settings' },
-            ]" class="w-full" />
+            <UTabs
+              v-model="tab"
+              variant="link"
+              :items="[
+                {
+                  label: t('admin.servers.tabs.overview'),
+                  value: 'overview',
+                  icon: 'i-lucide-layout-dashboard',
+                },
+                { label: t('admin.servers.tabs.build'), value: 'build', icon: 'i-lucide-wrench' },
+                {
+                  label: t('admin.servers.tabs.startup'),
+                  value: 'startup',
+                  icon: 'i-lucide-rocket',
+                },
+                {
+                  label: t('admin.servers.tabs.database'),
+                  value: 'database',
+                  icon: 'i-lucide-database',
+                },
+                {
+                  label: t('admin.servers.tabs.mounts'),
+                  value: 'mounts',
+                  icon: 'i-lucide-folder-tree',
+                },
+                {
+                  label: t('admin.servers.tabs.manage'),
+                  value: 'manage',
+                  icon: 'i-lucide-settings',
+                },
+              ]"
+              class="w-full"
+            />
 
             <UCard v-if="tab === 'overview'">
               <template #header>

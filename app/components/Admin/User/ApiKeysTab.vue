@@ -1,50 +1,50 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { AdminUserApiKeySummary, PaginatedApiKeysResponse } from '#shared/types/admin'
+import { computed, ref } from 'vue';
+import type { AdminUserApiKeySummary, PaginatedApiKeysResponse } from '#shared/types/admin';
 
 interface Props {
-  userId: string
-  itemsPerPage: number
+  userId: string;
+  itemsPerPage: number;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const { t } = useI18n()
-const toast = useToast()
-const apiKeysPage = ref(1)
-const expandedApiKeys = ref<Set<string>>(new Set())
-const showApiKeyDeleteModal = ref(false)
-const apiKeyToDelete = ref<AdminUserApiKeySummary | null>(null)
-const isDeletingApiKey = ref(false)
+const { t } = useI18n();
+const toast = useToast();
+const apiKeysPage = ref(1);
+const expandedApiKeys = ref<Set<string>>(new Set());
+const showApiKeyDeleteModal = ref(false);
+const apiKeyToDelete = ref<AdminUserApiKeySummary | null>(null);
+const isDeletingApiKey = ref(false);
 
-const {
-  data: apiKeysData,
-  refresh: refreshApiKeys,
-} = await useFetch<PaginatedApiKeysResponse>(
+const { data: apiKeysData, refresh: refreshApiKeys } = await useFetch<PaginatedApiKeysResponse>(
   () => `/api/admin/users/${props.userId}/api-keys`,
   {
     query: computed(() => ({
       page: apiKeysPage.value,
       limit: props.itemsPerPage,
     })),
-    default: () => ({ data: [], pagination: { page: 1, perPage: props.itemsPerPage, total: 0, totalPages: 0 } }),
+    default: () => ({
+      data: [],
+      pagination: { page: 1, perPage: props.itemsPerPage, total: 0, totalPages: 0 },
+    }),
     watch: [apiKeysPage, () => props.itemsPerPage],
   },
-)
+);
 
-const apiKeys = computed<AdminUserApiKeySummary[]>(() => apiKeysData.value?.data ?? [])
-const apiKeysPagination = computed(() => apiKeysData.value?.pagination)
+const apiKeys = computed<AdminUserApiKeySummary[]>(() => apiKeysData.value?.data ?? []);
+const apiKeysPagination = computed(() => apiKeysData.value?.pagination);
 
 function toggleApiKey(identifier: string) {
   if (expandedApiKeys.value.has(identifier)) {
-    expandedApiKeys.value.delete(identifier)
+    expandedApiKeys.value.delete(identifier);
   } else {
-    expandedApiKeys.value.add(identifier)
+    expandedApiKeys.value.add(identifier);
   }
 }
 
 function formatApiKeyJson(data: Record<string, unknown>): string {
-  return JSON.stringify(data, null, 2)
+  return JSON.stringify(data, null, 2);
 }
 
 function getFullApiKeyData(key: AdminUserApiKeySummary) {
@@ -55,69 +55,69 @@ function getFullApiKeyData(key: AdminUserApiKeySummary) {
     createdAt: key.createdAt,
     lastUsedAt: key.lastUsedAt,
     expiresAt: key.expiresAt,
-  }
+  };
 }
 
 async function copyApiKeyJson(key: AdminUserApiKeySummary) {
-  const json = formatApiKeyJson(getFullApiKeyData(key))
+  const json = formatApiKeyJson(getFullApiKeyData(key));
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(json)
+      await navigator.clipboard.writeText(json);
     } else {
-      const textArea = document.createElement('textarea')
-      textArea.value = json
-      textArea.style.position = 'fixed'
-      textArea.style.opacity = '0'
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
+      const textArea = document.createElement('textarea');
+      textArea.value = json;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
     }
     toast.add({
       title: t('common.copied'),
       description: t('common.copiedToClipboard'),
-    })
+    });
   } catch (error) {
     toast.add({
       title: t('common.failedToCopy'),
       description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
-    })
+    });
   }
 }
 
 function openApiKeyDeleteModal(key: AdminUserApiKeySummary) {
-  apiKeyToDelete.value = key
-  showApiKeyDeleteModal.value = true
+  apiKeyToDelete.value = key;
+  showApiKeyDeleteModal.value = true;
 }
 
 async function confirmApiKeyDelete() {
-  if (!apiKeyToDelete.value) return
+  if (!apiKeyToDelete.value) return;
 
-  isDeletingApiKey.value = true
+  isDeletingApiKey.value = true;
   try {
     await $fetch(`/api/admin/users/${props.userId}/api-keys/${apiKeyToDelete.value.identifier}`, {
       method: 'DELETE',
-    })
+    });
 
-    await refreshApiKeys()
-    showApiKeyDeleteModal.value = false
-    apiKeyToDelete.value = null
+    await refreshApiKeys();
+    showApiKeyDeleteModal.value = false;
+    apiKeyToDelete.value = null;
 
     toast.add({
       title: t('admin.users.apiKeys.apiKeyDeleted'),
       description: t('admin.users.apiKeys.apiKeyRemoved'),
       color: 'success',
-    })
+    });
   } catch (error) {
-    const err = error as { data?: { message?: string } }
+    const err = error as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
       description: err.data?.message || t('admin.users.apiKeys.failedToDeleteApiKey'),
       color: 'error',
-    })
+    });
   } finally {
-    isDeletingApiKey.value = false
+    isDeletingApiKey.value = false;
   }
 }
 </script>
@@ -152,17 +152,20 @@ async function confirmApiKeyDelete() {
             class="w-full flex items-center gap-3 p-3 text-left hover:bg-elevated/50 transition-colors"
             @click="toggleApiKey(key.identifier)"
           >
-            <UIcon
-              name="i-lucide-key"
-              class="size-5 shrink-0 text-primary"
-            />
-            
-            <div class="flex-1 min-w-0 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+            <UIcon name="i-lucide-key" class="size-5 shrink-0 text-primary" />
+
+            <div
+              class="flex-1 min-w-0 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
+            >
               <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                 <div class="flex items-center gap-2 min-w-0">
                   <code class="text-sm font-medium font-mono">{{ key.identifier }}</code>
                   <UIcon
-                    :name="expandedApiKeys.has(key.identifier) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                    :name="
+                      expandedApiKeys.has(key.identifier)
+                        ? 'i-lucide-chevron-down'
+                        : 'i-lucide-chevron-right'
+                    "
                     class="size-4 text-muted-foreground shrink-0"
                   />
                 </div>
@@ -197,14 +200,16 @@ async function confirmApiKeyDelete() {
               </div>
             </div>
           </button>
-          
+
           <div
             v-if="expandedApiKeys.has(key.identifier)"
             class="border-t border-default bg-muted/30 p-4 space-y-3"
           >
             <div class="space-y-2">
               <div class="flex items-center justify-between mb-2">
-                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{ t('admin.users.apiKeys.apiKeyData') }}</p>
+                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {{ t('admin.users.apiKeys.apiKeyData') }}
+                </p>
                 <UButton
                   variant="ghost"
                   size="xs"
@@ -214,7 +219,9 @@ async function confirmApiKeyDelete() {
                   {{ t('admin.users.apiKeys.copyJson') }}
                 </UButton>
               </div>
-              <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatApiKeyJson(getFullApiKeyData(key)) }}</code></pre>
+              <pre
+                class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
+              ><code>{{ formatApiKeyJson(getFullApiKeyData(key)) }}</code></pre>
             </div>
             <div class="flex justify-end">
               <UButton
@@ -232,13 +239,21 @@ async function confirmApiKeyDelete() {
             </div>
           </div>
         </div>
-        <div v-if="apiKeysPagination && apiKeysPagination.totalPages > 1" class="flex items-center justify-between border-t border-default pt-4">
+        <div
+          v-if="apiKeysPagination && apiKeysPagination.totalPages > 1"
+          class="flex items-center justify-between border-t border-default pt-4"
+        >
           <div class="text-sm text-muted-foreground">
-            {{ t('admin.users.apiKeys.showingApiKeys', { 
-              start: ((apiKeysPagination.page - 1) * apiKeysPagination.perPage) + 1,
-              end: Math.min(apiKeysPagination.page * apiKeysPagination.perPage, apiKeysPagination.total),
-              total: apiKeysPagination.total
-            }) }}
+            {{
+              t('admin.users.apiKeys.showingApiKeys', {
+                start: (apiKeysPagination.page - 1) * apiKeysPagination.perPage + 1,
+                end: Math.min(
+                  apiKeysPagination.page * apiKeysPagination.perPage,
+                  apiKeysPagination.total,
+                ),
+                total: apiKeysPagination.total,
+              })
+            }}
           </div>
           <UPagination
             v-model:page="apiKeysPage"
@@ -279,11 +294,13 @@ async function confirmApiKeyDelete() {
           variant="ghost"
           color="neutral"
           :disabled="isDeletingApiKey"
-          @click="() => {
-            showApiKeyDeleteModal = false
-            apiKeyToDelete = null
-            close()
-          }"
+          @click="
+            () => {
+              showApiKeyDeleteModal = false;
+              apiKeyToDelete = null;
+              close();
+            }
+          "
         >
           {{ t('common.cancel') }}
         </UButton>

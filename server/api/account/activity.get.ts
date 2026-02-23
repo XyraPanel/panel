@@ -1,41 +1,40 @@
-import { desc, eq, or, sql } from 'drizzle-orm'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { requireAccountUser } from '#server/utils/security'
+import { desc, eq, or, sql } from 'drizzle-orm';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { requireAccountUser } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
-  const { user } = await requireAccountUser(event)
+  const { user } = await requireAccountUser(event);
 
-  const query = getQuery(event)
+  const query = getQuery(event);
 
-  const page = Math.max(Number(query.page) || 1, 1)
-  const limitParam = Number.parseInt(
-    typeof query.limit === 'string' ? query.limit : '10',
-    10
-  )
-  const limit = Number.isNaN(limitParam) ? 10 : Math.min(Math.max(limitParam, 1), 100)
-  const offset = (page - 1) * limit
+  const page = Math.max(Number(query.page) || 1, 1);
+  const limitParam = Number.parseInt(typeof query.limit === 'string' ? query.limit : '10', 10);
+  const limit = Number.isNaN(limitParam) ? 10 : Math.min(Math.max(limitParam, 1), 100);
+  const offset = (page - 1) * limit;
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
-  const userId = user.id
-  const userEmail = user.email
+  const userId = user.id;
+  const userEmail = user.email;
 
-  const actorIdentifiers = new Set<string>()
-  actorIdentifiers.add(String(userId))
+  const actorIdentifiers = new Set<string>();
+  actorIdentifiers.add(String(userId));
   if (typeof userEmail === 'string' && userEmail.trim().length > 0) {
-    actorIdentifiers.add(userEmail.trim())
-    actorIdentifiers.add(userEmail.trim().toLowerCase())
+    actorIdentifiers.add(userEmail.trim());
+    actorIdentifiers.add(userEmail.trim().toLowerCase());
   }
 
-  const conditions = Array.from(actorIdentifiers).map(identifier => eq(tables.auditEvents.actor, identifier))
+  const conditions = Array.from(actorIdentifiers).map((identifier) =>
+    eq(tables.auditEvents.actor, identifier),
+  );
 
   const totalResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(tables.auditEvents)
-    .where(or(...conditions))
+    .where(or(...conditions));
 
-  const total = Number(totalResult[0]?.count ?? 0)
+  const total = Number(totalResult[0]?.count ?? 0);
 
   const rows = await db
     .select({
@@ -51,7 +50,7 @@ export default defineEventHandler(async (event) => {
     .where(or(...conditions))
     .orderBy(desc(tables.auditEvents.occurredAt))
     .limit(limit)
-    .offset(offset)
+    .offset(offset);
 
   const data = rows.map((row) => ({
     id: row.id,
@@ -60,7 +59,7 @@ export default defineEventHandler(async (event) => {
     target: row.targetId ? `${row.targetType}#${row.targetId}` : row.targetType,
     actor: row.actor,
     metadata: row.metadata ? JSON.parse(row.metadata) : null,
-  }))
+  }));
 
   await recordAuditEventFromRequest(event, {
     actor: user.id,
@@ -69,7 +68,7 @@ export default defineEventHandler(async (event) => {
     targetType: 'user',
     targetId: user.id,
     metadata: { page, limit, total },
-  })
+  });
 
   return {
     data,
@@ -80,5 +79,5 @@ export default defineEventHandler(async (event) => {
       totalPages: Math.ceil(total / limit),
     },
     generatedAt: new Date().toISOString(),
-  }
-})
+  };
+});

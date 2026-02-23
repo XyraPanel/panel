@@ -1,28 +1,27 @@
-import { getServerWithAccess } from '#server/utils/server-helpers'
-import { getWingsClientForServer } from '#server/utils/wings-client'
-import { requireServerPermission } from '#server/utils/permission-middleware'
-import { requireAccountUser } from '#server/utils/security'
+import { getServerWithAccess } from '#server/utils/server-helpers';
+import { getWingsClientForServer } from '#server/utils/wings-client';
+import { requireServerPermission } from '#server/utils/permission-middleware';
+import { requireAccountUser } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
-  const serverIdentifier = getRouterParam(event, 'server')
+  const serverIdentifier = getRouterParam(event, 'server');
   if (!serverIdentifier) {
-    throw createError({ status: 400, statusText: 'Server identifier required' })
+    throw createError({ status: 400, statusText: 'Server identifier required' });
   }
 
-  const accountContext = await requireAccountUser(event)
-  const { server } = await getServerWithAccess(serverIdentifier, accountContext.session)
+  const accountContext = await requireAccountUser(event);
+  const { server } = await getServerWithAccess(serverIdentifier, accountContext.session);
 
   await requireServerPermission(event, {
     serverId: server.id,
     requiredPermissions: ['server.view'],
     allowOwner: true,
     allowAdmin: true,
-  })
+  });
 
   try {
-
-    const { client } = await getWingsClientForServer(server.uuid as string)
-    const details = await client.getServerResources(server.uuid as string)
+    const { client } = await getWingsClientForServer(server.uuid as string);
+    const details = await client.getServerResources(server.uuid as string);
 
     return {
       data: {
@@ -39,9 +38,9 @@ export default defineEventHandler(async (event) => {
           state: details.state,
         },
       },
-    }
+    };
   } catch (error) {
-    console.error('Wings resource fetch failed:', error)
+    console.error('Wings resource fetch failed:', error);
 
     return {
       data: {
@@ -58,6 +57,6 @@ export default defineEventHandler(async (event) => {
           state: 'offline',
         },
       },
-    }
+    };
   }
-})
+});

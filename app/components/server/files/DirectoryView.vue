@@ -1,42 +1,44 @@
 <script setup lang="ts">
-import type { ServerFileListItem } from '#shared/types/server'
+import type { ServerFileListItem } from '#shared/types/server';
 
 const props = defineProps<{
-  currentEntries: ServerFileListItem[]
-  directoryPending: boolean
-  directoryError: Error | null
-  canNavigateUp: boolean
-  parentDirectoryLabel: string
-  onNavigateUp: () => void
-  allSelected: boolean
-  indeterminateSelection: boolean
-  toggleSelectAllEntries: (value: boolean) => void
-  isEntrySelected: (entry: ServerFileListItem) => boolean
-  toggleEntrySelection: (entry: ServerFileListItem, value: boolean) => void
-  handleEntryClick: (entry: ServerFileListItem) => void
-  availableFileActions: (entry: ServerFileListItem | null) => Array<{ label: string; icon: string; onClick: () => void }>
-  hasSelection: boolean
-  selectionLabel: string
-  canCopySelection: boolean
-  canMoveSelection: boolean
-  canArchiveSelection: boolean
-  canUnarchiveSelection: boolean
-  canDeleteSelection: boolean
-  copyStatusActive: boolean
-  moveStatusActive: boolean
-  compressStatusActive: boolean
-  decompressStatusActive: boolean
-  deleteStatusActive: boolean
-  directoryDisabled: boolean
-  handleBulkCopy: () => void
-  openBulkMoveModalWithDefaults: () => void
-  handleBulkArchive: () => void
-  handleBulkUnarchive: () => void
-  openBulkDeleteModal: () => void
-  clearSelection: () => void
-}>()
+  currentEntries: ServerFileListItem[];
+  directoryPending: boolean;
+  directoryError: Error | null;
+  canNavigateUp: boolean;
+  parentDirectoryLabel: string;
+  onNavigateUp: () => void;
+  allSelected: boolean;
+  indeterminateSelection: boolean;
+  toggleSelectAllEntries: (value: boolean) => void;
+  isEntrySelected: (entry: ServerFileListItem) => boolean;
+  toggleEntrySelection: (entry: ServerFileListItem, value: boolean) => void;
+  handleEntryClick: (entry: ServerFileListItem) => void;
+  availableFileActions: (
+    entry: ServerFileListItem | null,
+  ) => Array<{ label: string; icon: string; onClick: () => void }>;
+  hasSelection: boolean;
+  selectionLabel: string;
+  canCopySelection: boolean;
+  canMoveSelection: boolean;
+  canArchiveSelection: boolean;
+  canUnarchiveSelection: boolean;
+  canDeleteSelection: boolean;
+  copyStatusActive: boolean;
+  moveStatusActive: boolean;
+  compressStatusActive: boolean;
+  decompressStatusActive: boolean;
+  deleteStatusActive: boolean;
+  directoryDisabled: boolean;
+  handleBulkCopy: () => void;
+  openBulkMoveModalWithDefaults: () => void;
+  handleBulkArchive: () => void;
+  handleBulkUnarchive: () => void;
+  openBulkDeleteModal: () => void;
+  clearSelection: () => void;
+}>();
 
-const { t } = useI18n()
+const { t } = useI18n();
 </script>
 
 <template>
@@ -53,16 +55,14 @@ const { t } = useI18n()
       </UButton>
     </div>
 
-    <UAlert
-      v-if="props.directoryError"
-      color="error"
-      icon="i-lucide-alert-circle"
-    >
+    <UAlert v-if="props.directoryError" color="error" icon="i-lucide-alert-circle">
       {{ props.directoryError.message }}
     </UAlert>
 
     <div class="flex flex-col rounded-md border border-default h-full">
-      <div class="grid grid-cols-[auto_minmax(0,1.5fr)_110px_140px_64px] items-center gap-3 border-b border-default bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground shrink-0">
+      <div
+        class="grid grid-cols-[auto_minmax(0,1.5fr)_110px_140px_64px] items-center gap-3 border-b border-default bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground shrink-0"
+      >
         <UCheckbox
           :model-value="props.allSelected"
           :indeterminate="props.indeterminateSelection"
@@ -76,12 +76,20 @@ const { t } = useI18n()
         <span class="text-right">{{ t('common.actions') }}</span>
       </div>
 
-      <div class="overflow-y-auto flex-1" tabindex="0" role="region" :aria-label="t('server.files.title')">
+      <div
+        class="overflow-y-auto flex-1"
+        tabindex="0"
+        role="region"
+        :aria-label="t('server.files.title')"
+      >
         <div v-if="props.directoryPending" class="space-y-2 p-3 text-xs text-muted-foreground">
           <div v-for="index in 5" :key="index" class="h-5 animate-pulse rounded bg-muted/60" />
         </div>
 
-        <div v-else-if="props.currentEntries.length === 0" class="px-3 py-4 text-xs text-muted-foreground">
+        <div
+          v-else-if="props.currentEntries.length === 0"
+          class="px-3 py-4 text-xs text-muted-foreground"
+        >
           {{ t('server.files.noFilesDescription') }}
         </div>
 
@@ -91,7 +99,8 @@ const { t } = useI18n()
             :key="entry.path"
             class="grid w-full grid-cols-[auto_minmax(0,1.5fr)_110px_140px_64px] items-center gap-3 px-3 py-2 text-sm transition hover:bg-muted"
             :class="{
-              'border-l-2 border-primary bg-primary/10 text-foreground': props.isEntrySelected(entry),
+              'border-l-2 border-primary bg-primary/10 text-foreground':
+                props.isEntrySelected(entry),
               'text-muted-foreground': !props.isEntrySelected(entry),
             }"
           >
@@ -106,11 +115,17 @@ const { t } = useI18n()
               type="button"
               @click="props.handleEntryClick(entry)"
             >
-              <UIcon :name="entry.type === 'directory' ? 'i-lucide-folder' : 'i-lucide-file-text'" class="size-4 text-primary" />
+              <UIcon
+                :name="entry.type === 'directory' ? 'i-lucide-folder' : 'i-lucide-file-text'"
+                class="size-4 text-primary"
+              />
               <span class="truncate">{{ entry.name }}</span>
             </button>
 
-            <span class="text-xs uppercase" :class="entry.type === 'directory' ? 'text-primary' : 'text-muted-foreground'">
+            <span
+              class="text-xs uppercase"
+              :class="entry.type === 'directory' ? 'text-primary' : 'text-muted-foreground'"
+            >
               {{ entry.type }}
             </span>
 
@@ -120,14 +135,21 @@ const { t } = useI18n()
             </span>
 
             <UDropdownMenu
-              :items="props.availableFileActions(entry).map(action => ({ 
-                label: action.label, 
-                icon: action.icon, 
-                onSelect: action.onClick,
-                color: action.label.includes('Delete') ? 'error' : undefined 
-              }))"
+              :items="
+                props.availableFileActions(entry).map((action) => ({
+                  label: action.label,
+                  icon: action.icon,
+                  onSelect: action.onClick,
+                  color: action.label.includes('Delete') ? 'error' : undefined,
+                }))
+              "
             >
-              <UButton icon="i-lucide-ellipsis-vertical" variant="ghost" size="xs" color="neutral" />
+              <UButton
+                icon="i-lucide-ellipsis-vertical"
+                variant="ghost"
+                size="xs"
+                color="neutral"
+              />
             </UDropdownMenu>
           </div>
         </template>
@@ -172,7 +194,9 @@ const { t } = useI18n()
             size="xs"
             variant="soft"
             color="neutral"
-            :disabled="!props.canArchiveSelection || props.compressStatusActive || props.directoryDisabled"
+            :disabled="
+              !props.canArchiveSelection || props.compressStatusActive || props.directoryDisabled
+            "
             @click="props.handleBulkArchive"
           >
             {{ t('server.files.archive') }}
@@ -183,7 +207,11 @@ const { t } = useI18n()
             size="xs"
             variant="soft"
             color="neutral"
-            :disabled="!props.canUnarchiveSelection || props.decompressStatusActive || props.directoryDisabled"
+            :disabled="
+              !props.canUnarchiveSelection ||
+              props.decompressStatusActive ||
+              props.directoryDisabled
+            "
             @click="props.handleBulkUnarchive"
           >
             {{ t('server.files.extract') }}
@@ -194,7 +222,9 @@ const { t } = useI18n()
             size="xs"
             variant="soft"
             color="error"
-            :disabled="!props.canDeleteSelection || props.deleteStatusActive || props.directoryDisabled"
+            :disabled="
+              !props.canDeleteSelection || props.deleteStatusActive || props.directoryDisabled
+            "
             @click="props.openBulkDeleteModal"
           >
             {{ t('common.delete') }}

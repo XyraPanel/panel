@@ -102,8 +102,8 @@ const mockAuth = {
 };
 vi.mock('#server/utils/auth', () => ({
   getAuth: vi.fn(() => mockAuth),
-  normalizeHeadersForAuth: vi.fn((headers) => 
-    Object.fromEntries(Object.entries(headers).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v]))
+  normalizeHeadersForAuth: vi.fn((headers) =>
+    Object.fromEntries(Object.entries(headers).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])),
   ),
 }));
 
@@ -114,7 +114,7 @@ function createDb(selectResult: SelectRow | undefined, deletedChanges = 1) {
   const selectBuilder = {
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockReturnThis(),
-    limit: vi.fn(() => selectResult ? [selectResult] : []),
+    limit: vi.fn(() => (selectResult ? [selectResult] : [])),
   };
 
   const updateBuilder = {
@@ -134,11 +134,11 @@ function createDb(selectResult: SelectRow | undefined, deletedChanges = 1) {
 }
 
 const baseEvent = {
-  node: { 
-    req: { 
-      method: 'PUT', 
+  node: {
+    req: {
+      method: 'PUT',
       headers: {},
-    } 
+    },
   },
   context: {},
 } as H3Event;
@@ -173,7 +173,7 @@ describe('account/password/force.put handler', () => {
     };
     mockResolveSessionUser.mockReturnValue(forcedResetUser);
     mockRequireSessionUser.mockReturnValue(forcedResetUser);
-    
+
     // Setup auth API mocks
     mockAuthApi.verifyPassword.mockResolvedValue(null);
     mockAuthApi.setPassword.mockResolvedValue({});

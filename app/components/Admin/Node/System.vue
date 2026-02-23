@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import type { WingsSystemInformation } from '#shared/types/wings'
+import type { WingsSystemInformation } from '#shared/types/wings';
 
 const props = defineProps<{
-  nodeId: string
-}>()
+  nodeId: string;
+}>();
 
-const rawFetch = $fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>
+const rawFetch = $fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>;
 
 async function fetchSystemInfo(nodeId: string): Promise<WingsSystemInformation | null> {
-  const endpoint: string = `/api/admin/wings/nodes/${nodeId}/system`
-  const result = await rawFetch(endpoint)
-  const response = result as { data: WingsSystemInformation }
-  return response.data
+  const endpoint: string = `/api/admin/wings/nodes/${nodeId}/system`;
+  const result = await rawFetch(endpoint);
+  const response = result as { data: WingsSystemInformation };
+  return response.data;
 }
 
 const {
@@ -25,80 +25,84 @@ const {
     default: () => null,
     watch: [() => props.nodeId],
   },
-)
+);
 
-const systemInfo = computed(() => systemData.value)
+const systemInfo = computed(() => systemData.value);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null
+  return typeof value === 'object' && value !== null;
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${(bytes / (k ** i)).toFixed(2)} ${sizes[i]}`
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / k ** i).toFixed(2)} ${sizes[i]}`;
 }
 
 const systemMetrics = computed(() => {
-  const system = systemInfo.value
-  if (!isRecord(system)) return []
+  const system = systemInfo.value;
+  if (!isRecord(system)) return [];
 
-  const metrics: { label: string; value: string; icon: string }[] = []
+  const metrics: { label: string; value: string; icon: string }[] = [];
 
-  const wingsVersion = system.version
+  const wingsVersion = system.version;
   if (typeof wingsVersion === 'string' && wingsVersion.length > 0) {
-    metrics.push({ label: 'Wings Version', value: wingsVersion, icon: 'i-lucide-package' })
+    metrics.push({ label: 'Wings Version', value: wingsVersion, icon: 'i-lucide-package' });
   }
 
-  const systemBlock = isRecord(system.system) ? system.system : {}
+  const systemBlock = isRecord(system.system) ? system.system : {};
 
-  const cpuThreads = systemBlock.cpu_threads
+  const cpuThreads = systemBlock.cpu_threads;
   if (typeof cpuThreads === 'number') {
-    metrics.push({ label: 'CPU Threads', value: String(cpuThreads), icon: 'i-lucide-cpu' })
+    metrics.push({ label: 'CPU Threads', value: String(cpuThreads), icon: 'i-lucide-cpu' });
   }
 
-  const memoryBytes = systemBlock.memory_bytes
+  const memoryBytes = systemBlock.memory_bytes;
   if (typeof memoryBytes === 'number') {
-    metrics.push({ label: 'Physical Memory', value: formatBytes(memoryBytes), icon: 'i-lucide-memory-stick' })
+    metrics.push({
+      label: 'Physical Memory',
+      value: formatBytes(memoryBytes),
+      icon: 'i-lucide-memory-stick',
+    });
   }
 
-  const kernelVersion = systemBlock.kernel_version
+  const kernelVersion = systemBlock.kernel_version;
   if (typeof kernelVersion === 'string') {
-    metrics.push({ label: 'Kernel Version', value: kernelVersion, icon: 'i-lucide-terminal' })
+    metrics.push({ label: 'Kernel Version', value: kernelVersion, icon: 'i-lucide-terminal' });
   }
 
-  const osLabel = systemBlock.os
+  const osLabel = systemBlock.os;
   if (typeof osLabel === 'string') {
-    metrics.push({ label: 'Operating System', value: osLabel, icon: 'i-lucide-monitor' })
+    metrics.push({ label: 'Operating System', value: osLabel, icon: 'i-lucide-monitor' });
   }
 
-  const architecture = systemBlock.architecture
+  const architecture = systemBlock.architecture;
   if (typeof architecture === 'string') {
-    metrics.push({ label: 'Architecture', value: architecture, icon: 'i-lucide-cpu' })
+    metrics.push({ label: 'Architecture', value: architecture, icon: 'i-lucide-cpu' });
   }
 
-  const dockerBlock = isRecord(system.docker) ? system.docker : {}
+  const dockerBlock = isRecord(system.docker) ? system.docker : {};
 
-  const dockerVersion = dockerBlock.version
+  const dockerVersion = dockerBlock.version;
   if (typeof dockerVersion === 'string') {
-    metrics.push({ label: 'Docker Version', value: dockerVersion, icon: 'i-lucide-container' })
+    metrics.push({ label: 'Docker Version', value: dockerVersion, icon: 'i-lucide-container' });
   }
 
-  const dockerStorage = isRecord(dockerBlock.storage) ? dockerBlock.storage : {}
-  const storageDriver = dockerStorage.driver
+  const dockerStorage = isRecord(dockerBlock.storage) ? dockerBlock.storage : {};
+  const storageDriver = dockerStorage.driver;
   if (typeof storageDriver === 'string') {
-    metrics.push({ label: 'Storage Driver', value: storageDriver, icon: 'i-lucide-hard-drive' })
+    metrics.push({ label: 'Storage Driver', value: storageDriver, icon: 'i-lucide-hard-drive' });
   }
 
-  const storagePath = dockerStorage.path
+  const storagePath = dockerStorage.path;
   if (typeof storagePath === 'string') {
-    metrics.push({ label: 'Docker Root', value: storagePath, icon: 'i-lucide-folder' })
+    metrics.push({ label: 'Docker Root', value: storagePath, icon: 'i-lucide-folder' });
   }
 
-  return metrics
-})
+  return metrics;
+});
 </script>
 
 <template>
@@ -123,11 +127,12 @@ const systemMetrics = computed(() => {
       </template>
     </UAlert>
 
-    <div v-else-if="systemMetrics.length === 0" class="rounded-lg border border-default p-8 text-center">
+    <div
+      v-else-if="systemMetrics.length === 0"
+      class="rounded-lg border border-default p-8 text-center"
+    >
       <UIcon name="i-lucide-activity" class="mx-auto size-8 text-muted-foreground" />
-      <p class="mt-2 text-sm text-muted-foreground">
-        No system information available
-      </p>
+      <p class="mt-2 text-sm text-muted-foreground">No system information available</p>
     </div>
 
     <div v-else class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -151,7 +156,9 @@ const systemMetrics = computed(() => {
         <h3 class="text-sm font-semibold">Raw System Data</h3>
       </template>
       <div class="rounded-lg bg-muted/30 p-4">
-        <pre class="overflow-x-auto text-xs"><code>{{ JSON.stringify(systemInfo, null, 2) }}</code></pre>
+        <pre
+          class="overflow-x-auto text-xs"
+        ><code>{{ JSON.stringify(systemInfo, null, 2) }}</code></pre>
       </div>
     </UCard>
   </div>

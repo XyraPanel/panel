@@ -1,45 +1,42 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useClipboard } from '@vueuse/core'
-import type { PowerAction, PanelServerDetails } from '#shared/types/server'
-import { useAuthStore } from '~/stores/auth'
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { storeToRefs } from 'pinia';
+import { useClipboard } from '@vueuse/core';
+import type { PowerAction, PanelServerDetails } from '#shared/types/server';
+import { useAuthStore } from '~/stores/auth';
 
-const route = useRoute()
+const route = useRoute();
 
 definePageMeta({
   auth: true,
-})
+});
 
-const { t } = useI18n()
-const serverId = computed(() => route.params.id as string)
+const { t } = useI18n();
+const serverId = computed(() => route.params.id as string);
 
-const { data: serverResponse } = await useFetch(
-  `/api/client/servers/${serverId.value}`,
-  {
-    watch: [serverId],
-    key: `server-${serverId.value}`,
-    immediate: true,
-  },
-)
-const serverData = computed(() => serverResponse.value as { data: PanelServerDetails } | null)
+const { data: serverResponse } = await useFetch(`/api/client/servers/${serverId.value}`, {
+  watch: [serverId],
+  key: `server-${serverId.value}`,
+  immediate: true,
+});
+const serverData = computed(() => serverResponse.value as { data: PanelServerDetails } | null);
 
-const server = computed(() => serverData.value?.data ?? null)
+const server = computed(() => serverData.value?.data ?? null);
 const primaryAllocation = computed(() => {
-  return server.value?.allocations?.primary ?? null
-})
-const serverLimits = computed(() => server.value?.limits ?? null)
+  return server.value?.allocations?.primary ?? null;
+});
+const serverLimits = computed(() => server.value?.limits ?? null);
 
-const authStore = useAuthStore()
-const { user: sessionUser, isAdmin } = storeToRefs(authStore)
-const currentUserId = computed(() => sessionUser.value?.id ?? null)
-const serverPermissions = computed(() => server.value?.permissions ?? [])
+const authStore = useAuthStore();
+const { user: sessionUser, isAdmin } = storeToRefs(authStore);
+const currentUserId = computed(() => sessionUser.value?.id ?? null);
+const serverPermissions = computed(() => server.value?.permissions ?? []);
 
-const { copy, copied } = useClipboard()
+const { copy, copied } = useClipboard();
 const serverAddress = computed(() => {
-  if (!primaryAllocation.value) return ''
-  return `${primaryAllocation.value.ip}:${primaryAllocation.value.port}`
-})
+  if (!primaryAllocation.value) return '';
+  return `${primaryAllocation.value.ip}:${primaryAllocation.value.port}`;
+});
 
 const {
   connected,
@@ -52,195 +49,218 @@ const {
   sendPowerAction,
   reconnect,
   lifecycleStatus,
-} = useServerWebSocket(serverId)
+} = useServerWebSocket(serverId);
 
-const showStats = ref(true)
-const terminalRef = ref<{ search?: (term: string) => void; clear?: () => void; downloadLogs?: () => void; scrollToBottom?: () => void } | null>(null)
+const showStats = ref(true);
+const terminalRef = ref<{
+  search?: (term: string) => void;
+  clear?: () => void;
+  downloadLogs?: () => void;
+  scrollToBottom?: () => void;
+} | null>(null);
 
 const canSendCommands = computed(() => {
-  const perms = serverPermissions.value
-  const ownerId = server.value?.owner?.id ?? null
-  const currentUser = currentUserId.value
-  const isOwner = Boolean(ownerId && currentUser && ownerId === currentUser)
+  const perms = serverPermissions.value;
+  const ownerId = server.value?.owner?.id ?? null;
+  const currentUser = currentUserId.value;
+  const isOwner = Boolean(ownerId && currentUser && ownerId === currentUser);
 
   if (isAdmin.value || isOwner) {
-    return true
+    return true;
   }
 
-  return perms.includes('control.console') || perms.includes('*')
-})
+  return perms.includes('control.console') || perms.includes('*');
+});
 
-const commandInput = ref('')
-const commandHistory = ref<string[]>([])
-const historyIndex = ref(-1)
+const commandInput = ref('');
+const commandHistory = ref<string[]>([]);
+const historyIndex = ref(-1);
 
 if (import.meta.client) {
   try {
-    const stored = localStorage.getItem(`server-${serverId.value}:command_history`)
+    const stored = localStorage.getItem(`server-${serverId.value}:command_history`);
     if (stored) {
-      commandHistory.value = JSON.parse(stored)
+      commandHistory.value = JSON.parse(stored);
     }
   } catch (e) {
-    console.warn('[Console] Failed to load command history:', e)
+    console.warn('[Console] Failed to load command history:', e);
   }
 }
 
 function saveHistory() {
   if (import.meta.client) {
     try {
-      localStorage.setItem(`server-${serverId.value}:command_history`, JSON.stringify(commandHistory.value))
+      localStorage.setItem(
+        `server-${serverId.value}:command_history`,
+        JSON.stringify(commandHistory.value),
+      );
     } catch (e) {
-      console.warn('[Console] Failed to save command history:', e)
+      console.warn('[Console] Failed to save command history:', e);
     }
   }
 }
 
 function addCommandToHistory(command: string) {
-  if (!command.trim()) return
+  if (!command.trim()) return;
 
-  const index = commandHistory.value.indexOf(command)
+  const index = commandHistory.value.indexOf(command);
   if (index > -1) {
-    commandHistory.value.splice(index, 1)
+    commandHistory.value.splice(index, 1);
   }
 
-  commandHistory.value.unshift(command)
+  commandHistory.value.unshift(command);
   if (commandHistory.value.length > 32) {
-    commandHistory.value = commandHistory.value.slice(0, 32)
+    commandHistory.value = commandHistory.value.slice(0, 32);
   }
-  saveHistory()
+  saveHistory();
 }
 
 function submitCommand(event?: Event) {
-  event?.preventDefault()
-  const command = commandInput.value.trim()
+  event?.preventDefault();
+  const command = commandInput.value.trim();
   if (!command) {
-    return
+    return;
   }
 
-  addCommandToHistory(command)
-  handleCommand(command)
-  commandInput.value = ''
-  historyIndex.value = -1
+  addCommandToHistory(command);
+  handleCommand(command);
+  commandInput.value = '';
+  historyIndex.value = -1;
 }
 
 function handleCommandKeyDown(e: KeyboardEvent) {
   if (e.key === 'ArrowUp') {
-    e.preventDefault()
+    e.preventDefault();
     if (commandHistory.value.length > 0) {
-      historyIndex.value = Math.min(historyIndex.value + 1, commandHistory.value.length - 1)
-      commandInput.value = commandHistory.value[historyIndex.value] || ''
+      historyIndex.value = Math.min(historyIndex.value + 1, commandHistory.value.length - 1);
+      commandInput.value = commandHistory.value[historyIndex.value] || '';
     }
   } else if (e.key === 'ArrowDown') {
-    e.preventDefault()
+    e.preventDefault();
     if (historyIndex.value > 0) {
-      historyIndex.value = Math.max(historyIndex.value - 1, -1)
-      const nextCommand = historyIndex.value >= 0 ? commandHistory.value[historyIndex.value] : undefined
-      commandInput.value = nextCommand ?? ''
+      historyIndex.value = Math.max(historyIndex.value - 1, -1);
+      const nextCommand =
+        historyIndex.value >= 0 ? commandHistory.value[historyIndex.value] : undefined;
+      commandInput.value = nextCommand ?? '';
     } else if (historyIndex.value === 0) {
-      commandInput.value = ''
-      historyIndex.value = -1
+      commandInput.value = '';
+      historyIndex.value = -1;
     }
   }
 }
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return `0 ${t('common.bytes')}`
-  const k = 1024
-  const sizes = [t('common.bytes'), t('common.kb'), t('common.mb'), t('common.gb'), t('common.tb')]
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`
+  if (bytes === 0) return `0 ${t('common.bytes')}`;
+  const k = 1024;
+  const sizes = [t('common.bytes'), t('common.kb'), t('common.mb'), t('common.gb'), t('common.tb')];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
 }
 
-const currentTime = ref(Date.now())
-const lastStatsTime = ref<number | null>(null)
-let uptimeInterval: ReturnType<typeof setInterval> | null = null
+const currentTime = ref(Date.now());
+const lastStatsTime = ref<number | null>(null);
+let uptimeInterval: ReturnType<typeof setInterval> | null = null;
 
-watch(() => stats.value?.uptime, () => {
-  if (stats.value?.uptime) {
-    lastStatsTime.value = Date.now()
-  }
-})
+watch(
+  () => stats.value?.uptime,
+  () => {
+    if (stats.value?.uptime) {
+      lastStatsTime.value = Date.now();
+    }
+  },
+);
 
 onMounted(() => {
   uptimeInterval = setInterval(() => {
-    currentTime.value = Date.now()
-  }, 1000)
-})
+    currentTime.value = Date.now();
+  }, 1000);
+});
 
 onUnmounted(() => {
   if (uptimeInterval) {
-    clearInterval(uptimeInterval)
-    uptimeInterval = null
+    clearInterval(uptimeInterval);
+    uptimeInterval = null;
   }
-})
+});
 
 const formattedUptime = computed(() => {
-  if (!stats.value || !stats.value.uptime || !lastStatsTime.value) return '00:00:00'
-  
-  const baseUptimeMs = stats.value.uptime
-  const elapsedSinceUpdate = currentTime.value - lastStatsTime.value
-  const totalUptimeMs = baseUptimeMs + elapsedSinceUpdate
-  
+  if (!stats.value || !stats.value.uptime || !lastStatsTime.value) return '00:00:00';
+
+  const baseUptimeMs = stats.value.uptime;
+  const elapsedSinceUpdate = currentTime.value - lastStatsTime.value;
+  const totalUptimeMs = baseUptimeMs + elapsedSinceUpdate;
+
   // Convert to seconds
-  const totalSeconds = Math.floor(totalUptimeMs / 1000)
-  
-  const hours = Math.floor(totalSeconds / 3600)
-  const mins = Math.floor((totalSeconds % 3600) / 60)
-  const secs = totalSeconds % 60
-  
-  const pad = (n: number) => n.toString().padStart(2, '0')
-  return `${pad(hours)}:${pad(mins)}:${pad(secs)}`
-})
+  const totalSeconds = Math.floor(totalUptimeMs / 1000);
+
+  const hours = Math.floor(totalSeconds / 3600);
+  const mins = Math.floor((totalSeconds % 3600) / 60);
+  const secs = totalSeconds % 60;
+
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${pad(hours)}:${pad(mins)}:${pad(secs)}`;
+});
 
 function getStateColor(state: string): 'primary' | 'success' | 'warning' | 'error' {
   switch (state) {
-    case 'running': return 'success'
-    case 'starting': return 'warning'
-    case 'stopping': return 'warning'
-    case 'offline': return 'error'
-    default: return 'primary'
+    case 'running':
+      return 'success';
+    case 'starting':
+      return 'warning';
+    case 'stopping':
+      return 'warning';
+    case 'offline':
+      return 'error';
+    default:
+      return 'primary';
   }
 }
 
 function getStateIcon(state: string): string {
   switch (state) {
-    case 'running': return 'i-lucide-circle-check'
-    case 'starting': return 'i-lucide-loader-2'
-    case 'stopping': return 'i-lucide-loader-2'
-    case 'offline': return 'i-lucide-circle-x'
-    default: return 'i-lucide-circle'
+    case 'running':
+      return 'i-lucide-circle-check';
+    case 'starting':
+      return 'i-lucide-loader-2';
+    case 'stopping':
+      return 'i-lucide-loader-2';
+    case 'offline':
+      return 'i-lucide-circle-x';
+    default:
+      return 'i-lucide-circle';
   }
 }
 
 function handleCommand(command: string) {
   if (!command.trim()) {
-    return
-  }
-  
-  if (!connected.value) {
-    return
+    return;
   }
 
-  sendCommand(command)
+  if (!connected.value) {
+    return;
+  }
+
+  sendCommand(command);
 }
 
 function handlePowerAction(action: PowerAction) {
-  if (!connected.value) return
-  sendPowerAction(action)
+  if (!connected.value) return;
+  sendPowerAction(action);
 }
 
 function handleSearch() {
-  if (!import.meta.client) return
-  const { t } = useI18n()
-  const term = (typeof globalThis !== 'undefined' && 'prompt' in globalThis)
-    ? (globalThis as { prompt?: (message: string) => string | null }).prompt?.(t('server.console.search'))
-    : null
+  if (!import.meta.client) return;
+  const { t } = useI18n();
+  const term =
+    typeof globalThis !== 'undefined' && 'prompt' in globalThis
+      ? (globalThis as { prompt?: (message: string) => string | null }).prompt?.(
+          t('server.console.search'),
+        )
+      : null;
   if (term) {
-    terminalRef.value?.search?.(term)
+    terminalRef.value?.search?.(term);
   }
 }
-
-
 </script>
 
 <template>
@@ -255,7 +275,6 @@ function handleSearch() {
         />
 
         <div class="space-y-4">
-
           <div class="flex flex-wrap items-center gap-4">
             <div class="flex items-center gap-2">
               <UButton
@@ -305,7 +324,11 @@ function handleSearch() {
             </div>
           </div>
 
-          <UAlert v-if="wsError && wsError !== 'Connecting...'" color="error" icon="i-lucide-alert-circle">
+          <UAlert
+            v-if="wsError && wsError !== 'Connecting...'"
+            color="error"
+            icon="i-lucide-alert-circle"
+          >
             <template #title>{{ t('server.console.connectionLost') }}</template>
             <template #description>
               {{ wsError }}
@@ -317,7 +340,11 @@ function handleSearch() {
             </template>
           </UAlert>
 
-          <UAlert v-else-if="!connected && (!wsError || wsError === 'Connecting...')" color="warning" icon="i-lucide-wifi-off">
+          <UAlert
+            v-else-if="!connected && (!wsError || wsError === 'Connecting...')"
+            color="warning"
+            icon="i-lucide-wifi-off"
+          >
             <template #title>{{ t('server.console.connecting') }}</template>
             <template #description>
               {{ t('server.console.connecting') }}
@@ -395,7 +422,7 @@ function handleSearch() {
                 </template>
               </ClientOnly>
             </div>
-            
+
             <div v-show="canSendCommands" class="border-t border-default p-3">
               <UChatPrompt
                 v-model="commandInput"
@@ -421,7 +448,9 @@ function handleSearch() {
                 <div class="flex items-center justify-between">
                   <span class="text-muted-foreground">{{ t('common.status') }}</span>
                   <UBadge :color="connected ? 'success' : 'error'" size="xs">
-                    {{ connected ? t('server.console.connected') : t('server.console.disconnected') }}
+                    {{
+                      connected ? t('server.console.connected') : t('server.console.disconnected')
+                    }}
                   </UBadge>
                 </div>
                 <div class="flex items-center justify-between">
@@ -429,7 +458,9 @@ function handleSearch() {
                   <UBadge :color="getStateColor(serverState)" size="xs">
                     <UIcon
                       :name="getStateIcon(serverState)"
-                      :class="{ 'animate-spin': serverState === 'starting' || serverState === 'stopping' }"
+                      :class="{
+                        'animate-spin': serverState === 'starting' || serverState === 'stopping',
+                      }"
                     />
                     <span class="ml-1 capitalize">{{ serverState }}</span>
                   </UBadge>
@@ -455,22 +486,39 @@ function handleSearch() {
                   <span class="text-muted-foreground">{{ t('server.console.uptime') }}</span>
                   <span class="font-mono">{{ formattedUptime }}</span>
                 </div>
-                <div v-if="stats && stats.cpuAbsolute !== undefined" class="flex items-center justify-between">
+                <div
+                  v-if="stats && stats.cpuAbsolute !== undefined"
+                  class="flex items-center justify-between"
+                >
                   <span class="text-muted-foreground">{{ t('server.console.cpu') }}</span>
-                  <span v-if="serverLimits?.cpu">{{ stats.cpuAbsolute.toFixed(2) }}% / {{ serverLimits.cpu }}%</span>
+                  <span v-if="serverLimits?.cpu"
+                    >{{ stats.cpuAbsolute.toFixed(2) }}% / {{ serverLimits.cpu }}%</span
+                  >
                   <span v-else>{{ stats.cpuAbsolute.toFixed(2) }}%</span>
                 </div>
-                <div v-if="stats && stats.memoryLimitBytes" class="flex items-center justify-between">
+                <div
+                  v-if="stats && stats.memoryLimitBytes"
+                  class="flex items-center justify-between"
+                >
                   <span class="text-muted-foreground">{{ t('server.console.memory') }}</span>
-                  <span>{{ formatBytes(stats.memoryBytes) }} / {{ formatBytes(stats.memoryLimitBytes) }}</span>
+                  <span
+                    >{{ formatBytes(stats.memoryBytes) }} /
+                    {{ formatBytes(stats.memoryLimitBytes) }}</span
+                  >
                 </div>
                 <div v-if="stats && serverLimits?.disk" class="flex items-center justify-between">
                   <span class="text-muted-foreground">{{ t('server.console.disk') }}</span>
-                  <span>{{ formatBytes(stats.diskBytes) }} / {{ formatBytes((serverLimits.disk || 0) * 1024 * 1024) }}</span>
+                  <span
+                    >{{ formatBytes(stats.diskBytes) }} /
+                    {{ formatBytes((serverLimits.disk || 0) * 1024 * 1024) }}</span
+                  >
                 </div>
                 <div v-if="stats" class="flex items-center justify-between">
                   <span class="text-muted-foreground">{{ t('server.console.network') }}</span>
-                  <span>{{ formatBytes(stats.networkRxBytes) }} / {{ formatBytes(stats.networkTxBytes) }}</span>
+                  <span
+                    >{{ formatBytes(stats.networkRxBytes) }} /
+                    {{ formatBytes(stats.networkTxBytes) }}</span
+                  >
                 </div>
               </div>
             </UCard>
@@ -496,7 +544,12 @@ function handleSearch() {
             <div class="flex items-center justify-between">
               <span class="text-muted-foreground">{{ t('common.status') }}</span>
               <UBadge :color="getStateColor(serverState)" size="xs">
-                <UIcon :name="getStateIcon(serverState)" :class="{ 'animate-spin': serverState === 'starting' || serverState === 'stopping' }" />
+                <UIcon
+                  :name="getStateIcon(serverState)"
+                  :class="{
+                    'animate-spin': serverState === 'starting' || serverState === 'stopping',
+                  }"
+                />
                 <span class="ml-1 capitalize">{{ serverState }}</span>
               </UBadge>
             </div>
@@ -521,22 +574,36 @@ function handleSearch() {
               <span class="text-muted-foreground">{{ t('server.console.uptime') }}</span>
               <span class="font-mono">{{ formattedUptime }}</span>
             </div>
-            <div v-if="stats && stats.cpuAbsolute !== undefined" class="flex items-center justify-between">
+            <div
+              v-if="stats && stats.cpuAbsolute !== undefined"
+              class="flex items-center justify-between"
+            >
               <span class="text-muted-foreground">{{ t('server.console.cpu') }}</span>
-              <span v-if="serverLimits?.cpu">{{ stats.cpuAbsolute.toFixed(2) }}% / {{ serverLimits.cpu }}%</span>
+              <span v-if="serverLimits?.cpu"
+                >{{ stats.cpuAbsolute.toFixed(2) }}% / {{ serverLimits.cpu }}%</span
+              >
               <span v-else>{{ stats.cpuAbsolute.toFixed(2) }}%</span>
             </div>
             <div v-if="stats && stats.memoryLimitBytes" class="flex items-center justify-between">
               <span class="text-muted-foreground">{{ t('server.console.memory') }}</span>
-              <span>{{ formatBytes(stats.memoryBytes) }} / {{ formatBytes(stats.memoryLimitBytes) }}</span>
+              <span
+                >{{ formatBytes(stats.memoryBytes) }} /
+                {{ formatBytes(stats.memoryLimitBytes) }}</span
+              >
             </div>
             <div v-if="stats && serverLimits?.disk" class="flex items-center justify-between">
               <span class="text-muted-foreground">{{ t('server.console.disk') }}</span>
-              <span>{{ formatBytes(stats.diskBytes) }} / {{ formatBytes((serverLimits.disk || 0) * 1024 * 1024) }}</span>
+              <span
+                >{{ formatBytes(stats.diskBytes) }} /
+                {{ formatBytes((serverLimits.disk || 0) * 1024 * 1024) }}</span
+              >
             </div>
             <div v-if="stats" class="flex items-center justify-between">
               <span class="text-muted-foreground">{{ t('server.console.network') }}</span>
-              <span>{{ formatBytes(stats.networkRxBytes) }} / {{ formatBytes(stats.networkTxBytes) }}</span>
+              <span
+                >{{ formatBytes(stats.networkRxBytes) }} /
+                {{ formatBytes(stats.networkTxBytes) }}</span
+              >
             </div>
           </div>
         </UCard>

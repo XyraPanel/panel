@@ -1,26 +1,28 @@
 <script setup lang="ts">
-import { computed, defineAsyncComponent, ref } from 'vue'
-import { storeToRefs } from 'pinia'
+import { computed, defineAsyncComponent, ref } from 'vue';
+import { storeToRefs } from 'pinia';
 
 definePageMeta({
   auth: true,
-})
+});
 
-const { t } = useI18n()
-const authStore = useAuthStore()
-const { user: sessionUser, permissions } = storeToRefs(authStore)
+const { t } = useI18n();
+const authStore = useAuthStore();
+const { user: sessionUser, permissions } = storeToRefs(authStore);
 
 interface SettingsSection {
-  id: string
-  label: string
-  description: string
-  icon: string
-  component: ReturnType<typeof defineAsyncComponent>
-  permission?: string
-  order: number
+  id: string;
+  label: string;
+  description: string;
+  icon: string;
+  component: ReturnType<typeof defineAsyncComponent>;
+  permission?: string;
+  order: number;
 }
 
-const PanelInfoCard = defineAsyncComponent(() => import('~/components/Admin/Settings/PanelInfoCard.vue'))
+const PanelInfoCard = defineAsyncComponent(
+  () => import('~/components/Admin/Settings/PanelInfoCard.vue'),
+);
 
 const baseSections = computed<SettingsSection[]>(() => [
   {
@@ -55,19 +57,19 @@ const baseSections = computed<SettingsSection[]>(() => [
     component: defineAsyncComponent(() => import('~/components/Admin/Settings/EmailTemplates.vue')),
     order: 25,
   },
-])
+]);
 
 const availableSections = computed(() => {
-  const userPermissions = permissions.value ?? sessionUser.value?.permissions ?? []
+  const userPermissions = permissions.value ?? sessionUser.value?.permissions ?? [];
 
   return baseSections.value
-    .filter(section => !section.permission || userPermissions.includes(section.permission))
-    .sort((a, b) => a.order - b.order)
-})
+    .filter((section) => !section.permission || userPermissions.includes(section.permission))
+    .sort((a, b) => a.order - b.order);
+});
 
 const openSections = ref<Record<string, boolean>>({
   general: true,
-})
+});
 </script>
 
 <template>
@@ -77,15 +79,10 @@ const openSections = ref<Record<string, boolean>>({
         <PanelInfoCard />
 
         <UCard v-if="availableSections.length > 0" :ui="{ body: 'p-0 divide-y divide-default' }">
-          <div
-            v-for="section in availableSections"
-            :key="section.id"
-          >
+          <div v-for="section in availableSections" :key="section.id">
             <UCollapsible v-model:open="openSections[section.id]" :unmount-on-hide="false">
               <template #default>
-                <div
-                  class="flex w-full items-center justify-between p-4 cursor-pointer text-left"
-                >
+                <div class="flex w-full items-center justify-between p-4 cursor-pointer text-left">
                   <div class="flex items-center gap-3">
                     <UIcon :name="section.icon" class="size-5 text-primary" />
                     <div>

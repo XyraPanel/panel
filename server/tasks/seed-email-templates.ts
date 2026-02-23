@@ -1,6 +1,6 @@
-import { randomUUID } from 'node:crypto'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { defaultEmailTemplates } from '#server/utils/default-email-templates'
+import { randomUUID } from 'node:crypto';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { defaultEmailTemplates } from '#server/utils/default-email-templates';
 
 export default defineTask({
   meta: {
@@ -8,23 +8,23 @@ export default defineTask({
     description: 'Seed default email templates',
   },
   async run() {
-    console.log('Seeding email templates...')
-    const db = useDrizzle()
+    console.log('Seeding email templates...');
+    const db = useDrizzle();
 
-    const created: string[] = []
-    const skipped: string[] = []
+    const created: string[] = [];
+    const skipped: string[] = [];
 
     for (const template of defaultEmailTemplates) {
       const existing = await db.query.emailTemplates.findFirst({
-        where: (t, { eq }) => eq(t.templateId, template.id)
-      })
+        where: (t, { eq }) => eq(t.templateId, template.id),
+      });
 
       if (existing) {
-        skipped.push(template.id)
-        continue
+        skipped.push(template.id);
+        continue;
       }
 
-      const now = new Date().toISOString()
+      const now = new Date().toISOString();
       const insertData = {
         id: randomUUID(),
         name: template.name,
@@ -34,17 +34,17 @@ export default defineTask({
         isCustom: false,
         createdAt: now,
         updatedAt: now,
-      }
+      };
 
-      await db.insert(tables.emailTemplates).values(insertData)
+      await db.insert(tables.emailTemplates).values(insertData);
 
-      created.push(template.id)
+      created.push(template.id);
     }
 
     return {
       result: created.length ? 'created' : 'skipped',
       created,
       skipped,
-    }
+    };
   },
-})
+});

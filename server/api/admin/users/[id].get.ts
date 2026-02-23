@@ -1,23 +1,23 @@
-import { useDrizzle, tables, eq, or } from '#server/utils/drizzle'
-import { desc } from 'drizzle-orm'
-import { requireAdmin } from '#server/utils/security'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { useDrizzle, tables, eq, or } from '#server/utils/drizzle';
+import { desc } from 'drizzle-orm';
+import { requireAdmin } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ)
+  const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ);
 
-  const id = getRouterParam(event, 'id')
+  const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
       status: 400,
       message: 'User ID is required',
-    })
+    });
   }
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   const userResult = await db
     .select({
@@ -41,23 +41,23 @@ export default defineEventHandler(async (event) => {
     })
     .from(tables.users)
     .where(eq(tables.users.id, id))
-    .limit(1)
+    .limit(1);
 
-  const user = userResult[0]
+  const user = userResult[0];
 
   if (!user) {
     throw createError({
       status: 404,
       message: 'User not found',
-    })
+    });
   }
 
-  const activityConditions = [eq(tables.auditEvents.actor, user.id)]
+  const activityConditions = [eq(tables.auditEvents.actor, user.id)];
   if (user.email) {
-    activityConditions.push(eq(tables.auditEvents.actor, user.email))
+    activityConditions.push(eq(tables.auditEvents.actor, user.email));
   }
   if (user.username) {
-    activityConditions.push(eq(tables.auditEvents.actor, user.username))
+    activityConditions.push(eq(tables.auditEvents.actor, user.username));
   }
 
   const [servers, apiKeys, sessions, allActivityEvents] = await Promise.all([
@@ -77,7 +77,7 @@ export default defineEventHandler(async (event) => {
       .leftJoin(tables.wingsNodes, eq(tables.servers.nodeId, tables.wingsNodes.id))
       .where(eq(tables.servers.ownerId, user.id))
       .orderBy(desc(tables.servers.createdAt)),
-    
+
     // API keys query
     db
       .select({
@@ -91,7 +91,7 @@ export default defineEventHandler(async (event) => {
       .from(tables.apiKeys)
       .where(eq(tables.apiKeys.userId, user.id))
       .orderBy(desc(tables.apiKeys.createdAt)),
-    
+
     // Sessions query
     db
       .select({
@@ -105,10 +105,13 @@ export default defineEventHandler(async (event) => {
         userAgent: tables.sessionMetadata.userAgent,
       })
       .from(tables.sessions)
-      .leftJoin(tables.sessionMetadata, eq(tables.sessions.sessionToken, tables.sessionMetadata.sessionToken))
+      .leftJoin(
+        tables.sessionMetadata,
+        eq(tables.sessions.sessionToken, tables.sessionMetadata.sessionToken),
+      )
       .where(eq(tables.sessions.userId, user.id))
       .orderBy(desc(tables.sessions.expiresAt)),
-    
+
     // All activity events query
     db
       .select({
@@ -124,50 +127,51 @@ export default defineEventHandler(async (event) => {
       .where(or(...activityConditions))
       .orderBy(desc(tables.auditEvents.occurredAt))
       .limit(100),
-  ])
+  ]);
 
   const securityEvents = allActivityEvents
-    .filter(event => {
-      const action = event.action.toLowerCase()
-      return action.includes('login') || 
-             action.includes('sign') || 
-             action.includes('password') || 
-             action.includes('2fa') || 
-             action.includes('two_factor') ||
-             action.includes('security') ||
-             action.includes('session')
+    .filter((event) => {
+      const action = event.action.toLowerCase();
+      return (
+        action.includes('login') ||
+        action.includes('sign') ||
+        action.includes('password') ||
+        action.includes('2fa') ||
+        action.includes('two_factor') ||
+        action.includes('security') ||
+        action.includes('session')
+      );
     })
-    .slice(0, 5)
+    .slice(0, 5);
 
   const formatTimestamp = (value: number | Date | null | undefined) => {
     if (!value) {
-      return null
+      return null;
     }
 
-    const date = value instanceof Date ? value : new Date(value)
-    return Number.isNaN(date.getTime()) ? null : date.toISOString()
-  }
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  };
 
   const isRecord = (value: unknown): value is Record<string, unknown> => {
-    return typeof value === 'object' && value !== null
-  }
+    return typeof value === 'object' && value !== null;
+  };
 
   const parseMetadata = (value: string | null): Record<string, unknown> => {
     if (!value) {
-      return {}
+      return {};
     }
 
     try {
-      const parsed: unknown = JSON.parse(value)
+      const parsed: unknown = JSON.parse(value);
       if (isRecord(parsed)) {
-        return parsed
+        return parsed;
       }
-      return { value: parsed }
+      return { value: parsed };
+    } catch {
+      return { raw: value };
     }
-    catch {
-      return { raw: value }
-    }
-  }
+  };
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
@@ -175,7 +179,7 @@ export default defineEventHandler(async (event) => {
     action: 'admin.user.viewed',
     targetType: 'user',
     targetId: id,
-  })
+  });
 
   return {
     data: {
@@ -185,7 +189,10 @@ export default defineEventHandler(async (event) => {
         email: user.email,
         firstName: user.nameFirst ?? null,
         lastName: user.nameLast ?? null,
-        name: user.nameFirst || user.nameLast ? `${user.nameFirst ?? ''} ${user.nameLast ?? ''}`.trim() || null : null,
+        name:
+          user.nameFirst || user.nameLast
+            ? `${user.nameFirst ?? ''} ${user.nameLast ?? ''}`.trim() || null
+            : null,
         language: user.language,
         role: user.role,
         rootAdmin: Boolean(user.rootAdmin),
@@ -203,7 +210,7 @@ export default defineEventHandler(async (event) => {
         serverCount: servers.length,
         apiKeyCount: apiKeys.length,
       },
-      servers: servers.map(server => ({
+      servers: servers.map((server) => ({
         id: server.id,
         uuid: server.uuid,
         identifier: server.identifier,
@@ -213,7 +220,7 @@ export default defineEventHandler(async (event) => {
         nodeName: server.nodeName ?? null,
         createdAt: formatTimestamp(server.createdAt)!,
       })),
-      apiKeys: apiKeys.map(key => ({
+      apiKeys: apiKeys.map((key) => ({
         id: key.id,
         identifier: key.identifier,
         memo: key.memo,
@@ -221,7 +228,7 @@ export default defineEventHandler(async (event) => {
         lastUsedAt: formatTimestamp(key.lastUsedAt),
         expiresAt: formatTimestamp(key.expiresAt),
       })),
-      activity: allActivityEvents.map(entry => ({
+      activity: allActivityEvents.map((entry) => ({
         id: entry.id,
         occurredAt: formatTimestamp(entry.occurredAt)!,
         action: entry.action,
@@ -230,23 +237,21 @@ export default defineEventHandler(async (event) => {
         details: parseMetadata(entry.metadata ?? null),
       })),
       security: {
-        sessions: sessions.map(session => {
-          const ipAddress = session.metadataIpAddress || session.sessionIpAddress || null
+        sessions: sessions.map((session) => {
+          const ipAddress = session.metadataIpAddress || session.sessionIpAddress || null;
 
-          let expiresDate: Date | null = null
+          let expiresDate: Date | null = null;
           if (session.expiresAt) {
-            expiresDate = session.expiresAt instanceof Date
-              ? session.expiresAt
-              : new Date(session.expiresAt)
-          }
-          else if (session.expires) {
+            expiresDate =
+              session.expiresAt instanceof Date ? session.expiresAt : new Date(session.expiresAt);
+          } else if (session.expires) {
             if (session.expires instanceof Date) {
-              expiresDate = session.expires
-            }
-            else if (typeof session.expires === 'number') {
-              expiresDate = String(session.expires).length <= 10
-                ? new Date(session.expires * 1000)
-                : new Date(session.expires)
+              expiresDate = session.expires;
+            } else if (typeof session.expires === 'number') {
+              expiresDate =
+                String(session.expires).length <= 10
+                  ? new Date(session.expires * 1000)
+                  : new Date(session.expires);
             }
           }
 
@@ -256,67 +261,88 @@ export default defineEventHandler(async (event) => {
             ipAddress,
             lastSeenAt: formatTimestamp(session.lastSeenAt),
             userAgent: session.userAgent ?? null,
-          }
+          };
         }),
         lastLogin: (() => {
           const allSessions = sessions
-            .map(s => ({
-              lastSeenAt: s.lastSeenAt instanceof Date ? s.lastSeenAt : s.lastSeenAt ? new Date(s.lastSeenAt) : null,
-              firstSeenAt: s.firstSeenAt instanceof Date ? s.firstSeenAt : s.firstSeenAt ? new Date(s.firstSeenAt) : null,
+            .map((s) => ({
+              lastSeenAt:
+                s.lastSeenAt instanceof Date
+                  ? s.lastSeenAt
+                  : s.lastSeenAt
+                    ? new Date(s.lastSeenAt)
+                    : null,
+              firstSeenAt:
+                s.firstSeenAt instanceof Date
+                  ? s.firstSeenAt
+                  : s.firstSeenAt
+                    ? new Date(s.firstSeenAt)
+                    : null,
             }))
-            .filter(s => s.lastSeenAt || s.firstSeenAt)
+            .filter((s) => s.lastSeenAt || s.firstSeenAt);
 
-          if (allSessions.length === 0) return null
+          if (allSessions.length === 0) return null;
 
           const mostRecent = allSessions.reduce((latest, current) => {
-            const currentTime = (current.lastSeenAt || current.firstSeenAt)?.getTime() || 0
-            const latestTime = (latest.lastSeenAt || latest.firstSeenAt)?.getTime() || 0
-            return currentTime > latestTime ? current : latest
-          })
+            const currentTime = (current.lastSeenAt || current.firstSeenAt)?.getTime() || 0;
+            const latestTime = (latest.lastSeenAt || latest.firstSeenAt)?.getTime() || 0;
+            return currentTime > latestTime ? current : latest;
+          });
 
-          return formatTimestamp(mostRecent.lastSeenAt || mostRecent.firstSeenAt)
+          return formatTimestamp(mostRecent.lastSeenAt || mostRecent.firstSeenAt);
         })(),
         lastLoginIp: (() => {
           const sessionsWithTime = sessions
-            .map(s => ({
+            .map((s) => ({
               ipAddress: s.metadataIpAddress || s.sessionIpAddress || null,
-              lastSeenAt: s.lastSeenAt instanceof Date ? s.lastSeenAt : s.lastSeenAt ? new Date(s.lastSeenAt) : null,
-              firstSeenAt: s.firstSeenAt instanceof Date ? s.firstSeenAt : s.firstSeenAt ? new Date(s.firstSeenAt) : null,
+              lastSeenAt:
+                s.lastSeenAt instanceof Date
+                  ? s.lastSeenAt
+                  : s.lastSeenAt
+                    ? new Date(s.lastSeenAt)
+                    : null,
+              firstSeenAt:
+                s.firstSeenAt instanceof Date
+                  ? s.firstSeenAt
+                  : s.firstSeenAt
+                    ? new Date(s.firstSeenAt)
+                    : null,
             }))
-            .filter(s => s.ipAddress && (s.lastSeenAt || s.firstSeenAt))
+            .filter((s) => s.ipAddress && (s.lastSeenAt || s.firstSeenAt));
 
-          if (sessionsWithTime.length === 0) return null
+          if (sessionsWithTime.length === 0) return null;
 
           const mostRecent = sessionsWithTime.reduce((latest, current) => {
-            const currentTime = (current.lastSeenAt || current.firstSeenAt)?.getTime() || 0
-            const latestTime = (latest.lastSeenAt || latest.firstSeenAt)?.getTime() || 0
-            return currentTime > latestTime ? current : latest
-          })
+            const currentTime = (current.lastSeenAt || current.firstSeenAt)?.getTime() || 0;
+            const latestTime = (latest.lastSeenAt || latest.firstSeenAt)?.getTime() || 0;
+            return currentTime > latestTime ? current : latest;
+          });
 
-          return mostRecent.ipAddress
+          return mostRecent.ipAddress;
         })(),
         uniqueIps: (() => {
           const allIps = sessions
-            .map(s => s.metadataIpAddress || s.sessionIpAddress)
-            .filter((ip): ip is string => typeof ip === 'string' && ip.length > 0)
-          return [...new Set(allIps)]
+            .map((s) => s.metadataIpAddress || s.sessionIpAddress)
+            .filter((ip): ip is string => typeof ip === 'string' && ip.length > 0);
+          return [...new Set(allIps)];
         })(),
-        activeSessions: sessions.filter(s => {
-          if (!s.expires && !s.expiresAt) return false
-          const expires = s.expiresAt instanceof Date
-            ? s.expiresAt
-            : s.expires instanceof Date
-              ? s.expires
-              : typeof s.expires === 'number'
-                ? (String(s.expires).length <= 10
+        activeSessions: sessions.filter((s) => {
+          if (!s.expires && !s.expiresAt) return false;
+          const expires =
+            s.expiresAt instanceof Date
+              ? s.expiresAt
+              : s.expires instanceof Date
+                ? s.expires
+                : typeof s.expires === 'number'
+                  ? String(s.expires).length <= 10
                     ? new Date(s.expires * 1000)
-                    : new Date(s.expires))
-                : s.expiresAt
-                  ? new Date(s.expiresAt)
-                  : null
-          return expires && expires > new Date()
+                    : new Date(s.expires)
+                  : s.expiresAt
+                    ? new Date(s.expiresAt)
+                    : null;
+          return expires && expires > new Date();
         }).length,
-        securityEvents: securityEvents.map(event => ({
+        securityEvents: securityEvents.map((event) => ({
           id: event.id,
           occurredAt: formatTimestamp(event.occurredAt)!,
           action: event.action,
@@ -324,5 +350,5 @@ export default defineEventHandler(async (event) => {
         })),
       },
     },
-  }
-})
+  };
+});

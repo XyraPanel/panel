@@ -1,16 +1,16 @@
-import type { H3Event } from 'h3'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import type { ActivityMetadata } from '#shared/types/audit'
+import type { H3Event } from 'h3';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import type { ActivityMetadata } from '#shared/types/audit';
 
 interface RecordServerActivityOptions {
-  event: H3Event
-  actorId: string
-  action: string
+  event: H3Event;
+  actorId: string;
+  action: string;
   server: {
-    id: string
-    uuid?: string | null
-  }
-  metadata?: ActivityMetadata & Record<string, unknown>
+    id: string;
+    uuid?: string | null;
+  };
+  metadata?: ActivityMetadata & Record<string, unknown>;
 }
 
 export async function recordServerActivity({
@@ -30,5 +30,5 @@ export async function recordServerActivity({
       serverUuid: server.uuid ?? undefined,
       ...metadata,
     },
-  })
+  });
 }

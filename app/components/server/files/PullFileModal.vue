@@ -1,29 +1,29 @@
 <script setup lang="ts">
 defineProps<{
-  modelValue: boolean
-  value: string
-  loading: boolean
-  currentDirectoryLabel: string
-}>()
+  modelValue: boolean;
+  value: string;
+  loading: boolean;
+  currentDirectoryLabel: string;
+}>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: boolean): void
-  (e: 'update:value', value: string): void
-  (e: 'submit'): void
-}>()
+  (e: 'update:modelValue', value: boolean): void;
+  (e: 'update:value', value: string): void;
+  (e: 'submit'): void;
+}>();
 
-const { t } = useI18n()
+const { t } = useI18n();
 
 function close() {
-  emit('update:modelValue', false)
+  emit('update:modelValue', false);
 }
 
 function updateValue(value: string) {
-  emit('update:value', value)
+  emit('update:value', value);
 }
 
 function handleSubmit() {
-  emit('submit')
+  emit('submit');
 }
 </script>
 
@@ -37,7 +37,12 @@ function handleSubmit() {
   >
     <template #body>
       <UForm class="space-y-4" @submit.prevent="handleSubmit">
-        <UFormField :label="t('server.files.pullFileUrl')" name="fileUrl" :help="t('server.files.pullFileUrlHelp')" required>
+        <UFormField
+          :label="t('server.files.pullFileUrl')"
+          name="fileUrl"
+          :help="t('server.files.pullFileUrlHelp')"
+          required
+        >
           <UInput
             :model-value="value"
             type="url"

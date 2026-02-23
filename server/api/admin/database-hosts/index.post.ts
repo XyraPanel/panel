@@ -1,20 +1,28 @@
-import { randomUUID } from 'node:crypto'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { createDatabaseHostSchema } from '#shared/schema/admin/infrastructure'
+import { randomUUID } from 'node:crypto';
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { createDatabaseHostSchema } from '#shared/schema/admin/infrastructure';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.DATABASE_HOSTS, ADMIN_ACL_PERMISSIONS.WRITE)
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.DATABASE_HOSTS,
+    ADMIN_ACL_PERMISSIONS.WRITE,
+  );
 
-  const body = await readValidatedBodyWithLimit(event, createDatabaseHostSchema, BODY_SIZE_LIMITS.SMALL)
+  const body = await readValidatedBodyWithLimit(
+    event,
+    createDatabaseHostSchema,
+    BODY_SIZE_LIMITS.SMALL,
+  );
 
-  const db = useDrizzle()
-  const now = new Date()
+  const db = useDrizzle();
+  const now = new Date();
 
   const newHost = {
     id: randomUUID(),
@@ -28,9 +36,9 @@ export default defineEventHandler(async (event) => {
     maxDatabases: body.maxDatabases ?? null,
     createdAt: now,
     updatedAt: now,
-  }
+  };
 
-  await db.insert(tables.databaseHosts).values(newHost)
+  await db.insert(tables.databaseHosts).values(newHost);
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
@@ -43,7 +51,7 @@ export default defineEventHandler(async (event) => {
       hostname: newHost.hostname,
       port: newHost.port,
     },
-  })
+  });
 
   return {
     data: {
@@ -56,5 +64,5 @@ export default defineEventHandler(async (event) => {
       createdAt: newHost.createdAt,
       updatedAt: newHost.updatedAt,
     },
-  }
-})
+  };
+});

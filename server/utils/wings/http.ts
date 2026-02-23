@@ -1,49 +1,53 @@
-import { createError, type H3Error } from 'h3'
-import type { WingsErrorOptions, WingsFetchError, WingsQuery } from '#shared/types/wings'
+import { createError, type H3Error } from 'h3';
+import type { WingsErrorOptions, WingsFetchError, WingsQuery } from '#shared/types/wings';
 
-const NODE_QUERY_KEYS = ['node', 'node_id', 'nodeId'] as const
+const NODE_QUERY_KEYS = ['node', 'node_id', 'nodeId'] as const;
 
 function isFetchError(error: unknown): error is WingsFetchError {
-  return Boolean(error && typeof error === 'object' && 'response' in error)
+  return Boolean(error && typeof error === 'object' && 'response' in error);
 }
 
 export function isH3Error(error: unknown): error is H3Error {
-  return Boolean(error && typeof error === 'object' && 'status' in error)
+  return Boolean(error && typeof error === 'object' && 'status' in error);
 }
 
 export function getNodeIdFromQuery(query: WingsQuery): string | undefined {
   for (const key of NODE_QUERY_KEYS) {
-    const value = query[key]
+    const value = query[key];
     if (typeof value === 'string' && value.trim().length > 0) {
-      return value.trim()
+      return value.trim();
     }
 
     if (Array.isArray(value) && value.length > 0) {
-      const candidate = value[0]
+      const candidate = value[0];
       if (typeof candidate === 'string' && candidate.trim().length > 0) {
-        return candidate.trim()
+        return candidate.trim();
       }
     }
   }
 
-  return undefined
+  return undefined;
 }
 
 export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}) {
-  const operation = options.operation ?? 'contact Wings node'
+  const operation = options.operation ?? 'contact Wings node';
 
   if (isH3Error(error)) {
-    return error
+    return error;
   }
 
   if (isFetchError(error)) {
-    const status = error.response?.status ?? 502
-    const statusText = error.response?.statusText || 'Bad Gateway'
-    const data = error.data
+    const status = error.response?.status ?? 502;
+    const statusText = error.response?.statusText || 'Bad Gateway';
+    const data = error.data;
 
-    const message = typeof data === 'object' && data !== null && 'message' in data && typeof (data as { message?: unknown }).message === 'string'
-      ? (data as { message: string }).message
-      : `Wings responded with status ${status}.`
+    const message =
+      typeof data === 'object' &&
+      data !== null &&
+      'message' in data &&
+      typeof (data as { message?: unknown }).message === 'string'
+        ? (data as { message: string }).message
+        : `Wings responded with status ${status}.`;
 
     return createError({
       status,
@@ -54,7 +58,7 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
         details: data,
       },
       cause: error,
-    })
+    });
   }
 
   if (error instanceof Error) {
@@ -63,7 +67,7 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
         status: 503,
         statusText: 'No Wings node configured',
         message: 'Add a Wings node before attempting this operation.',
-      })
+      });
     }
 
     if (error.message === 'Multiple Wings nodes configured; specify nodeId') {
@@ -74,10 +78,10 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
         data: {
           nodeId: options.nodeId,
         },
-      })
+      });
     }
 
-    const nodeNotFoundMatch = /^Node\s+(.+)\s+not\s+found$/.exec(error.message)
+    const nodeNotFoundMatch = /^Node\s+(.+)\s+not\s+found$/.exec(error.message);
     if (nodeNotFoundMatch) {
       return createError({
         status: 404,
@@ -86,7 +90,7 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
         data: {
           nodeId: nodeNotFoundMatch[1],
         },
-      })
+      });
     }
 
     return createError({
@@ -98,7 +102,7 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
         details: error.message,
       },
       cause: error,
-    })
+    });
   }
 
   return createError({
@@ -109,5 +113,5 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
       nodeId: options.nodeId,
       details: error,
     },
-  })
+  });
 }

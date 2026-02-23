@@ -1,37 +1,33 @@
-import { eq } from 'drizzle-orm'
-import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { eq } from 'drizzle-orm';
+import { requireAdmin } from '#server/utils/security';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NESTS, ADMIN_ACL_PERMISSIONS.READ)
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NESTS, ADMIN_ACL_PERMISSIONS.READ);
 
-  const nestId = getRouterParam(event, 'id')
+  const nestId = getRouterParam(event, 'id');
   if (!nestId) {
-    throw createError({ status: 400, statusText: 'Bad Request', message: 'Nest ID is required' })
+    throw createError({ status: 400, statusText: 'Bad Request', message: 'Nest ID is required' });
   }
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
-  const [nest] = await db
-    .select()
-    .from(tables.nests)
-    .where(eq(tables.nests.id, nestId))
-    .limit(1)
+  const [nest] = await db.select().from(tables.nests).where(eq(tables.nests.id, nestId)).limit(1);
 
   if (!nest) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'Nest not found' })
+    throw createError({ status: 404, statusText: 'Not Found', message: 'Nest not found' });
   }
 
   const eggs = await db
     .select()
     .from(tables.eggs)
     .where(eq(tables.eggs.nestId, nestId))
-    .orderBy(tables.eggs.name)
+    .orderBy(tables.eggs.name);
 
   const data = {
     nest: {
@@ -43,7 +39,7 @@ export default defineEventHandler(async (event) => {
       createdAt: new Date(nest.createdAt).toISOString(),
       updatedAt: new Date(nest.updatedAt).toISOString(),
     },
-    eggs: eggs.map(egg => ({
+    eggs: eggs.map((egg) => ({
       id: egg.id,
       uuid: egg.uuid,
       nestId: egg.nestId,
@@ -54,7 +50,7 @@ export default defineEventHandler(async (event) => {
       createdAt: new Date(egg.createdAt).toISOString(),
       updatedAt: new Date(egg.updatedAt).toISOString(),
     })),
-  }
+  };
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
@@ -65,7 +61,7 @@ export default defineEventHandler(async (event) => {
     metadata: {
       eggCount: eggs.length,
     },
-  })
+  });
 
-  return { data }
-})
+  return { data };
+});

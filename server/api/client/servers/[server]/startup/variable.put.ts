@@ -1,91 +1,98 @@
-import { getServerWithAccess } from '#server/utils/server-helpers'
-import { useDrizzle, tables, eq, and } from '#server/utils/drizzle'
-import { requireServerPermission } from '#server/utils/permission-middleware'
-import { recordServerActivity } from '#server/utils/server-activity'
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
-import { serverStartupVariableSchema } from '#shared/schema/server/operations'
+import { getServerWithAccess } from '#server/utils/server-helpers';
+import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
+import { requireServerPermission } from '#server/utils/permission-middleware';
+import { recordServerActivity } from '#server/utils/server-activity';
+import {
+  requireAccountUser,
+  readValidatedBodyWithLimit,
+  BODY_SIZE_LIMITS,
+} from '#server/utils/security';
+import { serverStartupVariableSchema } from '#shared/schema/server/operations';
 
 export default defineEventHandler(async (event) => {
-  const serverId = getRouterParam(event, 'server')
+  const serverId = getRouterParam(event, 'server');
 
   if (!serverId) {
     throw createError({
       status: 400,
       message: 'Server identifier is required',
-    })
+    });
   }
 
-  const accountContext = await requireAccountUser(event)
-  const { server, user } = await getServerWithAccess(serverId, accountContext.session)
+  const accountContext = await requireAccountUser(event);
+  const { server, user } = await getServerWithAccess(serverId, accountContext.session);
 
   await requireServerPermission(event, {
     serverId: server.id,
     requiredPermissions: ['server.settings.update'],
     allowOwner: true,
     allowAdmin: true,
-  })
+  });
 
-  const { key, value } = await readValidatedBodyWithLimit(event, serverStartupVariableSchema, BODY_SIZE_LIMITS.SMALL)
-  const normalizedValue = value ?? ''
+  const { key, value } = await readValidatedBodyWithLimit(
+    event,
+    serverStartupVariableSchema,
+    BODY_SIZE_LIMITS.SMALL,
+  );
+  const normalizedValue = value ?? '';
 
-  const db = useDrizzle()
-  const eggVariableRows = await db.select()
+  const db = useDrizzle();
+  const eggVariableRows = await db
+    .select()
     .from(tables.eggVariables)
     .where(
-      and(
-        eq(tables.eggVariables.eggId, server.eggId!),
-        eq(tables.eggVariables.envVariable, key)
-      )
+      and(eq(tables.eggVariables.eggId, server.eggId!), eq(tables.eggVariables.envVariable, key)),
     )
-    .limit(1)
+    .limit(1);
 
-  const [eggVariable] = eggVariableRows
+  const [eggVariable] = eggVariableRows;
 
   if (!eggVariable) {
     throw createError({
       status: 404,
       message: 'Variable not found',
-    })
+    });
   }
 
   if (!eggVariable.userEditable) {
     throw createError({
       status: 403,
       message: 'This variable cannot be edited',
-    })
+    });
   }
 
-  const existingVarRows = await db.select()
+  const existingVarRows = await db
+    .select()
     .from(tables.serverEnvironmentVariables)
     .where(
       and(
         eq(tables.serverEnvironmentVariables.serverId, server.id),
-        eq(tables.serverEnvironmentVariables.key, key)
-      )
+        eq(tables.serverEnvironmentVariables.key, key),
+      ),
     )
-    .limit(1)
+    .limit(1);
 
-  const [existingVar] = existingVarRows
+  const [existingVar] = existingVarRows;
 
-  const now = new Date()
+  const now = new Date();
 
   if (existingVar) {
-    await db.update(tables.serverEnvironmentVariables)
+    await db
+      .update(tables.serverEnvironmentVariables)
       .set({
         value: normalizedValue,
         updatedAt: now,
       })
-      .where(eq(tables.serverEnvironmentVariables.id, existingVar.id))
+      .where(eq(tables.serverEnvironmentVariables.id, existingVar.id));
   } else {
-    await db.insert(tables.serverEnvironmentVariables)
-      .values({
-        id: `env_${Date.now()}`,
-        serverId: server.id,
-        key,
-        value: normalizedValue,
-        createdAt: now,
-        updatedAt: now,
-      })
+    await db.insert(tables.serverEnvironmentVariables).values({
+      id: `env_${Date.now()}`,
+      serverId: server.id,
+      key,
+      value: normalizedValue,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   await recordServerActivity({
@@ -96,7 +103,7 @@ export default defineEventHandler(async (event) => {
     metadata: {
       key,
     },
-  })
+  });
 
   return {
     data: {
@@ -111,5 +118,5 @@ export default defineEventHandler(async (event) => {
         rules: eggVariable.rules || '',
       },
     },
-  }
-})
+  };
+});

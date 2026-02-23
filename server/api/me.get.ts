@@ -1,9 +1,9 @@
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { requireAccountUser } from '#server/utils/security'
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { requireAccountUser } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
-  const accountContext = await requireAccountUser(event)
-  const user = accountContext.user
+  const accountContext = await requireAccountUser(event);
+  const user = accountContext.user;
 
   await recordAuditEventFromRequest(event, {
     actor: user.id,
@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
     action: 'account.me.viewed',
     targetType: 'user',
     targetId: user.id,
-  })
+  });
 
   return {
     data: {
@@ -21,5 +21,5 @@ export default defineEventHandler(async (event) => {
       role: user.role,
       permissions: user.permissions,
     },
-  }
-})
+  };
+});

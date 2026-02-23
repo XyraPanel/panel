@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import type { DashboardResponse } from '#shared/types/admin'
+import { computed, onMounted } from 'vue';
+import type { DashboardResponse } from '#shared/types/admin';
 
 definePageMeta({
   adminTitle: 'Dashboard',
   adminSubtitle: 'Infrastructure overview',
-})
+});
 
-const { t } = useI18n()
-const requestFetch = useRequestFetch()
+const { t } = useI18n();
+const requestFetch = useRequestFetch();
 
 function getDefaultDashboard(): DashboardResponse {
   return {
@@ -17,20 +17,23 @@ function getDefaultDashboard(): DashboardResponse {
     incidents: [],
     operations: [],
     generatedAt: new Date().toISOString(),
-  }
+  };
 }
 
 const dashboardFetch = await useAsyncData<Pick<DashboardResponse, 'metrics' | 'nodes'>>(
   'admin-dashboard-critical',
   async () => {
-    const response = await requestFetch<{ data: DashboardResponse } | DashboardResponse>('/api/admin/dashboard', {
-      query: { section: 'critical' },
-    })
-    const payload = 'data' in response ? response.data : response
+    const response = await requestFetch<{ data: DashboardResponse } | DashboardResponse>(
+      '/api/admin/dashboard',
+      {
+        query: { section: 'critical' },
+      },
+    );
+    const payload = 'data' in response ? response.data : response;
     return {
       metrics: payload.metrics ?? [],
       nodes: payload.nodes ?? [],
-    }
+    };
   },
   {
     default: () => ({
@@ -43,18 +46,21 @@ const dashboardFetch = await useAsyncData<Pick<DashboardResponse, 'metrics' | 'n
       nodes: value.nodes ?? [],
     }),
   },
-)
+);
 
 const secondaryDashboardFetch = useLazyAsyncData<Pick<DashboardResponse, 'incidents'>>(
   'admin-dashboard-secondary',
   async () => {
-    const response = await requestFetch<{ data: DashboardResponse } | DashboardResponse>('/api/admin/dashboard', {
-      query: { section: 'incidents' },
-    })
-    const payload = 'data' in response ? response.data : response
+    const response = await requestFetch<{ data: DashboardResponse } | DashboardResponse>(
+      '/api/admin/dashboard',
+      {
+        query: { section: 'incidents' },
+      },
+    );
+    const payload = 'data' in response ? response.data : response;
     return {
       incidents: payload.incidents ?? [],
-    }
+    };
   },
   {
     default: () => ({
@@ -67,52 +73,45 @@ const secondaryDashboardFetch = useLazyAsyncData<Pick<DashboardResponse, 'incide
       incidents: value.incidents ?? [],
     }),
   },
-)
+);
 
-const metrics = computed(() => dashboardFetch.data.value?.metrics ?? [])
-const nodes = computed(() => dashboardFetch.data.value?.nodes ?? [])
-const incidents = computed(() => secondaryDashboardFetch.data.value?.incidents ?? [])
-const operations = computed(() => [] as DashboardResponse['operations'])
-const loading = computed(() => dashboardFetch.pending.value)
-const loadingSecondary = computed(() => secondaryDashboardFetch.pending.value)
-const showCriticalSkeleton = computed(() =>
-  loading.value && metrics.value.length === 0 && nodes.value.length === 0,
-)
-const showIncidentSkeleton = computed(() =>
-  loadingSecondary.value && incidents.value.length === 0,
-)
+const metrics = computed(() => dashboardFetch.data.value?.metrics ?? []);
+const nodes = computed(() => dashboardFetch.data.value?.nodes ?? []);
+const incidents = computed(() => secondaryDashboardFetch.data.value?.incidents ?? []);
+const operations = computed(() => [] as DashboardResponse['operations']);
+const loading = computed(() => dashboardFetch.pending.value);
+const loadingSecondary = computed(() => secondaryDashboardFetch.pending.value);
+const showCriticalSkeleton = computed(
+  () => loading.value && metrics.value.length === 0 && nodes.value.length === 0,
+);
+const showIncidentSkeleton = computed(() => loadingSecondary.value && incidents.value.length === 0);
 const error = computed<string | null>(() => {
-  const err = dashboardFetch.error.value
+  const err = dashboardFetch.error.value;
   if (!err) {
-    return null
+    return null;
   }
   if (err instanceof Error) {
-    return err.message
+    return err.message;
   }
-  return t('admin.dashboard.failedToLoadDashboard')
-})
+  return t('admin.dashboard.failedToLoadDashboard');
+});
 
 function getIncidentActorLabel(incident: DashboardResponse['incidents'][number]): string {
-  return incident.actorEmail || incident.actorUsername || incident.actor
+  return incident.actorEmail || incident.actorUsername || incident.actor;
 }
 
 onMounted(() => {
-  void Promise.all([
-    prefetchComponents('/admin/users'),
-    prefetchComponents('/admin/servers'),
-  ])
+  void Promise.all([prefetchComponents('/admin/users'), prefetchComponents('/admin/servers')]);
 
-  void secondaryDashboardFetch.execute()
-})
+  void secondaryDashboardFetch.execute();
+});
 </script>
-
 
 <template>
   <UPage>
     <UPageBody>
       <UContainer>
         <section class="space-y-6">
-
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <template v-if="showCriticalSkeleton">
               <UCard v-for="i in 4" :key="`metric-skeleton-${i}`" :ui="{ body: 'space-y-3' }">
@@ -135,7 +134,9 @@ onMounted(() => {
               <UCard v-for="metric in metrics" :key="metric.key" :ui="{ body: 'space-y-3' }">
                 <div class="flex items-center justify-between">
                   <div>
-                    <p class="text-xs uppercase tracking-wide text-muted-foreground">{{ metric.label }}</p>
+                    <p class="text-xs uppercase tracking-wide text-muted-foreground">
+                      {{ metric.label }}
+                    </p>
                     <p class="mt-2 text-2xl font-semibold">{{ metric.value }}</p>
                   </div>
                   <UIcon :name="metric.icon" class="size-6 text-primary" />
@@ -153,7 +154,11 @@ onMounted(() => {
                 <div class="flex items-center justify-between">
                   <h2 class="text-lg font-semibold">{{ t('admin.dashboard.nodeHealth') }}</h2>
                   <UBadge :color="loading ? 'neutral' : 'primary'" :variant="'soft'">
-                    {{ loading ? t('admin.dashboard.loading') : t('admin.dashboard.tracked', { count: nodes.length }) }}
+                    {{
+                      loading
+                        ? t('admin.dashboard.loading')
+                        : t('admin.dashboard.tracked', { count: nodes.length })
+                    }}
                   </UBadge>
                 </div>
               </template>
@@ -167,15 +172,32 @@ onMounted(() => {
                   {{ t('admin.dashboard.noNodes') }}
                 </div>
                 <template v-else>
-                  <div v-for="node in nodes" :key="node.id"
-                    class="flex flex-col gap-2 px-2 py-3 md:flex-row md:items-center md:justify-between">
+                  <div
+                    v-for="node in nodes"
+                    :key="node.id"
+                    class="flex flex-col gap-2 px-2 py-3 md:flex-row md:items-center md:justify-between"
+                  >
                     <div>
                       <div class="flex items-center gap-2">
                         <h3 class="text-sm font-semibold">{{ node.name }}</h3>
-                        <UBadge size="sm" variant="subtle"
-                          :color="node.status === 'online' ? 'success' : node.status === 'maintenance' ? 'warning' : 'warning'">
-                          {{ node.status === 'online' ? t('admin.dashboard.online') : node.status === 'maintenance' ?
-                            t('admin.dashboard.maintenance') : t('admin.dashboard.unknown') }}
+                        <UBadge
+                          size="sm"
+                          variant="subtle"
+                          :color="
+                            node.status === 'online'
+                              ? 'success'
+                              : node.status === 'maintenance'
+                                ? 'warning'
+                                : 'warning'
+                          "
+                        >
+                          {{
+                            node.status === 'online'
+                              ? t('admin.dashboard.online')
+                              : node.status === 'maintenance'
+                                ? t('admin.dashboard.maintenance')
+                                : t('admin.dashboard.unknown')
+                          }}
                         </UBadge>
                       </div>
                       <p class="text-xs text-muted-foreground">{{ node.fqdn }}</p>
@@ -183,13 +205,23 @@ onMounted(() => {
                     <div class="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                       <span class="inline-flex items-center gap-1">
                         <UIcon name="i-lucide-hard-drive" class="size-3" />
-                        {{ node.serverCount !== null ? t('admin.dashboard.servers', { count: node.serverCount }) :
-                          t('admin.dashboard.unknownServers') }}
+                        {{
+                          node.serverCount !== null
+                            ? t('admin.dashboard.servers', { count: node.serverCount })
+                            : t('admin.dashboard.unknownServers')
+                        }}
                       </span>
-                      <span v-if="node.maintenanceMode" class="inline-flex items-center gap-1 text-warning">
-                        <UIcon name="i-lucide-cone" class="size-3" /> {{ t('admin.dashboard.maintenanceMode') }}
+                      <span
+                        v-if="node.maintenanceMode"
+                        class="inline-flex items-center gap-1 text-warning"
+                      >
+                        <UIcon name="i-lucide-cone" class="size-3" />
+                        {{ t('admin.dashboard.maintenanceMode') }}
                       </span>
-                      <span v-if="node.issue" class="inline-flex items-center gap-1 text-destructive">
+                      <span
+                        v-if="node.issue"
+                        class="inline-flex items-center gap-1 text-destructive"
+                      >
                         <UIcon name="i-lucide-alert-triangle" class="size-3" /> {{ node.issue }}
                       </span>
                       <span v-if="node.lastSeenAt" class="inline-flex items-center gap-1">
@@ -216,27 +248,41 @@ onMounted(() => {
                 <li v-if="showIncidentSkeleton" class="space-y-2">
                   <USkeleton v-for="i in 3" :key="`incident-skeleton-${i}`" class="h-10 w-full" />
                 </li>
-                <li v-else-if="error" class="rounded-md border border-default px-3 py-3 text-sm text-destructive">
+                <li
+                  v-else-if="error"
+                  class="rounded-md border border-default px-3 py-3 text-sm text-destructive"
+                >
                   {{ error }}
                 </li>
-                <li v-else-if="incidents.length === 0"
-                  class="rounded-md border border-default px-3 py-3 text-sm text-muted-foreground">
+                <li
+                  v-else-if="incidents.length === 0"
+                  class="rounded-md border border-default px-3 py-3 text-sm text-muted-foreground"
+                >
                   {{ t('admin.dashboard.noIncidents') }}
                 </li>
                 <template v-else>
-                  <li v-for="incident in incidents" :key="incident.id"
-                    class="rounded-md border border-default px-3 py-3">
-                    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                  <li
+                    v-for="incident in incidents"
+                    :key="incident.id"
+                    class="rounded-md border border-default px-3 py-3"
+                  >
+                    <div
+                      class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
+                    >
                       <span class="text-sm font-semibold">{{ incident.action }}</span>
                       <NuxtTime :datetime="incident.occurredAt" locale="en-US" />
                     </div>
                     <div class="mt-2 space-y-1 text-xs text-muted-foreground">
-                      <div v-if="incident.actorUsername || incident.actorEmail || incident.actor" class="flex items-center gap-2">
+                      <div
+                        v-if="incident.actorUsername || incident.actorEmail || incident.actor"
+                        class="flex items-center gap-2"
+                      >
                         <UIcon name="i-lucide-user" class="size-3" />
                         <NuxtLink
                           v-if="incident.actorUserId"
                           :to="`/admin/users/${incident.actorUserId}`"
-                          class="text-primary hover:underline">
+                          class="text-primary hover:underline"
+                        >
                           {{ getIncidentActorLabel(incident) }}
                         </NuxtLink>
                         <span v-else>{{ getIncidentActorLabel(incident) }}</span>

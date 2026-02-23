@@ -1,20 +1,20 @@
-import { randomUUID } from 'node:crypto'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { createEggSchema } from '#shared/schema/admin/eggs'
+import { randomUUID } from 'node:crypto';
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { createEggSchema } from '#shared/schema/admin/eggs';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.EGGS, ADMIN_ACL_PERMISSIONS.WRITE)
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.EGGS, ADMIN_ACL_PERMISSIONS.WRITE);
 
-  const body = await readValidatedBodyWithLimit(event, createEggSchema, BODY_SIZE_LIMITS.MEDIUM)
+  const body = await readValidatedBodyWithLimit(event, createEggSchema, BODY_SIZE_LIMITS.MEDIUM);
 
-  const db = useDrizzle()
-  const now = new Date()
+  const db = useDrizzle();
+  const now = new Date();
 
   const newEgg = {
     id: randomUUID(),
@@ -39,9 +39,9 @@ export default defineEventHandler(async (event) => {
     copyScriptFrom: body.copyScriptFrom ?? null,
     createdAt: now,
     updatedAt: now,
-  }
+  };
 
-  await db.insert(tables.eggs).values(newEgg)
+  await db.insert(tables.eggs).values(newEgg);
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
       eggName: newEgg.name,
       nestId: newEgg.nestId,
     },
-  })
+  });
 
   return {
     data: {
@@ -69,5 +69,5 @@ export default defineEventHandler(async (event) => {
       createdAt: newEgg.createdAt,
       updatedAt: newEgg.updatedAt,
     },
-  }
-})
+  };
+});

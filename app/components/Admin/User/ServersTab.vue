@@ -1,19 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { AdminUserServerSummary, PaginatedServersResponse } from '#shared/types/admin'
+import { computed, ref } from 'vue';
+import type { AdminUserServerSummary, PaginatedServersResponse } from '#shared/types/admin';
 
 interface Props {
-  userId: string
-  itemsPerPage: number
+  userId: string;
+  itemsPerPage: number;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const serversPage = ref(1)
+const serversPage = ref(1);
 
-const {
-  data: serversData,
-} = await useFetch<PaginatedServersResponse>(
+const { data: serversData } = await useFetch<PaginatedServersResponse>(
   () => `/api/admin/users/${props.userId}/servers`,
   {
     key: `admin-user-servers-${props.userId}`,
@@ -21,13 +19,16 @@ const {
       page: serversPage.value,
       limit: props.itemsPerPage,
     })),
-    default: () => ({ data: [], pagination: { page: 1, perPage: props.itemsPerPage, total: 0, totalPages: 0 } }),
+    default: () => ({
+      data: [],
+      pagination: { page: 1, perPage: props.itemsPerPage, total: 0, totalPages: 0 },
+    }),
     watch: [serversPage, () => props.itemsPerPage],
   },
-)
+);
 
-const servers = computed<AdminUserServerSummary[]>(() => serversData.value?.data ?? [])
-const serversPagination = computed(() => serversData.value?.pagination)
+const servers = computed<AdminUserServerSummary[]>(() => serversData.value?.data ?? []);
+const serversPagination = computed(() => serversData.value?.pagination);
 </script>
 
 <template>
@@ -35,7 +36,9 @@ const serversPagination = computed(() => serversData.value?.pagination)
     <template #header>
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-semibold">Servers</h2>
-        <UBadge color="neutral" variant="soft" size="xs">{{ serversPagination?.total ?? 0 }} total</UBadge>
+        <UBadge color="neutral" variant="soft" size="xs"
+          >{{ serversPagination?.total ?? 0 }} total</UBadge
+        >
       </div>
     </template>
 
@@ -61,15 +64,22 @@ const serversPagination = computed(() => serversData.value?.pagination)
             <tr v-for="server in servers" :key="server.id">
               <td class="px-3 py-2">
                 <div class="flex flex-col">
-                  <NuxtLink :to="`/admin/servers/${server.id}`" class="font-medium hover:text-primary">
+                  <NuxtLink
+                    :to="`/admin/servers/${server.id}`"
+                    class="font-medium hover:text-primary"
+                  >
                     {{ server.name }}
                   </NuxtLink>
                   <span class="text-xs text-muted-foreground">{{ server.identifier }}</span>
                 </div>
               </td>
               <td class="px-3 py-2">
-                <UBadge v-if="server.suspended" size="xs" color="error" variant="soft">Suspended</UBadge>
-                <span v-else class="text-xs text-muted-foreground">{{ server.status || 'Unknown' }}</span>
+                <UBadge v-if="server.suspended" size="xs" color="error" variant="soft"
+                  >Suspended</UBadge
+                >
+                <span v-else class="text-xs text-muted-foreground">{{
+                  server.status || 'Unknown'
+                }}</span>
               </td>
               <td class="px-3 py-2 text-xs text-muted-foreground">
                 {{ server.nodeName || 'Unassigned' }}
@@ -82,11 +92,16 @@ const serversPagination = computed(() => serversData.value?.pagination)
           </tbody>
         </table>
       </div>
-      <div v-if="serversPagination && serversPagination.totalPages > 1" class="flex items-center justify-between border-t border-default pt-4">
+      <div
+        v-if="serversPagination && serversPagination.totalPages > 1"
+        class="flex items-center justify-between border-t border-default pt-4"
+      >
         <div class="text-sm text-muted-foreground">
-          Showing {{ ((serversPagination.page - 1) * serversPagination.perPage) + 1 }} to
-          {{ Math.min(serversPagination.page * serversPagination.perPage, serversPagination.total) }} of
-          {{ serversPagination.total }} servers
+          Showing {{ (serversPagination.page - 1) * serversPagination.perPage + 1 }} to
+          {{
+            Math.min(serversPagination.page * serversPagination.perPage, serversPagination.total)
+          }}
+          of {{ serversPagination.total }} servers
         </div>
         <UPagination
           v-model:page="serversPage"

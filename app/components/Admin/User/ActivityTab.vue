@@ -1,51 +1,53 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { PaginatedActivityResponse } from '#shared/types/admin'
+import { computed, ref } from 'vue';
+import type { PaginatedActivityResponse } from '#shared/types/admin';
 
 interface Props {
-  userId: string
-  itemsPerPage: number
+  userId: string;
+  itemsPerPage: number;
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
-const { t } = useI18n()
-const toast = useToast()
-const requestFetch = useRequestFetch()
-const activityPage = ref(1)
-const expandedActivityEntries = ref<Set<string>>(new Set())
+const { t } = useI18n();
+const toast = useToast();
+const requestFetch = useRequestFetch();
+const activityPage = ref(1);
+const expandedActivityEntries = ref<Set<string>>(new Set());
 
-const {
-  data: activityData,
-} = await useAsyncData(
+const { data: activityData } = await useAsyncData(
   `admin-user-activity-${props.userId}`,
   async () => {
-    const url = `/api/admin/users/${props.userId}/activity?page=${activityPage.value}&limit=${props.itemsPerPage}` as string
-    return await requestFetch<PaginatedActivityResponse>(url)
+    const url =
+      `/api/admin/users/${props.userId}/activity?page=${activityPage.value}&limit=${props.itemsPerPage}` as string;
+    return await requestFetch<PaginatedActivityResponse>(url);
   },
   {
-    default: () => ({ data: [], pagination: { page: 1, perPage: props.itemsPerPage, total: 0, totalPages: 0 } }),
+    default: () => ({
+      data: [],
+      pagination: { page: 1, perPage: props.itemsPerPage, total: 0, totalPages: 0 },
+    }),
     watch: [activityPage, () => props.itemsPerPage, () => props.userId],
   },
-)
+);
 
-const activity = computed(() => activityData.value?.data ?? [])
-const activityPagination = computed(() => activityData.value?.pagination)
+const activity = computed(() => activityData.value?.data ?? []);
+const activityPagination = computed(() => activityData.value?.pagination);
 
 function toggleActivityEntry(id: string) {
   if (expandedActivityEntries.value.has(id)) {
-    expandedActivityEntries.value.delete(id)
+    expandedActivityEntries.value.delete(id);
   } else {
-    expandedActivityEntries.value.add(id)
+    expandedActivityEntries.value.add(id);
   }
 }
 
 function formatActivityJson(data: Record<string, unknown> | null): string {
-  if (!data) return 'null'
-  return JSON.stringify(data, null, 2)
+  if (!data) return 'null';
+  return JSON.stringify(data, null, 2);
 }
 
-function getFullActivityData(entry: typeof activity.value[0]) {
+function getFullActivityData(entry: (typeof activity.value)[0]) {
   return {
     id: entry.id,
     occurredAt: entry.occurredAt,
@@ -53,34 +55,34 @@ function getFullActivityData(entry: typeof activity.value[0]) {
     action: entry.action,
     target: entry.target,
     metadata: entry.details,
-  }
+  };
 }
 
-async function copyActivityJson(entry: typeof activity.value[0]) {
-  const json = formatActivityJson(getFullActivityData(entry))
+async function copyActivityJson(entry: (typeof activity.value)[0]) {
+  const json = formatActivityJson(getFullActivityData(entry));
   try {
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      await navigator.clipboard.writeText(json)
+      await navigator.clipboard.writeText(json);
     } else {
-      const textArea = document.createElement('textarea')
-      textArea.value = json
-      textArea.style.position = 'fixed'
-      textArea.style.opacity = '0'
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      document.body.removeChild(textArea)
+      const textArea = document.createElement('textarea');
+      textArea.value = json;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
     }
     toast.add({
       title: t('common.copied'),
       description: t('common.copiedToClipboard'),
-    })
+    });
   } catch (error) {
     toast.add({
       title: t('common.failedToCopy'),
       description: error instanceof Error ? error.message : t('common.failedToCopy'),
       color: 'error',
-    })
+    });
   }
 }
 </script>
@@ -117,11 +119,18 @@ async function copyActivityJson(entry: typeof activity.value[0]) {
             <div class="flex items-center gap-2">
               <p class="text-sm font-medium font-mono">{{ entry.action }}</p>
               <UIcon
-                :name="expandedActivityEntries.has(entry.id) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                :name="
+                  expandedActivityEntries.has(entry.id)
+                    ? 'i-lucide-chevron-down'
+                    : 'i-lucide-chevron-right'
+                "
                 class="size-4 text-muted-foreground shrink-0"
               />
             </div>
-            <p v-if="entry.target && !entry.target.startsWith('user#')" class="text-xs text-muted-foreground mt-1">
+            <p
+              v-if="entry.target && !entry.target.startsWith('user#')"
+              class="text-xs text-muted-foreground mt-1"
+            >
               {{ entry.target }}
             </p>
           </div>
@@ -129,7 +138,7 @@ async function copyActivityJson(entry: typeof activity.value[0]) {
             <NuxtTime :datetime="entry.occurredAt" relative />
           </div>
         </button>
-        
+
         <div
           v-if="expandedActivityEntries.has(entry.id)"
           class="border-t border-default bg-muted/30 p-4"
@@ -148,15 +157,22 @@ async function copyActivityJson(entry: typeof activity.value[0]) {
                 {{ t('account.activity.copyJSON') }}
               </UButton>
             </div>
-            <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"><code>{{ formatActivityJson(getFullActivityData(entry)) }}</code></pre>
+            <pre
+              class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
+            ><code>{{ formatActivityJson(getFullActivityData(entry)) }}</code></pre>
           </div>
         </div>
       </div>
-      <div v-if="activityPagination && activityPagination.totalPages > 1" class="flex items-center justify-between border-t border-default pt-4">
+      <div
+        v-if="activityPagination && activityPagination.totalPages > 1"
+        class="flex items-center justify-between border-t border-default pt-4"
+      >
         <div class="text-sm text-muted-foreground">
-          {{ t('account.activity.showingEvents', {
-            count: activityPagination.total
-          }) }}
+          {{
+            t('account.activity.showingEvents', {
+              count: activityPagination.total,
+            })
+          }}
         </div>
         <UPagination
           v-model:page="activityPage"

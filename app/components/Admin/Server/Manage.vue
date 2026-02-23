@@ -1,59 +1,61 @@
 <script setup lang="ts">
-import type { FormSubmitEvent } from '@nuxt/ui'
-import type { Server, AdminServerDetails } from '#shared/types/server'
-import type { Nest, Egg } from '#shared/types/nest'
-import { serverTransferFormSchema } from '#shared/schema/admin/server'
-import type { ServerTransferFormInput } from '#shared/schema/admin/server'
+import type { FormSubmitEvent } from '@nuxt/ui';
+import type { Server, AdminServerDetails } from '#shared/types/server';
+import type { Nest, Egg } from '#shared/types/nest';
+import { serverTransferFormSchema } from '#shared/schema/admin/server';
+import type { ServerTransferFormInput } from '#shared/schema/admin/server';
 
 const props = defineProps<{
-  server: AdminServerDetails
-}>()
+  server: AdminServerDetails;
+}>();
 
-const { t } = useI18n()
-const toast = useToast()
-const router = useRouter()
-const requestFetch = useRequestFetch()
-const suspendedSubmitting = ref(false)
-const reinstallSubmitting = ref(false)
-const createOnWingsSubmitting = ref(false)
-const deleteSubmitting = ref(false)
-const transferSubmitting = ref(false)
-const changeEggSubmitting = ref(false)
-const showChangeEggModal = ref(false)
+const { t } = useI18n();
+const toast = useToast();
+const router = useRouter();
+const requestFetch = useRequestFetch();
+const suspendedSubmitting = ref(false);
+const reinstallSubmitting = ref(false);
+const createOnWingsSubmitting = ref(false);
+const deleteSubmitting = ref(false);
+const transferSubmitting = ref(false);
+const changeEggSubmitting = ref(false);
+const showChangeEggModal = ref(false);
 
-const selectedNestId = ref<string>(props.server.nestId || '')
-const selectedEggId = ref<string>(props.server.eggId || '')
-const changeEggReinstall = ref(true)
-const changeEggSkipScripts = ref(false)
+const selectedNestId = ref<string>(props.server.nestId || '');
+const selectedEggId = ref<string>(props.server.eggId || '');
+const changeEggReinstall = ref(true);
+const changeEggSkipScripts = ref(false);
 
-const { data: nestsData } = await useAsyncData(
-  'admin-nests-for-egg-change',
-  () => requestFetch<{ data: Nest[] }>('/api/admin/nests'),
-)
-const nests = computed(() => nestsData.value?.data ?? [])
-const nestItems = computed(() => nests.value.map(n => ({ label: n.name, value: n.id })))
+const { data: nestsData } = await useAsyncData('admin-nests-for-egg-change', () =>
+  requestFetch<{ data: Nest[] }>('/api/admin/nests'),
+);
+const nests = computed(() => nestsData.value?.data ?? []);
+const nestItems = computed(() => nests.value.map((n) => ({ label: n.name, value: n.id })));
 
 const { data: eggsData, refresh: refreshEggs } = await useAsyncData(
   () => `admin-eggs-for-nest-${selectedNestId.value}`,
-  () => selectedNestId.value
-    ? requestFetch<{ data: { nest: Nest; eggs: Egg[] } }>(`/api/admin/nests/${selectedNestId.value}`)
-    : Promise.resolve(null),
+  () =>
+    selectedNestId.value
+      ? requestFetch<{ data: { nest: Nest; eggs: Egg[] } }>(
+          `/api/admin/nests/${selectedNestId.value}`,
+        )
+      : Promise.resolve(null),
   { watch: [selectedNestId] },
-)
-const eggs = computed(() => eggsData.value?.data?.eggs ?? [])
-const eggItems = computed(() => eggs.value.map(e => ({ label: e.name, value: e.id })))
+);
+const eggs = computed(() => eggsData.value?.data?.eggs ?? []);
+const eggItems = computed(() => eggs.value.map((e) => ({ label: e.name, value: e.id })));
 
 watch(selectedNestId, () => {
-  selectedEggId.value = ''
-})
+  selectedEggId.value = '';
+});
 
 async function handleChangeEgg() {
   if (!selectedEggId.value) {
-    toast.add({ title: t('common.error'), description: 'Please select an egg', color: 'error' })
-    return
+    toast.add({ title: t('common.error'), description: 'Please select an egg', color: 'error' });
+    return;
   }
-  if (changeEggSubmitting.value) return
-  changeEggSubmitting.value = true
+  if (changeEggSubmitting.value) return;
+  changeEggSubmitting.value = true;
   try {
     await $fetch(`/api/admin/servers/${props.server.id}/change-egg`, {
       method: 'POST',
@@ -64,104 +66,113 @@ async function handleChangeEgg() {
         reinstall: changeEggReinstall.value,
         skipScripts: changeEggSkipScripts.value,
       }),
-    })
+    });
     toast.add({
       title: 'Egg changed',
-      description: changeEggReinstall.value ? 'Egg updated and reinstall initiated' : 'Egg updated successfully',
+      description: changeEggReinstall.value
+        ? 'Egg updated and reinstall initiated'
+        : 'Egg updated successfully',
       color: 'success',
-    })
-    showChangeEggModal.value = false
-    setTimeout(() => router.go(0), 1500)
+    });
+    showChangeEggModal.value = false;
+    setTimeout(() => router.go(0), 1500);
   } catch (error) {
-    const err = error as { data?: { message?: string } }
-    toast.add({ title: t('common.error'), description: err.data?.message || 'Failed to change egg', color: 'error' })
+    const err = error as { data?: { message?: string } };
+    toast.add({
+      title: t('common.error'),
+      description: err.data?.message || 'Failed to change egg',
+      color: 'error',
+    });
   } finally {
-    changeEggSubmitting.value = false
+    changeEggSubmitting.value = false;
   }
 }
 
 async function handleSuspend() {
-  if (!confirm(props.server.suspended ? t('admin.servers.manage.confirmUnsuspend') : t('admin.servers.manage.confirmSuspend'))) {
-    return
+  if (
+    !confirm(
+      props.server.suspended
+        ? t('admin.servers.manage.confirmUnsuspend')
+        : t('admin.servers.manage.confirmSuspend'),
+    )
+  ) {
+    return;
   }
 
-  if (suspendedSubmitting.value)
-    return
+  if (suspendedSubmitting.value) return;
 
-  suspendedSubmitting.value = true
+  suspendedSubmitting.value = true;
   try {
-    const endpoint = props.server.suspended ? 'unsuspend' : 'suspend'
+    const endpoint = props.server.suspended ? 'unsuspend' : 'suspend';
     await $fetch(`/api/admin/servers/${props.server.id}/${endpoint}`, {
       method: 'POST',
-    })
+    });
 
     toast.add({
-      title: props.server.suspended ? t('admin.servers.manage.serverUnsuspended') : t('admin.servers.manage.serverSuspended'),
-      description: props.server.suspended ? t('admin.servers.manage.serverUnsuspendedDescription') : t('admin.servers.manage.serverSuspendedDescription'),
+      title: props.server.suspended
+        ? t('admin.servers.manage.serverUnsuspended')
+        : t('admin.servers.manage.serverSuspended'),
+      description: props.server.suspended
+        ? t('admin.servers.manage.serverUnsuspendedDescription')
+        : t('admin.servers.manage.serverSuspendedDescription'),
       color: 'success',
-    })
+    });
 
-    router.go(0)
-  }
-  catch (error) {
-    const err = error as { data?: { message?: string } }
+    router.go(0);
+  } catch (error) {
+    const err = error as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
       description: err.data?.message || t('admin.servers.manage.failedToUpdateSuspension'),
       color: 'error',
-    })
-  }
-  finally {
-    suspendedSubmitting.value = false
+    });
+  } finally {
+    suspendedSubmitting.value = false;
   }
 }
 
 async function handleReinstall() {
   if (!confirm(t('admin.servers.manage.confirmReinstall'))) {
-    return
+    return;
   }
 
-  if (reinstallSubmitting.value)
-    return
+  if (reinstallSubmitting.value) return;
 
-  reinstallSubmitting.value = true
+  reinstallSubmitting.value = true;
   try {
     await $fetch(`/api/admin/servers/${props.server.id}/reinstall`, {
       method: 'POST',
-    })
+    });
 
     toast.add({
       title: t('admin.servers.manage.reinstallTriggered'),
       description: t('admin.servers.manage.reinstallQueued'),
       color: 'success',
-    })
-    
+    });
+
     setTimeout(() => {
-      router.go(0)
-    }, 2000)
-  }
-  catch (error) {
-    const err = error as { data?: { message?: string } }
+      router.go(0);
+    }, 2000);
+  } catch (error) {
+    const err = error as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
       description: err.data?.message || t('admin.servers.manage.failedToTriggerReinstall'),
       color: 'error',
-    })
-  }
-  finally {
-    reinstallSubmitting.value = false
+    });
+  } finally {
+    reinstallSubmitting.value = false;
   }
 }
 
 async function handleCreateOnWings() {
   if (!confirm(t('admin.servers.manage.confirmCreateOnWings'))) {
-    return
+    return;
   }
 
-  if (createOnWingsSubmitting.value)
-    return
+  if (createOnWingsSubmitting.value) return;
 
-  createOnWingsSubmitting.value = true
+  createOnWingsSubmitting.value = true;
   try {
     await $fetch(`/api/admin/servers/create-on-wings`, {
       method: 'POST',
@@ -169,49 +180,46 @@ async function handleCreateOnWings() {
         serverId: props.server.id,
         startOnCompletion: true,
       },
-    })
+    });
 
     toast.add({
       title: t('admin.servers.manage.installationStarted'),
       description: t('admin.servers.manage.installationInitiated'),
       color: 'success',
-    })
-    
+    });
+
     setTimeout(() => {
-      router.go(0)
-    }, 2000)
-  }
-  catch (error) {
-    const err = error as { data?: { message?: string } }
+      router.go(0);
+    }, 2000);
+  } catch (error) {
+    const err = error as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
       description: err.data?.message || t('admin.servers.manage.failedToCreateOnWings'),
       color: 'error',
-    })
-  }
-  finally {
-    createOnWingsSubmitting.value = false
+    });
+  } finally {
+    createOnWingsSubmitting.value = false;
   }
 }
 
-const showTransferModal = ref(false)
+const showTransferModal = ref(false);
 
-const transferSchema = serverTransferFormSchema
+const transferSchema = serverTransferFormSchema;
 
-type TransferFormSchema = ServerTransferFormInput
+type TransferFormSchema = ServerTransferFormInput;
 
 const transferForm = reactive<TransferFormSchema>({
   nodeId: '',
   allocationId: '',
   additionalAllocationIds: '',
   startOnCompletion: true,
-})
+});
 
 async function handleTransfer(event: FormSubmitEvent<TransferFormSchema>) {
-  if (transferSubmitting.value)
-    return
+  if (transferSubmitting.value) return;
 
-  transferSubmitting.value = true
+  transferSubmitting.value = true;
   try {
     await $fetch(`/api/admin/servers/${props.server.id}/transfer`, {
       method: 'POST',
@@ -221,89 +229,88 @@ async function handleTransfer(event: FormSubmitEvent<TransferFormSchema>) {
         additionalAllocationIds: event.data.additionalAllocationIds || undefined,
         startOnCompletion: event.data.startOnCompletion,
       },
-    })
+    });
 
     toast.add({
       title: t('admin.servers.manage.transferInitiated'),
       description: t('admin.servers.manage.transferStarted'),
       color: 'success',
-    })
+    });
 
-    showTransferModal.value = false
+    showTransferModal.value = false;
     Object.assign(transferForm, {
       nodeId: '',
       allocationId: '',
       additionalAllocationIds: '',
       startOnCompletion: true,
-    })
-  }
-  catch (error) {
-    const err = error as { data?: { message?: string } }
+    });
+  } catch (error) {
+    const err = error as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
       description: err.data?.message || t('admin.servers.manage.failedToInitiateTransfer'),
       color: 'error',
-    })
-  }
-  finally {
-    transferSubmitting.value = false
+    });
+  } finally {
+    transferSubmitting.value = false;
   }
 }
 
 async function handleDelete(force: boolean = false) {
-  if (deleteSubmitting.value)
-    return
+  if (deleteSubmitting.value) return;
 
   if (!force) {
     if (!confirm(t('admin.servers.manage.confirmDelete'))) {
-      return
+      return;
     }
 
     if (!confirm(t('admin.servers.manage.confirmDeleteFinal'))) {
-      return
+      return;
     }
   }
 
-  deleteSubmitting.value = true
+  deleteSubmitting.value = true;
   try {
-    const url = force ? `/api/admin/servers/${props.server.id}?force=true` : `/api/admin/servers/${props.server.id}`
+    const url = force
+      ? `/api/admin/servers/${props.server.id}?force=true`
+      : `/api/admin/servers/${props.server.id}`;
     await $fetch(url, {
       method: 'DELETE',
-    })
+    });
 
     toast.add({
       title: t('admin.servers.manage.serverDeleted'),
       description: t('admin.servers.manage.serverDeletedDescription'),
       color: 'success',
-    })
+    });
 
-    router.push('/admin/servers')
-  }
-  catch (error) {
-    const err = error as { status?: number; statusCode?: number; data?: { message?: string } }
-    const status = err.status || err.statusCode
-    const message = err.data?.message || t('admin.servers.manage.failedToDeleteServer')
-    
+    router.push('/admin/servers');
+  } catch (error) {
+    const err = error as { status?: number; statusCode?: number; data?: { message?: string } };
+    const status = err.status || err.statusCode;
+    const message = err.data?.message || t('admin.servers.manage.failedToDeleteServer');
+
     if (status === 409 && !force) {
       toast.add({
         title: t('admin.servers.manage.deleteFailed'),
         description: message,
         color: 'warning',
-        actions: [{
-          label: 'Force Delete',
-          onClick: () => handleDelete(true),
-        }],
-      })
+        actions: [
+          {
+            label: 'Force Delete',
+            onClick: () => handleDelete(true),
+          },
+        ],
+      });
     } else {
       toast.add({
         title: t('common.error'),
         description: message,
         color: 'error',
-      })
+      });
     }
-  }
-  finally {
-    deleteSubmitting.value = false
+  } finally {
+    deleteSubmitting.value = false;
   }
 }
 </script>
@@ -318,12 +325,21 @@ async function handleDelete(force: boolean = false) {
     </UAlert>
 
     <div class="space-y-3">
-
       <div class="flex items-center justify-between rounded-lg border border-default p-4">
         <div class="space-y-1">
-          <p class="font-medium">{{ server.suspended ? t('admin.servers.manage.unsuspendServer') : t('admin.servers.manage.suspendServer') }}</p>
+          <p class="font-medium">
+            {{
+              server.suspended
+                ? t('admin.servers.manage.unsuspendServer')
+                : t('admin.servers.manage.suspendServer')
+            }}
+          </p>
           <p class="text-sm text-muted-foreground">
-            {{ server.suspended ? t('admin.servers.manage.unsuspendServerDescription') : t('admin.servers.manage.suspendServerDescription') }}
+            {{
+              server.suspended
+                ? t('admin.servers.manage.unsuspendServerDescription')
+                : t('admin.servers.manage.suspendServerDescription')
+            }}
           </p>
         </div>
         <UButton
@@ -333,11 +349,18 @@ async function handleDelete(force: boolean = false) {
           :disabled="suspendedSubmitting"
           @click="handleSuspend"
         >
-          {{ server.suspended ? t('admin.servers.manage.unsuspend') : t('admin.servers.manage.suspend') }}
+          {{
+            server.suspended
+              ? t('admin.servers.manage.unsuspend')
+              : t('admin.servers.manage.suspend')
+          }}
         </UButton>
       </div>
 
-      <div v-if="server.status === 'install_failed'" class="flex items-center justify-between rounded-lg border border-warning p-4">
+      <div
+        v-if="server.status === 'install_failed'"
+        class="flex items-center justify-between rounded-lg border border-warning p-4"
+      >
         <div class="space-y-1">
           <p class="font-medium">{{ t('admin.servers.manage.createInstallServerOnWings') }}</p>
           <p class="text-sm text-muted-foreground">
@@ -359,10 +382,12 @@ async function handleDelete(force: boolean = false) {
         <div class="space-y-1">
           <p class="font-medium">Change Egg</p>
           <p class="text-sm text-muted-foreground">
-            Switch this server to a different egg. Optionally reinstall with the new egg's install script.
+            Switch this server to a different egg. Optionally reinstall with the new egg's install
+            script.
           </p>
           <p class="text-xs text-muted-foreground">
-            Current: <span class="font-mono">{{ server.egg?.name || server.eggId || 'Unknown' }}</span>
+            Current:
+            <span class="font-mono">{{ server.egg?.name || server.eggId || 'Unknown' }}</span>
           </p>
         </div>
         <UButton
@@ -435,7 +460,9 @@ async function handleDelete(force: boolean = false) {
           <UAlert icon="i-lucide-info" variant="subtle" color="primary">
             <template #title>Changing the egg</template>
             <template #description>
-              This will update the server's egg. If reinstall is enabled, the server's install script will run again using the new egg. Existing server files will be deleted during reinstall.
+              This will update the server's egg. If reinstall is enabled, the server's install
+              script will run again using the new egg. Existing server files will be deleted during
+              reinstall.
             </template>
           </UAlert>
 
@@ -464,14 +491,27 @@ async function handleDelete(force: boolean = false) {
           </UFormField>
 
           <div class="space-y-3 rounded-lg border border-default p-3">
-            <USwitch v-model="changeEggReinstall" label="Reinstall server" description="Run the new egg's install script (deletes existing server files)" />
-            <USwitch v-model="changeEggSkipScripts" :disabled="!changeEggReinstall" label="Skip install scripts" description="Change egg without running the install script" />
+            <USwitch
+              v-model="changeEggReinstall"
+              label="Reinstall server"
+              description="Run the new egg's install script (deletes existing server files)"
+            />
+            <USwitch
+              v-model="changeEggSkipScripts"
+              :disabled="!changeEggReinstall"
+              label="Skip install scripts"
+              description="Change egg without running the install script"
+            />
           </div>
         </div>
       </template>
 
       <template #footer>
-        <UButton variant="ghost" :disabled="changeEggSubmitting" @click="showChangeEggModal = false">
+        <UButton
+          variant="ghost"
+          :disabled="changeEggSubmitting"
+          @click="showChangeEggModal = false"
+        >
           {{ t('common.cancel') }}
         </UButton>
         <UButton
@@ -486,7 +526,11 @@ async function handleDelete(force: boolean = false) {
       </template>
     </UModal>
 
-    <UModal v-model:open="showTransferModal" :title="t('admin.servers.manage.transferServer')" :ui="{ footer: 'justify-end' }">
+    <UModal
+      v-model:open="showTransferModal"
+      :title="t('admin.servers.manage.transferServer')"
+      :ui="{ footer: 'justify-end' }"
+    >
       <template #body>
         <UForm
           id="transfer-form"
@@ -524,7 +568,10 @@ async function handleDelete(force: boolean = false) {
             </template>
           </UFormField>
 
-          <UFormField :label="t('admin.servers.manage.additionalAllocations')" name="additionalAllocationIds">
+          <UFormField
+            :label="t('admin.servers.manage.additionalAllocations')"
+            name="additionalAllocationIds"
+          >
             <UInput
               v-model="transferForm.additionalAllocationIds"
               :placeholder="t('admin.servers.manage.additionalAllocationsPlaceholder')"

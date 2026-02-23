@@ -1,8 +1,8 @@
 export interface DefaultEmailTemplate {
-  id: string
-  name: string
-  subject: string
-  html: string
+  id: string;
+  name: string;
+  subject: string;
+  html: string;
 }
 
 export const defaultEmailTemplates: DefaultEmailTemplate[] = [
@@ -54,4 +54,4 @@ export const defaultEmailTemplates: DefaultEmailTemplate[] = [
     subject: 'Account Created',
     html: '<h1>Account Created</h1><p>Hello,</p><p>An administrator has created an account for you on <strong>{{ appName }}</strong>.</p><p>Username: {{ username }}</p><p>A temporary password has been generated for you:</p><p>{{ temporaryPassword }}</p><p><strong>⚠️ Important:</strong> Please sign in and change this password immediately from your account security settings.</p><p><a href="{{ loginUrl }}" class="button">Sign In to Panel</a></p><p>If you have any questions, please contact your administrator.</p><p>© {{ year }} {{ appName }}. All rights reserved.</p><p>This is an automated message, please do not reply to this email.</p>',
   },
-]
+];

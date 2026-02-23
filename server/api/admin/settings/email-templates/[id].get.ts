@@ -1,33 +1,33 @@
-import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAdmin } from '#server/utils/security';
+import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  const id = getRouterParam(event, 'id')
+  const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
       status: 400,
       statusText: 'Template ID is required',
-    })
+    });
   }
 
   try {
-    const db = useDrizzle()
+    const db = useDrizzle();
     const templateRows = await db
       .select()
       .from(tables.emailTemplates)
       .where(eq(tables.emailTemplates.templateId, id))
-      .limit(1)
+      .limit(1);
 
-    const [template] = templateRows as { htmlContent: string; updatedAt: Date }[]
+    const [template] = templateRows as { htmlContent: string; updatedAt: Date }[];
 
     if (!template) {
       throw createError({
         status: 404,
         statusText: `Template "${id}" not found`,
-      })
+      });
     }
 
     await recordAuditEventFromRequest(event, {
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
       metadata: {
         templateId: id,
       },
-    })
+    });
 
     return {
       data: {
@@ -46,15 +46,14 @@ export default defineEventHandler(async (event) => {
         content: template.htmlContent,
         updatedAt: template.updatedAt,
       },
-    }
-  }
-  catch (err) {
+    };
+  } catch (err) {
     if (err && typeof err === 'object' && ('statusCode' in err || 'status' in err)) {
-      throw err
+      throw err;
     }
     throw createError({
       status: 500,
       statusText: `Failed to retrieve template: ${err instanceof Error ? err.message : 'Unknown error'}`,
-    })
+    });
   }
-})
+});

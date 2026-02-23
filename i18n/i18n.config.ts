@@ -1,5 +1,5 @@
 export default defineI18nConfig(() => {
-  const isDev = process.env.NODE_ENV !== 'production'
+  const isDev = process.env.NODE_ENV !== 'production';
 
   return {
     legacy: false,
@@ -10,6 +10,5 @@ export default defineI18nConfig(() => {
     warnHtmlMessage: false,
     silentTranslationWarn: !isDev,
     silentFallbackWarn: !isDev,
-  }
-})
-
+  };
+});

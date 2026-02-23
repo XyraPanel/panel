@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { ServerBackup } from '#shared/types/server'
+import type { ServerBackup } from '#shared/types/server';
 
-const route = useRoute()
+const route = useRoute();
 
 definePageMeta({
   auth: true,
-})
+});
 
-const { t } = useI18n()
-const serverId = computed(() => route.params.id as string)
+const { t } = useI18n();
+const serverId = computed(() => route.params.id as string);
 
 const {
   data: backupsData,
@@ -22,42 +22,54 @@ const {
     watch: [serverId],
     default: () => ({ data: [] }),
   },
-)
+);
 
-const backups = computed(() => backupsData.value?.data || [])
+const backups = computed(() => backupsData.value?.data || []);
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return t('common.na')
-  const k = 1024
-  const sizes = [t('common.bytes'), t('common.kb'), t('common.mb'), t('common.gb'), t('common.tb')]
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`
+  if (bytes === 0) return t('common.na');
+  const k = 1024;
+  const sizes = [t('common.bytes'), t('common.kb'), t('common.mb'), t('common.gb'), t('common.tb')];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${Math.round((bytes / Math.pow(k, i)) * 100) / 100} ${sizes[i]}`;
 }
 
 function getBackupStatus(backup: ServerBackup) {
   if (!backup.completedAt) {
-    return { label: t('server.backups.inProgress'), color: 'warning' as const, variant: 'outline' as const }
+    return {
+      label: t('server.backups.inProgress'),
+      color: 'warning' as const,
+      variant: 'outline' as const,
+    };
   }
   if (backup.isSuccessful) {
-    return { label: t('server.backups.completed'), color: 'success' as const, variant: 'subtle' as const }
+    return {
+      label: t('server.backups.completed'),
+      color: 'success' as const,
+      variant: 'subtle' as const,
+    };
   }
-  return { label: t('server.backups.failed'), color: 'error' as const, variant: 'outline' as const }
+  return {
+    label: t('server.backups.failed'),
+    color: 'error' as const,
+    variant: 'outline' as const,
+  };
 }
 
 function getStorageLabel(disk: string): string {
-  return disk === 's3' ? t('server.backups.storageS3') : t('server.backups.storageWings')
+  return disk === 's3' ? t('server.backups.storageS3') : t('server.backups.storageWings');
 }
 
-const creating = ref(false)
-const operatingBackupId = ref<string | null>(null)
-const toast = useToast()
-const showDeleteModal = ref(false)
-const showRestoreModal = ref(false)
-const backupToDelete = ref<ServerBackup | null>(null)
-const backupToRestore = ref<ServerBackup | null>(null)
+const creating = ref(false);
+const operatingBackupId = ref<string | null>(null);
+const toast = useToast();
+const showDeleteModal = ref(false);
+const showRestoreModal = ref(false);
+const backupToDelete = ref<ServerBackup | null>(null);
+const backupToRestore = ref<ServerBackup | null>(null);
 
 async function createBackup() {
-  creating.value = true
+  creating.value = true;
   try {
     await $fetch(`/api/client/servers/${serverId.value}/backups`, {
       method: 'POST',
@@ -65,116 +77,110 @@ async function createBackup() {
         name: t('server.backups.defaultBackupName', { date: new Date().toISOString() }),
         locked: false,
       },
-    })
+    });
 
     toast.add({
       title: t('common.success'),
       description: t('server.backups.backupStartedDescription'),
       color: 'success',
-    })
+    });
 
-    await refreshBackups()
-  }
-  catch (err) {
+    await refreshBackups();
+  } catch (err) {
     toast.add({
       title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.backups.backupFailed'),
       color: 'error',
-    })
-  }
-  finally {
-    creating.value = false
+    });
+  } finally {
+    creating.value = false;
   }
 }
 
 async function downloadBackup(backupUuid: string) {
-  operatingBackupId.value = backupUuid
+  operatingBackupId.value = backupUuid;
   try {
-    const response = await $fetch<{ attributes: { url: string } }>(`/api/client/servers/${serverId.value}/backups/${backupUuid}/download`)
-    
-    await navigateTo(response.attributes.url, { external: true, open: { target: '_blank' } })
+    const response = await $fetch<{ attributes: { url: string } }>(
+      `/api/client/servers/${serverId.value}/backups/${backupUuid}/download`,
+    );
+
+    await navigateTo(response.attributes.url, { external: true, open: { target: '_blank' } });
 
     toast.add({
       title: t('common.success'),
       description: t('server.backups.downloadStarted'),
       color: 'success',
-    })
-  }
-  catch (err) {
+    });
+  } catch (err) {
     toast.add({
       title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.backups.downloadFailed'),
       color: 'error',
-    })
-  }
-  finally {
-    operatingBackupId.value = null
+    });
+  } finally {
+    operatingBackupId.value = null;
   }
 }
 
 function openRestoreModal(backup: ServerBackup) {
-  backupToRestore.value = backup
-  showRestoreModal.value = true
+  backupToRestore.value = backup;
+  showRestoreModal.value = true;
 }
 
 function closeRestoreModal() {
-  showRestoreModal.value = false
-  backupToRestore.value = null
+  showRestoreModal.value = false;
+  backupToRestore.value = null;
 }
 
 async function confirmRestore() {
-  if (!backupToRestore.value) return
+  if (!backupToRestore.value) return;
 
-  const backupUuid = backupToRestore.value.uuid
-  operatingBackupId.value = backupUuid
+  const backupUuid = backupToRestore.value.uuid;
+  operatingBackupId.value = backupUuid;
   try {
     await $fetch(`/api/client/servers/${serverId.value}/backups/${backupUuid}/restore`, {
       method: 'POST',
-    })
+    });
 
     toast.add({
       title: t('common.success'),
       description: t('server.backups.restoreStartedDescription'),
       color: 'success',
-    })
-    closeRestoreModal()
-  }
-  catch (err) {
+    });
+    closeRestoreModal();
+  } catch (err) {
     toast.add({
       title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.backups.restoreFailed'),
       color: 'error',
-    })
-  }
-  finally {
-    operatingBackupId.value = null
+    });
+  } finally {
+    operatingBackupId.value = null;
   }
 }
 
 async function toggleLock(backupUuid: string) {
-  operatingBackupId.value = backupUuid
+  operatingBackupId.value = backupUuid;
   try {
     await $fetch(`/api/client/servers/${serverId.value}/backups/${backupUuid}/lock`, {
       method: 'POST',
-    })
+    });
 
     toast.add({
       title: t('common.success'),
       description: t('server.backups.lockToggledDescription'),
       color: 'success',
-    })
+    });
 
-    await refreshBackups()
-  }
-  catch (err) {
+    await refreshBackups();
+  } catch (err) {
     toast.add({
       title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.backups.lockFailed'),
       color: 'error',
-    })
-  }
-  finally {
-    operatingBackupId.value = null
+    });
+  } finally {
+    operatingBackupId.value = null;
   }
 }
 
@@ -184,32 +190,32 @@ function openDeleteModal(backup: ServerBackup) {
       title: t('common.error'),
       description: t('server.backups.deleteLockedError'),
       color: 'error',
-    })
-    return
+    });
+    return;
   }
-  backupToDelete.value = backup
-  showDeleteModal.value = true
+  backupToDelete.value = backup;
+  showDeleteModal.value = true;
 }
 
 function closeDeleteModal() {
-  showDeleteModal.value = false
-  backupToDelete.value = null
+  showDeleteModal.value = false;
+  backupToDelete.value = null;
 }
 
 async function confirmDelete() {
-  if (!backupToDelete.value) return
+  if (!backupToDelete.value) return;
 
-  const targetBackup = backupToDelete.value
-  operatingBackupId.value = targetBackup.uuid
+  const targetBackup = backupToDelete.value;
+  operatingBackupId.value = targetBackup.uuid;
   try {
     await $fetch(`/api/client/servers/${serverId.value}/backups/${targetBackup.uuid}`, {
       method: 'DELETE',
-    })
+    });
 
     if (backupsData.value?.data) {
-      const index = backupsData.value.data.findIndex(b => b.uuid === targetBackup.uuid)
+      const index = backupsData.value.data.findIndex((b) => b.uuid === targetBackup.uuid);
       if (index !== -1) {
-        backupsData.value.data.splice(index, 1)
+        backupsData.value.data.splice(index, 1);
       }
     }
 
@@ -217,18 +223,16 @@ async function confirmDelete() {
       title: t('common.success'),
       description: t('server.backups.backupDeletedDescription'),
       color: 'success',
-    })
-    closeDeleteModal()
-  }
-  catch (err) {
+    });
+    closeDeleteModal();
+  } catch (err) {
     toast.add({
       title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.backups.deleteFailed'),
       color: 'error',
-    })
-  }
-  finally {
-    operatingBackupId.value = null
+    });
+  } finally {
+    operatingBackupId.value = null;
   }
 }
 </script>
@@ -238,7 +242,6 @@ async function confirmDelete() {
     <UPageBody>
       <UContainer>
         <section class="space-y-6">
-
           <UCard>
             <template #header>
               <div class="flex flex-wrap items-center justify-between gap-3">
@@ -256,7 +259,10 @@ async function confirmDelete() {
               </div>
             </template>
 
-            <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
+            <div
+              v-if="error"
+              class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error"
+            >
               <div class="flex items-start gap-2">
                 <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
                 <div>
@@ -266,8 +272,13 @@ async function confirmDelete() {
               </div>
             </div>
 
-            <div v-else-if="pending || !backupsData" class="overflow-hidden rounded-lg border border-default">
-              <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            <div
+              v-else-if="pending || !backupsData"
+              class="overflow-hidden rounded-lg border border-default"
+            >
+              <div
+                class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
                 <span class="col-span-4">{{ t('server.backups.backup') }}</span>
                 <span class="col-span-2">{{ t('server.backups.size') }}</span>
                 <span class="col-span-3">{{ t('server.backups.created') }}</span>
@@ -275,7 +286,11 @@ async function confirmDelete() {
                 <span class="col-span-1 text-right">{{ t('server.backups.status') }}</span>
               </div>
               <div class="divide-y divide-default">
-                <div v-for="i in 3" :key="`skeleton-${i}`" class="grid grid-cols-12 items-center gap-2 px-4 py-3">
+                <div
+                  v-for="i in 3"
+                  :key="`skeleton-${i}`"
+                  class="grid grid-cols-12 items-center gap-2 px-4 py-3"
+                >
                   <div class="col-span-4 space-y-2">
                     <USkeleton class="h-4 w-32" />
                     <USkeleton class="h-3 w-48" />
@@ -296,14 +311,21 @@ async function confirmDelete() {
               </div>
             </div>
 
-            <div v-else-if="backups.length === 0" class="rounded-lg border border-dashed border-default p-8 text-center">
+            <div
+              v-else-if="backups.length === 0"
+              class="rounded-lg border border-dashed border-default p-8 text-center"
+            >
               <UIcon name="i-lucide-archive" class="mx-auto size-12 text-muted-foreground/50" />
               <p class="mt-3 text-sm font-medium">{{ t('server.backups.noBackups') }}</p>
-              <p class="mt-1 text-xs text-muted-foreground">{{ t('server.backups.noBackupsDescription') }}</p>
+              <p class="mt-1 text-xs text-muted-foreground">
+                {{ t('server.backups.noBackupsDescription') }}
+              </p>
             </div>
 
             <div v-else class="overflow-hidden rounded-lg border border-default">
-              <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div
+                class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
                 <span class="col-span-4">{{ t('server.backups.backup') }}</span>
                 <span class="col-span-2">{{ t('server.backups.size') }}</span>
                 <span class="col-span-3">{{ t('server.backups.created') }}</span>
@@ -327,7 +349,9 @@ async function confirmDelete() {
                     </div>
                     <p class="text-xs text-muted-foreground">{{ backup.uuid }}</p>
                   </div>
-                  <span class="col-span-2 text-sm text-muted-foreground">{{ formatBytes(backup.bytes) }}</span>
+                  <span class="col-span-2 text-sm text-muted-foreground">{{
+                    formatBytes(backup.bytes)
+                  }}</span>
                   <span class="col-span-3 text-sm text-muted-foreground">
                     <NuxtTime
                       v-if="backup.completedAt || backup.createdAt"
@@ -341,7 +365,9 @@ async function confirmDelete() {
                     />
                     <span v-else>{{ t('server.backups.inProgressEllipsis') }}</span>
                   </span>
-                  <span class="col-span-2 text-sm text-muted-foreground">{{ getStorageLabel(backup.disk) }}</span>
+                  <span class="col-span-2 text-sm text-muted-foreground">{{
+                    getStorageLabel(backup.disk)
+                  }}</span>
                   <div class="col-span-1">
                     <UBadge
                       :color="getBackupStatus(backup).color"
@@ -420,7 +446,9 @@ async function confirmDelete() {
           <div v-if="backupToDelete" class="rounded-md bg-muted p-3 space-y-2">
             <p class="text-sm font-medium">{{ backupToDelete.name }}</p>
             <p class="text-xs text-muted-foreground">{{ backupToDelete.uuid }}</p>
-            <p class="text-xs text-muted-foreground">{{ t('server.backups.size') }}: {{ formatBytes(backupToDelete.bytes) }}</p>
+            <p class="text-xs text-muted-foreground">
+              {{ t('server.backups.size') }}: {{ formatBytes(backupToDelete.bytes) }}
+            </p>
           </div>
         </div>
       </template>
@@ -430,7 +458,12 @@ async function confirmDelete() {
           variant="ghost"
           color="neutral"
           :disabled="operatingBackupId !== null"
-          @click="() => { closeDeleteModal(); close() }"
+          @click="
+            () => {
+              closeDeleteModal();
+              close();
+            }
+          "
         >
           {{ t('common.cancel') }}
         </UButton>
@@ -462,7 +495,9 @@ async function confirmDelete() {
           <div v-if="backupToRestore" class="rounded-md bg-muted p-3 space-y-2">
             <p class="text-sm font-medium">{{ backupToRestore.name }}</p>
             <p class="text-xs text-muted-foreground">{{ backupToRestore.uuid }}</p>
-            <p class="text-xs text-muted-foreground">{{ t('server.backups.size') }}: {{ formatBytes(backupToRestore.bytes) }}</p>
+            <p class="text-xs text-muted-foreground">
+              {{ t('server.backups.size') }}: {{ formatBytes(backupToRestore.bytes) }}
+            </p>
           </div>
         </div>
       </template>
@@ -472,7 +507,12 @@ async function confirmDelete() {
           variant="ghost"
           color="neutral"
           :disabled="operatingBackupId !== null"
-          @click="() => { closeRestoreModal(); close() }"
+          @click="
+            () => {
+              closeRestoreModal();
+              close();
+            }
+          "
         >
           {{ t('common.cancel') }}
         </UButton>

@@ -1,13 +1,13 @@
-      { code: 'es', name: 'Español', language: 'es', dir: 'ltr', file: 'es.json' },
-      <script setup lang="ts">
-const { t } = useI18n()
+{ code: 'es', name: 'Español', language: 'es', dir: 'ltr', file: 'es.json' },
+<script setup lang="ts">
+const { t } = useI18n();
 
 defineProps<{
-  isInstalling?: boolean
-  isTransferring?: boolean
-  isSuspended?: boolean
-  isNodeUnderMaintenance?: boolean
-}>()
+  isInstalling?: boolean;
+  isTransferring?: boolean;
+  isSuspended?: boolean;
+  isNodeUnderMaintenance?: boolean;
+}>();
 </script>
 
 <template>

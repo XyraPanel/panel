@@ -1,60 +1,64 @@
-import { getServerWithAccess } from '#server/utils/server-helpers'
-import { useDrizzle, tables, eq, and } from '#server/utils/drizzle'
-import { invalidateServerCaches } from '#server/utils/serversStore'
-import { requireServerPermission } from '#server/utils/permission-middleware'
-import { requireAccountUser } from '#server/utils/security'
-import { recordServerActivity } from '#server/utils/server-activity'
+import { getServerWithAccess } from '#server/utils/server-helpers';
+import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
+import { invalidateServerCaches } from '#server/utils/serversStore';
+import { requireServerPermission } from '#server/utils/permission-middleware';
+import { requireAccountUser } from '#server/utils/security';
+import { recordServerActivity } from '#server/utils/server-activity';
 
 export default defineEventHandler(async (event) => {
-  const serverIdentifier = getRouterParam(event, 'server')
-  const allocationId = getRouterParam(event, 'allocation')
+  const serverIdentifier = getRouterParam(event, 'server');
+  const allocationId = getRouterParam(event, 'allocation');
 
   if (!serverIdentifier || !allocationId) {
     throw createError({
       status: 400,
       message: 'Server and allocation identifiers are required',
-    })
+    });
   }
 
-  const accountContext = await requireAccountUser(event)
-  const { server, user } = await getServerWithAccess(serverIdentifier, accountContext.session)
+  const accountContext = await requireAccountUser(event);
+  const { server, user } = await getServerWithAccess(serverIdentifier, accountContext.session);
 
   await requireServerPermission(event, {
     serverId: server.id,
     requiredPermissions: ['allocation.update'],
     allowOwner: true,
     allowAdmin: true,
-  })
+  });
 
-  const db = useDrizzle()
-  const [allocation] = await db.select()
+  const db = useDrizzle();
+  const [allocation] = await db
+    .select()
     .from(tables.serverAllocations)
     .where(
       and(
         eq(tables.serverAllocations.id, allocationId),
-        eq(tables.serverAllocations.serverId, server.id)
-      )
+        eq(tables.serverAllocations.serverId, server.id),
+      ),
     )
-    .limit(1)
+    .limit(1);
 
   if (!allocation) {
     throw createError({
       status: 404,
       message: 'Allocation not found',
-    })
+    });
   }
 
-  await db.update(tables.servers)
+  await db
+    .update(tables.servers)
     .set({ allocationId: allocation.id })
-    .where(eq(tables.servers.id, server.id))
+    .where(eq(tables.servers.id, server.id));
 
-  await db.update(tables.serverAllocations)
+  await db
+    .update(tables.serverAllocations)
     .set({ isPrimary: false, updatedAt: new Date().toISOString() })
-    .where(eq(tables.serverAllocations.serverId, server.id))
+    .where(eq(tables.serverAllocations.serverId, server.id));
 
-  await db.update(tables.serverAllocations)
+  await db
+    .update(tables.serverAllocations)
     .set({ isPrimary: true, updatedAt: new Date().toISOString() })
-    .where(eq(tables.serverAllocations.id, allocation.id))
+    .where(eq(tables.serverAllocations.id, allocation.id));
 
   await recordServerActivity({
     event,
@@ -66,9 +70,9 @@ export default defineEventHandler(async (event) => {
       ip: allocation?.ip,
       port: allocation?.port,
     },
-  })
+  });
 
-  await invalidateServerCaches({ id: server.id, uuid: server.uuid, identifier: server.identifier })
+  await invalidateServerCaches({ id: server.id, uuid: server.uuid, identifier: server.identifier });
 
   return {
     data: {
@@ -79,5 +83,5 @@ export default defineEventHandler(async (event) => {
       notes: allocation.notes ?? null,
       isPrimary: true,
     },
-  }
-})
+  };
+});

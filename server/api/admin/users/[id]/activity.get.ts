@@ -1,27 +1,30 @@
-import { useDrizzle, tables, eq, or } from '#server/utils/drizzle'
-import { desc, count } from 'drizzle-orm'
-import { getNumericSetting, SETTINGS_KEYS } from '#server/utils/settings'
-import { requireAdmin } from '#server/utils/security'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { useDrizzle, tables, eq, or } from '#server/utils/drizzle';
+import { desc, count } from 'drizzle-orm';
+import { getNumericSetting, SETTINGS_KEYS } from '#server/utils/settings';
+import { requireAdmin } from '#server/utils/security';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  await requireAdmin(event);
 
-  const id = getRouterParam(event, 'id')
+  const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
       status: 400,
       message: 'User ID is required',
-    })
+    });
   }
 
-  const query = getQuery(event)
-  const page = Math.max(1, Number.parseInt(query.page as string ?? '1', 10) || 1)
-  const defaultLimit = await getNumericSetting(SETTINGS_KEYS.PAGINATION_LIMIT, 25)
-  const limit = Math.min(100, Math.max(10, Number.parseInt(query.limit as string ?? String(defaultLimit), 10) || 25))
-  const offset = (page - 1) * limit
+  const query = getQuery(event);
+  const page = Math.max(1, Number.parseInt((query.page as string) ?? '1', 10) || 1);
+  const defaultLimit = await getNumericSetting(SETTINGS_KEYS.PAGINATION_LIMIT, 25);
+  const limit = Math.min(
+    100,
+    Math.max(10, Number.parseInt((query.limit as string) ?? String(defaultLimit), 10) || 25),
+  );
+  const offset = (page - 1) * limit;
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   const userResult = await db
     .select({
@@ -31,31 +34,31 @@ export default defineEventHandler(async (event) => {
     })
     .from(tables.users)
     .where(eq(tables.users.id, id))
-    .limit(1)
+    .limit(1);
 
-  const user = userResult[0]
+  const user = userResult[0];
 
   if (!user) {
     throw createError({
       status: 404,
       message: 'User not found',
-    })
+    });
   }
 
-  const activityConditions = [eq(tables.auditEvents.actor, user.id)]
+  const activityConditions = [eq(tables.auditEvents.actor, user.id)];
   if (user.email) {
-    activityConditions.push(eq(tables.auditEvents.actor, user.email))
+    activityConditions.push(eq(tables.auditEvents.actor, user.email));
   }
   if (user.username) {
-    activityConditions.push(eq(tables.auditEvents.actor, user.username))
+    activityConditions.push(eq(tables.auditEvents.actor, user.username));
   }
 
   const totalResult = await db
     .select({ count: count() })
     .from(tables.auditEvents)
-    .where(or(...activityConditions))
+    .where(or(...activityConditions));
 
-  const totalCount = Number(totalResult[0]?.count ?? 0)
+  const totalCount = Number(totalResult[0]?.count ?? 0);
 
   const activityEvents = await db
     .select({
@@ -71,35 +74,34 @@ export default defineEventHandler(async (event) => {
     .where(or(...activityConditions))
     .orderBy(desc(tables.auditEvents.occurredAt))
     .limit(limit)
-    .offset(offset)
+    .offset(offset);
 
   const formatTimestamp = (value: number | Date | null | undefined) => {
     if (!value) {
-      return null
+      return null;
     }
 
-    const date = value instanceof Date ? value : new Date(value)
-    return Number.isNaN(date.getTime()) ? null : date.toISOString()
-  }
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date.toISOString();
+  };
 
   const parseMetadata = (value: string | null) => {
     if (!value) {
-      return {}
+      return {};
     }
 
     try {
-      const parsed = JSON.parse(value)
+      const parsed = JSON.parse(value);
       if (parsed && typeof parsed === 'object') {
-        return parsed as Record<string, unknown>
+        return parsed as Record<string, unknown>;
       }
-      return { value: parsed }
+      return { value: parsed };
+    } catch {
+      return { raw: value };
     }
-    catch {
-      return { raw: value }
-    }
-  }
+  };
 
-  const totalPages = Math.ceil(totalCount / limit)
+  const totalPages = Math.ceil(totalCount / limit);
 
   await recordAuditEventFromRequest(event, {
     actor: user.id,
@@ -112,7 +114,7 @@ export default defineEventHandler(async (event) => {
       page,
       perPage: limit,
     },
-  })
+  });
 
   return {
     data: activityEvents.map((entry) => ({
@@ -129,5 +131,5 @@ export default defineEventHandler(async (event) => {
       total: totalCount,
       totalPages,
     },
-  }
-})
+  };
+});

@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { WingsNodeConfiguration } from '#shared/types/wings'
+import type { WingsNodeConfiguration } from '#shared/types/wings';
 
 const props = defineProps<{
-  nodeId: string
-}>()
+  nodeId: string;
+}>();
 
-const toast = useToast()
-const requestFetch = useRequestFetch()
-const isGenerating = ref(false)
-const showConfig = ref(false)
+const toast = useToast();
+const requestFetch = useRequestFetch();
+const isGenerating = ref(false);
+const showConfig = ref(false);
 
 const {
   data: configData,
@@ -18,79 +18,79 @@ const {
   `node-config-${props.nodeId}`,
   async () => {
     try {
-      const response = await requestFetch<{ data: WingsNodeConfiguration }>(`/api/admin/wings/nodes/${props.nodeId}/configuration`)
-      return response.data
-    }
-    catch {
-      return null
+      const response = await requestFetch<{ data: WingsNodeConfiguration }>(
+        `/api/admin/wings/nodes/${props.nodeId}/configuration`,
+      );
+      return response.data;
+    } catch {
+      return null;
     }
   },
   {
     default: () => null,
   },
-)
+);
 
-const configuration = computed(() => configData.value)
+const configuration = computed(() => configData.value);
 
 watch(configuration, (value) => {
-  if (value)
-    showConfig.value = true
-})
+  if (value) showConfig.value = true;
+});
 
 async function generateToken() {
-  if (!confirm('Generate a new deployment token? The previous token will be invalidated and Wings will need to be reconfigured.')) {
-    return
+  if (
+    !confirm(
+      'Generate a new deployment token? The previous token will be invalidated and Wings will need to be reconfigured.',
+    )
+  ) {
+    return;
   }
 
-  isGenerating.value = true
+  isGenerating.value = true;
 
   try {
     await $fetch(`/api/admin/wings/nodes/${props.nodeId}/token`, {
       method: 'POST',
-    })
+    });
 
     toast.add({
       title: 'Token generated',
       description: 'A new deployment token has been generated. Save the configuration below.',
       color: 'success',
-    })
+    });
 
-    await refresh()
-    showConfig.value = true
-  }
-  catch (error) {
-    const err = error as { data?: { message?: string } }
+    await refresh();
+    showConfig.value = true;
+  } catch (error) {
+    const err = error as { data?: { message?: string } };
     toast.add({
       title: 'Error',
       description: err.data?.message || 'Failed to generate token',
       color: 'error',
-    })
-  }
-  finally {
-    isGenerating.value = false
+    });
+  } finally {
+    isGenerating.value = false;
   }
 }
 
 async function copyToClipboard(text: string) {
   try {
     if (typeof navigator !== 'undefined' && navigator.clipboard) {
-      await navigator.clipboard.writeText(text)
+      await navigator.clipboard.writeText(text);
       toast.add({
         title: 'Copied',
         description: 'Configuration copied to clipboard',
         color: 'success',
-      })
+      });
+    } else {
+      throw new Error('Clipboard API not available');
     }
-    else {
-      throw new Error('Clipboard API not available')
-    }
-  }
-  catch (error) {
+  } catch (error) {
     toast.add({
       title: 'Copy failed',
       description: error instanceof Error ? error.message : 'Unable to copy to clipboard',
       color: 'error',
-    })
+    });
   }
 }
 
@@ -100,39 +100,38 @@ async function downloadConfigFile() {
       title: 'Nothing to download',
       description: 'Generate a token to create a configuration file first.',
       color: 'error',
-    })
-    return
+    });
+    return;
   }
 
-  if (typeof window === 'undefined')
-    return
+  if (typeof window === 'undefined') return;
 
-  const blob = new Blob([configYaml.value], { type: 'text/yaml' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = 'config.yml'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
+  const blob = new Blob([configYaml.value], { type: 'text/yaml' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = 'config.yml';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 
   toast.add({
     title: 'Download started',
     description: 'Saved as config.yml',
     color: 'success',
-  })
+  });
 }
 
 const configYaml = computed(() => {
-  const value = configuration.value as WingsNodeConfiguration | null
-  if (!value)
-    return ''
+  const value = configuration.value as WingsNodeConfiguration | null;
+  if (!value) return '';
 
-  const allowedMounts = value.allowed_mounts ?? []
-  const allowedMountLines = Array.isArray(allowedMounts) && allowedMounts.length > 0
-    ? allowedMounts.map((mount: string) => `  - ${mount}`)
-    : ['  []']
+  const allowedMounts = value.allowed_mounts ?? [];
+  const allowedMountLines =
+    Array.isArray(allowedMounts) && allowedMounts.length > 0
+      ? allowedMounts.map((mount: string) => `  - ${mount}`)
+      : ['  []'];
 
   return [
     `debug: ${value.debug}`,
@@ -154,8 +153,8 @@ const configYaml = computed(() => {
     'allowed_mounts:',
     ...allowedMountLines,
     `remote: ${value.remote ?? ''}`,
-  ].join('\n')
-})
+  ].join('\n');
+});
 </script>
 
 <template>
@@ -163,8 +162,8 @@ const configYaml = computed(() => {
     <UAlert icon="i-lucide-info" variant="subtle">
       <template #title>Auto-Deploy Configuration</template>
       <template #description>
-        Generate a configuration file for Wings to automatically connect to this panel.
-        This token is valid for one-time use and will be invalidated after the node connects.
+        Generate a configuration file for Wings to automatically connect to this panel. This token
+        is valid for one-time use and will be invalidated after the node connects.
       </template>
     </UAlert>
 
@@ -175,7 +174,14 @@ const configYaml = computed(() => {
           Create a new auto-deploy configuration for Wings
         </div>
       </div>
-      <UButton icon="i-lucide-key" color="primary" variant="subtle" :loading="isGenerating" :disabled="configPending" @click="generateToken">
+      <UButton
+        icon="i-lucide-key"
+        color="primary"
+        variant="subtle"
+        :loading="isGenerating"
+        :disabled="configPending"
+        @click="generateToken"
+      >
         Generate Token
       </UButton>
     </div>
@@ -190,7 +196,12 @@ const configYaml = computed(() => {
         <div class="flex items-center justify-between">
           <label class="text-sm font-medium">Configuration File (config.yml)</label>
           <div class="flex gap-2">
-            <UButton icon="i-lucide-copy" variant="soft" size="sm" @click="copyToClipboard(configYaml)">
+            <UButton
+              icon="i-lucide-copy"
+              variant="soft"
+              size="sm"
+              @click="copyToClipboard(configYaml)"
+            >
               Copy
             </UButton>
             <UButton icon="i-lucide-download" variant="soft" size="sm" @click="downloadConfigFile">
@@ -206,7 +217,8 @@ const configYaml = computed(() => {
       <UAlert color="warning" variant="subtle" icon="i-lucide-alert-triangle">
         <template #title>Save this configuration now!</template>
         <template #description>
-          This token will only be shown once. Save it to your Wings config.yml file before closing this page.
+          This token will only be shown once. Save it to your Wings config.yml file before closing
+          this page.
         </template>
       </UAlert>
 
@@ -214,10 +226,14 @@ const configYaml = computed(() => {
         <label class="text-sm font-medium">Installation Steps</label>
         <ol class="list-decimal space-y-2 pl-5 text-sm text-muted-foreground">
           <li>Copy the configuration above</li>
-          <li>Save it to <code class="rounded bg-muted px-1 py-0.5">/etc/pterodactyl/config.yml</code> on your Wings
-            server
+          <li>
+            Save it to
+            <code class="rounded bg-muted px-1 py-0.5">/etc/pterodactyl/config.yml</code> on your
+            Wings server
           </li>
-          <li>Restart Wings: <code class="rounded bg-muted px-1 py-0.5">systemctl restart wings</code></li>
+          <li>
+            Restart Wings: <code class="rounded bg-muted px-1 py-0.5">systemctl restart wings</code>
+          </li>
           <li>Wings will automatically connect to the panel</li>
         </ol>
       </div>

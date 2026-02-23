@@ -58,16 +58,12 @@ function parseApiKeyVerification(value: unknown): {
       ? {
           id: keyValue.id,
           userId: keyValue.userId,
-          permissions: parseApiKeyPermissions(
-            keyValue.permissions
-            ?? keyValue.metadata
-            ?? null
-          ),
+          permissions: parseApiKeyPermissions(keyValue.permissions ?? keyValue.metadata ?? null),
         }
       : null;
 
   return { valid, key };
-};
+}
 
 const PUBLIC_ASSET_PREFIXES = ['/_nuxt/', '/__nuxt_devtools__/', '/_ipx/', '/public/'];
 
@@ -205,9 +201,10 @@ export default defineEventHandler(async (event) => {
       try {
         const verification = parseApiKeyVerification(
           await auth.api.verifyApiKey({
-          body: { key: apiKeyValue },
-          headers,
-        }));
+            body: { key: apiKeyValue },
+            headers,
+          }),
+        );
 
         if (!verification.valid || !verification.key) {
           throw createError({

@@ -1,62 +1,69 @@
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
-import { getWingsClientForServer, WingsConnectionError, WingsAuthError } from '#server/utils/wings-client'
-import { getServerStatus, updateServerStatus } from '#server/utils/server-status'
-import { provisionServerOnWings, waitForServerInstall } from '#server/utils/server-provisioning'
-import { recordAuditEvent } from '#server/utils/audit'
-import { sendServerReinstalledEmail, sendServerSuspendedEmail } from '#server/utils/email'
-import type { WingsClient } from '#server/utils/wings-client'
-import type { ServerManagerOptions } from '#shared/types/server'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import {
+  getWingsClientForServer,
+  WingsConnectionError,
+  WingsAuthError,
+} from '#server/utils/wings-client';
+import { getServerStatus, updateServerStatus } from '#server/utils/server-status';
+import { provisionServerOnWings, waitForServerInstall } from '#server/utils/server-provisioning';
+import { recordAuditEvent } from '#server/utils/audit';
+import { sendServerReinstalledEmail, sendServerSuspendedEmail } from '#server/utils/email';
+import type { WingsClient } from '#server/utils/wings-client';
+import type { ServerManagerOptions } from '#shared/types/server';
 
 export class ServerManager {
-  private db = useDrizzle()
+  private db = useDrizzle();
 
   private async getServerOwnerContact(ownerId: string | null | undefined) {
     if (!ownerId) {
-      return null
+      return null;
     }
 
     const [row] = await this.db
       .select({ email: tables.users.email, username: tables.users.username })
       .from(tables.users)
       .where(eq(tables.users.id, ownerId))
-      .limit(1)
-    return row ?? null
+      .limit(1);
+    return row ?? null;
   }
 
   private async waitForServerDeletion(client: WingsClient, serverUuid: string): Promise<void> {
-    const maxRetries = 20
-    const delayMs = 3000
+    const maxRetries = 20;
+    const delayMs = 3000;
 
     for (let attempt = 0; attempt < maxRetries; attempt++) {
       try {
-        await client.getServerDetails(serverUuid)
+        await client.getServerDetails(serverUuid);
       } catch (error) {
         if (error instanceof WingsConnectionError && error.message.includes('404')) {
-          return
+          return;
         }
 
         if (error instanceof WingsAuthError) {
-          throw error
+          throw error;
         }
       }
 
-      await new Promise(resolve => setTimeout(resolve, delayMs))
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
     }
 
-    throw new Error('Timed out waiting for Wings to delete server')
+    throw new Error('Timed out waiting for Wings to delete server');
   }
 
-  async createServer(config: {
-    serverId: string
-    serverUuid: string
-    eggId: string
-    nodeId: string
-    allocationId: string
-    environment?: Record<string, string>
-  }, options: ServerManagerOptions = {}): Promise<void> {
+  async createServer(
+    config: {
+      serverId: string;
+      serverUuid: string;
+      eggId: string;
+      nodeId: string;
+      allocationId: string;
+      environment?: Record<string, string>;
+    },
+    options: ServerManagerOptions = {},
+  ): Promise<void> {
     try {
-      await provisionServerOnWings(config)
-      
+      await provisionServerOnWings(config);
+
       if (!options.skipAudit && options.userId) {
         await recordAuditEvent({
           actor: options.userId,
@@ -65,7 +72,7 @@ export class ServerManager {
           targetType: 'server',
           targetId: config.serverId,
           metadata: { serverUuid: config.serverUuid },
-        })
+        });
       }
     } catch (error) {
       await this.db
@@ -74,9 +81,9 @@ export class ServerManager {
           status: 'install_failed',
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(tables.servers.id, config.serverId))
+        .where(eq(tables.servers.id, config.serverId));
 
-      throw error
+      throw error;
     }
   }
 
@@ -85,10 +92,10 @@ export class ServerManager {
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.uuid, serverUuid))
-      .limit(1)
+      .limit(1);
 
     if (!server) {
-      throw new Error('Server not found')
+      throw new Error('Server not found');
     }
 
     try {
@@ -98,16 +105,14 @@ export class ServerManager {
           status: 'deleting',
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(tables.servers.uuid, serverUuid))
+        .where(eq(tables.servers.uuid, serverUuid));
 
-      const { client } = await getWingsClientForServer(serverUuid)
-      await client.deleteServer(serverUuid)
+      const { client } = await getWingsClientForServer(serverUuid);
+      await client.deleteServer(serverUuid);
 
-      await this.waitForServerDeletion(client, serverUuid)
+      await this.waitForServerDeletion(client, serverUuid);
 
-      await this.db
-        .delete(tables.servers)
-        .where(eq(tables.servers.uuid, serverUuid))
+      await this.db.delete(tables.servers).where(eq(tables.servers.uuid, serverUuid));
 
       if (!options.skipAudit && options.userId) {
         await recordAuditEvent({
@@ -117,7 +122,7 @@ export class ServerManager {
           targetType: 'server',
           targetId: server.id,
           metadata: { serverUuid },
-        })
+        });
       }
     } catch (error) {
       await this.db
@@ -126,30 +131,30 @@ export class ServerManager {
           status: 'deletion_failed',
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(tables.servers.uuid, serverUuid))
+        .where(eq(tables.servers.uuid, serverUuid));
 
       if (error instanceof WingsConnectionError) {
-        console.warn(`Wings unavailable during server deletion: ${serverUuid}`, error)
+        console.warn(`Wings unavailable during server deletion: ${serverUuid}`, error);
       }
 
-      throw error
+      throw error;
     }
   }
 
   async powerAction(
-    serverUuid: string, 
+    serverUuid: string,
     action: 'start' | 'stop' | 'restart' | 'kill',
-    options: ServerManagerOptions = {}
+    options: ServerManagerOptions = {},
   ): Promise<void> {
-    const { client, server } = await getWingsClientForServer(serverUuid)
-    
-    await client.sendPowerAction(serverUuid, action)
+    const { client, server } = await getWingsClientForServer(serverUuid);
+
+    await client.sendPowerAction(serverUuid, action);
 
     setTimeout(() => {
-      updateServerStatus(serverUuid).catch(error => {
-        console.error(`Failed to update status after power action for ${serverUuid}:`, error)
-      })
-    }, 2000)
+      updateServerStatus(serverUuid).catch((error) => {
+        console.error(`Failed to update status after power action for ${serverUuid}:`, error);
+      });
+    }, 2000);
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({
@@ -159,14 +164,14 @@ export class ServerManager {
         targetType: 'server',
         targetId: server.id as string,
         metadata: { action, serverUuid },
-      })
+      });
     }
   }
 
   async reinstallServer(serverUuid: string, options: ServerManagerOptions = {}): Promise<void> {
-    const { client, server } = await getWingsClientForServer(serverUuid)
+    const { client, server } = await getWingsClientForServer(serverUuid);
 
-    const now = new Date()
+    const now = new Date();
 
     await this.db
       .update(tables.servers)
@@ -175,11 +180,11 @@ export class ServerManager {
         installedAt: null,
         updatedAt: now,
       })
-      .where(eq(tables.servers.uuid, serverUuid))
+      .where(eq(tables.servers.uuid, serverUuid));
 
     try {
-      await client.reinstallServer(serverUuid)
-      await waitForServerInstall(client, serverUuid)
+      await client.reinstallServer(serverUuid);
+      await waitForServerInstall(client, serverUuid);
 
       await this.db
         .update(tables.servers)
@@ -188,15 +193,14 @@ export class ServerManager {
           installedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(tables.servers.uuid, serverUuid))
+        .where(eq(tables.servers.uuid, serverUuid));
 
-      const owner = await this.getServerOwnerContact(server.ownerId as string | undefined)
+      const owner = await this.getServerOwnerContact(server.ownerId as string | undefined);
       if (owner?.email) {
         try {
-          await sendServerReinstalledEmail(owner.email, server.name as string, serverUuid)
-        }
-        catch (error) {
-          console.error('Failed to send server reinstalled email', error)
+          await sendServerReinstalledEmail(owner.email, server.name as string, serverUuid);
+        } catch (error) {
+          console.error('Failed to send server reinstalled email', error);
         }
       }
 
@@ -208,7 +212,7 @@ export class ServerManager {
           targetType: 'server',
           targetId: server.id as string,
           metadata: { serverUuid },
-        })
+        });
       }
     } catch (error) {
       await this.db
@@ -217,9 +221,9 @@ export class ServerManager {
           status: 'install_failed',
           updatedAt: new Date().toISOString(),
         })
-        .where(eq(tables.servers.uuid, serverUuid))
+        .where(eq(tables.servers.uuid, serverUuid));
 
-      throw error
+      throw error;
     }
   }
 
@@ -228,16 +232,16 @@ export class ServerManager {
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.uuid, serverUuid))
-      .limit(1)
+      .limit(1);
 
     if (!server) {
-      throw new Error('Server not found')
+      throw new Error('Server not found');
     }
 
     try {
-      await this.powerAction(serverUuid, 'stop', { ...options, skipAudit: true })
+      await this.powerAction(serverUuid, 'stop', { ...options, skipAudit: true });
     } catch (error) {
-      console.warn(`Failed to stop server during suspension: ${error}`)
+      console.warn(`Failed to stop server during suspension: ${error}`);
     }
 
     await this.db
@@ -246,15 +250,14 @@ export class ServerManager {
         suspended: true,
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(tables.servers.uuid, serverUuid))
+      .where(eq(tables.servers.uuid, serverUuid));
 
-    const owner = await this.getServerOwnerContact(server.ownerId as string | undefined)
+    const owner = await this.getServerOwnerContact(server.ownerId as string | undefined);
     if (owner?.email) {
       try {
-        await sendServerSuspendedEmail(owner.email, server.name as string)
-      }
-      catch (error) {
-        console.error('Failed to send server suspended email', error)
+        await sendServerSuspendedEmail(owner.email, server.name as string);
+      } catch (error) {
+        console.error('Failed to send server suspended email', error);
       }
     }
 
@@ -266,7 +269,7 @@ export class ServerManager {
         targetType: 'server',
         targetId: server.id,
         metadata: { serverUuid },
-      })
+      });
     }
   }
 
@@ -275,10 +278,10 @@ export class ServerManager {
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.uuid, serverUuid))
-      .limit(1)
+      .limit(1);
 
     if (!server) {
-      throw new Error('Server not found')
+      throw new Error('Server not found');
     }
 
     await this.db
@@ -287,7 +290,7 @@ export class ServerManager {
         suspended: false,
         updatedAt: new Date().toISOString(),
       })
-      .where(eq(tables.servers.uuid, serverUuid))
+      .where(eq(tables.servers.uuid, serverUuid));
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({
@@ -297,7 +300,7 @@ export class ServerManager {
         targetType: 'server',
         targetId: server.id,
         metadata: { serverUuid },
-      })
+      });
     }
   }
 
@@ -306,19 +309,19 @@ export class ServerManager {
       .select()
       .from(tables.servers)
       .where(eq(tables.servers.uuid, serverUuid))
-      .limit(1)
+      .limit(1);
 
     if (!server) {
-      throw new Error('Server not found')
+      throw new Error('Server not found');
     }
 
-    const status = await getServerStatus(serverUuid)
+    const status = await getServerStatus(serverUuid);
 
     return {
       ...server,
       realTimeStatus: status,
-    }
+    };
   }
 }
 
-export const serverManager = new ServerManager()
+export const serverManager = new ServerManager();

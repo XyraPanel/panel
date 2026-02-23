@@ -1,8 +1,12 @@
-import { z } from 'zod'
+import { z } from 'zod';
 
 export const createUserSchema = z.object({
   username: z.string().min(1).max(255).optional(),
-  email: z.string().min(1).max(255).refine((val) => z.email().safeParse(val).success, 'Invalid email format'),
+  email: z
+    .string()
+    .min(1)
+    .max(255)
+    .refine((val) => z.email().safeParse(val).success, 'Invalid email format'),
   password: z.string().min(8).max(255).optional(),
   name: z.string().min(1).max(255).optional(),
   nameFirst: z.string().max(255).optional(),
@@ -10,7 +14,7 @@ export const createUserSchema = z.object({
   language: z.string().max(10).optional(),
   rootAdmin: z.union([z.boolean(), z.string()]).optional(),
   role: z.enum(['admin', 'user']).default('user'),
-})
+});
 
 export const updateUserSchema = z.object({
   email: z.email().optional(),
@@ -18,7 +22,7 @@ export const updateUserSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   password: z.string().min(8).optional(),
   role: z.enum(['user', 'admin']).optional(),
-})
+});
 
 export const adminCreateUserSchema = z.object({
   username: z.string().trim().min(1, 'Username is required').max(255),
@@ -28,7 +32,7 @@ export const adminCreateUserSchema = z.object({
   nameLast: z.string().trim().optional(),
   language: z.string().trim().optional(),
   role: z.enum(['user', 'admin']),
-})
+});
 
 export const adminUpdateUserSchema = z.object({
   username: z.string().trim().min(1).max(255).optional(),
@@ -39,15 +43,14 @@ export const adminUpdateUserSchema = z.object({
   language: z.string().max(10).optional(),
   rootAdmin: z.union([z.boolean(), z.string()]).optional(),
   role: z.enum(['admin', 'user']).optional(),
-})
+});
 
 export const emailVerificationActionSchema = z.object({
   action: z.enum(['mark-verified', 'mark-unverified', 'resend-link']),
-})
+});
 
-export type CreateUserInput = z.infer<typeof createUserSchema>
-export type UpdateUserInput = z.infer<typeof updateUserSchema>
-export type AdminCreateUserInput = z.infer<typeof adminCreateUserSchema>
-export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>
-export type EmailVerificationActionInput = z.infer<typeof emailVerificationActionSchema>
-
+export type CreateUserInput = z.infer<typeof createUserSchema>;
+export type UpdateUserInput = z.infer<typeof updateUserSchema>;
+export type AdminCreateUserInput = z.infer<typeof adminCreateUserSchema>;
+export type AdminUpdateUserInput = z.infer<typeof adminUpdateUserSchema>;
+export type EmailVerificationActionInput = z.infer<typeof emailVerificationActionSchema>;

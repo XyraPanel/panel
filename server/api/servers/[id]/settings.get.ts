@@ -1,28 +1,28 @@
-import { eq } from 'drizzle-orm'
-import type { SettingsData } from '#shared/types/server'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { requireAccountUser } from '#server/utils/security'
-import { getServerWithAccess } from '#server/utils/server-helpers'
-import { requireServerPermission } from '#server/utils/permission-middleware'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { recordServerActivity } from '#server/utils/server-activity'
+import { eq } from 'drizzle-orm';
+import type { SettingsData } from '#shared/types/server';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { requireAccountUser } from '#server/utils/security';
+import { getServerWithAccess } from '#server/utils/server-helpers';
+import { requireServerPermission } from '#server/utils/permission-middleware';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { recordServerActivity } from '#server/utils/server-activity';
 
 export default defineEventHandler(async (event) => {
-  const identifier = getRouterParam(event, 'id')
+  const identifier = getRouterParam(event, 'id');
   if (!identifier) {
-    throw createError({ status: 400, statusText: 'Missing server identifier' })
+    throw createError({ status: 400, statusText: 'Missing server identifier' });
   }
 
-  const { user, session } = await requireAccountUser(event)
+  const { user, session } = await requireAccountUser(event);
 
-  const { server } = await getServerWithAccess(identifier, session)
+  const { server } = await getServerWithAccess(identifier, session);
 
   await requireServerPermission(event, {
     serverId: server.id,
     requiredPermissions: ['server.settings.read'],
-  })
+  });
 
-  const db = useDrizzle()
+  const db = useDrizzle();
   const limitsRow = await db
     .select({
       cpu: tables.serverLimits.cpu,
@@ -38,9 +38,9 @@ export default defineEventHandler(async (event) => {
     })
     .from(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, server.id))
-    .limit(1)
+    .limit(1);
 
-  const [limitsResult] = limitsRow
+  const [limitsResult] = limitsRow;
 
   const response: SettingsData = {
     server: {
@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
           backupLimit: limitsResult.backupLimit ?? null,
         }
       : null,
-  }
+  };
 
   await Promise.all([
     recordAuditEventFromRequest(event, {
@@ -87,9 +87,9 @@ export default defineEventHandler(async (event) => {
         context: 'server.settings',
       },
     }),
-  ])
+  ]);
 
   return {
     data: response,
-  }
-})
+  };
+});

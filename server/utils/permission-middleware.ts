@@ -1,22 +1,26 @@
-import type { H3Event } from 'h3'
-import { getServerSession } from '#server/utils/session'
-import { permissionManager } from '#server/utils/permission-manager'
-import { resolveSessionUser } from '#server/utils/auth/sessionUser'
-import type { Permission, PermissionContext, PermissionMiddlewareOptions } from '#shared/types/server'
+import type { H3Event } from 'h3';
+import { getServerSession } from '#server/utils/session';
+import { permissionManager } from '#server/utils/permission-manager';
+import { resolveSessionUser } from '#server/utils/auth/sessionUser';
+import type {
+  Permission,
+  PermissionContext,
+  PermissionMiddlewareOptions,
+} from '#shared/types/server';
 
 export async function requireServerPermission(
   event: H3Event,
-  options: PermissionMiddlewareOptions
+  options: PermissionMiddlewareOptions,
 ): Promise<PermissionContext> {
-  const session = await getServerSession(event)
-  const user = resolveSessionUser(session)
+  const session = await getServerSession(event);
+  const user = resolveSessionUser(session);
 
   if (!user?.id) {
     throw createError({
       status: 401,
       statusText: 'Unauthorized',
       message: 'Authentication required',
-    })
+    });
   }
 
   if (!options.serverId) {
@@ -24,43 +28,43 @@ export async function requireServerPermission(
       status: 400,
       statusText: 'Bad Request',
       message: 'Server ID is required for permission check',
-    })
+    });
   }
 
-  const userPermissions = await permissionManager.getUserPermissions(user.id)
-  const isAdmin = userPermissions.isAdmin
-  const serverPerms = userPermissions.serverPermissions.get(options.serverId) || []
+  const userPermissions = await permissionManager.getUserPermissions(user.id);
+  const isAdmin = userPermissions.isAdmin;
+  const serverPerms = userPermissions.serverPermissions.get(options.serverId) || [];
 
-  const isOwner = serverPerms.length > 0 && serverPerms.includes('server.view')
+  const isOwner = serverPerms.length > 0 && serverPerms.includes('server.view');
 
-  if (isAdmin && (options.allowAdmin !== false)) {
+  if (isAdmin && options.allowAdmin !== false) {
     return {
       userId: user.id,
       isAdmin: true,
       isOwner: false,
       hasPermissions: true,
       missingPermissions: [],
-    }
+    };
   }
 
-  if (isOwner && (options.allowOwner !== false)) {
+  if (isOwner && options.allowOwner !== false) {
     return {
       userId: user.id,
       isAdmin: false,
       isOwner: true,
       hasPermissions: true,
       missingPermissions: [],
-    }
+    };
   }
 
-  const missingPermissions: Permission[] = []
+  const missingPermissions: Permission[] = [];
   for (const permission of options.requiredPermissions) {
     if (!serverPerms.includes(permission)) {
-      missingPermissions.push(permission)
+      missingPermissions.push(permission);
     }
   }
 
-  const hasPermissions = missingPermissions.length === 0
+  const hasPermissions = missingPermissions.length === 0;
 
   if (!hasPermissions) {
     throw createError({
@@ -71,7 +75,7 @@ export async function requireServerPermission(
         missingPermissions,
         requiredPermissions: options.requiredPermissions,
       },
-    })
+    });
   }
 
   return {
@@ -80,52 +84,52 @@ export async function requireServerPermission(
     isOwner: false,
     hasPermissions: true,
     missingPermissions: [],
-  }
+  };
 }
 
 export async function requirePermission(
   event: H3Event,
   permission: Permission,
-  serverId: string
+  serverId: string,
 ): Promise<PermissionContext> {
   return requireServerPermission(event, {
     requiredPermissions: [permission],
     serverId,
-  })
+  });
 }
 
 export async function requireAllPermissions(
   event: H3Event,
   permissions: Permission[],
-  serverId: string
+  serverId: string,
 ): Promise<PermissionContext> {
   return requireServerPermission(event, {
     requiredPermissions: permissions,
     serverId,
-  })
+  });
 }
 
 export async function requireAnyPermission(
   event: H3Event,
   permissions: Permission[],
-  serverId: string
+  serverId: string,
 ): Promise<PermissionContext> {
-  const session = await getServerSession(event)
-  const user = resolveSessionUser(session)
+  const session = await getServerSession(event);
+  const user = resolveSessionUser(session);
 
   if (!user?.id) {
     throw createError({
       status: 401,
       statusText: 'Unauthorized',
       message: 'Authentication required',
-    })
+    });
   }
 
-  const userPermissions = await permissionManager.getUserPermissions(user.id)
-  const isAdmin = userPermissions.isAdmin
-  const serverPerms = userPermissions.serverPermissions.get(serverId) || []
+  const userPermissions = await permissionManager.getUserPermissions(user.id);
+  const isAdmin = userPermissions.isAdmin;
+  const serverPerms = userPermissions.serverPermissions.get(serverId) || [];
 
-  const isOwner = serverPerms.length > 0 && serverPerms.includes('server.view')
+  const isOwner = serverPerms.length > 0 && serverPerms.includes('server.view');
 
   if (isAdmin || isOwner) {
     return {
@@ -134,12 +138,10 @@ export async function requireAnyPermission(
       isOwner,
       hasPermissions: true,
       missingPermissions: [],
-    }
+    };
   }
 
-  const hasAnyPermission = permissions.some(permission => 
-    serverPerms.includes(permission)
-  )
+  const hasAnyPermission = permissions.some((permission) => serverPerms.includes(permission));
 
   if (!hasAnyPermission) {
     throw createError({
@@ -149,7 +151,7 @@ export async function requireAnyPermission(
       data: {
         requiredPermissions: permissions,
       },
-    })
+    });
   }
 
   return {
@@ -158,29 +160,29 @@ export async function requireAnyPermission(
     isOwner: false,
     hasPermissions: true,
     missingPermissions: [],
-  }
+  };
 }
 
 export async function requireAdminPermission(event: H3Event): Promise<PermissionContext> {
-  const session = await getServerSession(event)
-  const user = resolveSessionUser(session)
+  const session = await getServerSession(event);
+  const user = resolveSessionUser(session);
 
   if (!user?.id) {
     throw createError({
       status: 401,
       statusText: 'Unauthorized',
       message: 'Authentication required',
-    })
+    });
   }
 
-  const userPermissions = await permissionManager.getUserPermissions(user.id)
-  
+  const userPermissions = await permissionManager.getUserPermissions(user.id);
+
   if (!userPermissions.isAdmin) {
     throw createError({
       status: 403,
       statusText: 'Forbidden',
       message: 'Administrator privileges required',
-    })
+    });
   }
 
   return {
@@ -189,5 +191,5 @@ export async function requireAdminPermission(event: H3Event): Promise<Permission
     isOwner: false,
     hasPermissions: true,
     missingPermissions: [],
-  }
+  };
 }

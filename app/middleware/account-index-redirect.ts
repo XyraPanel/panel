@@ -1,7 +1,7 @@
 export default defineNuxtRouteMiddleware((to) => {
   if (to.path !== '/account') {
-    return
+    return;
   }
 
-  return navigateTo('/account/profile', { replace: true })
-})
+  return navigateTo('/account/profile', { replace: true });
+});

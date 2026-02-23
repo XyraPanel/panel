@@ -1,44 +1,41 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from 'vue';
 
-const { t } = useI18n()
-const route = useRoute()
+const { t } = useI18n();
+const route = useRoute();
 
-const serverId = computed(() => route.params.id as string)
+const serverId = computed(() => route.params.id as string);
 
-const { data: serverResponse } = await useFetch(
-  `/api/client/servers/${serverId.value}`,
-  {
-    key: `server-${serverId.value}`,
-    watch: [serverId],
-  },
-)
+const { data: serverResponse } = await useFetch(`/api/client/servers/${serverId.value}`, {
+  key: `server-${serverId.value}`,
+  watch: [serverId],
+});
 
 const server = computed(() => {
-  const response = serverResponse.value as { data: { name: string; identifier: string } } | null
-  return response?.data ?? null
-})
+  const response = serverResponse.value as { data: { name: string; identifier: string } } | null;
+  return response?.data ?? null;
+});
 
 const serverName = computed(() => {
-  const name = server.value?.name
-  return name && name.trim() ? name : t('common.server')
-})
+  const name = server.value?.name;
+  return name && name.trim() ? name : t('common.server');
+});
 
 const serverIdentifier = computed(() => {
-  const identifier = server.value?.identifier
-  return identifier || serverId.value
-})
+  const identifier = server.value?.identifier;
+  return identifier || serverId.value;
+});
 
 const sidebarToggleProps = computed(() => ({
   icon: 'i-lucide-menu',
   color: 'neutral' as const,
   variant: 'ghost' as const,
   'aria-label': t('common.navigation'),
-}))
+}));
 
 const navItems = computed(() => {
-  const basePath = `/server/${serverId.value}`
-  const currentPath = route.path
+  const basePath = `/server/${serverId.value}`;
+  const currentPath = route.path;
 
   return [
     {
@@ -101,24 +98,35 @@ const navItems = computed(() => {
       to: `${basePath}/settings`,
       active: currentPath.startsWith(`${basePath}/settings`),
     },
-  ]
-})
+  ];
+});
 
 const currentPageTitle = computed(() => {
-  const activeItem = navItems.value.find(item => item.active)
-  return activeItem?.label || ''
-})
+  const activeItem = navItems.value.find((item) => item.active);
+  return activeItem?.label || '';
+});
 </script>
 
 <template>
-  <UDashboardGroup class="server-layout min-h-screen bg-muted/20" storage="local" storage-key="server-dashboard">
+  <UDashboardGroup
+    class="server-layout min-h-screen bg-muted/20"
+    storage="local"
+    storage-key="server-dashboard"
+  >
     <UDashboardSidebar
       collapsible
       :toggle="sidebarToggleProps"
-      :ui="{ body: 'flex flex-col gap-1 px-2 pb-4', header: 'px-4 py-4', footer: 'border-t border-default px-4 py-3' }"
+      :ui="{
+        body: 'flex flex-col gap-1 px-2 pb-4',
+        header: 'px-4 py-4',
+        footer: 'border-t border-default px-4 py-3',
+      }"
     >
       <template #header="{ collapsed }">
-        <NuxtLink to="/server" class="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary">
+        <NuxtLink
+          to="/server"
+          class="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary"
+        >
           <UIcon v-if="collapsed" name="i-lucide-arrow-left" class="mx-auto size-4" />
           <template v-else>
             <UIcon name="i-lucide-arrow-left" class="size-3" />
@@ -128,11 +136,7 @@ const currentPageTitle = computed(() => {
       </template>
 
       <template #default="{ collapsed }">
-        <UNavigationMenu
-          :collapsed="collapsed"
-          :items="[navItems]"
-          orientation="vertical"
-        />
+        <UNavigationMenu :collapsed="collapsed" :items="[navItems]" orientation="vertical" />
       </template>
     </UDashboardSidebar>
 
@@ -142,14 +146,18 @@ const currentPageTitle = computed(() => {
           <UDashboardNavbar
             :ui="{
               left: 'flex flex-col gap-0.5 text-left leading-tight sm:flex-row sm:items-baseline sm:gap-2',
-              root: 'justify-between items-center px-4 py-1.5 sm:px-6 sm:py-2'
+              root: 'justify-between items-center px-4 py-1.5 sm:px-6 sm:py-2',
             }"
           >
             <template #left>
-              <div class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2">
+              <div
+                class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2"
+              >
                 <h1 class="text-base font-semibold text-foreground sm:text-lg">
                   {{ serverName }}
-                  <span v-if="currentPageTitle" class="text-sm font-normal text-muted-foreground">· {{ currentPageTitle }}</span>
+                  <span v-if="currentPageTitle" class="text-sm font-normal text-muted-foreground"
+                    >· {{ currentPageTitle }}</span
+                  >
                 </h1>
                 <p class="text-xs text-muted-foreground">{{ serverIdentifier }}</p>
               </div>

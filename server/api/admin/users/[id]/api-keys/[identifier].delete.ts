@@ -1,34 +1,34 @@
-import { useDrizzle, tables, eq, and } from '#server/utils/drizzle'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { requireAdmin } from '#server/utils/security'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
+import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { requireAdmin } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 
 export default defineEventHandler(async (event) => {
-  assertMethod(event, 'DELETE')
-  const session = await requireAdmin(event)
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE)
+  assertMethod(event, 'DELETE');
+  const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);
 
-  const userId = getRouterParam(event, 'id')
+  const userId = getRouterParam(event, 'id');
   if (!userId) {
-    throw createError({ status: 400, statusText: 'Missing user ID' })
+    throw createError({ status: 400, statusText: 'Missing user ID' });
   }
 
-  const identifier = getRouterParam(event, 'identifier')
+  const identifier = getRouterParam(event, 'identifier');
   if (!identifier) {
-    throw createError({ status: 400, statusText: 'Missing API key identifier' })
+    throw createError({ status: 400, statusText: 'Missing API key identifier' });
   }
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   const [targetUser] = await db
     .select({ id: tables.users.id, username: tables.users.username })
     .from(tables.users)
     .where(eq(tables.users.id, userId))
-    .limit(1)
+    .limit(1);
 
   if (!targetUser) {
-    throw createError({ status: 404, statusText: 'User not found' })
+    throw createError({ status: 404, statusText: 'User not found' });
   }
 
   const [apiKey] = await db
@@ -38,20 +38,14 @@ export default defineEventHandler(async (event) => {
       memo: tables.apiKeys.memo,
     })
     .from(tables.apiKeys)
-    .where(
-      and(
-        eq(tables.apiKeys.identifier, identifier),
-        eq(tables.apiKeys.userId, userId)
-      )
-    )
-    .limit(1)
+    .where(and(eq(tables.apiKeys.identifier, identifier), eq(tables.apiKeys.userId, userId)))
+    .limit(1);
 
   if (!apiKey) {
-    throw createError({ status: 404, statusText: 'API key not found' })
+    throw createError({ status: 404, statusText: 'API key not found' });
   }
 
-  await db.delete(tables.apiKeys)
-    .where(eq(tables.apiKeys.id, apiKey.id))
+  await db.delete(tables.apiKeys).where(eq(tables.apiKeys.id, apiKey.id));
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
@@ -66,7 +60,7 @@ export default defineEventHandler(async (event) => {
       apiKeyMemo: apiKey.memo,
       apiKeyId: apiKey.id,
     },
-  })
+  });
 
   return {
     data: {
@@ -74,6 +68,5 @@ export default defineEventHandler(async (event) => {
       userId,
       apiKeyIdentifier: identifier,
     },
-  }
-})
-
+  };
+});

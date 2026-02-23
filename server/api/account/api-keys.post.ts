@@ -1,39 +1,39 @@
-import { randomUUID } from 'node:crypto'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAccountUser } from '#server/utils/security'
-import { createApiKeySchema } from '#shared/schema/account'
-import type { ApiKeyResponse } from '#shared/types/api'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { APIError } from 'better-auth/api'
-import { getAuth } from '#server/utils/auth'
+import { randomUUID } from 'node:crypto';
+import {
+  readValidatedBodyWithLimit,
+  BODY_SIZE_LIMITS,
+  requireAccountUser,
+} from '#server/utils/security';
+import { createApiKeySchema } from '#shared/schema/account';
+import type { ApiKeyResponse } from '#shared/types/api';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { APIError } from 'better-auth/api';
+import { getAuth } from '#server/utils/auth';
 
 export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
-  const accountContext = await requireAccountUser(event)
-  const user = accountContext.user
+  const accountContext = await requireAccountUser(event);
+  const user = accountContext.user;
 
-  const body = await readValidatedBodyWithLimit(
-    event,
-    createApiKeySchema,
-    BODY_SIZE_LIMITS.SMALL,
-  )
+  const body = await readValidatedBodyWithLimit(event, createApiKeySchema, BODY_SIZE_LIMITS.SMALL);
 
   try {
-    const db = useDrizzle()
-    const now = new Date()
-    const auth = getAuth()
-    const apiKeyPermId = randomUUID()
+    const db = useDrizzle();
+    const now = new Date();
+    const auth = getAuth();
+    const apiKeyPermId = randomUUID();
 
-    let expiresIn: number | undefined
+    let expiresIn: number | undefined;
     if (body.expiresAt) {
-      const expiresAtMs = new Date(body.expiresAt).getTime()
+      const expiresAtMs = new Date(body.expiresAt).getTime();
       if (Number.isNaN(expiresAtMs) || expiresAtMs <= Date.now()) {
         throw createError({
           status: 400,
           statusText: 'Bad Request',
           message: 'expiresAt must be a valid future datetime',
-        })
+        });
       }
-      expiresIn = Math.floor((expiresAtMs - Date.now()) / 1000)
+      expiresIn = Math.floor((expiresAtMs - Date.now()) / 1000);
     }
 
     const created = await auth.api.createApiKey({
@@ -42,8 +42,8 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
         userId: user.id,
         ...(expiresIn ? { expiresIn } : {}),
       },
-    })
-    const apiKeyId = created.id
+    });
+    const apiKeyId = created.id;
 
     await db.insert(tables.apiKeyMetadata).values({
       id: apiKeyPermId,
@@ -63,7 +63,7 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
       rServerDatabases: 0,
       createdAt: now,
       updatedAt: now,
-    })
+    });
 
     await recordAuditEventFromRequest(event, {
       actor: user.id,
@@ -75,7 +75,7 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
         description: body.memo || null,
         allowedIpsCount: body.allowedIps?.length || 0,
       },
-    })
+    });
 
     return {
       data: {
@@ -88,25 +88,26 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
       meta: {
         secret_token: created.key,
       },
-    }
+    };
   } catch (error) {
     if (error instanceof APIError) {
-      const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
+      const statusCode =
+        typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
         statusMessage: error.message || 'Failed to create API key',
-      })
+      });
     }
-    console.error('Error creating API key:', error)
+    console.error('Error creating API key:', error);
 
     if (error && typeof error === 'object' && 'status' in error) {
-      throw error
+      throw error;
     }
 
     throw createError({
       status: 500,
       statusText: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Failed to create API key',
-    })
+    });
   }
-})
+});

@@ -1,39 +1,38 @@
-import { type H3Event } from 'h3'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { findServerByIdentifier } from '#server/utils/serversStore'
-import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
-import type { ActivityAction } from '#shared/types/audit'
-import { remoteActivityBatchSchema } from '#shared/schema/wings'
+import { type H3Event } from 'h3';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { findServerByIdentifier } from '#server/utils/serversStore';
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import type { ActivityAction } from '#shared/types/audit';
+import { remoteActivityBatchSchema } from '#shared/schema/wings';
 
 export default defineEventHandler(async (event: H3Event) => {
   const { data: activities } = await readValidatedBodyWithLimit(
     event,
     remoteActivityBatchSchema,
     BODY_SIZE_LIMITS.MEDIUM,
-  )
+  );
 
-  const insertedCount = activities.length
-  let successCount = 0
+  const insertedCount = activities.length;
+  let successCount = 0;
 
-  const serverCache = new Map<string, Awaited<ReturnType<typeof findServerByIdentifier>> | null>()
+  const serverCache = new Map<string, Awaited<ReturnType<typeof findServerByIdentifier>> | null>();
 
   for (const activity of activities) {
     try {
-
       if (!activity.event || !activity.timestamp) {
-        console.warn('Skipping invalid activity log:', activity)
-        continue
+        console.warn('Skipping invalid activity log:', activity);
+        continue;
       }
 
-      let resolvedServer = null
-      const serverKey = activity.server
+      let resolvedServer = null;
+      const serverKey = activity.server;
 
       if (serverKey) {
         if (!serverCache.has(serverKey)) {
-          const serverRecord = await findServerByIdentifier(serverKey)
-          serverCache.set(serverKey, serverRecord)
+          const serverRecord = await findServerByIdentifier(serverKey);
+          serverCache.set(serverKey, serverRecord);
         }
-        resolvedServer = serverCache.get(serverKey) ?? null
+        resolvedServer = serverCache.get(serverKey) ?? null;
       }
 
       await recordAuditEventFromRequest(event, {
@@ -50,13 +49,11 @@ export default defineEventHandler(async (event: H3Event) => {
           wings_timestamp: activity.timestamp,
           source: 'wings',
         },
-      })
+      });
 
-      successCount++
-    }
-    catch (error) {
-      console.error('Failed to insert activity log:', error, activity)
-
+      successCount++;
+    } catch (error) {
+      console.error('Failed to insert activity log:', error, activity);
     }
   }
 
@@ -67,5 +64,5 @@ export default defineEventHandler(async (event: H3Event) => {
       processed: successCount,
       failed: insertedCount - successCount,
     },
-  }
-})
+  };
+});

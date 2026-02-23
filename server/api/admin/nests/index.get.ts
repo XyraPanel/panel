@@ -1,17 +1,17 @@
-import { eq, sql } from 'drizzle-orm'
-import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import type { NestWithEggCount } from '#shared/types/admin'
+import { eq, sql } from 'drizzle-orm';
+import { requireAdmin } from '#server/utils/security';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import type { NestWithEggCount } from '#shared/types/admin';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NESTS, ADMIN_ACL_PERMISSIONS.READ)
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NESTS, ADMIN_ACL_PERMISSIONS.READ);
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   const nests = await db
     .select({
@@ -27,9 +27,9 @@ export default defineEventHandler(async (event) => {
     .from(tables.nests)
     .leftJoin(tables.eggs, eq(tables.eggs.nestId, tables.nests.id))
     .groupBy(tables.nests.id)
-    .orderBy(tables.nests.name)
+    .orderBy(tables.nests.name);
 
-  const data: NestWithEggCount[] = nests.map(nest => ({
+  const data: NestWithEggCount[] = nests.map((nest) => ({
     id: nest.id,
     uuid: nest.uuid,
     author: nest.author,
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     createdAt: new Date(nest.createdAt).toISOString(),
     updatedAt: new Date(nest.updatedAt).toISOString(),
     eggCount: Number(nest.eggCount) || 0,
-  }))
+  }));
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
@@ -48,7 +48,7 @@ export default defineEventHandler(async (event) => {
     metadata: {
       count: data.length,
     },
-  })
+  });
 
-  return { data }
-})
+  return { data };
+});

@@ -1,53 +1,59 @@
-import { and, eq } from 'drizzle-orm'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { getServerLimits, listServerAllocations } from '#server/utils/serversStore'
-import { permissionManager } from '#server/utils/permission-manager'
-import { getServerStatus } from '#server/utils/server-status'
-import { requireAccountUser } from '#server/utils/security'
-import { getServerWithAccess } from '#server/utils/server-helpers'
-import { requireServerPermission } from '#server/utils/permission-middleware'
-import { recordServerActivity } from '#server/utils/server-activity'
-import type { PanelServerDetails, ServerAllocationSummary } from '#shared/types/server'
+import { and, eq } from 'drizzle-orm';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { getServerLimits, listServerAllocations } from '#server/utils/serversStore';
+import { permissionManager } from '#server/utils/permission-manager';
+import { getServerStatus } from '#server/utils/server-status';
+import { requireAccountUser } from '#server/utils/security';
+import { getServerWithAccess } from '#server/utils/server-helpers';
+import { requireServerPermission } from '#server/utils/permission-middleware';
+import { recordServerActivity } from '#server/utils/server-activity';
+import type { PanelServerDetails, ServerAllocationSummary } from '#shared/types/server';
 
 export default defineEventHandler(async (event) => {
-  const identifier = getRouterParam(event, 'id')
+  const identifier = getRouterParam(event, 'id');
   if (!identifier) {
-    throw createError({ status: 400, statusText: 'Bad Request', message: 'Missing server identifier' })
+    throw createError({
+      status: 400,
+      statusText: 'Bad Request',
+      message: 'Missing server identifier',
+    });
   }
 
-  const { user, session } = await requireAccountUser(event)
-  const { server } = await getServerWithAccess(identifier, session)
+  const { user, session } = await requireAccountUser(event);
+  const { server } = await getServerWithAccess(identifier, session);
 
   await requireServerPermission(event, {
     serverId: server.id,
     requiredPermissions: ['server.view'],
     allowOwner: true,
     allowAdmin: true,
-  })
+  });
 
-  const db = useDrizzle()
-  const userPermissions = await permissionManager.getUserPermissions(user.id)
-  const serverPerms = userPermissions.serverPermissions.get(server.id) || []
+  const db = useDrizzle();
+  const userPermissions = await permissionManager.getUserPermissions(user.id);
+  const serverPerms = userPermissions.serverPermissions.get(server.id) || [];
 
   const nodeRow = server.nodeId
-    ? (await db
-      .select({ id: tables.wingsNodes.id, name: tables.wingsNodes.name })
-      .from(tables.wingsNodes)
-      .where(eq(tables.wingsNodes.id, server.nodeId))
-      .limit(1)
-    )[0] ?? null
-    : null
+    ? ((
+        await db
+          .select({ id: tables.wingsNodes.id, name: tables.wingsNodes.name })
+          .from(tables.wingsNodes)
+          .where(eq(tables.wingsNodes.id, server.nodeId))
+          .limit(1)
+      )[0] ?? null)
+    : null;
 
   const ownerRow = server.ownerId
-    ? (await db
-      .select({ id: tables.users.id, username: tables.users.username })
-      .from(tables.users)
-      .where(eq(tables.users.id, server.ownerId))
-      .limit(1)
-    )[0] ?? null
-    : null
+    ? ((
+        await db
+          .select({ id: tables.users.id, username: tables.users.username })
+          .from(tables.users)
+          .where(eq(tables.users.id, server.ownerId))
+          .limit(1)
+      )[0] ?? null)
+    : null;
 
-  const limits = await getServerLimits(server.id)
+  const limits = await getServerLimits(server.id);
   const primaryAllocationRow = await db
     .select({
       ip: tables.serverAllocations.ip,
@@ -60,40 +66,49 @@ export default defineEventHandler(async (event) => {
       and(
         eq(tables.serverAllocations.serverId, tables.servers.id),
         eq(tables.serverAllocations.isPrimary, true),
-      )
+      ),
     )
     .where(eq(tables.servers.id, server.id))
-    .limit(1)
+    .limit(1);
 
-  const [primaryAllocationResult] = primaryAllocationRow
-  
-  const allAllocations = await listServerAllocations(server.id)
-  const additionalAllocations = allAllocations.filter(allocation => !allocation.isPrimary)
-  
-  const allocationMapper = (allocation: { ip: string; port: number; notes?: string | null }): ServerAllocationSummary => ({
+  const [primaryAllocationResult] = primaryAllocationRow;
+
+  const allAllocations = await listServerAllocations(server.id);
+  const additionalAllocations = allAllocations.filter((allocation) => !allocation.isPrimary);
+
+  const allocationMapper = (allocation: {
+    ip: string;
+    port: number;
+    notes?: string | null;
+  }): ServerAllocationSummary => ({
     ip: allocation.ip,
     port: allocation.port,
     description: allocation.notes ?? '',
-  })
-  
-  const primaryAllocation = primaryAllocationResult
-    && primaryAllocationResult.ip !== null
-    && primaryAllocationResult.port !== null
-    ? { ip: primaryAllocationResult.ip, port: primaryAllocationResult.port, notes: primaryAllocationResult.notes }
-    : null
+  });
 
-  let actualStatus = server.status ?? null
-  let actualSuspended = Boolean(server.suspended)
+  const primaryAllocation =
+    primaryAllocationResult &&
+    primaryAllocationResult.ip !== null &&
+    primaryAllocationResult.port !== null
+      ? {
+          ip: primaryAllocationResult.ip,
+          port: primaryAllocationResult.port,
+          notes: primaryAllocationResult.notes,
+        }
+      : null;
+
+  let actualStatus = server.status ?? null;
+  let actualSuspended = Boolean(server.suspended);
 
   if (server.uuid) {
     try {
-      const status = await getServerStatus(server.uuid)
-      actualStatus = status.state || actualStatus
-      actualSuspended = status.isSuspended ?? actualSuspended
+      const status = await getServerStatus(server.uuid);
+      actualStatus = status.state || actualStatus;
+      actualSuspended = status.isSuspended ?? actualSuspended;
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : String(error)
+      const errorMessage = error instanceof Error ? error.message : String(error);
       if (!errorMessage.includes('404') && !errorMessage.includes('not found')) {
-        console.warn(`Failed to resolve cached status for server ${server.uuid}:`, errorMessage)
+        console.warn(`Failed to resolve cached status for server ${server.uuid}:`, errorMessage);
       }
     }
   }
@@ -117,7 +132,10 @@ export default defineEventHandler(async (event) => {
       swap: null,
       io: limits?.io ?? null,
     },
-    createdAt: server.createdAt instanceof Date ? server.createdAt : new Date(server.createdAt).toISOString(),
+    createdAt:
+      server.createdAt instanceof Date
+        ? server.createdAt
+        : new Date(server.createdAt).toISOString(),
     allocations: {
       primary: primaryAllocation ? allocationMapper(primaryAllocation) : null,
       additional: additionalAllocations.map(allocationMapper),
@@ -127,7 +145,7 @@ export default defineEventHandler(async (event) => {
       username: ownerRow?.username ?? null,
     },
     permissions: serverPerms,
-  }
+  };
 
   await recordServerActivity({
     event,
@@ -137,9 +155,9 @@ export default defineEventHandler(async (event) => {
     metadata: {
       permissionsCount: serverPerms.length,
     },
-  })
+  });
 
   return {
     data: response,
-  }
-})
+  };
+});

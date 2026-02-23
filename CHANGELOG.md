@@ -1,8 +1,6 @@
 # Changelog
 
-
 ## v0.1.0-alpha.0
-
 
 ### 🚀 Enhancements
 
@@ -243,4 +241,3 @@
 
 - 26bz ([@26bz](https://github.com/26bz))
 - Bz ([@26bz](https://github.com/26bz))
-

@@ -1,16 +1,19 @@
-import redisDriver from 'unstorage/drivers/redis'
+import redisDriver from 'unstorage/drivers/redis';
 
 export default defineNitroPlugin(() => {
-  const config = useRuntimeConfig().redis
+  const config = useRuntimeConfig().redis;
 
-  if (!config?.host) return
+  if (!config?.host) return;
 
-  useStorage().mount('redis', redisDriver({
-    base: 'redis',
-    host: config.host,
-    port: config.port,
-    username: config.username,
-    password: config.password,
-    tls: config.tls ? {} : undefined,
-  }))
-})
+  useStorage().mount(
+    'redis',
+    redisDriver({
+      base: 'redis',
+      host: config.host,
+      port: config.port,
+      username: config.username,
+      password: config.password,
+      tls: config.tls ? {} : undefined,
+    }),
+  );
+});

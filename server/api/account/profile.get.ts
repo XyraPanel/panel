@@ -1,12 +1,12 @@
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { requireAccountUser } from '#server/utils/security'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { requireAccountUser } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
-  const accountContext = await requireAccountUser(event)
-  const sessionUser = accountContext.user
+  const accountContext = await requireAccountUser(event);
+  const sessionUser = accountContext.user;
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   const profile = await db.query.users.findFirst({
     where: (u, { eq }) => eq(u.id, sessionUser.id),
@@ -15,11 +15,11 @@ export default defineEventHandler(async (event) => {
       username: true,
       email: true,
       role: true,
-    }
-  })
+    },
+  });
 
   if (!profile) {
-    throw createError({ status: 404, statusText: 'User not found' })
+    throw createError({ status: 404, statusText: 'User not found' });
   }
 
   await recordAuditEventFromRequest(event, {
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     action: 'account.profile.viewed',
     targetType: 'user',
     targetId: sessionUser.id,
-  })
+  });
 
-  return { data: profile }
-})
+  return { data: profile };
+});

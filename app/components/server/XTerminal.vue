@@ -1,73 +1,71 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, watch } from 'vue'
-import type { ServerTerminalProps } from '#shared/types/server'
-import type { Terminal } from '@xterm/xterm'
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import type { ServerTerminalProps } from '#shared/types/server';
+import type { Terminal } from '@xterm/xterm';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-const props = defineProps<ServerTerminalProps>()
+const props = defineProps<ServerTerminalProps>();
 defineEmits<{
-  command: [command: string]
-}>()
+  command: [command: string];
+}>();
 
-const terminalRef = ref<HTMLElement | null>(null)
-let terminal: Terminal | null = null
-let fitAddon: import('@xterm/addon-fit').FitAddon | null = null
-let searchAddon: import('@xterm/addon-search').SearchAddon | null = null
-let webLinksAddon: import('@xterm/addon-web-links').WebLinksAddon | null = null
-let lastProcessedLogCount = 0
+const terminalRef = ref<HTMLElement | null>(null);
+let terminal: Terminal | null = null;
+let fitAddon: import('@xterm/addon-fit').FitAddon | null = null;
+let searchAddon: import('@xterm/addon-search').SearchAddon | null = null;
+let webLinksAddon: import('@xterm/addon-web-links').WebLinksAddon | null = null;
+let lastProcessedLogCount = 0;
 
-const HISTORY_KEY = `server-${props.serverId || 'default'}:command_history`
-const MAX_HISTORY = 32
-let commandHistory: string[] = []
-let _historyIndex = -1
+const HISTORY_KEY = `server-${props.serverId || 'default'}:command_history`;
+const MAX_HISTORY = 32;
+let commandHistory: string[] = [];
+let _historyIndex = -1;
 
 if (import.meta.client) {
   try {
-    const stored = localStorage.getItem(HISTORY_KEY)
+    const stored = localStorage.getItem(HISTORY_KEY);
     if (stored) {
-      commandHistory = JSON.parse(stored)
+      commandHistory = JSON.parse(stored);
     }
-  } catch {
-  }
+  } catch {}
 }
 
 function saveHistory() {
   if (import.meta.client) {
     try {
-      localStorage.setItem(HISTORY_KEY, JSON.stringify(commandHistory))
-    } catch {
-    }
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(commandHistory));
+    } catch {}
   }
 }
 
 function _addToHistory(command: string) {
-  if (!command.trim()) return
-  
-  const index = commandHistory.indexOf(command)
+  if (!command.trim()) return;
+
+  const index = commandHistory.indexOf(command);
   if (index > -1) {
-    commandHistory.splice(index, 1)
+    commandHistory.splice(index, 1);
   }
-  
-  commandHistory.unshift(command)
-  
+
+  commandHistory.unshift(command);
+
   if (commandHistory.length > MAX_HISTORY) {
-    commandHistory = commandHistory.slice(0, MAX_HISTORY)
+    commandHistory = commandHistory.slice(0, MAX_HISTORY);
   }
-  
-  saveHistory()
-  _historyIndex = -1 
+
+  saveHistory();
+  _historyIndex = -1;
 }
 
 const writeToTerminal = (text: string) => {
   if (terminal) {
-    terminal.write(text)
+    terminal.write(text);
   }
-}
+};
 
 function handleTerminalClick() {
   if (terminal) {
-    terminal.focus()
+    terminal.focus();
   }
 }
 
@@ -92,185 +90,186 @@ const theme = {
   brightCyan: '#89DDFF',
   brightWhite: '#ffffff',
   selection: '#FAF089',
-}
+};
 
-let resizeObserverRef: ResizeObserver | null = null
+let resizeObserverRef: ResizeObserver | null = null;
 
 onUnmounted(() => {
-  resizeObserverRef?.disconnect()
-  resizeObserverRef = null
+  resizeObserverRef?.disconnect();
+  resizeObserverRef = null;
   if (fitAddon) {
     // ResizeObserver cleanup is handled by disconnect
   }
-  terminal?.dispose()
-  terminal = null
-  fitAddon = null
-  searchAddon = null
-  webLinksAddon = null
-})
+  terminal?.dispose();
+  terminal = null;
+  fitAddon = null;
+  searchAddon = null;
+  webLinksAddon = null;
+});
 
 onMounted(async () => {
-  if (!terminalRef.value) return
+  if (!terminalRef.value) return;
 
-  const { Terminal } = await import('@xterm/xterm')
-  const { FitAddon } = await import('@xterm/addon-fit')
-  const { SearchAddon } = await import('@xterm/addon-search')
-  const { WebLinksAddon } = await import('@xterm/addon-web-links')
-  await import('@xterm/xterm/css/xterm.css')
-  
+  const { Terminal } = await import('@xterm/xterm');
+  const { FitAddon } = await import('@xterm/addon-fit');
+  const { SearchAddon } = await import('@xterm/addon-search');
+  const { WebLinksAddon } = await import('@xterm/addon-web-links');
+  await import('@xterm/xterm/css/xterm.css');
+
   terminal = new Terminal({
     theme,
-    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
+    fontFamily:
+      'ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace',
     fontSize: 12,
     lineHeight: 1.2,
     cursorBlink: true,
     cursorStyle: 'underline',
     allowTransparency: true,
     scrollback: 5000,
-    disableStdin: true, 
-  })
+    disableStdin: true,
+  });
 
-  fitAddon = new FitAddon()
-  searchAddon = new SearchAddon()
-  webLinksAddon = new WebLinksAddon()
+  fitAddon = new FitAddon();
+  searchAddon = new SearchAddon();
+  webLinksAddon = new WebLinksAddon();
 
-  terminal.loadAddon(fitAddon)
-  terminal.loadAddon(searchAddon)
-  terminal.loadAddon(webLinksAddon)
-  
-  terminal.open(terminalRef.value)
-  fitAddon.fit()
+  terminal.loadAddon(fitAddon);
+  terminal.loadAddon(searchAddon);
+  terminal.loadAddon(webLinksAddon);
+
+  terminal.open(terminalRef.value);
+  fitAddon.fit();
 
   terminal.onWriteParsed(() => {
     if (terminal) {
-      terminal.refresh(0, terminal.rows - 1)
+      terminal.refresh(0, terminal.rows - 1);
     }
-  })
+  });
 
-  terminal.focus()
+  terminal.focus();
 
   if (terminalRef.value) {
     terminalRef.value.addEventListener('click', () => {
-      if (terminal) terminal.focus()
-    })
+      if (terminal) terminal.focus();
+    });
   }
 
   terminal.attachCustomKeyEventHandler((e: KeyboardEvent) => {
     // Ctrl+F or Cmd+F: Open search
     if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-      e.preventDefault()
+      e.preventDefault();
       if (searchAddon) {
         if (import.meta.client && typeof globalThis !== 'undefined' && 'prompt' in globalThis) {
-          const searchTerm = (globalThis as { prompt?: (message: string) => string | null }).prompt?.(t('server.console.searchTerminal'))
+          const searchTerm = (
+            globalThis as { prompt?: (message: string) => string | null }
+          ).prompt?.(t('server.console.searchTerminal'));
           if (searchTerm) {
-            searchAddon.findNext(searchTerm)
+            searchAddon.findNext(searchTerm);
           }
         }
       }
-      return false
+      return false;
     }
     if ((e.ctrlKey || e.metaKey) && e.key === 'c' && terminal?.hasSelection()) {
-      return true
+      return true;
     }
-    return true
-  })
+    return true;
+  });
 
   const resizeObserver = new ResizeObserver(() => {
-    fitAddon?.fit()
-  })
-  resizeObserver.observe(terminalRef.value)
+    fitAddon?.fit();
+  });
+  resizeObserver.observe(terminalRef.value);
 
-  resizeObserverRef = resizeObserver
+  resizeObserverRef = resizeObserver;
 
   if (Array.isArray(props.logs)) {
-    lastProcessedLogCount = props.logs.length
+    lastProcessedLogCount = props.logs.length;
     if (props.logs.length > 0) {
       props.logs.forEach((log, index) => {
         if (typeof log !== 'string') {
-          return
+          return;
         }
-        writeToTerminal(log + '\r\n')
-      })
+        writeToTerminal(log + '\r\n');
+      });
     }
+  } else {
+    lastProcessedLogCount = 0;
   }
-  else {
-    lastProcessedLogCount = 0
-  }
-})
+});
 
-watch(() => props.logs, (newLogs) => {
-  if (!terminal) {
-    return
-  }
+watch(
+  () => props.logs,
+  (newLogs) => {
+    if (!terminal) {
+      return;
+    }
 
-  if (!Array.isArray(newLogs)) {
-    return
-  }
+    if (!Array.isArray(newLogs)) {
+      return;
+    }
 
-  const newLength = newLogs.length
-  const newLogCount = newLength - lastProcessedLogCount
+    const newLength = newLogs.length;
+    const newLogCount = newLength - lastProcessedLogCount;
 
-  if (newLogCount > 0) {
-    const logsToWrite = newLogs.slice(lastProcessedLogCount)
-    logsToWrite.forEach((log) => {
-      if (typeof log === 'string' && terminal) {
-        terminal.write(log + '\r\n')
-      }
-    })
-    lastProcessedLogCount = newLength
-  } else if (newLogCount < 0 && newLength === 0) {
-    terminal?.clear()
-    lastProcessedLogCount = 0
-  } else if (newLogCount < 0 && newLength > 0) {
-    lastProcessedLogCount = newLength
-  }
-}, { immediate: true, flush: 'sync' })
+    if (newLogCount > 0) {
+      const logsToWrite = newLogs.slice(lastProcessedLogCount);
+      logsToWrite.forEach((log) => {
+        if (typeof log === 'string' && terminal) {
+          terminal.write(log + '\r\n');
+        }
+      });
+      lastProcessedLogCount = newLength;
+    } else if (newLogCount < 0 && newLength === 0) {
+      terminal?.clear();
+      lastProcessedLogCount = 0;
+    } else if (newLogCount < 0 && newLength > 0) {
+      lastProcessedLogCount = newLength;
+    }
+  },
+  { immediate: true, flush: 'sync' },
+);
 
 defineExpose({
   search: (term: string) => searchAddon?.findNext(term),
   searchPrevious: (term: string) => searchAddon?.findPrevious(term),
   clear: () => {
-    terminal?.clear()
-    lastProcessedLogCount = 0
+    terminal?.clear();
+    lastProcessedLogCount = 0;
   },
   fit: () => fitAddon?.fit(),
   write: (text: string) => writeToTerminal(text),
   downloadLogs: () => {
-    if (!terminal) return
-    const lines: string[] = []
+    if (!terminal) return;
+    const lines: string[] = [];
     for (let i = 0; i < terminal.buffer.active.length; i++) {
-      const line = terminal.buffer.active.getLine(i)
+      const line = terminal.buffer.active.getLine(i);
       if (line) {
-        lines.push(line.translateToString(false))
+        lines.push(line.translateToString(false));
       }
     }
-    const content = lines.join('\n')
-    const blob = new Blob([content], { type: 'text/plain' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${t('server.console.downloadFilename')}-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
+    const content = lines.join('\n');
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${t('server.console.downloadFilename')}-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   },
   scrollToBottom: () => {
-    terminal?.scrollToBottom()
+    terminal?.scrollToBottom();
   },
-})
+});
 </script>
 
 <template>
-  <div 
-    ref="terminalRef" 
-    class="h-full w-full cursor-text"
-    @click="handleTerminalClick"
-  />
+  <div ref="terminalRef" class="h-full w-full cursor-text" @click="handleTerminalClick" />
 </template>
 
 <style scoped>
-
 :deep(.xterm) {
   height: 100%;
   padding: 1rem;

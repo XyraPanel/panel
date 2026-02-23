@@ -1,35 +1,39 @@
-import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables, eq, isNotNull, desc } from '#server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { sql } from 'drizzle-orm'
-import { adminServersPaginationSchema } from '#shared/schema/admin/server'
+import { requireAdmin } from '#server/utils/security';
+import { useDrizzle, tables, eq, isNotNull, desc } from '#server/utils/drizzle';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { sql } from 'drizzle-orm';
+import { adminServersPaginationSchema } from '#shared/schema/admin/server';
 
 export default defineEventHandler(async (event) => {
   try {
-    const session = await requireAdmin(event)
+    const session = await requireAdmin(event);
 
-    await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.SERVERS, ADMIN_ACL_PERMISSIONS.READ)
+    await requireAdminApiKeyPermission(
+      event,
+      ADMIN_ACL_RESOURCES.SERVERS,
+      ADMIN_ACL_PERMISSIONS.READ,
+    );
 
-    const query = getQuery(event)
+    const query = getQuery(event);
     const parsed = adminServersPaginationSchema.safeParse({
       page: query.page,
       perPage: query.per_page ?? query.perPage,
-    })
+    });
 
     if (!parsed.success) {
       throw createError({
         status: 400,
         statusText: 'Invalid pagination parameters',
         data: parsed.error.format(),
-      })
+      });
     }
 
-    const { page, perPage } = parsed.data
-    const offset = (page - 1) * perPage
+    const { page, perPage } = parsed.data;
+    const offset = (page - 1) * perPage;
 
-    const db = useDrizzle()
+    const db = useDrizzle();
 
     const servers = await db
       .select({
@@ -47,14 +51,14 @@ export default defineEventHandler(async (event) => {
       .where(isNotNull(tables.servers.nodeId))
       .orderBy(desc(tables.servers.updatedAt))
       .limit(perPage)
-      .offset(offset)
+      .offset(offset);
 
     const totalResult = await db
       .select({ count: sql<number>`count(*)` })
       .from(tables.servers)
-      .where(isNotNull(tables.servers.nodeId))
+      .where(isNotNull(tables.servers.nodeId));
 
-    const totalCount = Number(totalResult[0]?.count ?? 0)
+    const totalCount = Number(totalResult[0]?.count ?? 0);
 
     await recordAuditEventFromRequest(event, {
       actor: session.user.email || session.user.id,
@@ -67,7 +71,7 @@ export default defineEventHandler(async (event) => {
         perPage,
         count: servers.length,
       },
-    })
+    });
 
     return {
       data: servers.map(({ server, owner, node, egg, nest }) => ({
@@ -104,8 +108,14 @@ export default defineEventHandler(async (event) => {
               name: nest.name,
             }
           : null,
-        createdAt: server.createdAt instanceof Date ? server.createdAt : new Date(server.createdAt).toISOString(),
-        updatedAt: server.updatedAt instanceof Date ? server.updatedAt : new Date(server.updatedAt).toISOString(),
+        createdAt:
+          server.createdAt instanceof Date
+            ? server.createdAt
+            : new Date(server.createdAt).toISOString(),
+        updatedAt:
+          server.updatedAt instanceof Date
+            ? server.updatedAt
+            : new Date(server.updatedAt).toISOString(),
       })),
       meta: {
         pagination: {
@@ -116,17 +126,16 @@ export default defineEventHandler(async (event) => {
           totalPages: Math.ceil(totalCount / perPage),
         },
       },
-    }
-  }
- catch (error) {
-    console.error('[GET] /api/admin/servers: Error:', error)
+    };
+  } catch (error) {
+    console.error('[GET] /api/admin/servers: Error:', error);
     if (error && typeof error === 'object' && 'status' in error) {
-      throw error
+      throw error;
     }
     throw createError({
       status: 500,
       statusText: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Failed to fetch servers',
-    })
+    });
   }
-})
+});

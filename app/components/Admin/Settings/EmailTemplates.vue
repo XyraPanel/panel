@@ -1,176 +1,194 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import type { EditorToolbarItem } from '@nuxt/ui'
+import { ref, computed } from 'vue';
+import type { EditorToolbarItem } from '@nuxt/ui';
 
 interface Template {
-  id: string
-  name: string
-  description: string
-  variables: string[]
+  id: string;
+  name: string;
+  description: string;
+  variables: string[];
 }
 
-const toast = useToast()
-const templates = ref<Template[]>([])
-const selectedTemplate = ref<Template | null>(null)
-const templateContent = ref('')
-const isLoading = ref(false)
-const isSaving = ref(false)
-const isPreviewing = ref(false)
-const isResetting = ref(false)
-const isPreviewMode = ref(false)
-const previewHtml = ref('')
-const previewData = ref<{ subject: string; variables: Record<string, string> } | null>(null)
+const toast = useToast();
+const templates = ref<Template[]>([]);
+const selectedTemplate = ref<Template | null>(null);
+const templateContent = ref('');
+const isLoading = ref(false);
+const isSaving = ref(false);
+const isPreviewing = ref(false);
+const isResetting = ref(false);
+const isPreviewMode = ref(false);
+const previewHtml = ref('');
+const previewData = ref<{ subject: string; variables: Record<string, string> } | null>(null);
 
-const toolbarItems = computed<EditorToolbarItem[][]>(() => [[{
-  kind: 'mark',
-  mark: 'bold',
-  icon: 'i-lucide-bold',
-  tooltip: { text: 'Bold' }
-}, {
-  kind: 'mark',
-  mark: 'italic',
-  icon: 'i-lucide-italic',
-  tooltip: { text: 'Italic' }
-}, {
-  kind: 'mark',
-  mark: 'underline',
-  icon: 'i-lucide-underline',
-  tooltip: { text: 'Underline' }
-}, {
-  kind: 'mark',
-  mark: 'code',
-  icon: 'i-lucide-code',
-  tooltip: { text: 'Code' }
-}], [{
-  icon: 'i-lucide-heading',
-  tooltip: { text: 'Headings' },
-  content: { align: 'start' },
-  items: [{
-    kind: 'heading',
-    level: 1,
-    icon: 'i-lucide-heading-1',
-    label: 'Heading 1'
-  }, {
-    kind: 'heading',
-    level: 2,
-    icon: 'i-lucide-heading-2',
-    label: 'Heading 2'
-  }, {
-    kind: 'heading',
-    level: 3,
-    icon: 'i-lucide-heading-3',
-    label: 'Heading 3'
-  }]
-}, {
-  icon: 'i-lucide-list',
-  tooltip: { text: 'Lists' },
-  content: { align: 'start' },
-  items: [{
-    kind: 'bulletList',
-    icon: 'i-lucide-list',
-    label: 'Bullet List'
-  }, {
-    kind: 'orderedList',
-    icon: 'i-lucide-list-ordered',
-    label: 'Ordered List'
-  }]
-}, {
-  kind: 'blockquote',
-  icon: 'i-lucide-text-quote',
-  tooltip: { text: 'Blockquote' }
-}, {
-  kind: 'codeBlock',
-  icon: 'i-lucide-square-code',
-  tooltip: { text: 'Code Block' }
-}], [{
-  kind: 'link',
-  icon: 'i-lucide-link',
-  tooltip: { text: 'Link' }
-}]])
+const toolbarItems = computed<EditorToolbarItem[][]>(() => [
+  [
+    {
+      kind: 'mark',
+      mark: 'bold',
+      icon: 'i-lucide-bold',
+      tooltip: { text: 'Bold' },
+    },
+    {
+      kind: 'mark',
+      mark: 'italic',
+      icon: 'i-lucide-italic',
+      tooltip: { text: 'Italic' },
+    },
+    {
+      kind: 'mark',
+      mark: 'underline',
+      icon: 'i-lucide-underline',
+      tooltip: { text: 'Underline' },
+    },
+    {
+      kind: 'mark',
+      mark: 'code',
+      icon: 'i-lucide-code',
+      tooltip: { text: 'Code' },
+    },
+  ],
+  [
+    {
+      icon: 'i-lucide-heading',
+      tooltip: { text: 'Headings' },
+      content: { align: 'start' },
+      items: [
+        {
+          kind: 'heading',
+          level: 1,
+          icon: 'i-lucide-heading-1',
+          label: 'Heading 1',
+        },
+        {
+          kind: 'heading',
+          level: 2,
+          icon: 'i-lucide-heading-2',
+          label: 'Heading 2',
+        },
+        {
+          kind: 'heading',
+          level: 3,
+          icon: 'i-lucide-heading-3',
+          label: 'Heading 3',
+        },
+      ],
+    },
+    {
+      icon: 'i-lucide-list',
+      tooltip: { text: 'Lists' },
+      content: { align: 'start' },
+      items: [
+        {
+          kind: 'bulletList',
+          icon: 'i-lucide-list',
+          label: 'Bullet List',
+        },
+        {
+          kind: 'orderedList',
+          icon: 'i-lucide-list-ordered',
+          label: 'Ordered List',
+        },
+      ],
+    },
+    {
+      kind: 'blockquote',
+      icon: 'i-lucide-text-quote',
+      tooltip: { text: 'Blockquote' },
+    },
+    {
+      kind: 'codeBlock',
+      icon: 'i-lucide-square-code',
+      tooltip: { text: 'Code Block' },
+    },
+  ],
+  [
+    {
+      kind: 'link',
+      icon: 'i-lucide-link',
+      tooltip: { text: 'Link' },
+    },
+  ],
+]);
 
 onMounted(async () => {
-  await fetchTemplates()
-})
+  await fetchTemplates();
+});
 
 async function fetchTemplates() {
   try {
-    isLoading.value = true
-    const response = await $fetch<{ data: Template[] }>('/api/admin/settings/email-templates')
-    templates.value = response.data
-  }
-  catch {
+    isLoading.value = true;
+    const response = await $fetch<{ data: Template[] }>('/api/admin/settings/email-templates');
+    templates.value = response.data;
+  } catch {
     toast.add({
       title: 'Error',
       description: 'Failed to load templates',
       color: 'error',
-    })
-  }
-  finally {
-    isLoading.value = false
+    });
+  } finally {
+    isLoading.value = false;
   }
 }
 
 async function selectTemplate(template: Template) {
   try {
-    selectedTemplate.value = template
+    selectedTemplate.value = template;
     const response = await $fetch<{ data: { id: string; content: string; updatedAt: string } }>(
       `/api/admin/settings/email-templates/${template.id}`,
-    )
-    templateContent.value = response.data.content
-  }
-  catch {
+    );
+    templateContent.value = response.data.content;
+  } catch {
     toast.add({
       title: 'Error',
       description: `Failed to load template: ${template.name}`,
       color: 'error',
-    })
+    });
   }
 }
 
 async function saveTemplate() {
-  if (!selectedTemplate.value) return
+  if (!selectedTemplate.value) return;
 
   try {
-    isSaving.value = true
+    isSaving.value = true;
     await $fetch(`/api/admin/settings/email-templates/${selectedTemplate.value.id}`, {
       method: 'PATCH',
       body: {
         content: templateContent.value,
       },
-    })
+    });
     toast.add({
       title: 'Success',
       description: `Template "${selectedTemplate.value.name}" updated successfully`,
       color: 'success',
-    })
-  }
-  catch {
+    });
+  } catch {
     toast.add({
       title: 'Error',
       description: 'Failed to save template',
       color: 'error',
-    })
-  }
-  finally {
-    isSaving.value = false
+    });
+  } finally {
+    isSaving.value = false;
   }
 }
 
 async function previewTemplate() {
-  if (!selectedTemplate.value) return
+  if (!selectedTemplate.value) return;
 
   try {
-    isPreviewing.value = true
+    isPreviewing.value = true;
 
     if (!previewData.value) {
       previewData.value = {
         subject: `Preview of ${selectedTemplate.value.name}`,
         variables: {},
-      }
+      };
 
       for (const variable of selectedTemplate.value.variables) {
         if (!['appName', 'year'].includes(variable)) {
-          previewData.value.variables[variable] = `{{ ${variable} }}`
+          previewData.value.variables[variable] = `{{ ${variable} }}`;
         }
       }
     }
@@ -186,25 +204,23 @@ async function previewTemplate() {
           },
         },
       },
-    )
+    );
 
-    previewHtml.value = response.data.html || ''
-    isPreviewMode.value = true
-  }
-  catch {
+    previewHtml.value = response.data.html || '';
+    isPreviewMode.value = true;
+  } catch {
     toast.add({
       title: 'Error',
       description: 'Failed to preview template',
       color: 'error',
-    })
-  }
-  finally {
-    isPreviewing.value = false
+    });
+  } finally {
+    isPreviewing.value = false;
   }
 }
 
 async function resetTemplate() {
-  if (!selectedTemplate.value) return
+  if (!selectedTemplate.value) return;
 
   const confirmed = await new Promise<boolean>((resolve) => {
     toast.add({
@@ -224,52 +240,47 @@ async function resetTemplate() {
           onClick: () => resolve(false),
         },
       ],
-    })
-  })
+    });
+  });
 
-  if (!confirmed) return
+  if (!confirmed) return;
 
   try {
-    isResetting.value = true
-    await $fetch(
-      `/api/admin/settings/email-templates/${selectedTemplate.value.id}/reset`,
-      {
-        method: 'POST',
-      }
-    )
+    isResetting.value = true;
+    await $fetch(`/api/admin/settings/email-templates/${selectedTemplate.value.id}/reset`, {
+      method: 'POST',
+    });
 
     const response = await $fetch<{ data: { id: string; content: string; updatedAt: string } }>(
       `/api/admin/settings/email-templates/${selectedTemplate.value.id}`,
-    )
-    templateContent.value = response.data.content
+    );
+    templateContent.value = response.data.content;
 
     toast.add({
       title: 'Success',
       description: `Template reset to default`,
       color: 'success',
-    })
-  }
-  catch {
+    });
+  } catch {
     toast.add({
       title: 'Error',
       description: 'Failed to reset template',
       color: 'error',
-    })
-  }
-  finally {
-    isResetting.value = false
+    });
+  } finally {
+    isResetting.value = false;
   }
 }
 
 function cancelEdit() {
   if (isPreviewMode.value) {
-    isPreviewMode.value = false
-    previewData.value = null
-    previewHtml.value = ''
+    isPreviewMode.value = false;
+    previewData.value = null;
+    previewHtml.value = '';
   } else {
-    selectedTemplate.value = null
-    templateContent.value = ''
-    previewData.value = null
+    selectedTemplate.value = null;
+    templateContent.value = '';
+    previewData.value = null;
   }
 }
 </script>
@@ -292,9 +303,7 @@ function cancelEdit() {
             :key="template.id"
             :class="[
               'p-3 rounded-lg cursor-pointer transition-colors border-2',
-              selectedTemplate?.id === template.id
-                ? 'border-primary'
-                : 'border-transparent'
+              selectedTemplate?.id === template.id ? 'border-primary' : 'border-transparent',
             ]"
             @click="selectTemplate(template)"
           >
@@ -317,13 +326,7 @@ function cancelEdit() {
             </div>
 
             <div class="flex justify-end gap-2">
-              <UButton
-                color="error"
-                variant="ghost"
-                @click="cancelEdit"
-              >
-                Back to Editor
-              </UButton>
+              <UButton color="error" variant="ghost" @click="cancelEdit"> Back to Editor </UButton>
             </div>
           </div>
 
@@ -332,13 +335,21 @@ function cancelEdit() {
               <h3 class="font-semibold text-sm">Available Variables</h3>
               <div class="bg-muted/50 rounded-lg p-3 border border-default">
                 <code class="text-xs font-mono text-foreground block space-y-1">
-                  <div v-for="variable in selectedTemplate.variables" :key="variable" class="text-primary">
+                  <div
+                    v-for="variable in selectedTemplate.variables"
+                    :key="variable"
+                    class="text-primary"
+                  >
                     {{ variable }}
                   </div>
                 </code>
               </div>
               <p class="text-xs text-muted-foreground">
-                Use <code class="bg-muted px-1.5 py-0.5 rounded">&#123;&#123; variableName &#125;&#125;</code> syntax in your template
+                Use
+                <code class="bg-muted px-1.5 py-0.5 rounded"
+                  >&#123;&#123; variableName &#125;&#125;</code
+                >
+                syntax in your template
               </p>
             </div>
 
@@ -359,40 +370,21 @@ function cancelEdit() {
                 />
               </UEditor>
               <p class="text-xs text-muted-foreground mt-2">
-                Use <code class="bg-muted px-1.5 py-0.5 rounded">\{\{ variableName \}\}</code> syntax for dynamic content
+                Use
+                <code class="bg-muted px-1.5 py-0.5 rounded">\{\{ variableName \}\}</code> syntax
+                for dynamic content
               </p>
             </div>
 
             <div class="flex justify-end gap-2">
-              <UButton
-                color="error"
-                variant="ghost"
-                @click="cancelEdit"
-              >
-                Cancel
-              </UButton>
-              <UButton
-                :loading="isResetting"
-                color="warning"
-                variant="soft"
-                @click="resetTemplate"
-              >
+              <UButton color="error" variant="ghost" @click="cancelEdit"> Cancel </UButton>
+              <UButton :loading="isResetting" color="warning" variant="soft" @click="resetTemplate">
                 Reset to Default
               </UButton>
-              <UButton
-                :loading="isPreviewing"
-                color="info"
-                variant="soft"
-                @click="previewTemplate"
-              >
+              <UButton :loading="isPreviewing" color="info" variant="soft" @click="previewTemplate">
                 Preview
               </UButton>
-              <UButton
-                :loading="isSaving"
-                color="primary"
-                variant="subtle"
-                @click="saveTemplate"
-              >
+              <UButton :loading="isSaving" color="primary" variant="subtle" @click="saveTemplate">
                 Save Changes
               </UButton>
             </div>
@@ -403,6 +395,5 @@ function cancelEdit() {
         </div>
       </div>
     </div>
-
   </div>
 </template>

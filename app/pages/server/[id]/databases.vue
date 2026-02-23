@@ -1,61 +1,72 @@
 <script setup lang="ts">
-import type { ServerDatabase } from '#shared/types/server'
+import type { ServerDatabase } from '#shared/types/server';
 
-const route = useRoute()
+const route = useRoute();
 
 definePageMeta({
   auth: true,
-})
+});
 
-const { t } = useI18n()
-const serverId = computed(() => route.params.id as string)
-const requestFetch = useRequestFetch()
+const { t } = useI18n();
+const serverId = computed(() => route.params.id as string);
+const requestFetch = useRequestFetch();
 
-const { data: databasesData, pending, error } = await useAsyncData(
+const {
+  data: databasesData,
+  pending,
+  error,
+} = await useAsyncData(
   `server-${serverId.value}-databases`,
-  () => requestFetch<{ data: ServerDatabase[], hostAvailable: boolean }>(`/api/client/servers/${serverId.value}/databases`),
+  () =>
+    requestFetch<{ data: ServerDatabase[]; hostAvailable: boolean }>(
+      `/api/client/servers/${serverId.value}/databases`,
+    ),
   {
     watch: [serverId],
   },
-)
+);
 
-const databases = computed<ServerDatabase[]>(() => (databasesData.value as { data: ServerDatabase[] } | null)?.data ?? [])
-const hostAvailable = computed(() => (databasesData.value as { hostAvailable?: boolean } | null)?.hostAvailable ?? true)
+const databases = computed<ServerDatabase[]>(
+  () => (databasesData.value as { data: ServerDatabase[] } | null)?.data ?? [],
+);
+const hostAvailable = computed(
+  () => (databasesData.value as { hostAvailable?: boolean } | null)?.hostAvailable ?? true,
+);
 
 function getStatusColor(status: string) {
   switch (status) {
     case 'ready':
-      return 'primary'
+      return 'primary';
     case 'revoking':
-      return 'warning'
+      return 'warning';
     case 'error':
-      return 'error'
+      return 'error';
     default:
-      return 'neutral'
+      return 'neutral';
   }
 }
 
 function getStatusLabel(status: string) {
   switch (status) {
     case 'ready':
-      return t('server.databases.statusReady')
+      return t('server.databases.statusReady');
     case 'revoking':
-      return t('server.databases.statusRevoking')
+      return t('server.databases.statusRevoking');
     case 'error':
-      return t('server.databases.statusError')
+      return t('server.databases.statusError');
     default:
-      return status.charAt(0).toUpperCase() + status.slice(1)
+      return status.charAt(0).toUpperCase() + status.slice(1);
   }
 }
 
-const showCreateModal = ref(false)
-const showPasswordModal = ref(false)
-const selectedDatabase = ref<(ServerDatabase & { password?: string }) | null>(null)
-const operatingDatabaseId = ref<string | null>(null)
+const showCreateModal = ref(false);
+const showPasswordModal = ref(false);
+const selectedDatabase = ref<(ServerDatabase & { password?: string }) | null>(null);
+const operatingDatabaseId = ref<string | null>(null);
 const newDatabaseForm = ref({
   name: '',
   remote: '%',
-})
+});
 
 async function createDatabase() {
   if (!newDatabaseForm.value.name) {
@@ -63,18 +74,24 @@ async function createDatabase() {
       title: t('validation.required'),
       description: t('validation.required'),
       color: 'error',
-    })
-    return
+    });
+    return;
   }
 
   try {
-    const response = await $fetch<{ data: { id: string; name: string; username: string; password: string; host: string; port: number } }>(
-      `/api/client/servers/${serverId.value}/databases`,
-      {
-        method: 'POST',
-        body: newDatabaseForm.value,
-      },
-    )
+    const response = await $fetch<{
+      data: {
+        id: string;
+        name: string;
+        username: string;
+        password: string;
+        host: string;
+        port: number;
+      };
+    }>(`/api/client/servers/${serverId.value}/databases`, {
+      method: 'POST',
+      body: newDatabaseForm.value,
+    });
 
     selectedDatabase.value = {
       id: response.data.id,
@@ -86,101 +103,98 @@ async function createDatabase() {
       status: 'ready',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-    } as ServerDatabase & { password: string }
+    } as ServerDatabase & { password: string };
 
-    showPasswordModal.value = true
+    showPasswordModal.value = true;
 
     useToast().add({
       title: t('common.success'),
       description: t('server.databases.databaseCreatedDescription', { name: response.data.name }),
       color: 'success',
-    })
+    });
 
-    showCreateModal.value = false
-    newDatabaseForm.value = { name: '', remote: '%' }
+    showCreateModal.value = false;
+    newDatabaseForm.value = { name: '', remote: '%' };
 
-    await refreshNuxtData(`server-${serverId.value}-databases`)
-  }
-  catch (err) {
+    await refreshNuxtData(`server-${serverId.value}-databases`);
+  } catch (err) {
     useToast().add({
       title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.databases.createFailed'),
       color: 'error',
-    })
+    });
   }
 }
 
 async function rotatePassword(databaseId: string) {
-  operatingDatabaseId.value = databaseId
+  operatingDatabaseId.value = databaseId;
   try {
     const response = await $fetch<{ data: { password: string } }>(
       `/api/client/servers/${serverId.value}/databases/${databaseId}/rotate`,
       {
         method: 'POST',
       },
-    )
+    );
 
-    const db = databases.value.find(database => database.id === databaseId)
+    const db = databases.value.find((database) => database.id === databaseId);
     if (db) {
-      selectedDatabase.value = { ...db, password: response.data.password } as ServerDatabase & { password: string }
-      showPasswordModal.value = true
+      selectedDatabase.value = { ...db, password: response.data.password } as ServerDatabase & {
+        password: string;
+      };
+      showPasswordModal.value = true;
     }
 
     useToast().add({
       title: t('common.success'),
       description: t('server.databases.passwordRotatedDescription'),
       color: 'success',
-    })
-  }
-  catch (err) {
+    });
+  } catch (err) {
     useToast().add({
       title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.databases.rotationFailed'),
       color: 'error',
-    })
-  }
-  finally {
-    operatingDatabaseId.value = null
+    });
+  } finally {
+    operatingDatabaseId.value = null;
   }
 }
 
-const showDeleteModal = ref(false)
-const databaseToDelete = ref<string | null>(null)
+const showDeleteModal = ref(false);
+const databaseToDelete = ref<string | null>(null);
 
 function confirmDelete(databaseId: string) {
-  databaseToDelete.value = databaseId
-  showDeleteModal.value = true
+  databaseToDelete.value = databaseId;
+  showDeleteModal.value = true;
 }
 
 async function deleteDatabase() {
-  if (!databaseToDelete.value) return
+  if (!databaseToDelete.value) return;
 
-  operatingDatabaseId.value = databaseToDelete.value
+  operatingDatabaseId.value = databaseToDelete.value;
   try {
     await $fetch(`/api/client/servers/${serverId.value}/databases/${databaseToDelete.value}`, {
       method: 'DELETE',
-    })
+    });
 
     useToast().add({
       title: t('common.success'),
       description: t('server.databases.databaseDeletedDescription'),
       color: 'success',
-    })
+    });
 
-    showDeleteModal.value = false
-    databaseToDelete.value = null
+    showDeleteModal.value = false;
+    databaseToDelete.value = null;
 
-    await refreshNuxtData(`server-${serverId.value}-databases`)
-  }
-  catch (err) {
+    await refreshNuxtData(`server-${serverId.value}-databases`);
+  } catch (err) {
     useToast().add({
       title: t('common.error'),
       description: err instanceof Error ? err.message : t('server.databases.deleteFailed'),
       color: 'error',
-    })
-  }
-  finally {
-    operatingDatabaseId.value = null
+    });
+  } finally {
+    operatingDatabaseId.value = null;
   }
 }
 </script>
@@ -190,7 +204,6 @@ async function deleteDatabase() {
     <UPageBody>
       <UContainer>
         <section class="space-y-6">
-
           <UCard>
             <template #header>
               <div class="flex flex-wrap items-center justify-between gap-2">
@@ -218,7 +231,10 @@ async function deleteDatabase() {
               class="mb-4"
             />
 
-            <div v-if="error" class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error">
+            <div
+              v-if="error"
+              class="rounded-lg border border-error/20 bg-error/5 p-4 text-sm text-error"
+            >
               <div class="flex items-start gap-2">
                 <UIcon name="i-lucide-alert-circle" class="mt-0.5 size-4" />
                 <div>
@@ -240,7 +256,9 @@ async function deleteDatabase() {
             />
 
             <div v-else class="overflow-hidden rounded-lg border border-default">
-              <div class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              <div
+                class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
                 <span class="col-span-3">{{ t('server.databases.name') }}</span>
                 <span class="col-span-3">{{ t('server.databases.host') }}</span>
                 <span class="col-span-3">{{ t('server.databases.username') }}</span>
@@ -384,11 +402,7 @@ async function deleteDatabase() {
 
       <template #footer>
         <div class="flex justify-end">
-          <UButton
-            icon="i-lucide-check"
-            color="primary"
-            @click="showPasswordModal = false"
-          >
+          <UButton icon="i-lucide-check" color="primary" @click="showPasswordModal = false">
             {{ t('server.databases.iveSavedIt') }}
           </UButton>
         </div>
@@ -406,7 +420,9 @@ async function deleteDatabase() {
             <template #title>{{ t('common.warning') }}</template>
             <template #description>
               <span>{{ t('server.databases.confirmDeleteDatabaseDescription') }}</span>
-              <span class="mt-1 block text-sm text-muted-foreground">{{ t('common.irreversibleAction') }}</span>
+              <span class="mt-1 block text-sm text-muted-foreground">{{
+                t('common.irreversibleAction')
+              }}</span>
             </template>
           </UAlert>
 

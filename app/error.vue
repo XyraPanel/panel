@@ -1,46 +1,46 @@
 <script setup lang="ts">
-import { clearError, useRequestURL } from '#app'
-import type { NuxtError } from '#app'
+import { clearError, useRequestURL } from '#app';
+import type { NuxtError } from '#app';
 
-const props = defineProps<{ error: NuxtError }>()
-const requestURL = useRequestURL()
-const { t } = useI18n()
+const props = defineProps<{ error: NuxtError }>();
+const requestURL = useRequestURL();
+const { t } = useI18n();
 
 const headline = computed(() => {
-  if (props.error.statusCode === 404) return t('errors.pageNotFound')
-  return t('errors.unexpectedPanelError')
-})
+  if (props.error.statusCode === 404) return t('errors.pageNotFound');
+  return t('errors.unexpectedPanelError');
+});
 
 const description = computed(() => {
   if (props.error.statusCode === 404) {
-    const url = requestURL.href
+    const url = requestURL.href;
     if (url.includes('/api/')) {
-      return t('errors.apiEndpointNotFound')
+      return t('errors.apiEndpointNotFound');
     }
     if (url.includes('/server/')) {
-      return t('errors.serverPageNotFound')
+      return t('errors.serverPageNotFound');
     }
-    return t('errors.pageNotFoundDescription')
+    return t('errors.pageNotFoundDescription');
   }
   if (props.error.statusCode === 401) {
-    return t('errors.authenticationRequired')
+    return t('errors.authenticationRequired');
   }
   if (props.error.statusCode === 500) {
-    return t('errors.internalServerError')
+    return t('errors.internalServerError');
   }
-  return props.error.statusMessage || t('errors.noAdditionalContext')
-})
+  return props.error.statusMessage || t('errors.noAdditionalContext');
+});
 
 const requestedUrl = computed(() => {
-  const dataUrl = (props.error.data as { url?: string } | undefined)?.url
-  return dataUrl ?? requestURL.href
-})
+  const dataUrl = (props.error.data as { url?: string } | undefined)?.url;
+  return dataUrl ?? requestURL.href;
+});
 
 interface QuickLink {
-  label: string
-  icon: string
-  to?: string
-  action?: () => void
+  label: string;
+  icon: string;
+  to?: string;
+  action?: () => void;
 }
 
 const quickLinks = computed<QuickLink[]>(() => [
@@ -49,17 +49,17 @@ const quickLinks = computed<QuickLink[]>(() => [
     icon: 'i-lucide-arrow-left',
     action: () => {
       if (import.meta.client && window.history.length > 1) {
-        window.history.back()
+        window.history.back();
       } else {
-        clearError({ redirect: '/' })
+        clearError({ redirect: '/' });
       }
     },
   },
   { label: t('errors.adminDashboard'), icon: 'i-lucide-layout-dashboard', to: '/admin' },
   { label: t('errors.home'), icon: 'i-lucide-home', to: '/' },
-])
+]);
 
-const handleReset = () => clearError({ redirect: '/' })
+const handleReset = () => clearError({ redirect: '/' });
 </script>
 
 <template>
@@ -71,15 +71,29 @@ const handleReset = () => clearError({ redirect: '/' })
             <h1 class="text-2xl font-semibold">{{ headline }}</h1>
             <p class="text-sm text-muted-foreground">{{ description }}</p>
           </div>
-          <div class="rounded-md border border-default bg-muted/40 px-4 py-3 text-xs text-muted-foreground">
+          <div
+            class="rounded-md border border-default bg-muted/40 px-4 py-3 text-xs text-muted-foreground"
+          >
             {{ t('errors.requestedResource') }} <code>{{ requestedUrl }}</code>
           </div>
           <div class="flex flex-wrap justify-center gap-2">
-            <UButton v-for="link in quickLinks" :key="link.label" :icon="link.icon" :to="link.to" color="primary"
-              variant="subtle" @click="link.action ? link.action() : undefined">
+            <UButton
+              v-for="link in quickLinks"
+              :key="link.label"
+              :icon="link.icon"
+              :to="link.to"
+              color="primary"
+              variant="subtle"
+              @click="link.action ? link.action() : undefined"
+            >
               {{ link.label }}
             </UButton>
-            <UButton icon="i-lucide-refresh-ccw" variant="ghost" color="neutral" @click="handleReset">
+            <UButton
+              icon="i-lucide-refresh-ccw"
+              variant="ghost"
+              color="neutral"
+              @click="handleReset"
+            >
               {{ t('errors.tryAgain') }}
             </UButton>
           </div>

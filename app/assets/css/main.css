@@ -1,11 +1,11 @@
 /* If your overriding styling, and your overrides are for components within the panel,
  you should probably use the app.config.ts file to override the components. */
 
-@import "tailwindcss";
-@import "@nuxt/ui";
+@import 'tailwindcss';
+@import '@nuxt/ui';
 
 :root {
-  --font-sans: "Inter", sans-serif;
+  --font-sans: 'Inter', sans-serif;
 }
 
 .default-layout,

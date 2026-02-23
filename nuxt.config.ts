@@ -1,6 +1,6 @@
 /// <reference types="@vite-pwa/nuxt" />
 
-const isDev = process.env.NODE_ENV !== 'production'
+const isDev = process.env.NODE_ENV !== 'production';
 
 const redisStorageConfig = {
   host: process.env.REDIS_HOST || (isDev ? 'localhost' : 'redis'),
@@ -8,7 +8,7 @@ const redisStorageConfig = {
   username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
   tls: process.env.REDIS_TLS === 'true',
-}
+};
 
 const redisRateLimiterOptions = {
   host: process.env.REDIS_HOST || (isDev ? 'localhost' : 'redis'),
@@ -16,59 +16,66 @@ const redisRateLimiterOptions = {
   username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
   ...(process.env.REDIS_TLS === 'true' ? { tls: {} } : {}),
-}
+};
 
-const authOrigin = process.env.BETTER_AUTH_URL
-  || process.env.AUTH_ORIGIN
-  || process.env.NUXT_AUTH_ORIGIN
-  || process.env.NUXT_PUBLIC_APP_URL
-  || process.env.APP_URL
-  || 'http://localhost:3000'
+const authOrigin =
+  process.env.BETTER_AUTH_URL ||
+  process.env.AUTH_ORIGIN ||
+  process.env.NUXT_AUTH_ORIGIN ||
+  process.env.NUXT_PUBLIC_APP_URL ||
+  process.env.APP_URL ||
+  'http://localhost:3000';
 
-const appOrigin = process.env.NUXT_SECURITY_CORS_ORIGIN
-  || authOrigin
+const appOrigin = process.env.NUXT_SECURITY_CORS_ORIGIN || authOrigin;
 
 const allowedOrigins = process.env.NUXT_SECURITY_CORS_ORIGIN
-  ? process.env.NUXT_SECURITY_CORS_ORIGIN.split(',').map(origin => origin.trim()).filter(Boolean)
+  ? process.env.NUXT_SECURITY_CORS_ORIGIN.split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean)
   : appOrigin === 'http://localhost:3000'
     ? ['*'] // Dev - allow all
-    : [appOrigin] // Production - only allow configured origin (no localhost)
+    : [appOrigin]; // Production - only allow configured origin (no localhost)
 
 const extraConnectSources = process.env.NUXT_SECURITY_CONNECT_SRC
-  ? process.env.NUXT_SECURITY_CONNECT_SRC.split(',').map(entry => entry.trim()).filter(Boolean)
-  : []
+  ? process.env.NUXT_SECURITY_CONNECT_SRC.split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+  : [];
 
-const connectSrcDirectives = ["'self'", 'https:', 'wss:', 'ws:', ...extraConnectSources]
-const enableCspReportOnly = process.env.NUXT_SECURITY_CSP_REPORT_ONLY === 'true'
-const cspReportUri = process.env.NUXT_SECURITY_CSP_REPORT_URI?.trim() || null
-const hasRedisRateLimitConfig = Boolean(process.env.REDIS_HOST && process.env.REDIS_PORT)
-const preferredRateLimiterDriver = (process.env.NUXT_SECURITY_RATE_LIMIT_DRIVER || 'lruCache').trim()
-const shouldUseRedisRateLimiter = !isDev && preferredRateLimiterDriver === 'redis' && hasRedisRateLimitConfig
+const connectSrcDirectives = ["'self'", 'https:', 'wss:', 'ws:', ...extraConnectSources];
+const enableCspReportOnly = process.env.NUXT_SECURITY_CSP_REPORT_ONLY === 'true';
+const cspReportUri = process.env.NUXT_SECURITY_CSP_REPORT_URI?.trim() || null;
+const hasRedisRateLimitConfig = Boolean(process.env.REDIS_HOST && process.env.REDIS_PORT);
+const preferredRateLimiterDriver = (
+  process.env.NUXT_SECURITY_RATE_LIMIT_DRIVER || 'lruCache'
+).trim();
+const shouldUseRedisRateLimiter =
+  !isDev && preferredRateLimiterDriver === 'redis' && hasRedisRateLimitConfig;
 
 const globalRateLimiterDriver = shouldUseRedisRateLimiter
-  ? {
+  ? ({
       name: 'redis',
       options: redisRateLimiterOptions,
-    } as const
-  : {
+    } as const)
+  : ({
       name: 'lruCache',
-    } as const
+    } as const);
 
 const globalRateLimiterTokens = process.env.NUXT_SECURITY_RATE_LIMIT_TOKENS
   ? Number.parseInt(process.env.NUXT_SECURITY_RATE_LIMIT_TOKENS, 10)
-  : 150
+  : 150;
 
 const globalRateLimiterInterval = process.env.NUXT_SECURITY_RATE_LIMIT_INTERVAL_MS
   ? Number.parseInt(process.env.NUXT_SECURITY_RATE_LIMIT_INTERVAL_MS, 10)
-  : 300000
+  : 300000;
 
 const maxRequestSize = process.env.NUXT_MAX_REQUEST_SIZE_MB
   ? Number.parseInt(process.env.NUXT_MAX_REQUEST_SIZE_MB) * 1024 * 1024
-  : 4 * 1024 * 1024
+  : 4 * 1024 * 1024;
 
 const maxUploadSize = process.env.NUXT_MAX_UPLOAD_SIZE_MB
   ? Number.parseInt(process.env.NUXT_MAX_UPLOAD_SIZE_MB) * 1024 * 1024
-  : 20 * 1024 * 1024
+  : 20 * 1024 * 1024;
 
 export default defineNuxtConfig({
   compatibilityDate: '2026-02-12',
@@ -91,11 +98,11 @@ export default defineNuxtConfig({
     '@nuxt/a11y',
     '@nuxt/hints',
   ],
-vite: {
-  ssr: {
-    noExternal: ['drizzle-orm'],
+  vite: {
+    ssr: {
+      noExternal: ['drizzle-orm'],
+    },
   },
-},
   routeRules: {
     '/admin/**': {
       appLayout: 'admin',
@@ -284,7 +291,7 @@ vite: {
       display: 'standalone',
       scope: '/',
       start_url: '/',
-icons: [
+      icons: [
         {
           src: '/favicon.ico',
           sizes: '64x64 32x32 24x24 16x16',
@@ -376,22 +383,27 @@ icons: [
     removeSourceMaps: true,
   },
 
-  ...(process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY ? {
-    turnstile: {
-      siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY,
-    },
-  } : {}),
+  ...(process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY
+    ? {
+        turnstile: {
+          siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY,
+        },
+      }
+    : {}),
 
   runtimeConfig: {
     authOrigin,
-    authSecret: process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET || process.env.NUXT_AUTH_SECRET,
+    authSecret:
+      process.env.BETTER_AUTH_SECRET || process.env.AUTH_SECRET || process.env.NUXT_AUTH_SECRET,
     redis: redisStorageConfig,
     turnstile: {
       secretKey: process.env.NUXT_TURNSTILE_SECRET_KEY || '',
     },
     recaptcha: {
       secretKey: process.env.NUXT_RECAPTCHA_SECRET_KEY || '',
-      minScore: process.env.NUXT_RECAPTCHA_MIN_SCORE ? Number.parseFloat(process.env.NUXT_RECAPTCHA_MIN_SCORE) : 0.5,
+      minScore: process.env.NUXT_RECAPTCHA_MIN_SCORE
+        ? Number.parseFloat(process.env.NUXT_RECAPTCHA_MIN_SCORE)
+        : 0.5,
     },
     hcaptcha: {
       secretKey: process.env.NUXT_HCAPTCHA_SECRET_KEY || '',
@@ -429,108 +441,116 @@ icons: [
       appName: process.env.APP_NAME || 'XyraPanel',
       debug: process.env.DEBUG === 'true',
       panel: {
-        baseUrl: process.env.NUXT_PUBLIC_PANEL_BASE_URL || process.env.NUXT_PUBLIC_APP_URL || process.env.APP_URL || 'http://localhost:3000',
+        baseUrl:
+          process.env.NUXT_PUBLIC_PANEL_BASE_URL ||
+          process.env.NUXT_PUBLIC_APP_URL ||
+          process.env.APP_URL ||
+          'http://localhost:3000',
       },
       turnstile: {
         siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY || '',
       },
       i18n: {
-        baseUrl: process.env.NUXT_PUBLIC_I18N_BASE_URL || appOrigin || authOrigin || 'http://localhost:3000',
+        baseUrl:
+          process.env.NUXT_PUBLIC_I18N_BASE_URL ||
+          appOrigin ||
+          authOrigin ||
+          'http://localhost:3000',
       },
     },
   },
 
   security: isDev
     ? {
-      headers: {
-        contentSecurityPolicy: false,
-        crossOriginEmbedderPolicy: 'unsafe-none',
-        crossOriginOpenerPolicy: 'unsafe-none',
-        originAgentCluster: false,
-      },
-      corsHandler: {
-        origin: '*',
-        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-        credentials: true,
-        preflight: { statusCode: 204 },
-      },
-      requestSizeLimiter: {
-        maxRequestSizeInBytes: maxRequestSize,
-        maxUploadFileRequestInBytes: maxUploadSize,
-        throwError: true,
-      },
-      rateLimiter: false,
-    }
-    : {
-      headers: {
-        ...(enableCspReportOnly
-          ? {
-              contentSecurityPolicyReportOnly: {
-                'default-src': ["'self'"],
-                'connect-src': connectSrcDirectives,
-                'img-src': ["'self'", 'data:', 'https:', 'blob:'],
-                'style-src': ["'self'", 'https:', "'unsafe-inline'"],
-                'font-src': ["'self'", 'https:', 'data:'],
-                'script-src': ["'strict-dynamic'", "'nonce-{{nonce}}'", "'self'", 'https:'],
-                'frame-src': ["'self'", 'https://challenges.cloudflare.com'],
-                'object-src': ["'none'"],
-                'base-uri': ["'self'"],
-                'form-action': ["'self'"],
-                'frame-ancestors': ["'none'"],
-                ...(cspReportUri ? { 'report-uri': [cspReportUri] } : {}),
-                'upgrade-insecure-requests': true,
-              },
-              contentSecurityPolicy: false,
-            }
-          : {
-              contentSecurityPolicy: {
-                'default-src': ["'self'"],
-                'connect-src': connectSrcDirectives,
-                'img-src': ["'self'", 'data:', 'https:', 'blob:'],
-                'style-src': ["'self'", 'https:', "'unsafe-inline'"],
-                'font-src': ["'self'", 'https:', 'data:'],
-                'script-src': ["'strict-dynamic'", "'nonce-{{nonce}}'", "'self'", 'https:'],
-                'frame-src': ["'self'", 'https://challenges.cloudflare.com'],
-                'object-src': ["'none'"],
-                'base-uri': ["'self'"],
-                'form-action': ["'self'"],
-                'frame-ancestors': ["'none'"],
-                ...(cspReportUri ? { 'report-uri': [cspReportUri] } : {}),
-                'upgrade-insecure-requests': true,
-              },
-            }),
-        crossOriginEmbedderPolicy: 'unsafe-none',
-        crossOriginOpenerPolicy: 'same-origin-allow-popups',
-        crossOriginResourcePolicy: 'cross-origin',
-        originAgentCluster: false,
-        strictTransportSecurity: {
-          maxAge: 31536000,
-          includeSubdomains: true,
-          preload: true,
+        headers: {
+          contentSecurityPolicy: false,
+          crossOriginEmbedderPolicy: 'unsafe-none',
+          crossOriginOpenerPolicy: 'unsafe-none',
+          originAgentCluster: false,
         },
-        xFrameOptions: 'DENY',
-        xXSSProtection: '1; mode=block',
-        referrerPolicy: 'strict-origin-when-cross-origin',
+        corsHandler: {
+          origin: '*',
+          methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+          credentials: true,
+          preflight: { statusCode: 204 },
+        },
+        requestSizeLimiter: {
+          maxRequestSizeInBytes: maxRequestSize,
+          maxUploadFileRequestInBytes: maxUploadSize,
+          throwError: true,
+        },
+        rateLimiter: false,
+      }
+    : {
+        headers: {
+          ...(enableCspReportOnly
+            ? {
+                contentSecurityPolicyReportOnly: {
+                  'default-src': ["'self'"],
+                  'connect-src': connectSrcDirectives,
+                  'img-src': ["'self'", 'data:', 'https:', 'blob:'],
+                  'style-src': ["'self'", 'https:', "'unsafe-inline'"],
+                  'font-src': ["'self'", 'https:', 'data:'],
+                  'script-src': ["'strict-dynamic'", "'nonce-{{nonce}}'", "'self'", 'https:'],
+                  'frame-src': ["'self'", 'https://challenges.cloudflare.com'],
+                  'object-src': ["'none'"],
+                  'base-uri': ["'self'"],
+                  'form-action': ["'self'"],
+                  'frame-ancestors': ["'none'"],
+                  ...(cspReportUri ? { 'report-uri': [cspReportUri] } : {}),
+                  'upgrade-insecure-requests': true,
+                },
+                contentSecurityPolicy: false,
+              }
+            : {
+                contentSecurityPolicy: {
+                  'default-src': ["'self'"],
+                  'connect-src': connectSrcDirectives,
+                  'img-src': ["'self'", 'data:', 'https:', 'blob:'],
+                  'style-src': ["'self'", 'https:', "'unsafe-inline'"],
+                  'font-src': ["'self'", 'https:', 'data:'],
+                  'script-src': ["'strict-dynamic'", "'nonce-{{nonce}}'", "'self'", 'https:'],
+                  'frame-src': ["'self'", 'https://challenges.cloudflare.com'],
+                  'object-src': ["'none'"],
+                  'base-uri': ["'self'"],
+                  'form-action': ["'self'"],
+                  'frame-ancestors': ["'none'"],
+                  ...(cspReportUri ? { 'report-uri': [cspReportUri] } : {}),
+                  'upgrade-insecure-requests': true,
+                },
+              }),
+          crossOriginEmbedderPolicy: 'unsafe-none',
+          crossOriginOpenerPolicy: 'same-origin-allow-popups',
+          crossOriginResourcePolicy: 'cross-origin',
+          originAgentCluster: false,
+          strictTransportSecurity: {
+            maxAge: 31536000,
+            includeSubdomains: true,
+            preload: true,
+          },
+          xFrameOptions: 'DENY',
+          xXSSProtection: '1; mode=block',
+          referrerPolicy: 'strict-origin-when-cross-origin',
+        },
+        corsHandler: {
+          origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
+          methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+          credentials: true,
+          preflight: { statusCode: 204 },
+        },
+        requestSizeLimiter: {
+          maxRequestSizeInBytes: maxRequestSize,
+          maxUploadFileRequestInBytes: maxUploadSize,
+          throwError: true,
+        },
+        rateLimiter: {
+          tokensPerInterval: globalRateLimiterTokens,
+          interval: globalRateLimiterInterval,
+          headers: true,
+          driver: globalRateLimiterDriver,
+        },
+        nonce: true,
       },
-      corsHandler: {
-        origin: allowedOrigins.includes('*') ? '*' : allowedOrigins,
-        methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-        credentials: true,
-        preflight: { statusCode: 204 },
-      },
-      requestSizeLimiter: {
-        maxRequestSizeInBytes: maxRequestSize,
-        maxUploadFileRequestInBytes: maxUploadSize,
-        throwError: true,
-      },
-      rateLimiter: {
-        tokensPerInterval: globalRateLimiterTokens,
-        interval: globalRateLimiterInterval,
-        headers: true,
-        driver: globalRateLimiterDriver,
-      },
-      nonce: true,
-    },
 
   app: {
     head: {
@@ -538,8 +558,8 @@ icons: [
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     },
   },
-  site: { 
-    indexable: false, 
+  site: {
+    indexable: false,
   },
   robots: {
     blockAiBots: true, // Block AI bots from crawling !
@@ -621,7 +641,12 @@ icons: [
       '* * * * *': ['scheduler:process'],
       '*/2 * * * *': ['monitoring:collect-resources'],
       '0 * * * *': ['maintenance:prune-rate-limits'],
-      '0 2 * * *': ['maintenance:prune-audit-logs', 'maintenance:prune-sessions', 'maintenance:prune-tokens', 'maintenance:prune-backups'],
+      '0 2 * * *': [
+        'maintenance:prune-audit-logs',
+        'maintenance:prune-sessions',
+        'maintenance:prune-tokens',
+        'maintenance:prune-backups',
+      ],
       '0 3 * * 0': ['maintenance:prune-transfers'],
     },
     storage: {
@@ -637,4 +662,4 @@ icons: [
       },
     },
   },
-})
+});

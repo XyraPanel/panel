@@ -1,69 +1,69 @@
-import { randomUUID } from 'node:crypto'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import type { EggImportResponse, EggImportData } from '#shared/types/admin'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { eggImportSchema } from '#shared/schema/admin/eggs'
+import { randomUUID } from 'node:crypto';
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import type { EggImportResponse, EggImportData } from '#shared/types/admin';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { eggImportSchema } from '#shared/schema/admin/eggs';
 
 export default defineEventHandler(async (event): Promise<EggImportResponse> => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.EGGS, ADMIN_ACL_PERMISSIONS.WRITE)
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.EGGS, ADMIN_ACL_PERMISSIONS.WRITE);
 
-  const { nestId, eggData } = await readValidatedBodyWithLimit(event, eggImportSchema, BODY_SIZE_LIMITS.LARGE)
-  const typedEggData = eggData as EggImportData
+  const { nestId, eggData } = await readValidatedBodyWithLimit(
+    event,
+    eggImportSchema,
+    BODY_SIZE_LIMITS.LARGE,
+  );
+  const typedEggData = eggData as EggImportData;
 
   if (!nestId || !typedEggData) {
-    throw createError({ 
-      status: 400, 
+    throw createError({
+      status: 400,
       statusText: 'Nest ID and egg data are required',
-      message: 'Missing nestId or eggData in request body'
-    })
+      message: 'Missing nestId or eggData in request body',
+    });
   }
 
-  const metaVersion = typedEggData.meta?.version
-  const ACCEPTED_VERSIONS = ['PTDL_v1', 'PTDL_v2', 'v1', 'v2']
+  const metaVersion = typedEggData.meta?.version;
+  const ACCEPTED_VERSIONS = ['PTDL_v1', 'PTDL_v2', 'v1', 'v2'];
   if (metaVersion && !ACCEPTED_VERSIONS.includes(metaVersion)) {
-    throw createError({ 
-      status: 400, 
+    throw createError({
+      status: 400,
       statusText: 'Bad Request',
       message: `Invalid egg format version: "${metaVersion}". Expected one of: ${ACCEPTED_VERSIONS.join(', ')}`,
-    })
+    });
   }
 
   if (!typedEggData.name || !typedEggData.author) {
-    throw createError({ 
-      status: 400, 
+    throw createError({
+      status: 400,
       statusText: 'Bad Request',
       message: `Egg file is missing required fields: ${[!typedEggData.name && 'name', !typedEggData.author && 'author'].filter(Boolean).join(', ')}`,
-    })
+    });
   }
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
-  const [nest] = await db
-    .select()
-    .from(tables.nests)
-    .where(eq(tables.nests.id, nestId))
-    .limit(1)
+  const [nest] = await db.select().from(tables.nests).where(eq(tables.nests.id, nestId)).limit(1);
 
   if (!nest) {
-    throw createError({ status: 404, statusText: 'Nest not found' })
+    throw createError({ status: 404, statusText: 'Nest not found' });
   }
 
-  const now = new Date().toISOString()
-  const eggId = randomUUID()
+  const now = new Date().toISOString();
+  const eggId = randomUUID();
 
-  const dockerImages = typedEggData.docker_images || {}
-  const firstImage = Object.values(dockerImages)[0] || 'ghcr.io/pterodactyl/yolks:latest'
+  const dockerImages = typedEggData.docker_images || {};
+  const firstImage = Object.values(dockerImages)[0] || 'ghcr.io/pterodactyl/yolks:latest';
 
   const normalizeConfigField = (field: string | Record<string, unknown> | undefined): string => {
-    if (!field) return '{}'
-    if (typeof field === 'string') return field
-    return JSON.stringify(field)
-  }
+    if (!field) return '{}';
+    if (typeof field === 'string') return field;
+    return JSON.stringify(field);
+  };
 
   await db.insert(tables.eggs).values({
     id: eggId,
@@ -88,10 +88,10 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
     copyScriptFrom: null,
     createdAt: now,
     updatedAt: now,
-  })
+  });
 
   if (typedEggData.variables && typedEggData.variables.length > 0) {
-    const variableValues = typedEggData.variables.map(variable => ({
+    const variableValues = typedEggData.variables.map((variable) => ({
       id: randomUUID(),
       eggId,
       name: variable.name,
@@ -103,10 +103,10 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
       rules: variable.rules || 'required|string',
       createdAt: now,
       updatedAt: now,
-    }))
+    }));
 
     if (variableValues.length > 0) {
-      await db.insert(tables.eggVariables).values(variableValues)
+      await db.insert(tables.eggVariables).values(variableValues);
     }
   }
 
@@ -121,10 +121,10 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
       nestId,
       variableCount: typedEggData.variables?.length || 0,
     },
-  })
+  });
 
   return {
     success: true,
     data: { id: eggId },
-  }
-})
+  };
+});

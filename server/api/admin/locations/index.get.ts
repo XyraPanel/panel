@@ -1,17 +1,21 @@
-import { eq, sql } from 'drizzle-orm'
-import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import type { LocationWithNodeCount } from '#shared/types/admin'
+import { eq, sql } from 'drizzle-orm';
+import { requireAdmin } from '#server/utils/security';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import type { LocationWithNodeCount } from '#shared/types/admin';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
-  
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.LOCATIONS, ADMIN_ACL_PERMISSIONS.READ)
+  const session = await requireAdmin(event);
 
-  const db = useDrizzle()
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.LOCATIONS,
+    ADMIN_ACL_PERMISSIONS.READ,
+  );
+
+  const db = useDrizzle();
 
   const locations = await db
     .select({
@@ -25,16 +29,16 @@ export default defineEventHandler(async (event) => {
     .from(tables.locations)
     .leftJoin(tables.wingsNodes, eq(tables.wingsNodes.locationId, tables.locations.id))
     .groupBy(tables.locations.id)
-    .orderBy(tables.locations.short)
+    .orderBy(tables.locations.short);
 
-  const data: LocationWithNodeCount[] = locations.map(loc => ({
+  const data: LocationWithNodeCount[] = locations.map((loc) => ({
     id: loc.id,
     short: loc.short,
     long: loc.long,
     createdAt: new Date(loc.createdAt).toISOString(),
     updatedAt: new Date(loc.updatedAt).toISOString(),
     nodeCount: Number(loc.nodeCount) || 0,
-  }))
+  }));
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
@@ -44,7 +48,7 @@ export default defineEventHandler(async (event) => {
     metadata: {
       count: data.length,
     },
-  })
+  });
 
-  return { data }
-})
+  return { data };
+});

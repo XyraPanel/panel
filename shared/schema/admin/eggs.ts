@@ -1,14 +1,14 @@
-import { z } from 'zod'
-import type { EggImportData } from '#shared/types/admin'
+import { z } from 'zod';
+import type { EggImportData } from '#shared/types/admin';
 
-const jsonRecordSchema = z.record(z.string(), z.any()).optional()
+const jsonRecordSchema = z.record(z.string(), z.any()).optional();
 
 export const eggImportSchema = z.object({
   nestId: z.string().min(1),
   eggData: z.custom<EggImportData>(),
-})
+});
 
-export type EggImportInput = z.infer<typeof eggImportSchema>
+export type EggImportInput = z.infer<typeof eggImportSchema>;
 
 export const createEggSchema = z.object({
   nestId: z.string().uuid(),
@@ -29,6 +29,6 @@ export const createEggSchema = z.object({
   scriptEntry: z.string().optional(),
   scriptInstall: z.string().optional(),
   copyScriptFrom: z.string().optional(),
-})
+});
 
-export type CreateEggInput = z.infer<typeof createEggSchema>
+export type CreateEggInput = z.infer<typeof createEggSchema>;

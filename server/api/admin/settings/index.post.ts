@@ -1,47 +1,45 @@
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { adminSettingsPayloadSchema } from '#shared/schema/admin/settings'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { adminSettingsPayloadSchema } from '#shared/schema/admin/settings';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  const body = await readValidatedBodyWithLimit(event, adminSettingsPayloadSchema, BODY_SIZE_LIMITS.SMALL)
-  const db = useDrizzle()
+  const body = await readValidatedBodyWithLimit(
+    event,
+    adminSettingsPayloadSchema,
+    BODY_SIZE_LIMITS.SMALL,
+  );
+  const db = useDrizzle();
 
-  const updatedKeys: string[] = []
-  const deletedKeys: string[] = []
+  const updatedKeys: string[] = [];
+  const deletedKeys: string[] = [];
 
   for (const [key, value] of Object.entries(body)) {
     if (value === null) {
-      await db
-        .delete(tables.settings)
-        .where(eq(tables.settings.key, key))
-      deletedKeys.push(key)
-      continue
+      await db.delete(tables.settings).where(eq(tables.settings.key, key));
+      deletedKeys.push(key);
+      continue;
     }
 
     const [existing] = await db
       .select()
       .from(tables.settings)
       .where(eq(tables.settings.key, key))
-      .limit(1)
+      .limit(1);
 
-    const stringValue = String(value)
+    const stringValue = String(value);
 
     if (existing) {
-
       await db
         .update(tables.settings)
         .set({ value: stringValue })
-        .where(eq(tables.settings.key, key))
+        .where(eq(tables.settings.key, key));
     } else {
-
-      await db
-        .insert(tables.settings)
-        .values({ key, value: stringValue })
+      await db.insert(tables.settings).values({ key, value: stringValue });
     }
-    updatedKeys.push(key)
+    updatedKeys.push(key);
   }
 
   await recordAuditEventFromRequest(event, {
@@ -53,7 +51,7 @@ export default defineEventHandler(async (event) => {
       updatedKeys,
       deletedKeys,
     },
-  })
+  });
 
   return {
     data: {
@@ -62,5 +60,5 @@ export default defineEventHandler(async (event) => {
       updatedKeys,
       deletedKeys,
     },
-  }
-})
+  };
+});

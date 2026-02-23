@@ -68,14 +68,16 @@ export default defineEventHandler(async (event) => {
 
     const now = new Date();
 
-    await db.update(tables.users)
+    await db
+      .update(tables.users)
       .set({
         passwordResetRequired: false,
         updatedAt: now,
       })
       .where(eq(tables.users.id, user.id));
 
-    const revokedResult = await db.delete(tables.sessions)
+    const revokedResult = await db
+      .delete(tables.sessions)
       .where(eq(tables.sessions.userId, user.id));
 
     const revokedCount = (revokedResult as any)?.rowCount ?? 0;
@@ -95,16 +97,16 @@ export default defineEventHandler(async (event) => {
       success: true,
       revokedSessions: revokedCount,
     };
-  }
-  catch (error) {
-  if (error instanceof APIError) {
-    const statusCode = typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500
-    throw createError({
-      statusCode,
-      statusMessage: error.message || 'Failed to update password',
-    })
-  }
+  } catch (error) {
+    if (error instanceof APIError) {
+      const statusCode =
+        typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
+      throw createError({
+        statusCode,
+        statusMessage: error.message || 'Failed to update password',
+      });
+    }
 
-  throw error
+    throw error;
   }
 });

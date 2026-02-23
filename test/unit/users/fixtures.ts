@@ -1,37 +1,37 @@
 export interface BetterAuthSession {
   session?: {
-    id: string
-    token: string
-    userId: string
-    expiresAt: Date
-    createdAt: Date
-  } | null
+    id: string;
+    token: string;
+    userId: string;
+    expiresAt: Date;
+    createdAt: Date;
+  } | null;
   user?: {
-    id: string
-    email: string
-    name?: string | null
-    username?: string | null
-    role?: string | null
-    image?: string | null
-    permissions?: string[]
-    remember?: boolean | null
-    passwordResetRequired?: boolean | null
-    emailVerified?: boolean | null
-    createdAt?: Date
-    updatedAt?: Date
-  } | null
+    id: string;
+    email: string;
+    name?: string | null;
+    username?: string | null;
+    role?: string | null;
+    image?: string | null;
+    permissions?: string[];
+    remember?: boolean | null;
+    passwordResetRequired?: boolean | null;
+    emailVerified?: boolean | null;
+    createdAt?: Date;
+    updatedAt?: Date;
+  } | null;
 }
 
 export interface ResolvedUser {
-  id: string
-  username: string
-  role: string
-  permissions: string[]
-  email: string | null
-  name: string | null
-  image: string | null
-  remember: boolean | null
-  passwordResetRequired: boolean
+  id: string;
+  username: string;
+  role: string;
+  permissions: string[];
+  email: string | null;
+  name: string | null;
+  image: string | null;
+  remember: boolean | null;
+  passwordResetRequired: boolean;
 }
 
 export const basePayload = {
@@ -40,16 +40,16 @@ export const basePayload = {
   password: 'supersafepass',
   name: 'New Admin',
   role: 'admin' as const,
-}
+};
 
 export function buildBetterAuthSession(
   overrides: Partial<BetterAuthSession['user']> & {
-    id?: string
-    username?: string
-    role?: 'admin' | 'user'
-    permissions?: string[]
-    remember?: boolean | null
-    passwordResetRequired?: boolean
+    id?: string;
+    username?: string;
+    role?: 'admin' | 'user';
+    permissions?: string[];
+    remember?: boolean | null;
+    passwordResetRequired?: boolean;
   } = {},
 ): BetterAuthSession {
   const user = {
@@ -66,7 +66,7 @@ export function buildBetterAuthSession(
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
-  }
+  };
 
   return {
     session: {
@@ -77,18 +77,18 @@ export function buildBetterAuthSession(
       createdAt: new Date(),
     },
     user,
-  }
+  };
 }
 
 export function getSessionUser(session: BetterAuthSession | null): ResolvedUser | null {
   if (!session?.user) {
-    return null
+    return null;
   }
 
-  const candidate = session.user
+  const candidate = session.user;
 
   if (!candidate.id || !candidate.username || !candidate.role) {
-    return null
+    return null;
   }
 
   return {
@@ -101,14 +101,14 @@ export function getSessionUser(session: BetterAuthSession | null): ResolvedUser 
     image: candidate.image ?? null,
     remember: candidate.remember ?? null,
     passwordResetRequired: candidate.passwordResetRequired ?? false,
-  }
+  };
 }
 
 export function resolveSessionUser(session: BetterAuthSession | null): ResolvedUser | null {
-  const user = getSessionUser(session)
+  const user = getSessionUser(session);
 
   if (!user || !user.id || !user.username || !user.role) {
-    return null
+    return null;
   }
 
   return {
@@ -121,13 +121,13 @@ export function resolveSessionUser(session: BetterAuthSession | null): ResolvedU
     image: user.image ?? null,
     remember: user.remember ?? null,
     passwordResetRequired: user.passwordResetRequired ?? false,
-  }
+  };
 }
 
 export function isAdmin(session: BetterAuthSession | null): boolean {
-  const user = getSessionUser(session)
+  const user = getSessionUser(session);
   if (!user) {
-    return false
+    return false;
   }
-  return user.role === 'admin'
+  return user.role === 'admin';
 }

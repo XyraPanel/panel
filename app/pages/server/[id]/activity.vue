@@ -1,28 +1,31 @@
 <script setup lang="ts">
-import type { PaginatedServerActivityResponse, ServerActivityEvent } from '#shared/types/server'
+import type { PaginatedServerActivityResponse, ServerActivityEvent } from '#shared/types/server';
 
-const { t } = useI18n()
-const route = useRoute()
-const toast = useToast()
+const { t } = useI18n();
+const route = useRoute();
+const toast = useToast();
 
 definePageMeta({
   auth: true,
-})
+});
 
-const serverId = computed(() => route.params.id as string)
-const currentPage = ref(1)
-const expandedEntries = ref<Set<string>>(new Set())
+const serverId = computed(() => route.params.id as string);
+const currentPage = ref(1);
+const expandedEntries = ref<Set<string>>(new Set());
 
-const { data: paginationSettings } = await useFetch<{ paginationLimit: number }>('/api/settings/pagination', {
-  key: 'settings-pagination',
-  default: () => ({ paginationLimit: 25 }),
-})
-const itemsPerPage = computed(() => paginationSettings.value?.paginationLimit ?? 25)
+const { data: paginationSettings } = await useFetch<{ paginationLimit: number }>(
+  '/api/settings/pagination',
+  {
+    key: 'settings-pagination',
+    default: () => ({ paginationLimit: 25 }),
+  },
+);
+const itemsPerPage = computed(() => paginationSettings.value?.paginationLimit ?? 25);
 
 watch(serverId, () => {
-  currentPage.value = 1
-  expandedEntries.value.clear()
-})
+  currentPage.value = 1;
+  expandedEntries.value.clear();
+});
 
 const defaultResponse = (): PaginatedServerActivityResponse => ({
   data: [],
@@ -33,7 +36,7 @@ const defaultResponse = (): PaginatedServerActivityResponse => ({
     totalPages: 0,
   },
   generatedAt: new Date().toISOString(),
-})
+});
 
 const {
   data: activityResponse,
@@ -50,33 +53,34 @@ const {
     default: defaultResponse,
     watch: [serverId, currentPage, itemsPerPage],
   },
-)
+);
 
-const entries = computed<ServerActivityEvent[]>(() => activityResponse.value?.data ?? [])
-const pagination = computed(() => activityResponse.value?.pagination ?? defaultResponse().pagination)
+const entries = computed<ServerActivityEvent[]>(() => activityResponse.value?.data ?? []);
+const pagination = computed(
+  () => activityResponse.value?.pagination ?? defaultResponse().pagination,
+);
 
 const displayError = computed(() => {
-  if (!error.value)
-    return null
-  return error.value instanceof Error ? error.value.message : t('server.activity.failedToLoadActivity')
-})
+  if (!error.value) return null;
+  return error.value instanceof Error
+    ? error.value.message
+    : t('server.activity.failedToLoadActivity');
+});
 
 function toggleEntry(id: string) {
-  if (expandedEntries.value.has(id))
-    expandedEntries.value.delete(id)
-  else
-    expandedEntries.value.add(id)
+  if (expandedEntries.value.has(id)) expandedEntries.value.delete(id);
+  else expandedEntries.value.add(id);
 }
 
 function formatAction(action: string): string {
   return action
     .split('.')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 function formatJson(data: Record<string, unknown> | null): string {
-  return data ? JSON.stringify(data, null, 2) : 'null'
+  return data ? JSON.stringify(data, null, 2) : 'null';
 }
 
 function getFullEvent(entry: ServerActivityEvent) {
@@ -89,58 +93,56 @@ function getFullEvent(entry: ServerActivityEvent) {
     targetType: entry.targetType,
     targetId: entry.targetId,
     metadata: entry.metadata,
-  }
+  };
 }
 
 async function copyJson(entry: ServerActivityEvent) {
-  const json = formatJson(getFullEvent(entry))
+  const json = formatJson(getFullEvent(entry));
   try {
-    if (navigator.clipboard?.writeText)
-      await navigator.clipboard.writeText(json)
+    if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(json);
     else {
-      const textArea = document.createElement('textarea')
-      textArea.value = json
-      textArea.style.position = 'fixed'
-      textArea.style.opacity = '0'
-      document.body.appendChild(textArea)
-      textArea.select()
-      document.execCommand('copy')
-      textArea.remove()
+      const textArea = document.createElement('textarea');
+      textArea.value = json;
+      textArea.style.position = 'fixed';
+      textArea.style.opacity = '0';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      textArea.remove();
     }
 
     toast.add({
       title: t('common.copied'),
       description: t('common.copiedToClipboard'),
-    })
-  }
-  catch (err) {
+    });
+  } catch (err) {
     toast.add({
       title: t('common.failedToCopy'),
       description: err instanceof Error ? err.message : t('common.failedToCopy'),
       color: 'error',
-    })
+    });
   }
 }
 
 function getActionIcon(action: string): string {
-  if (action.includes('power.start')) return 'i-lucide-play'
-  if (action.includes('power.stop')) return 'i-lucide-square'
-  if (action.includes('power.restart')) return 'i-lucide-rotate-cw'
-  if (action.includes('console')) return 'i-lucide-terminal'
-  if (action.includes('backup')) return 'i-lucide-archive'
-  if (action.includes('schedule')) return 'i-lucide-clock'
-  if (action.includes('database')) return 'i-lucide-database'
-  if (action.includes('file')) return 'i-lucide-file'
-  if (action.includes('user')) return 'i-lucide-user'
-  if (action.includes('settings')) return 'i-lucide-settings'
-  return 'i-lucide-activity'
+  if (action.includes('power.start')) return 'i-lucide-play';
+  if (action.includes('power.stop')) return 'i-lucide-square';
+  if (action.includes('power.restart')) return 'i-lucide-rotate-cw';
+  if (action.includes('console')) return 'i-lucide-terminal';
+  if (action.includes('backup')) return 'i-lucide-archive';
+  if (action.includes('schedule')) return 'i-lucide-clock';
+  if (action.includes('database')) return 'i-lucide-database';
+  if (action.includes('file')) return 'i-lucide-file';
+  if (action.includes('user')) return 'i-lucide-user';
+  if (action.includes('settings')) return 'i-lucide-settings';
+  return 'i-lucide-activity';
 }
 
 function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neutral' {
-  if (action.includes('start') || action.includes('create')) return 'primary'
-  if (action.includes('stop') || action.includes('delete')) return 'error'
-  if (action.includes('restart') || action.includes('update')) return 'warning'
-  return 'neutral'
+  if (action.includes('start') || action.includes('create')) return 'primary';
+  if (action.includes('stop') || action.includes('delete')) return 'error';
+  if (action.includes('restart') || action.includes('update')) return 'warning';
+  return 'neutral';
 }
 </script>
 
@@ -165,7 +167,11 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
 
           <template v-if="pending">
             <div class="space-y-2">
-              <USkeleton v-for="i in 5" :key="`server-activity-skeleton-${i}`" class="h-14 w-full" />
+              <USkeleton
+                v-for="i in 5"
+                :key="`server-activity-skeleton-${i}`"
+                class="h-14 w-full"
+              />
             </div>
           </template>
 
@@ -204,13 +210,25 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
                       />
                       <p class="text-sm font-medium font-mono truncate">{{ entry.action }}</p>
                       <UIcon
-                        :name="expandedEntries.has(entry.id) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                        :name="
+                          expandedEntries.has(entry.id)
+                            ? 'i-lucide-chevron-down'
+                            : 'i-lucide-chevron-right'
+                        "
                         class="size-4 text-muted-foreground shrink-0"
                       />
                     </div>
-                    <div class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span>{{ t('admin.activity.actor') }}: <span class="font-medium">{{ entry.actor }}</span></span>
-                      <span>{{ formatAction(entry.targetType) }} <span v-if="entry.targetId">#{{ entry.targetId }}</span></span>
+                    <div
+                      class="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
+                    >
+                      <span
+                        >{{ t('admin.activity.actor') }}:
+                        <span class="font-medium">{{ entry.actor }}</span></span
+                      >
+                      <span
+                        >{{ formatAction(entry.targetType) }}
+                        <span v-if="entry.targetId">#{{ entry.targetId }}</span></span
+                      >
                     </div>
                   </div>
                   <div class="text-xs text-muted-foreground shrink-0">
@@ -235,7 +253,9 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
                       {{ t('account.activity.copyJSON') }}
                     </UButton>
                   </div>
-                  <pre class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default">
+                  <pre
+                    class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
+                  >
 <code>{{ formatJson(getFullEvent(entry)) }}</code>
 </pre>
                 </div>
@@ -247,11 +267,13 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
               class="flex flex-col gap-3 border-t border-default pt-4 sm:flex-row sm:items-center sm:justify-between"
             >
               <p class="text-sm text-muted-foreground">
-                {{ t('activity.showingEvents', {
-                  start: ((pagination.page - 1) * pagination.limit) + 1,
-                  end: Math.min(pagination.page * pagination.limit, pagination.total),
-                  total: pagination.total,
-                }) }}
+                {{
+                  t('activity.showingEvents', {
+                    start: (pagination.page - 1) * pagination.limit + 1,
+                    end: Math.min(pagination.page * pagination.limit, pagination.total),
+                    total: pagination.total,
+                  })
+                }}
               </p>
               <UPagination
                 v-model:page="currentPage"

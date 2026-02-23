@@ -1,7 +1,7 @@
-import { requireAdmin } from '#server/utils/security'
+import { requireAdmin } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
-  await requireAdmin(event)
+  await requireAdmin(event);
 
   const templates = [
     {
@@ -26,13 +26,29 @@ export default defineEventHandler(async (event) => {
       id: 'server-created',
       name: 'Server Created',
       description: 'Sent when a server is successfully created',
-      variables: ['serverName', 'serverUuid', 'serverType', 'createdAt', 'panelUrl', 'appName', 'year'],
+      variables: [
+        'serverName',
+        'serverUuid',
+        'serverType',
+        'createdAt',
+        'panelUrl',
+        'appName',
+        'year',
+      ],
     },
     {
       id: 'backup-completed',
       name: 'Backup Completed',
       description: 'Sent when a server backup is completed',
-      variables: ['serverName', 'backupName', 'backupSize', 'completedAt', 'panelUrl', 'appName', 'year'],
+      variables: [
+        'serverName',
+        'backupName',
+        'backupSize',
+        'completedAt',
+        'panelUrl',
+        'appName',
+        'year',
+      ],
     },
     {
       id: 'server-suspended',
@@ -52,9 +68,9 @@ export default defineEventHandler(async (event) => {
       description: 'Sent when an admin creates a new user account',
       variables: ['username', 'temporaryPassword', 'loginUrl', 'appName', 'year'],
     },
-  ]
+  ];
 
   return {
     data: templates,
-  }
-})
+  };
+});

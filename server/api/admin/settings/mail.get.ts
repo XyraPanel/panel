@@ -1,9 +1,9 @@
-import { requireAdmin } from '#server/utils/security'
-import { SETTINGS_KEYS, getSettings } from '#server/utils/settings'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { requireAdmin } from '#server/utils/security';
+import { SETTINGS_KEYS, getSettings } from '#server/utils/settings';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
   const s = await getSettings([
     SETTINGS_KEYS.MAIL_DRIVER,
@@ -15,9 +15,9 @@ export default defineEventHandler(async (event) => {
     SETTINGS_KEYS.MAIL_ENCRYPTION,
     SETTINGS_KEYS.MAIL_FROM_ADDRESS,
     SETTINGS_KEYS.MAIL_FROM_NAME,
-  ])
+  ]);
 
-  const appName = useRuntimeConfig().public.appName || 'XyraPanel'
+  const appName = useRuntimeConfig().public.appName || 'XyraPanel';
   const data = {
     driver: s[SETTINGS_KEYS.MAIL_DRIVER] ?? 'smtp',
     service: s[SETTINGS_KEYS.MAIL_SERVICE] ?? '',
@@ -28,16 +28,16 @@ export default defineEventHandler(async (event) => {
     encryption: s[SETTINGS_KEYS.MAIL_ENCRYPTION] ?? 'tls',
     fromAddress: s[SETTINGS_KEYS.MAIL_FROM_ADDRESS] ?? 'noreply@xyrapanel.local',
     fromName: s[SETTINGS_KEYS.MAIL_FROM_NAME] ?? appName,
-  }
+  };
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
     actorType: 'user',
     action: 'admin.settings.mail.viewed',
     targetType: 'settings',
-  })
+  });
 
   return {
     data,
-  }
-})
+  };
+});

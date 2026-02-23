@@ -1,8 +1,8 @@
 <script setup lang="ts">
 const props = defineProps<{
-  actions: Array<{ label: string; icon: string; disabled?: boolean; handler: () => void }>
-  showLoadingBadge?: boolean
-}>()
+  actions: Array<{ label: string; icon: string; disabled?: boolean; handler: () => void }>;
+  showLoadingBadge?: boolean;
+}>();
 </script>
 
 <template>

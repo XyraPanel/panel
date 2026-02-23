@@ -1,47 +1,55 @@
 <script setup lang="ts">
-import type { PanelInformation } from '#shared/types/admin'
+import type { PanelInformation } from '#shared/types/admin';
 
-const { t } = useI18n()
+const { t } = useI18n();
 
-const {
-  data,
-  pending,
-  error,
-} = await useFetch<{ data: PanelInformation } | null>('/api/admin/panel/information', {
-  key: 'admin-panel-information',
-})
+const { data, pending, error } = await useFetch<{ data: PanelInformation } | null>(
+  '/api/admin/panel/information',
+  {
+    key: 'admin-panel-information',
+  },
+);
 
-const info = computed<PanelInformation | null>(() => data.value?.data ?? null)
+const info = computed<PanelInformation | null>(() => data.value?.data ?? null);
 
-const releaseNotesOpen = ref(false)
-const releaseNotesLoading = ref(false)
-const releaseVersions = ref<Array<{ title: string; description: string; date?: string }>>([])
-const releaseNotesError = ref(false)
-type ReleaseData = { name?: string; tag_name?: string; body?: string; description?: string; markdown?: string; tag?: string; publishedAt?: string; createdAt?: string }
+const releaseNotesOpen = ref(false);
+const releaseNotesLoading = ref(false);
+const releaseVersions = ref<Array<{ title: string; description: string; date?: string }>>([]);
+const releaseNotesError = ref(false);
+type ReleaseData = {
+  name?: string;
+  tag_name?: string;
+  body?: string;
+  description?: string;
+  markdown?: string;
+  tag?: string;
+  publishedAt?: string;
+  createdAt?: string;
+};
 
 function isReleaseData(value: unknown): value is ReleaseData {
-  return Boolean(value) && typeof value === 'object'
+  return Boolean(value) && typeof value === 'object';
 }
 
 function isReleaseDataArray(value: unknown): value is ReleaseData[] {
-  return Array.isArray(value) && value.every(isReleaseData)
+  return Array.isArray(value) && value.every(isReleaseData);
 }
 
 function normalizeReleasePayload(value: unknown): ReleaseData | ReleaseData[] | string | null {
   if (typeof value === 'string' || value === null) {
-    return value
+    return value;
   }
   if (isReleaseDataArray(value)) {
-    return value
+    return value;
   }
   if (isReleaseData(value)) {
-    return value
+    return value;
   }
-  return null
+  return null;
 }
 
 const detailRows = computed(() => {
-  const panelInfo = info.value
+  const panelInfo = info.value;
   return [
     {
       key: 'panelVersion',
@@ -55,13 +63,13 @@ const detailRows = computed(() => {
       value: panelInfo?.latestPanelVersion ?? t('admin.settings.panelInfo.versionUnavailable'),
       highlight: true,
     },
-  ]
-})
+  ];
+});
 
 const resourceLinks = computed(() => {
-  const panelInfo = info.value
+  const panelInfo = info.value;
   if (!panelInfo) {
-    return []
+    return [];
   }
 
   return [
@@ -95,54 +103,61 @@ const resourceLinks = computed(() => {
       icon: 'i-lucide-heart-handshake',
       url: panelInfo.donationsUrl,
     },
-  ].filter(Boolean) as { key: string; label: string; icon: string; url: string }[]
-})
+  ].filter(Boolean) as { key: string; label: string; icon: string; url: string }[];
+});
 
 async function openReleaseNotes(url: string) {
-  releaseNotesOpen.value = true
-  releaseNotesLoading.value = true
-  releaseVersions.value = []
-  releaseNotesError.value = false
+  releaseNotesOpen.value = true;
+  releaseNotesLoading.value = true;
+  releaseVersions.value = [];
+  releaseNotesError.value = false;
   try {
-    const fetchExternal = $fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>
-    let data: ReleaseData | ReleaseData[] | string | null = null
+    const fetchExternal = $fetch as (
+      input: string,
+      init?: Record<string, unknown>,
+    ) => Promise<unknown>;
+    let data: ReleaseData | ReleaseData[] | string | null = null;
     try {
-      data = normalizeReleasePayload(await fetchExternal(url))
-    }
-    catch (err) {
+      data = normalizeReleasePayload(await fetchExternal(url));
+    } catch (err) {
       if (url.includes('/releases') && !url.includes('/latest')) {
-        const latestUrl = url.endsWith('/') ? `${url}latest` : `${url}/latest`
-        data = normalizeReleasePayload(await fetchExternal(latestUrl))
+        const latestUrl = url.endsWith('/') ? `${url}latest` : `${url}/latest`;
+        data = normalizeReleasePayload(await fetchExternal(latestUrl));
       } else {
-        throw err
+        throw err;
       }
     }
-    
+
     if (Array.isArray(data) && data.length > 0) {
       releaseVersions.value = data.map((release: ReleaseData) => ({
         title: release.name || release.tag_name || release.tag || 'Release',
         description: release.markdown || release.body || release.description || '',
         date: release.publishedAt || release.createdAt,
-      }))
-    } else if (data && typeof data === 'object' && !Array.isArray(data) && ('name' in data || 'tag_name' in data || 'tag' in data)) {
-      const release = data as ReleaseData
-      releaseVersions.value = [{
-        title: release.name || release.tag_name || release.tag || 'Release',
-        description: release.markdown || release.body || release.description || '',
-        date: release.publishedAt || release.createdAt,
-      }]
+      }));
+    } else if (
+      data &&
+      typeof data === 'object' &&
+      !Array.isArray(data) &&
+      ('name' in data || 'tag_name' in data || 'tag' in data)
+    ) {
+      const release = data as ReleaseData;
+      releaseVersions.value = [
+        {
+          title: release.name || release.tag_name || release.tag || 'Release',
+          description: release.markdown || release.body || release.description || '',
+          date: release.publishedAt || release.createdAt,
+        },
+      ];
     } else if (typeof data === 'string') {
-      releaseNotesError.value = true
+      releaseNotesError.value = true;
     } else {
-      releaseNotesError.value = true
+      releaseNotesError.value = true;
     }
-  }
-  catch (err) {
-    console.error('Failed to load release notes:', err)
-    releaseNotesError.value = true
-  }
-  finally {
-    releaseNotesLoading.value = false
+  } catch (err) {
+    console.error('Failed to load release notes:', err);
+    releaseNotesError.value = true;
+  } finally {
+    releaseNotesLoading.value = false;
   }
 }
 </script>
@@ -151,7 +166,9 @@ async function openReleaseNotes(url: string) {
   <UCard :ui="{ body: 'space-y-5' }">
     <template #header>
       <div>
-        <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{ t('admin.settings.panelInfo.title') }}</p>
+        <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          {{ t('admin.settings.panelInfo.title') }}
+        </p>
       </div>
     </template>
 
@@ -175,7 +192,9 @@ async function openReleaseNotes(url: string) {
           :key="row.key"
           class="rounded-lg border border-default bg-muted/30 p-4"
         >
-          <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">{{ row.label }}</p>
+          <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            {{ row.label }}
+          </p>
           <p
             class="mt-1 font-mono text-sm"
             :class="row.highlight ? 'text-primary' : 'text-foreground'"
@@ -202,7 +221,11 @@ async function openReleaseNotes(url: string) {
         />
       </div>
 
-      <UModal v-model:open="releaseNotesOpen" :title="t('admin.settings.panelInfo.releaseNotes')" scrollable>
+      <UModal
+        v-model:open="releaseNotesOpen"
+        :title="t('admin.settings.panelInfo.releaseNotes')"
+        scrollable
+      >
         <template #body>
           <div class="p-4">
             <div v-if="releaseNotesLoading" class="text-muted-foreground text-center py-8">

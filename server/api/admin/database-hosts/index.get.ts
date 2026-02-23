@@ -1,17 +1,21 @@
-import { eq, sql } from 'drizzle-orm'
-import { requireAdmin } from '#server/utils/security'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import type { DatabaseHostWithStats } from '#shared/types/admin'
+import { eq, sql } from 'drizzle-orm';
+import { requireAdmin } from '#server/utils/security';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import type { DatabaseHostWithStats } from '#shared/types/admin';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.DATABASE_HOSTS, ADMIN_ACL_PERMISSIONS.READ)
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.DATABASE_HOSTS,
+    ADMIN_ACL_PERMISSIONS.READ,
+  );
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   const hosts = await db
     .select({
@@ -29,11 +33,14 @@ export default defineEventHandler(async (event) => {
       databaseCount: sql<number>`count(${tables.serverDatabases.id})`.as('databaseCount'),
     })
     .from(tables.databaseHosts)
-    .leftJoin(tables.serverDatabases, eq(tables.serverDatabases.databaseHostId, tables.databaseHosts.id))
+    .leftJoin(
+      tables.serverDatabases,
+      eq(tables.serverDatabases.databaseHostId, tables.databaseHosts.id),
+    )
     .groupBy(tables.databaseHosts.id)
-    .orderBy(tables.databaseHosts.name)
+    .orderBy(tables.databaseHosts.name);
 
-  const data: DatabaseHostWithStats[] = hosts.map(host => ({
+  const data: DatabaseHostWithStats[] = hosts.map((host) => ({
     id: host.id,
     name: host.name,
     hostname: host.hostname,
@@ -46,7 +53,7 @@ export default defineEventHandler(async (event) => {
     createdAt: new Date(host.createdAt).toISOString(),
     updatedAt: new Date(host.updatedAt).toISOString(),
     databaseCount: Number(host.databaseCount) || 0,
-  }))
+  }));
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,
@@ -56,7 +63,7 @@ export default defineEventHandler(async (event) => {
     metadata: {
       count: data.length,
     },
-  })
+  });
 
-  return { data }
-})
+  return { data };
+});

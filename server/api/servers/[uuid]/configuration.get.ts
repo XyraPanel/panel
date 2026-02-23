@@ -1,75 +1,80 @@
-import { useDrizzle, tables, eq } from '#server/utils/drizzle'
-import { requireAccountUser } from '#server/utils/security'
-import { getServerWithAccess } from '#server/utils/server-helpers'
-import { requireServerPermission } from '#server/utils/permission-middleware'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import type { WingsServerConfiguration } from '#shared/types/wings-config'
+import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { requireAccountUser } from '#server/utils/security';
+import { getServerWithAccess } from '#server/utils/server-helpers';
+import { requireServerPermission } from '#server/utils/permission-middleware';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import type { WingsServerConfiguration } from '#shared/types/wings-config';
 
 export default defineEventHandler(async (event) => {
-  const uuid = getRouterParam(event, 'uuid')
+  const uuid = getRouterParam(event, 'uuid');
   if (!uuid) {
     throw createError({
       status: 400,
       message: 'Server UUID is required',
-    })
+    });
   }
 
-  const { user, session } = await requireAccountUser(event)
-  const { server } = await getServerWithAccess(uuid, session)
+  const { user, session } = await requireAccountUser(event);
+  const { server } = await getServerWithAccess(uuid, session);
 
   await requireServerPermission(event, {
     serverId: server.id,
     requiredPermissions: ['server.settings.read'],
-  })
+  });
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
-  const limitsRows = await db.select()
+  const limitsRows = await db
+    .select()
     .from(tables.serverLimits)
     .where(eq(tables.serverLimits.serverId, server.id))
-    .limit(1)
+    .limit(1);
 
-  const limits = limitsRows[0]
+  const limits = limitsRows[0];
 
-  let primaryAllocation = null
+  let primaryAllocation = null;
   if (server.allocationId) {
-    const allocRows = await db.select()
+    const allocRows = await db
+      .select()
       .from(tables.serverAllocations)
       .where(eq(tables.serverAllocations.id, server.allocationId))
-      .limit(1)
-    primaryAllocation = allocRows[0] ?? null
+      .limit(1);
+    primaryAllocation = allocRows[0] ?? null;
   }
 
-  const allocations = await db.select()
+  const allocations = await db
+    .select()
     .from(tables.serverAllocations)
-    .where(eq(tables.serverAllocations.serverId, server.id))
+    .where(eq(tables.serverAllocations.serverId, server.id));
 
-  const envVars = await db.select()
+  const envVars = await db
+    .select()
     .from(tables.serverStartupEnv)
-    .where(eq(tables.serverStartupEnv.serverId, server.id))
+    .where(eq(tables.serverStartupEnv.serverId, server.id));
 
-  let egg = null
+  let egg = null;
   if (server.eggId) {
-    const eggRows = await db.select()
+    const eggRows = await db
+      .select()
       .from(tables.eggs)
       .where(eq(tables.eggs.id, server.eggId))
-      .limit(1)
-    egg = eggRows[0] ?? null
+      .limit(1);
+    egg = eggRows[0] ?? null;
   }
 
-  const environment: Record<string, string> = {}
+  const environment: Record<string, string> = {};
   for (const envVar of envVars) {
-    environment[envVar.key] = envVar.value
+    environment[envVar.key] = envVar.value;
   }
 
-  const allocationMappings: Record<string, number[]> = {}
+  const allocationMappings: Record<string, number[]> = {};
   for (const alloc of allocations) {
     if (!allocationMappings[alloc.ip]) {
-      allocationMappings[alloc.ip] = []
+      allocationMappings[alloc.ip] = [];
     }
-    const mapping = allocationMappings[alloc.ip]
+    const mapping = allocationMappings[alloc.ip];
     if (mapping) {
-      mapping.push(alloc.port)
+      mapping.push(alloc.port);
     }
   }
 
@@ -113,7 +118,7 @@ export default defineEventHandler(async (event) => {
     container: {
       image: server.image || egg?.dockerImage || 'ghcr.io/pterodactyl/yolks:java_21',
     },
-  }
+  };
 
   await recordAuditEventFromRequest(event, {
     actor: user.id,
@@ -121,7 +126,7 @@ export default defineEventHandler(async (event) => {
     action: 'server.configuration.requested',
     targetType: 'server',
     targetId: server.id,
-  })
+  });
 
-  return config
-})
+  return config;
+});

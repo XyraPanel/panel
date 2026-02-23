@@ -1,7 +1,7 @@
 export interface CacheSetOptions {
-  ttl?: number
+  ttl?: number;
 }
 
 export interface CacheOptions extends CacheSetOptions {
-  skipCache?: boolean
+  skipCache?: boolean;
 }

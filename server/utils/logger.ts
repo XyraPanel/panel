@@ -3,38 +3,40 @@
  * Only logs when debug mode is enabled in runtime config
  */
 
-let debugEnabled: boolean | null = null
+let debugEnabled: boolean | null = null;
 
 function getDebugEnabled(): boolean {
   if (debugEnabled !== null) {
-    return debugEnabled
+    return debugEnabled;
   }
 
   try {
-    const config = useRuntimeConfig()
-    debugEnabled = config.debug === true || config.public?.debug === true
+    const config = useRuntimeConfig();
+    debugEnabled = config.debug === true || config.public?.debug === true;
   } catch {
-    debugEnabled = process.env.DEBUG === 'true' || process.env.NUXT_DEBUG === 'true' || process.env.NODE_ENV === 'development'
+    debugEnabled =
+      process.env.DEBUG === 'true' ||
+      process.env.NUXT_DEBUG === 'true' ||
+      process.env.NODE_ENV === 'development';
   }
 
-  return debugEnabled
+  return debugEnabled;
 }
 
 export function debugLog(...args: unknown[]): void {
   if (getDebugEnabled()) {
-    console.log(...args)
+    console.log(...args);
   }
 }
 
 export function debugError(...args: unknown[]): void {
   if (getDebugEnabled()) {
-    console.error(...args)
+    console.error(...args);
   }
 }
 
 export function debugWarn(...args: unknown[]): void {
   if (getDebugEnabled()) {
-    console.warn(...args)
+    console.warn(...args);
   }
 }
-

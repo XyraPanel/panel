@@ -1,43 +1,57 @@
-import { createMountSchema } from '#shared/schema/admin/infrastructure'
-import { randomUUID } from 'node:crypto'
-import { inArray } from 'drizzle-orm'
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
-import { useDrizzle, tables } from '#server/utils/drizzle'
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions'
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
+import { createMountSchema } from '#shared/schema/admin/infrastructure';
+import { randomUUID } from 'node:crypto';
+import { inArray } from 'drizzle-orm';
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { useDrizzle, tables } from '#server/utils/drizzle';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.MOUNTS, ADMIN_ACL_PERMISSIONS.WRITE)
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.MOUNTS,
+    ADMIN_ACL_PERMISSIONS.WRITE,
+  );
 
-  const body = await readValidatedBodyWithLimit(event, createMountSchema, BODY_SIZE_LIMITS.SMALL)
+  const body = await readValidatedBodyWithLimit(event, createMountSchema, BODY_SIZE_LIMITS.SMALL);
 
-  const db = useDrizzle()
+  const db = useDrizzle();
 
   if (body.nodeIds && body.nodeIds.length > 0) {
-    const nodes = await db.select({ id: tables.wingsNodes.id })
+    const nodes = await db
+      .select({ id: tables.wingsNodes.id })
       .from(tables.wingsNodes)
-      .where(inArray(tables.wingsNodes.id, body.nodeIds))
+      .where(inArray(tables.wingsNodes.id, body.nodeIds));
 
     if (nodes.length !== body.nodeIds.length) {
-      throw createError({ status: 400, statusText: 'Bad Request', message: 'One or more nodes were not found' })
+      throw createError({
+        status: 400,
+        statusText: 'Bad Request',
+        message: 'One or more nodes were not found',
+      });
     }
   }
 
   if (body.eggIds && body.eggIds.length > 0) {
-    const eggs = await db.select({ id: tables.eggs.id })
+    const eggs = await db
+      .select({ id: tables.eggs.id })
       .from(tables.eggs)
-      .where(inArray(tables.eggs.id, body.eggIds))
+      .where(inArray(tables.eggs.id, body.eggIds));
 
     if (eggs.length !== body.eggIds.length) {
-      throw createError({ status: 400, statusText: 'Bad Request', message: 'One or more eggs were not found' })
+      throw createError({
+        status: 400,
+        statusText: 'Bad Request',
+        message: 'One or more eggs were not found',
+      });
     }
   }
 
-  const mountId = randomUUID()
-  const now = new Date()
+  const mountId = randomUUID();
+  const now = new Date();
 
   const newMount = {
     id: mountId,
@@ -50,9 +64,9 @@ export default defineEventHandler(async (event) => {
     userMountable: body.userMountable ?? false,
     createdAt: now,
     updatedAt: now,
-  }
+  };
 
-  await db.insert(tables.mounts).values(newMount)
+  await db.insert(tables.mounts).values(newMount);
 
   if (body.nodeIds && body.nodeIds.length > 0) {
     await db.insert(tables.mountNode).values(
@@ -60,7 +74,7 @@ export default defineEventHandler(async (event) => {
         mountId,
         nodeId,
       })),
-    )
+    );
   }
 
   if (body.eggIds && body.eggIds.length > 0) {
@@ -69,7 +83,7 @@ export default defineEventHandler(async (event) => {
         mountId,
         eggId,
       })),
-    )
+    );
   }
 
   await recordAuditEventFromRequest(event, {
@@ -85,7 +99,7 @@ export default defineEventHandler(async (event) => {
       nodeCount: body.nodeIds?.length || 0,
       eggCount: body.eggIds?.length || 0,
     },
-  })
+  });
 
   return {
     data: {
@@ -102,5 +116,5 @@ export default defineEventHandler(async (event) => {
       createdAt: newMount.createdAt,
       updatedAt: newMount.updatedAt,
     },
-  }
-})
+  };
+});

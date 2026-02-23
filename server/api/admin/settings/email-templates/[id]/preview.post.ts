@@ -1,39 +1,46 @@
-import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security'
-import { renderEmailTemplate } from '#server/utils/email-templates'
-import { recordAuditEventFromRequest } from '#server/utils/audit'
-import { emailTemplatePreviewSchema } from '#shared/schema/admin/settings'
+import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { renderEmailTemplate } from '#server/utils/email-templates';
+import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { emailTemplatePreviewSchema } from '#shared/schema/admin/settings';
 
 export default defineEventHandler(async (event) => {
-  const session = await requireAdmin(event)
+  const session = await requireAdmin(event);
 
-  const id = getRouterParam(event, 'id')
+  const id = getRouterParam(event, 'id');
   if (!id) {
     throw createError({
       status: 400,
       statusText: 'Template ID is required',
-    })
+    });
   }
 
-  const body = await readValidatedBodyWithLimit(event, emailTemplatePreviewSchema, BODY_SIZE_LIMITS.MEDIUM)
+  const body = await readValidatedBodyWithLimit(
+    event,
+    emailTemplatePreviewSchema,
+    BODY_SIZE_LIMITS.MEDIUM,
+  );
 
   try {
     const isPlaceholderMode = Object.values(body.data).some(
-      (val) => typeof val === 'string' && val.match(/^\{\{\s*\w+\s*\}\}$/)
-    )
-    
-    let templateHtml: string
+      (val) => typeof val === 'string' && val.match(/^\{\{\s*\w+\s*\}\}$/),
+    );
+
+    let templateHtml: string;
     if (isPlaceholderMode) {
-      const { getTemplate } = await import('#server/utils/email-templates')
-      const templateData = await getTemplate(id)
-      templateHtml = templateData.html
+      const { getTemplate } = await import('#server/utils/email-templates');
+      const templateData = await getTemplate(id);
+      templateHtml = templateData.html;
     } else {
-      const templateData = body.data as Record<string, string | number | boolean | null | undefined>
-      const template = await renderEmailTemplate(id, templateData)
-      templateHtml = template.html
+      const templateData = body.data as Record<
+        string,
+        string | number | boolean | null | undefined
+      >;
+      const template = await renderEmailTemplate(id, templateData);
+      templateHtml = template.html;
     }
-    
-    const appName = body.data.appName || 'XyraPanel'
-    
+
+    const appName = body.data.appName || 'XyraPanel';
+
     const styledHtml = `
       <!DOCTYPE html>
       <html>
@@ -111,8 +118,8 @@ export default defineEventHandler(async (event) => {
         </div>
       </body>
       </html>
-    `
-    
+    `;
+
     await recordAuditEventFromRequest(event, {
       actor: session.user.email || session.user.id,
       actorType: 'user',
@@ -122,7 +129,7 @@ export default defineEventHandler(async (event) => {
         templateId: id,
         placeholderMode: isPlaceholderMode,
       },
-    })
+    });
 
     return {
       data: {
@@ -130,12 +137,11 @@ export default defineEventHandler(async (event) => {
         subject: '',
         html: styledHtml,
       },
-    }
-  }
-  catch (err) {
+    };
+  } catch (err) {
     throw createError({
       status: 500,
       statusText: `Failed to render template: ${err instanceof Error ? err.message : 'Unknown error'}`,
-    })
+    });
   }
-})
+});
