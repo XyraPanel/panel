@@ -1,4 +1,4 @@
-name: PR Quality Checks
+name: autofix.ci
 
 on:
   pull_request:
