@@ -6,7 +6,6 @@ import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/secu
 import { recordAuditEvent } from '#server/utils/audit';
 import { APIError } from 'better-auth/api';
 import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
-import type { SftpAuthResponse } from '#shared/types/api';
 import { remoteSftpAuthSchema } from '#shared/schema/wings';
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();

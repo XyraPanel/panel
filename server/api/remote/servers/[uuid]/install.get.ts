@@ -2,12 +2,6 @@ import { type H3Event } from 'h3';
 import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 
-interface InstallScriptResponse {
-  container_image: string;
-  entrypoint: string;
-  script: string;
-}
-
 export default defineEventHandler(async (event: H3Event) => {
   const { uuid } = event.context.params ?? {};
   if (!uuid || typeof uuid !== 'string') {

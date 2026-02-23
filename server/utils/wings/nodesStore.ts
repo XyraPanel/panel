@@ -385,7 +385,7 @@ export async function createWingsNode(input: CreateWingsNodeInput): Promise<Stor
       .limit(1);
 
     if (existingById[0]) {
-      throw new Error(`A Wings node with id \"${requestedId}\" already exists`);
+      throw new Error(`A Wings node with id "{requestedId}""lready exists`);
     }
   }
 
@@ -397,7 +397,7 @@ export async function createWingsNode(input: CreateWingsNodeInput): Promise<Stor
 
   if (existingByBaseUrl[0]) {
     throw new Error(
-      `A Wings node with base URL \"${sanitized}\" already exists (id: ${existingByBaseUrl[0].id})`,
+      `A Wings node with base URL "{sanitized}""lready exists (id: ${existingByBaseUrl[0].id})`,
     );
   }
 

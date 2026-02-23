@@ -1,4 +1,4 @@
-import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { useDrizzle } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAccountUser } from '#server/utils/security';
 

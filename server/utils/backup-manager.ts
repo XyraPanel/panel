@@ -1,7 +1,6 @@
 import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { recordAuditEvent } from '#server/utils/audit';
-import { sendBackupCompletedEmail } from '#server/utils/email';
 import { invalidateServerBackupsCache } from '#server/utils/backups';
 import { randomUUID } from 'node:crypto';
 import type { BackupManagerOptions, CreateBackupOptions, BackupInfo } from '#shared/types/server';
@@ -25,6 +24,8 @@ export class BackupManager {
   async createBackup(serverUuid: string, options: CreateBackupOptions = {}): Promise<BackupInfo> {
     const { client, server } = await getWingsClientForServer(serverUuid);
 
+    const serverId = String(server.id);
+
     const backupId = randomUUID();
     const backupUuid = randomUUID();
     const nowDate = new Date();
@@ -34,7 +35,7 @@ export class BackupManager {
 
     const backupRecord = {
       id: backupId,
-      serverId: server.id as string,
+      serverId,
       uuid: backupUuid,
       name: backupName,
       ignoredFiles: options.ignoredFiles || '',
@@ -49,7 +50,7 @@ export class BackupManager {
     };
 
     await this.db.insert(tables.serverBackups).values(backupRecord);
-    await invalidateServerBackupsCache(server.id as string);
+    await invalidateServerBackupsCache(serverId);
 
     try {
       await client.createBackup(serverUuid, backupUuid, options.ignoredFiles);
@@ -60,7 +61,7 @@ export class BackupManager {
           actorType: 'user',
           action: 'server.backup.create',
           targetType: 'server',
-          targetId: server.id as string,
+          targetId: serverId,
           metadata: {
             backupId,
             backupName,
@@ -72,7 +73,7 @@ export class BackupManager {
         id: backupId,
         uuid: backupUuid,
         name: backupName,
-        serverId: server.id as string,
+        serverId,
         serverUuid,
         size: 0,
         isSuccessful: false,
@@ -90,7 +91,7 @@ export class BackupManager {
           updatedAt: new Date().toISOString(),
         })
         .where(eq(tables.serverBackups.id, backupId));
-      await invalidateServerBackupsCache(server.id as string);
+      await invalidateServerBackupsCache(serverId);
 
       throw error;
     }
@@ -103,12 +104,14 @@ export class BackupManager {
   ): Promise<void> {
     const { client, server } = await getWingsClientForServer(serverUuid);
 
+    const serverId = String(server.id);
+
     const [backup] = await this.db
       .select()
       .from(tables.serverBackups)
       .where(
         and(
-          eq(tables.serverBackups.serverId, server.id as string),
+          eq(tables.serverBackups.serverId, serverId),
           eq(tables.serverBackups.uuid, backupUuid),
         ),
       )
@@ -125,7 +128,7 @@ export class BackupManager {
     await client.deleteBackup(serverUuid, backupUuid);
 
     await this.db.delete(tables.serverBackups).where(eq(tables.serverBackups.id, backup.id));
-    await invalidateServerBackupsCache(server.id as string);
+    await invalidateServerBackupsCache(serverId);
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({
@@ -133,7 +136,7 @@ export class BackupManager {
         actorType: 'user',
         action: 'server.backup.delete',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: serverId,
         metadata: {
           backupId: backup.id,
           backupName: backup.name,
@@ -150,13 +153,14 @@ export class BackupManager {
     options: BackupManagerOptions = {},
   ): Promise<void> {
     const { client, server } = await getWingsClientForServer(serverUuid);
+    const serverId = String(server.id);
 
     const [backup] = await this.db
       .select()
       .from(tables.serverBackups)
       .where(
         and(
-          eq(tables.serverBackups.serverId, server.id as string),
+          eq(tables.serverBackups.serverId, serverId),
           eq(tables.serverBackups.uuid, backupUuid),
         ),
       )
@@ -178,7 +182,7 @@ export class BackupManager {
         actorType: 'user',
         action: 'server.backup.restore',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: serverId,
         metadata: {
           backupId: backup.id,
           backupName: backup.name,
@@ -190,11 +194,12 @@ export class BackupManager {
 
   async listBackups(serverUuid: string): Promise<BackupInfo[]> {
     const { server } = await getWingsClientForServer(serverUuid);
+    const serverId = String(server.id);
 
     const backups = await this.db
       .select()
       .from(tables.serverBackups)
-      .where(eq(tables.serverBackups.serverId, server.id as string))
+      .where(eq(tables.serverBackups.serverId, serverId))
       .orderBy(tables.serverBackups.createdAt);
 
     return backups.map((backup) => ({
@@ -215,13 +220,14 @@ export class BackupManager {
 
   async getBackup(serverUuid: string, backupUuid: string): Promise<BackupInfo | null> {
     const { server } = await getWingsClientForServer(serverUuid);
+    const serverId = String(server.id);
 
     const [backup] = await this.db
       .select()
       .from(tables.serverBackups)
       .where(
         and(
-          eq(tables.serverBackups.serverId, server.id as string),
+          eq(tables.serverBackups.serverId, serverId),
           eq(tables.serverBackups.uuid, backupUuid),
         ),
       )
@@ -253,13 +259,14 @@ export class BackupManager {
     options: BackupManagerOptions = {},
   ): Promise<void> {
     const { server } = await getWingsClientForServer(serverUuid);
+    const serverId = String(server.id);
 
     const [backup] = await this.db
       .select()
       .from(tables.serverBackups)
       .where(
         and(
-          eq(tables.serverBackups.serverId, server.id as string),
+          eq(tables.serverBackups.serverId, serverId),
           eq(tables.serverBackups.uuid, backupUuid),
         ),
       )
@@ -276,7 +283,7 @@ export class BackupManager {
         updatedAt: new Date().toISOString(),
       })
       .where(eq(tables.serverBackups.id, backup.id));
-    await invalidateServerBackupsCache(server.id as string);
+    await invalidateServerBackupsCache(serverId);
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({
@@ -284,7 +291,7 @@ export class BackupManager {
         actorType: 'user',
         action: 'server.backup.lock',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: serverId,
         metadata: {
           backupId: backup.id,
           backupName: backup.name,
@@ -299,13 +306,14 @@ export class BackupManager {
     options: BackupManagerOptions = {},
   ): Promise<void> {
     const { server } = await getWingsClientForServer(serverUuid);
+    const serverId = String(server.id);
 
     const [backup] = await this.db
       .select()
       .from(tables.serverBackups)
       .where(
         and(
-          eq(tables.serverBackups.serverId, server.id as string),
+          eq(tables.serverBackups.serverId, serverId),
           eq(tables.serverBackups.uuid, backupUuid),
         ),
       )
@@ -322,7 +330,7 @@ export class BackupManager {
         updatedAt: new Date().toISOString(),
       })
       .where(eq(tables.serverBackups.id, backup.id));
-    await invalidateServerBackupsCache(server.id as string);
+    await invalidateServerBackupsCache(serverId);
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({
@@ -330,7 +338,7 @@ export class BackupManager {
         actorType: 'user',
         action: 'server.backup.unlock',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: serverId,
         metadata: {
           backupId: backup.id,
           backupName: backup.name,
@@ -345,6 +353,8 @@ export class BackupManager {
 
   async syncBackupsWithWings(serverUuid: string): Promise<{ synced: number; errors: string[] }> {
     const { client, server } = await getWingsClientForServer(serverUuid);
+
+    const serverId = String(server.id);
 
     try {
       const wingsBackups = await client.listBackups(serverUuid);
@@ -375,7 +385,7 @@ export class BackupManager {
           try {
             await this.db.insert(tables.serverBackups).values({
               id: randomUUID(),
-              serverId: server.id as string,
+              serverId,
               uuid: wingsBackup.uuid,
               name: wingsBackup.name,
               ignoredFiles: wingsBackup.ignored_files.join('\n'),
@@ -392,16 +402,16 @@ export class BackupManager {
             });
             synced++;
           } catch (error) {
-            errors.push(`Failed to create backup record for ${wingsBackup.name}: ${error}`);
+            const errorMessage = error instanceof Error ? error.message : String(error);
+            errors.push(`Failed to create backup record for ${wingsBackup.name}: ${errorMessage}`);
           }
         }
       }
 
       return { synced, errors };
     } catch (error) {
-      throw new Error(
-        `Failed to sync backups: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to sync backups: ${errorMessage}`);
     }
   }
 }

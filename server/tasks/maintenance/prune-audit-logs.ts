@@ -1,4 +1,4 @@
-import { useDrizzle, tables, lt } from '#server/utils/drizzle';
+import { useDrizzle } from '#server/utils/drizzle';
 import { debugLog, debugError } from '#server/utils/logger';
 
 export default defineTask({
