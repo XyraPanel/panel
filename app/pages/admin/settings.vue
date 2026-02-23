@@ -84,7 +84,7 @@ const openSections = ref<Record<string, boolean>>({
             <UCollapsible v-model:open="openSections[section.id]" :unmount-on-hide="false">
               <template #default>
                 <div
-                  class="flex w-full items-center justify-between p-4 cursor-pointer"
+                  class="flex w-full items-center justify-between p-4 cursor-pointer text-left"
                 >
                   <div class="flex items-center gap-3">
                     <UIcon :name="section.icon" class="size-5 text-primary" />

@@ -76,7 +76,7 @@ const { t } = useI18n()
         <span class="text-right">{{ t('common.actions') }}</span>
       </div>
 
-      <div class="overflow-y-auto flex-1">
+      <div class="overflow-y-auto flex-1" tabindex="0" role="region" :aria-label="t('server.files.title')">
         <div v-if="props.directoryPending" class="space-y-2 p-3 text-xs text-muted-foreground">
           <div v-for="index in 5" :key="index" class="h-5 animate-pulse rounded bg-muted/60" />
         </div>

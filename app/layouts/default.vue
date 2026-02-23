@@ -115,15 +115,28 @@ const navigationItems = computed<NavigationMenuItem[]>(() => {
       to: localePath('/server'),
     },
     {
-      label: t('dashboard.account'),
-      children: [
-        { label: t('account.profile.title'), to: localePath('/account/profile') },
-        { label: t('account.security.title'), to: localePath('/account/security') },
-        { label: t('account.apiKeys.title'), to: localePath('/account/api-keys') },
-        { label: t('account.sshKeys.title'), to: localePath('/account/ssh-keys') },
-        { label: t('account.sessions.title'), to: localePath('/account/sessions') },
-        { label: t('account.activity.title'), to: localePath('/account/activity') },
-      ],
+      label: t('account.profile.title'),
+      to: localePath('/account/profile'),
+    },
+    {
+      label: t('account.security.title'),
+      to: localePath('/account/security'),
+    },
+    {
+      label: t('account.apiKeys.title'),
+      to: localePath('/account/api-keys'),
+    },
+    {
+      label: t('account.sshKeys.title'),
+      to: localePath('/account/ssh-keys'),
+    },
+    {
+      label: t('account.sessions.title'),
+      to: localePath('/account/sessions'),
+    },
+    {
+      label: t('account.activity.title'),
+      to: localePath('/account/activity'),
     },
   ]
 
@@ -192,7 +205,7 @@ async function handleLocaleChange(newLocale: string | undefined) {
           <img
             v-if="showBrandLogo"
             :src="brandLogoUrl"
-            :alt="appName"
+            alt=""
             class="h-12 w-auto"
           >
           <UIcon v-else name="i-simple-icons-nuxtdotjs" class="size-5 text-primary" />
@@ -239,44 +252,46 @@ async function handleLocaleChange(newLocale: string | undefined) {
 
     <UDashboardPanel :key="'dashboard-panel'" :ui="{ body: 'flex flex-1 flex-col p-0' }">
       <template #body>
-        <UDashboardNavbar
-          :ui="{
-            left: 'flex flex-col gap-0.5 text-left leading-tight sm:flex-row sm:items-baseline sm:gap-2',
-            root: 'justify-between items-center px-4 py-1.5 sm:px-6 sm:py-2'
-          }"
-        >
-          <template #left>
-            <div v-if="pageTitle" class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2">
-              <h1 class="text-base font-semibold text-foreground sm:text-lg">{{ pageTitle }}</h1>
-              <p v-if="pageSubtitle" class="text-xs text-muted-foreground">{{ pageSubtitle }}</p>
-            </div>
-          </template>
-          <template #right>
-            <div class="flex items-center gap-2">
-              <ULocaleSelect
-                :model-value="locale"
-                :locales="uiLocales"
-                size="sm"
-                variant="ghost"
-                class="w-32"
-                @update:model-value="handleLocaleChange($event)"
-              />
-              <UButton
-                v-if="isHydrated && isAdminUser"
-                icon="i-lucide-shield"
-                variant="ghost"
-                color="error"
-                to="/admin"
-              >
-                {{ t('admin.title') }}
-              </UButton>
-              <UButton icon="i-lucide-log-out" color="primary" variant="subtle" :loading="signOutLoading"
-                @click="handleSignOut">
-                {{ t('auth.signOut') }}
-              </UButton>
-            </div>
-          </template>
-        </UDashboardNavbar>
+        <header role="banner">
+          <UDashboardNavbar
+            :ui="{
+              left: 'flex flex-col gap-0.5 text-left leading-tight sm:flex-row sm:items-baseline sm:gap-2',
+              root: 'justify-between items-center px-4 py-1.5 sm:px-6 sm:py-2'
+            }"
+          >
+            <template #left>
+              <div v-if="pageTitle" class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2">
+                <h1 class="text-base font-semibold text-foreground sm:text-lg">{{ pageTitle }}</h1>
+                <p v-if="pageSubtitle" class="text-xs text-muted-foreground">{{ pageSubtitle }}</p>
+              </div>
+            </template>
+            <template #right>
+              <div class="flex items-center gap-2">
+                <ULocaleSelect
+                  :model-value="locale"
+                  :locales="uiLocales"
+                  size="sm"
+                  variant="ghost"
+                  class="w-32"
+                  @update:model-value="handleLocaleChange($event)"
+                />
+                <UButton
+                  v-if="isHydrated && isAdminUser"
+                  icon="i-lucide-shield"
+                  variant="ghost"
+                  color="error"
+                  to="/admin"
+                >
+                  {{ t('admin.title') }}
+                </UButton>
+                <UButton icon="i-lucide-log-out" color="primary" variant="subtle" :loading="signOutLoading"
+                  @click="handleSignOut">
+                  {{ t('auth.signOut') }}
+                </UButton>
+              </div>
+            </template>
+          </UDashboardNavbar>
+        </header>
 
         <main class="flex-1 overflow-y-auto">
           <div v-if="isMaintenanceMode" class="mx-auto flex w-full max-w-4xl flex-col items-center gap-4 px-6 py-16 text-center">

@@ -308,13 +308,13 @@ watch(
                       <div class="col-span-2 flex justify-end gap-2">
                         <UButton icon="i-lucide-activity" size="xs" variant="ghost"
                           :loading="systemModal.loading && systemModal.nodeId === node.id"
-                          @click="handleViewSystemInfo(node)" />
+                          :aria-label="t('admin.nodes.systemInformation')" @click="handleViewSystemInfo(node)" />
                         <UButton icon="i-lucide-download" size="xs" variant="ghost"
-                          :loading="loadingConfigFor === node.id" @click="handleDownloadConfiguration(node)" />
+                          :loading="loadingConfigFor === node.id" :aria-label="t('admin.nodes.downloadConfiguration')" @click="handleDownloadConfiguration(node)" />
                         <UButton icon="i-lucide-terminal" size="xs" color="primary" variant="ghost"
-                          :loading="issuingFor === node.id" @click="handleIssueToken(node)" />
+                          :loading="issuingFor === node.id" :aria-label="t('admin.nodes.issueToken')" @click="handleIssueToken(node)" />
                         <UButton icon="i-lucide-trash" size="xs" color="error" variant="ghost"
-                          @click="nodeToDelete = node; showDeleteModal = true" />
+                          :aria-label="t('common.delete')" @click="nodeToDelete = node; showDeleteModal = true" />
                       </div>
                     </div>
                   </div>

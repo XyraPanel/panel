@@ -138,22 +138,24 @@ const currentPageTitle = computed(() => {
 
     <UDashboardPanel :ui="{ body: 'flex flex-1 flex-col p-0' }">
       <template #body>
-        <UDashboardNavbar
-          :ui="{
-            left: 'flex flex-col gap-0.5 text-left leading-tight sm:flex-row sm:items-baseline sm:gap-2',
-            root: 'justify-between items-center px-4 py-1.5 sm:px-6 sm:py-2'
-          }"
-        >
-          <template #left>
-            <div class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2">
-              <h1 class="text-base font-semibold text-foreground sm:text-lg">
-                {{ serverName }}
-                <span v-if="currentPageTitle" class="text-sm font-normal text-muted-foreground">· {{ currentPageTitle }}</span>
-              </h1>
-              <p class="text-xs text-muted-foreground">{{ serverIdentifier }}</p>
-            </div>
-          </template>
-        </UDashboardNavbar>
+        <header role="banner">
+          <UDashboardNavbar
+            :ui="{
+              left: 'flex flex-col gap-0.5 text-left leading-tight sm:flex-row sm:items-baseline sm:gap-2',
+              root: 'justify-between items-center px-4 py-1.5 sm:px-6 sm:py-2'
+            }"
+          >
+            <template #left>
+              <div class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2">
+                <h1 class="text-base font-semibold text-foreground sm:text-lg">
+                  {{ serverName }}
+                  <span v-if="currentPageTitle" class="text-sm font-normal text-muted-foreground">· {{ currentPageTitle }}</span>
+                </h1>
+                <p class="text-xs text-muted-foreground">{{ serverIdentifier }}</p>
+              </div>
+            </template>
+          </UDashboardNavbar>
+        </header>
 
         <main class="flex-1 overflow-y-auto">
           <div class="w-full px-4 py-5 sm:px-6">

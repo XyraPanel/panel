@@ -165,9 +165,9 @@ async function handleDelete() {
 
                 <div class="flex items-center gap-2">
                   <UButton icon="i-lucide-pencil" size="xs" variant="ghost" color="info"
-                    @click="openEditModal(location)" />
+                    :aria-label="t('common.edit')" @click="openEditModal(location)" />
                   <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                    :disabled="location.nodeCount > 0" @click="locationToDelete = location; showDeleteModal = true" />
+                    :aria-label="t('common.delete')" :disabled="location.nodeCount > 0" @click="locationToDelete = location; showDeleteModal = true" />
                 </div>
               </div>
             </div>

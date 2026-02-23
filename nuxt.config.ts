@@ -88,6 +88,8 @@ export default defineNuxtConfig({
     '@nuxtjs/turnstile',
     '@nuxt/scripts',
     '@nuxtjs/i18n',
+    '@nuxt/a11y',
+    '@nuxt/hints',
   ],
 vite: {
   ssr: {

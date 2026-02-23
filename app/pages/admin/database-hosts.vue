@@ -161,7 +161,7 @@ async function handleDelete() {
 
                 <div class="flex items-center gap-2">
                   <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                    :disabled="host.databaseCount > 0" @click="hostToDelete = host; showDeleteModal = true" />
+                    :aria-label="t('common.delete')" :disabled="host.databaseCount > 0" @click="hostToDelete = host; showDeleteModal = true" />
                 </div>
               </div>
 

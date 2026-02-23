@@ -33,7 +33,7 @@ export async function generateWingsJWT(
     })
     .setIssuedAt()
     .setIssuer(getAppUrl())
-    .setAudience(node.baseUrl)
+    .setAudience(getAppUrl())
     .setJti(identifier)
     .setNotBefore(Math.floor(Date.now() / 1000) - 300)
 
@@ -68,7 +68,7 @@ export async function verifyWingsJWT(
   try {
     const { payload } = await jwtVerify(token, secret, {
       issuer: getAppUrl(),
-      audience: node.baseUrl,
+      audience: getAppUrl(),
     })
 
     return payload as WingsJWTClaims

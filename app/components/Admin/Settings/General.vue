@@ -236,7 +236,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
           <div class="flex items-center justify-between rounded-lg border border-default p-3">
             <p class="text-sm text-muted-foreground">{{ t('admin.settings.generalSettings.showBrandLogoDescription') }}
             </p>
-            <USwitch v-model="form.showBrandLogo" />
+            <USwitch v-model="form.showBrandLogo" :label="t('admin.settings.generalSettings.showBrandLogo')" />
           </div>
         </UFormField>
 
@@ -274,7 +274,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
         <h3 class="text-sm font-medium">{{ t('admin.settings.generalSettings.system') }}</h3>
       </div>
 
-      <UFormField name="telemetryEnabled">
+      <UFormField :label="t('admin.settings.generalSettings.enableTelemetry')" name="telemetryEnabled">
         <USwitch v-model="form.telemetryEnabled" :label="t('admin.settings.generalSettings.enableTelemetry')"
           :disabled="isSubmitting" />
       </UFormField>

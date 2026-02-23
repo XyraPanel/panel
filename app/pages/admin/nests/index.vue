@@ -156,9 +156,9 @@ function viewNest(nest: NestWithEggCount) {
                 </div>
 
                 <div class="flex items-center gap-2" @click.stop>
-                  <UButton icon="i-lucide-arrow-right" size="xs" variant="ghost" @click="viewNest(nest)" />
+                  <UButton icon="i-lucide-arrow-right" size="xs" variant="ghost" :aria-label="t('common.view')" @click="viewNest(nest)" />
                   <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                    :disabled="nest.eggCount > 0" @click="nestToDelete = nest; showDeleteModal = true" />
+                    :aria-label="t('common.delete')" :disabled="nest.eggCount > 0" @click="nestToDelete = nest; showDeleteModal = true" />
                 </div>
               </div>
             </div>

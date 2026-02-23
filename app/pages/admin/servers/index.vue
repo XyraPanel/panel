@@ -293,6 +293,7 @@ const table = useTemplateRef('table')
                         :items="sortOptions"
                         value-key="value"
                         class="w-40"
+                        :aria-label="t('common.filter')"
                       />
                     </div>
                   </div>

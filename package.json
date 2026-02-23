@@ -46,6 +46,8 @@
     "generate-pwa-assets": "pwa-assets-generator --preset minimal-2023 public/logo.png"
   },
   "dependencies": {
+    "@nuxt/a11y": "1.0.0-alpha.1",
+    "@nuxt/hints": "1.0.0-alpha.7",
     "@nuxt/scripts": "0.13.2",
     "@nuxt/ui": "4.4.0",
     "@nuxtjs/i18n": "^10.2.3",

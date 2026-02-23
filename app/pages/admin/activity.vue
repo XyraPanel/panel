@@ -183,7 +183,7 @@ function exportCsv() {
                 <div />
                 <div class="flex items-center gap-2">
                   <div v-if="activities.length > 0">
-                    <USelect v-model="sortOrder" :items="sortOptions" value-key="value" class="w-40" />
+                    <USelect v-model="sortOrder" :items="sortOptions" value-key="value" class="w-40" :aria-label="t('common.filter')" />
                   </div>
                   <UBadge v-if="pending" color="primary" variant="soft">{{ t('common.loading') }}</UBadge>
                   <UButton icon="i-lucide-download" color="neutral" variant="outline"
@@ -211,8 +211,8 @@ function exportCsv() {
               <div class="space-y-3">
                 <div v-for="entry in sortedActivities" :key="entry.id"
                   class="rounded-lg border border-default overflow-hidden">
-                  <button
-                    class="w-full flex flex-col gap-2 p-3 text-left hover:bg-elevated/50 transition-colors md:flex-row md:items-center md:justify-between"
+                  <div
+                    class="w-full flex flex-col gap-2 p-3 text-left hover:bg-elevated/50 transition-colors md:flex-row md:items-center md:justify-between cursor-pointer"
                     @click="toggleEntry(entry.id)">
                     <div class="flex-1 min-w-0">
                       <div class="flex items-center gap-2">
@@ -239,7 +239,7 @@ function exportCsv() {
                     <div class="text-xs text-muted-foreground shrink-0">
                       <NuxtTime :datetime="entry.occurredAt" relative />
                     </div>
-                  </button>
+                  </div>
 
                   <div v-if="expandedEntries.has(entry.id)" class="border-t border-default bg-muted/30 p-4">
                     <div class="space-y-2">

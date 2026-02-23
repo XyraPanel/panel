@@ -272,6 +272,7 @@ async function handleSignOutAll(includeCurrent = false) {
               :items="sortOptions"
               value-key="value"
               class="w-40"
+              :aria-label="t('common.filter')"
             />
           </div>
 
@@ -292,76 +293,79 @@ async function handleSignOutAll(includeCurrent = false) {
               :key="session.token"
               class="rounded-lg border border-default overflow-hidden"
             >
-              <button
-                class="w-full flex items-center gap-3 p-3 text-left hover:bg-elevated/50 transition-colors"
-                @click="toggleSession(session.token)"
-              >
-                <UIcon
-                  :name="session.device === 'Mobile' ? 'i-lucide-smartphone' : session.device === 'Tablet' ? 'i-lucide-tablet' : 'i-lucide-monitor'"
-                  class="size-5 shrink-0 text-primary"
-                />
-                
-                <div class="flex-1 min-w-0 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                  <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                    <div class="flex items-center gap-2 min-w-0">
-                      <span class="text-sm font-medium">{{ session.device ?? t('common.unknown') }}</span>
-                      <UIcon
-                        :name="expandedSessions.has(session.token) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
-                        class="size-4 text-muted-foreground shrink-0"
-                      />
-                    </div>
-                    <span class="text-xs text-muted-foreground">{{ session.os ?? t('common.unknown') }} • {{ session.browser ?? t('common.unknown') }}</span>
-                    <UBadge v-if="session.token === currentSessionToken" color="primary" variant="soft" size="xs" class="shrink-0">
-                      {{ t('account.sessions.current') }}
-                    </UBadge>
-                  </div>
+              <div class="w-full flex items-center gap-3 p-3 hover:bg-elevated/50 transition-colors">
+                <button
+                  type="button"
+                  class="flex flex-1 items-center gap-3 text-left cursor-pointer bg-transparent border-0 p-0 min-w-0"
+                  @click="toggleSession(session.token)"
+                >
+                  <UIcon
+                    :name="session.device === 'Mobile' ? 'i-lucide-smartphone' : session.device === 'Tablet' ? 'i-lucide-tablet' : 'i-lucide-monitor'"
+                    class="size-5 shrink-0 text-primary"
+                  />
 
-                  <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs text-muted-foreground shrink-0">
-                    <div class="flex items-center gap-1 shrink-0">
-                      <span class="truncate">{{ t('account.sessions.ipAddress') }}:</span>
-                      <UTooltip
-                        v-if="session.ipAddress && session.ipAddress !== 'Unknown'"
-                        :delay-duration="0"
-                        :text="session.ipAddress"
-                      >
-                        <span class="cursor-help font-mono">{{ maskIp(session.ipAddress) }}</span>
-                      </UTooltip>
-                      <span v-else class="font-mono">{{ maskIp(session.ipAddress ?? t('common.unknown')) }}</span>
+                  <div class="flex-1 min-w-0 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                    <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-sm font-medium">{{ session.device ?? t('common.unknown') }}</span>
+                        <UIcon
+                          :name="expandedSessions.has(session.token) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
+                          class="size-4 text-muted-foreground shrink-0"
+                        />
+                      </div>
+                      <span class="text-xs text-muted-foreground">{{ session.os ?? t('common.unknown') }} • {{ session.browser ?? t('common.unknown') }}</span>
+                      <UBadge v-if="session.token === currentSessionToken" color="primary" variant="soft" size="xs" class="shrink-0">
+                        {{ t('account.sessions.current') }}
+                      </UBadge>
                     </div>
-                    <span class="hidden sm:inline">•</span>
-                    <div class="flex items-center gap-2 shrink-0">
-                      <span class="truncate">
-                        {{ t('account.sessions.active') }}
-                        <template v-if="session.isCurrent">
-                          <span class="font-medium">{{ t('common.now') }}</span>
-                        </template>
-                        <template v-else-if="session.lastSeenAt">
-                          <NuxtTime :datetime="session.lastSeenAt" class="font-medium" />
-                        </template>
-                        <span v-else class="text-muted-foreground">{{ t('account.sessions.neverUsed') }}</span>
-                      </span>
+
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3 text-xs text-muted-foreground shrink-0">
+                      <div class="flex items-center gap-1 shrink-0">
+                        <span class="truncate">{{ t('account.sessions.ipAddress') }}:</span>
+                        <UTooltip
+                          v-if="session.ipAddress && session.ipAddress !== 'Unknown'"
+                          :delay-duration="0"
+                          :text="session.ipAddress"
+                        >
+                          <span class="cursor-help font-mono">{{ maskIp(session.ipAddress) }}</span>
+                        </UTooltip>
+                        <span v-else class="font-mono">{{ maskIp(session.ipAddress ?? t('common.unknown')) }}</span>
+                      </div>
                       <span class="hidden sm:inline">•</span>
-                      <span class="truncate">
-                        {{ t('account.sessions.expires') }}
-                        <NuxtTime :datetime="session.expiresAt" class="font-medium" />
-                      </span>
+                      <div class="flex items-center gap-2 shrink-0">
+                        <span class="truncate">
+                          {{ t('account.sessions.active') }}
+                          <template v-if="session.isCurrent">
+                            <span class="font-medium">{{ t('common.now') }}</span>
+                          </template>
+                          <template v-else-if="session.lastSeenAt">
+                            <NuxtTime :datetime="session.lastSeenAt" class="font-medium" />
+                          </template>
+                          <span v-else class="text-muted-foreground">{{ t('account.sessions.neverUsed') }}</span>
+                        </span>
+                        <span class="hidden sm:inline">•</span>
+                        <span class="truncate">
+                          {{ t('account.sessions.expires') }}
+                          <NuxtTime :datetime="session.expiresAt" class="font-medium" />
+                        </span>
+                      </div>
                     </div>
                   </div>
+                </button>
 
-                  <div class="flex items-center gap-2 shrink-0">
-                    <UButton
-                      variant="ghost"
-                      color="error"
-                      size="xs"
-                      :loading="updatingSessions"
-                      :disabled="session.token === currentSessionToken && updatingSessions"
-                      @click.stop="handleSignOut(session.token)"
-                    >
-                      {{ t('account.sessions.revoke') }}
-                    </UButton>
-                  </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <UButton
+                    variant="ghost"
+                    color="error"
+                    size="xs"
+                    :loading="updatingSessions"
+                    :disabled="session.token === currentSessionToken && updatingSessions"
+                    @click.stop="handleSignOut(session.token)"
+                  >
+                    {{ t('account.sessions.revoke') }}
+                  </UButton>
                 </div>
-              </button>
+              </div>
               
               <div
                 v-if="expandedSessions.has(session.token)"

@@ -71,7 +71,9 @@
     "readOnly": "Read-only",
     "userEditable": "User editable",
     "newest": "Newest",
-    "oldest": "Oldest"
+    "oldest": "Oldest",
+    "view": "View",
+    "toggleSection": "Toggle section"
   },
   "units": {
     "bytes": "bytes",
@@ -987,6 +989,7 @@
       "created": "Created",
       "actions": "Actions",
       "view": "View",
+      "viewProfile": "View profile",
       "noUsers": "No users found",
       "noUsersDescription": "No users match your search criteria.",
       "showingUsers": "Showing {count} users",
@@ -1453,7 +1456,9 @@
       "systemSnapshot": "System snapshot",
       "recentServers": "Recent servers",
       "noServersForNodeYet": "No servers on this node yet.",
-      "showingNodes": "Showing {count} nodes"
+      "showingNodes": "Showing {count} nodes",
+      "downloadConfiguration": "Download configuration",
+      "issueToken": "Issue token"
     },
     "locations": {
       "title": "Locations",

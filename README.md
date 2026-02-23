@@ -19,7 +19,7 @@ XyraPanel is an open-source game server management panel built on Nuxt, TypeScri
 **One-line installer** — Ubuntu 22.04 / 24.04, run as root:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/XyraPanel/panel/main/scripts/install.sh)
+bash <(curl -fsSL https://xyrapanel.com/install)
 ```
 
 ## Links

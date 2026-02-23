@@ -69,10 +69,22 @@ const authStore = useAuthStore()
 const isAdminUser = computed(() => authStore.isAdmin || authStore.user?.role === 'admin')
 
 const isHydrated = ref(false)
+const defaultSecuritySettings: SecuritySettings = {
+  enforceTwoFactor: false,
+  maintenanceMode: false,
+  maintenanceMessage: '',
+  announcementEnabled: false,
+  announcementMessage: '',
+  sessionTimeoutMinutes: 60,
+  queueConcurrency: 4,
+  queueRetryLimit: 3,
+}
+
 const [
   meFetch,
   dashboardFetch,
   sessionsFetch,
+  securityFetch,
 ] = await Promise.all([
   useFetch<MeResponse>('/api/me', {
     key: 'dashboard-me',
@@ -87,6 +99,20 @@ const [
     key: 'dashboard-sessions',
     dedupe: 'defer',
   }),
+  useAsyncData<SecuritySettings>(
+    'dashboard-security-settings',
+    async () => {
+      if (!isAdminUser.value) {
+        return defaultSecuritySettings
+      }
+
+      return await $fetch<SecuritySettings>('/api/admin/settings/security')
+    },
+    {
+      default: () => defaultSecuritySettings,
+      watch: [isAdminUser],
+    },
+  ),
 ])
 
 const {
@@ -103,32 +129,6 @@ const {
   data: sessionsResponse,
 } = sessionsFetch
 
-const defaultSecuritySettings: SecuritySettings = {
-  enforceTwoFactor: false,
-  maintenanceMode: false,
-  maintenanceMessage: '',
-  announcementEnabled: false,
-  announcementMessage: '',
-  sessionTimeoutMinutes: 60,
-  queueConcurrency: 4,
-  queueRetryLimit: 3,
-}
-
-const securityFetch = await useAsyncData<SecuritySettings>(
-  'dashboard-security-settings',
-  async () => {
-    if (!isAdminUser.value) {
-      return defaultSecuritySettings
-    }
-
-    return await $fetch<SecuritySettings>('/api/admin/settings/security')
-  },
-  {
-    default: () => defaultSecuritySettings,
-    watch: [isAdminUser],
-  },
-)
-
 const {
   data: securitySettings,
 } = securityFetch
@@ -138,9 +138,11 @@ onMounted(() => {
 })
 
 if (import.meta.client) {
-  await callOnce(async () => {
-    await prefetchComponents('/admin')
-  })
+  if (isAdminUser.value) {
+    void callOnce(async () => {
+      await prefetchComponents('/admin')
+    })
+  }
 
   void callOnce(async () => {
     await new Promise(resolve => setTimeout(resolve, 250))

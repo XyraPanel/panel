@@ -137,6 +137,7 @@ async function copyJson(entry: typeof entries.value[0]) {
               :items="sortOptions"
               value-key="value"
               class="w-40"
+              :aria-label="t('common.filter')"
             />
           </div>
 

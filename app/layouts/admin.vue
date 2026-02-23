@@ -429,7 +429,7 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
             :shortcut="dashboardSearchShortcut" :label="t('common.search')" />
           <div v-if="!collapsed" class="text-[10px] uppercase tracking-wide text-muted-foreground/70 px-2 py-2">
             <p class="flex items-center gap-1">
-              <img src="/logo.png" alt="XyraPanel logo" class="h-4 w-auto" loading="lazy">
+              <img src="/logo.png" alt="XyraPanel" class="h-4 w-auto" loading="lazy">
               {{ t('layout.copyright', { year: new Date().getFullYear() }) }}
               <ULink href="https://xyrapanel.com" target="_blank">XyraPanel</ULink>
             </p>
@@ -479,19 +479,21 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
       }" />
     <UDashboardPanel :ui="{ body: 'flex flex-1 flex-col p-0' }">
       <template #body>
-        <UDashboardNavbar
-          :ui="{
-            left: 'flex flex-col gap-0.5 text-left leading-tight sm:flex-row sm:items-baseline sm:gap-2',
-            root: 'justify-between items-center px-4 py-1.5 sm:px-6 sm:py-2'
-          }"
-        >
-          <template #left>
-            <div v-if="adminTitle" class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2">
-              <h1 class="text-base font-semibold text-foreground sm:text-lg">{{ adminTitle }}</h1>
-              <p class="text-xs text-muted-foreground">{{ adminSubtitle }}</p>
-            </div>
-          </template>
-        </UDashboardNavbar>
+        <header role="banner">
+          <UDashboardNavbar
+            :ui="{
+              left: 'flex flex-col gap-0.5 text-left leading-tight sm:flex-row sm:items-baseline sm:gap-2',
+              root: 'justify-between items-center px-4 py-1.5 sm:px-6 sm:py-2'
+            }"
+          >
+            <template #left>
+              <div v-if="adminTitle" class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2">
+                <h1 class="text-base font-semibold text-foreground sm:text-lg">{{ adminTitle }}</h1>
+                <p class="text-xs text-muted-foreground">{{ adminSubtitle }}</p>
+              </div>
+            </template>
+          </UDashboardNavbar>
+        </header>
 
         <main class="flex-1 overflow-y-auto">
           <div class="mx-auto w-full px-4 py-5 sm:px-6 space-y-6">

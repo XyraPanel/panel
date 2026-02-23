@@ -106,13 +106,13 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       @submit="handleSubmit"
     >
       <div class="space-y-3">
-        <UFormField name="enforceTwoFactor">
+        <UFormField :label="t('admin.settings.securitySettings.enforceTwoFactor')" name="enforceTwoFactor">
           <USwitch v-model="form.enforceTwoFactor" :label="t('admin.settings.securitySettings.enforceTwoFactor')" :disabled="isSubmitting" />
         </UFormField>
       </div>
 
       <div class="space-y-3">
-        <UFormField name="maintenanceMode">
+        <UFormField :label="t('admin.settings.securitySettings.maintenanceMode')" name="maintenanceMode">
           <USwitch v-model="form.maintenanceMode" :label="t('admin.settings.securitySettings.maintenanceMode')" :disabled="isSubmitting" />
         </UFormField>
 
@@ -125,7 +125,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       </div>
 
       <div class="space-y-3">
-        <UFormField name="announcementEnabled">
+        <UFormField :label="t('admin.settings.securitySettings.announcementEnabled')" name="announcementEnabled">
           <USwitch v-model="form.announcementEnabled" :label="t('admin.settings.securitySettings.announcementEnabled')" :disabled="isSubmitting" />
         </UFormField>
 

@@ -300,17 +300,18 @@ async function updateDockerImage() {
                     </p>
                     <div class="flex flex-col gap-2 sm:flex-row sm:items-end">
                       <div class="flex-1">
-                        <label class="text-xs text-muted-foreground">{{ t('server.startup.variableValue') }}</label>
                         <template v-if="variable.isEditable">
-                          <UInput
-                            v-model="variableValues[variable.key]"
-                            size="sm"
-                            class="mt-1"
-                            :disabled="savingVariables[variable.key]"
-                            @keyup.enter="saveVariable(variable)"
-                          />
+                          <UFormField :label="t('server.startup.variableValue')" :name="variable.key">
+                            <UInput
+                              v-model="variableValues[variable.key]"
+                              size="sm"
+                              :disabled="savingVariables[variable.key]"
+                              @keyup.enter="saveVariable(variable)"
+                            />
+                          </UFormField>
                         </template>
                         <template v-else>
+                          <span class="text-xs text-muted-foreground">{{ t('server.startup.variableValue') }}</span>
                           <code class="mt-1 block rounded border border-default bg-muted/40 px-3 py-2 text-sm font-mono break-all" :class="variableValues[variable.key] ? 'text-foreground' : 'text-muted-foreground italic'">
                             {{ variableValues[variable.key] || t('server.startup.noValue') }}
                           </code>

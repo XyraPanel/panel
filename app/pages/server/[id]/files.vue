@@ -581,7 +581,7 @@ const isEditorDirty = computed(() => {
                   {{ fileError?.message || fileError?.toString() || t('server.files.failedToLoadFileContents') }}
                 </UAlert>
 
-                <div class="relative min-h-[60vh] overflow-hidden rounded-md border border-default/80">
+                <div class="relative min-h-[60vh] overflow-hidden rounded-md border border-default/80" tabindex="0" :aria-label="t('server.files.editing') + ': ' + (selectedFile?.name ?? '')" role="region">
                   <div v-if="filePending" class="absolute inset-0 z-10 flex items-center justify-center bg-background/80">
                     <span class="text-sm text-muted-foreground">{{ t('server.files.loadingFile') }}</span>
                   </div>

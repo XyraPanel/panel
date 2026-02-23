@@ -122,9 +122,13 @@ async function copyJson(schedule: AdminScheduleResponse) {
               <div class="space-y-3">
                 <div v-for="schedule in schedules" :key="schedule.id"
                   class="rounded-lg border border-default overflow-hidden">
-                  <button
-                    class="w-full flex flex-col gap-2 p-3 text-left hover:bg-elevated/50 transition-colors md:flex-row md:items-center md:justify-between"
-                    @click="toggleEntry(schedule.id)">
+                  <div
+                    role="button"
+                    tabindex="0"
+                    class="w-full flex flex-col gap-2 p-3 text-left hover:bg-elevated/50 transition-colors md:flex-row md:items-center md:justify-between cursor-pointer"
+                    @click="toggleEntry(schedule.id)"
+                    @keydown.enter.prevent="toggleEntry(schedule.id)"
+                    @keydown.space.prevent="toggleEntry(schedule.id)">
                     <div class="flex-1 min-w-0 flex items-center gap-3">
                       <UIcon
                         :name="expandedEntries.has(schedule.id) ? 'i-lucide-chevron-down' : 'i-lucide-chevron-right'"
@@ -143,7 +147,7 @@ async function copyJson(schedule: AdminScheduleResponse) {
                           schedule.cron }}</span>
                       </span>
                     </div>
-                  </button>
+                  </div>
 
                   <div v-if="expandedEntries.has(schedule.id)" class="border-t border-default bg-muted/30 p-4">
                     <div class="space-y-2">

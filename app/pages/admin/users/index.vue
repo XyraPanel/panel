@@ -345,11 +345,11 @@ async function handleDelete() {
                 <template #actions-cell="{ row }">
                   <div class="flex gap-1 justify-end">
                     <UButton icon="i-lucide-user-circle" size="xs" variant="ghost"
-                      :to="`/admin/users/${row.original.id}`" />
+                      :to="`/admin/users/${row.original.id}`" :aria-label="t('admin.users.viewProfile')" />
                     <UButton icon="i-lucide-pencil" size="xs" color="info" variant="ghost"
-                      @click="openEditModal(row.original)" />
+                      :aria-label="t('common.edit')" @click="openEditModal(row.original)" />
                     <UButton icon="i-lucide-trash" size="xs" variant="ghost" color="error"
-                      @click="userToDelete = row.original; showDeleteModal = true" />
+                      :aria-label="t('common.delete')" @click="userToDelete = row.original; showDeleteModal = true" />
                   </div>
                 </template>
               </UTable>
