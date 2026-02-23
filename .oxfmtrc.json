@@ -9,6 +9,7 @@
     "dist/**",
     ".nuxt/**",
     ".output/**",
+    ".github/**",
     "coverage/**",
     "build/**",
     "*.min.js"
