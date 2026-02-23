@@ -91,7 +91,6 @@ export default defineEventHandler(async (event) => {
           updatedAt: now,
         })
         .where(eq(tables.users.id, id));
-      userRecord = { ...userRecord, role };
       changedFields.add('role');
     }
 
