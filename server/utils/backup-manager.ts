@@ -110,10 +110,7 @@ export class BackupManager {
       .select()
       .from(tables.serverBackups)
       .where(
-        and(
-          eq(tables.serverBackups.serverId, serverId),
-          eq(tables.serverBackups.uuid, backupUuid),
-        ),
+        and(eq(tables.serverBackups.serverId, serverId), eq(tables.serverBackups.uuid, backupUuid)),
       )
       .limit(1);
 
@@ -159,10 +156,7 @@ export class BackupManager {
       .select()
       .from(tables.serverBackups)
       .where(
-        and(
-          eq(tables.serverBackups.serverId, serverId),
-          eq(tables.serverBackups.uuid, backupUuid),
-        ),
+        and(eq(tables.serverBackups.serverId, serverId), eq(tables.serverBackups.uuid, backupUuid)),
       )
       .limit(1);
 
@@ -226,10 +220,7 @@ export class BackupManager {
       .select()
       .from(tables.serverBackups)
       .where(
-        and(
-          eq(tables.serverBackups.serverId, serverId),
-          eq(tables.serverBackups.uuid, backupUuid),
-        ),
+        and(eq(tables.serverBackups.serverId, serverId), eq(tables.serverBackups.uuid, backupUuid)),
       )
       .limit(1);
 
@@ -265,10 +256,7 @@ export class BackupManager {
       .select()
       .from(tables.serverBackups)
       .where(
-        and(
-          eq(tables.serverBackups.serverId, serverId),
-          eq(tables.serverBackups.uuid, backupUuid),
-        ),
+        and(eq(tables.serverBackups.serverId, serverId), eq(tables.serverBackups.uuid, backupUuid)),
       )
       .limit(1);
 
@@ -312,10 +300,7 @@ export class BackupManager {
       .select()
       .from(tables.serverBackups)
       .where(
-        and(
-          eq(tables.serverBackups.serverId, serverId),
-          eq(tables.serverBackups.uuid, backupUuid),
-        ),
+        and(eq(tables.serverBackups.serverId, serverId), eq(tables.serverBackups.uuid, backupUuid)),
       )
       .limit(1);
 
