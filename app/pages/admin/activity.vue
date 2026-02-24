@@ -186,11 +186,7 @@ function exportCsv() {
             <template #header>
               <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex flex-wrap items-center gap-2">
-                  <UBadge
-                    :color="pending ? 'neutral' : 'primary'"
-                    variant="subtle"
-                    size="xs"
-                  >
+                  <UBadge :color="pending ? 'neutral' : 'primary'" variant="subtle" size="xs">
                     {{ t('admin.activity.auditLog') }}
                   </UBadge>
                 </div>

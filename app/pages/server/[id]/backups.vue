@@ -276,7 +276,9 @@ async function confirmDelete() {
               v-else-if="pending || !backupsData"
               class="overflow-hidden rounded-lg border border-default"
             >
-              <div class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
+              <div
+                class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid"
+              >
                 <span class="col-span-4">{{ t('server.backups.backup') }}</span>
                 <span class="col-span-2">{{ t('server.backups.size') }}</span>
                 <span class="col-span-3">{{ t('server.backups.created') }}</span>
@@ -321,7 +323,9 @@ async function confirmDelete() {
             </div>
 
             <div v-else class="overflow-hidden rounded-lg border border-default">
-              <div class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
+              <div
+                class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid"
+              >
                 <span class="col-span-4">{{ t('server.backups.backup') }}</span>
                 <span class="col-span-2">{{ t('server.backups.size') }}</span>
                 <span class="col-span-3">{{ t('server.backups.created') }}</span>

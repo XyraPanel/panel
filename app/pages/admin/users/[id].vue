@@ -53,7 +53,8 @@ async function runAction<T>(
 
     return result;
   } catch (actionError) {
-    const description = actionError instanceof Error ? actionError.message : t('common.unexpectedError');
+    const description =
+      actionError instanceof Error ? actionError.message : t('common.unexpectedError');
     toast.add({
       title: t('admin.users.actionFailed'),
       description,

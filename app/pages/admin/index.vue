@@ -276,7 +276,9 @@ onMounted(() => {
                     <div
                       class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                     >
-                      <span class="text-sm font-semibold wrap-break-word">{{ incident.action }}</span>
+                      <span class="text-sm font-semibold wrap-break-word">{{
+                        incident.action
+                      }}</span>
                       <NuxtTime
                         :datetime="incident.occurredAt"
                         locale="en-US"

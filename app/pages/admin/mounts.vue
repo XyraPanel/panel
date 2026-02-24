@@ -149,7 +149,9 @@ async function handleDelete() {
             <template #header>
               <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                  <p v-if="mounts.length > 0">{{ t('admin.mounts.showingMounts', { count: mounts.length }) }}</p>
+                  <p v-if="mounts.length > 0">
+                    {{ t('admin.mounts.showingMounts', { count: mounts.length }) }}
+                  </p>
                 </div>
                 <UButton
                   icon="i-lucide-plus"
@@ -196,7 +198,10 @@ async function handleDelete() {
                       >{{ t('admin.mounts.userMountable') }}
                     </UBadge>
                   </div>
-                  <p v-if="mount.description" class="mt-1 text-sm text-muted-foreground wrap-break-word">
+                  <p
+                    v-if="mount.description"
+                    class="mt-1 text-sm text-muted-foreground wrap-break-word"
+                  >
                     {{ mount.description }}
                   </p>
                   <div class="mt-2 space-y-2 text-xs text-muted-foreground">

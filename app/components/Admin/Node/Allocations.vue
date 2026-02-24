@@ -323,46 +323,51 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
 
     <UCard>
       <div class="overflow-x-auto">
-        <UTable :rows="paginatedAllocations" :columns="columns" :loading="pending" class="min-w-full">
-        <template #ip-data="{ row }">
-          <code class="text-sm">{{ (row as unknown as Allocation).ip }}</code>
-        </template>
+        <UTable
+          :rows="paginatedAllocations"
+          :columns="columns"
+          :loading="pending"
+          class="min-w-full"
+        >
+          <template #ip-data="{ row }">
+            <code class="text-sm">{{ (row as unknown as Allocation).ip }}</code>
+          </template>
 
-        <template #ipAlias-data="{ row }">
-          <UInput
-            :model-value="(row as unknown as Allocation).ipAlias || ''"
-            :placeholder="t('common.none')"
-            size="sm"
-            :loading="updatingAlias === (row as unknown as Allocation).id"
-            @blur="handleAliasBlur(row as unknown as Allocation, $event)"
-          />
-        </template>
+          <template #ipAlias-data="{ row }">
+            <UInput
+              :model-value="(row as unknown as Allocation).ipAlias || ''"
+              :placeholder="t('common.none')"
+              size="sm"
+              :loading="updatingAlias === (row as unknown as Allocation).id"
+              @blur="handleAliasBlur(row as unknown as Allocation, $event)"
+            />
+          </template>
 
-        <template #port-data="{ row }">
-          <code class="text-sm">{{ (row as unknown as Allocation).port }}</code>
-        </template>
+          <template #port-data="{ row }">
+            <code class="text-sm">{{ (row as unknown as Allocation).port }}</code>
+          </template>
 
-        <template #server-data="{ row }">
-          <NuxtLink
-            v-if="(row as unknown as Allocation).serverId"
-            :to="`/admin/servers/${(row as unknown as Allocation).serverId}`"
-            class="text-primary hover:underline"
-          >
-            {{ t('common.server') }}
-          </NuxtLink>
-          <span v-else class="text-sm text-muted-foreground">-</span>
-        </template>
+          <template #server-data="{ row }">
+            <NuxtLink
+              v-if="(row as unknown as Allocation).serverId"
+              :to="`/admin/servers/${(row as unknown as Allocation).serverId}`"
+              class="text-primary hover:underline"
+            >
+              {{ t('common.server') }}
+            </NuxtLink>
+            <span v-else class="text-sm text-muted-foreground">-</span>
+          </template>
 
-        <template #actions-data="{ row }">
-          <UButton
-            v-if="!(row as unknown as Allocation).serverId"
-            icon="i-lucide-trash-2"
-            color="error"
-            variant="ghost"
-            size="sm"
-            @click="deleteAllocation(row as unknown as Allocation)"
-          />
-        </template>
+          <template #actions-data="{ row }">
+            <UButton
+              v-if="!(row as unknown as Allocation).serverId"
+              icon="i-lucide-trash-2"
+              color="error"
+              variant="ghost"
+              size="sm"
+              @click="deleteAllocation(row as unknown as Allocation)"
+            />
+          </template>
         </UTable>
       </div>
 

@@ -167,7 +167,9 @@ function viewNest(nest: NestWithEggCount) {
                     class="mt-2 flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4"
                   >
                     <span>{{ t('admin.nests.author') }}: {{ nest.author }}</span>
-                    <span class="break-all">{{ t('admin.nests.uuid') }}: {{ nest.uuid.slice(0, 8) }}</span>
+                    <span class="break-all"
+                      >{{ t('admin.nests.uuid') }}: {{ nest.uuid.slice(0, 8) }}</span
+                    >
                   </div>
                 </div>
 

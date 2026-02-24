@@ -285,7 +285,9 @@ watch(
               <template #header>
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                    <p v-if="nodes.length > 0">{{ t('admin.nodes.showingNodes', { count: nodes.length }) }}</p>
+                    <p v-if="nodes.length > 0">
+                      {{ t('admin.nodes.showingNodes', { count: nodes.length }) }}
+                    </p>
                   </div>
                   <UButton
                     icon="i-lucide-plus"
@@ -317,7 +319,9 @@ watch(
                   :description="t('admin.nodes.description')"
                 />
                 <div v-else class="overflow-hidden rounded-lg border border-default">
-                  <div class="bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden sm:grid sm:grid-cols-12">
+                  <div
+                    class="bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden sm:grid sm:grid-cols-12"
+                  >
                     <span class="col-span-4">{{ t('common.name') }}</span>
                     <span class="col-span-4">{{ t('admin.nodes.endpoint') }}</span>
                     <span class="col-span-2">{{ t('admin.nodes.token') }}</span>
@@ -336,18 +340,22 @@ watch(
                         >
                           {{ node.name }}
                         </NuxtLink>
-                        <p class="text-xs text-muted-foreground">{{ t('admin.nodes.id') }}: {{ node.id }}</p>
-                        <p v-if="node.description" class="text-xs text-muted-foreground wrap-break-word">
+                        <p class="text-xs text-muted-foreground">
+                          {{ t('admin.nodes.id') }}: {{ node.id }}
+                        </p>
+                        <p
+                          v-if="node.description"
+                          class="text-xs text-muted-foreground wrap-break-word"
+                        >
                           {{ node.description }}
                         </p>
                       </div>
                       <div class="flex flex-col gap-1 text-xs text-muted-foreground sm:col-span-4">
                         <code class="block break-all sm:truncate">{{ node.baseURL }}</code>
-                        <span>{
-                          node.allowInsecure
-                            ? t('admin.nodes.tlsVerificationDisabled')
-                            : t('admin.nodes.tlsVerificationEnforced')
-                        }}</span>
+                        <span
+                          >{ node.allowInsecure ? t('admin.nodes.tlsVerificationDisabled') :
+                          t('admin.nodes.tlsVerificationEnforced') }}</span
+                        >
                         <span>
                           {{ t('admin.nodes.updated') }}
                           <NuxtTime :datetime="node.updatedAt" />

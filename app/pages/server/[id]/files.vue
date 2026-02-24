@@ -496,7 +496,9 @@ const isEditorDirty = computed(() => {
               </UAlert>
             </div>
 
-            <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between mb-6">
+            <div
+              class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between mb-6"
+            >
               <div
                 v-if="currentDirectoryLabel !== '/' || breadcrumbs.length"
                 class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"

@@ -249,7 +249,9 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
                   v-if="expandedEntries.has(entry.id)"
                   class="border-t border-default bg-muted/30 p-4"
                 >
-                  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2">
+                  <div
+                    class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2"
+                  >
                     <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {{ t('account.activity.auditLogEntry') }}
                     </p>

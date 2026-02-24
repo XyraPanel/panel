@@ -183,7 +183,10 @@ async function handleDelete() {
                       }}
                     </UBadge>
                   </div>
-                  <p v-if="location.long" class="mt-1 text-sm text-muted-foreground wrap-break-word">
+                  <p
+                    v-if="location.long"
+                    class="mt-1 text-sm text-muted-foreground wrap-break-word"
+                  >
                     {{ location.long }}
                   </p>
                 </div>

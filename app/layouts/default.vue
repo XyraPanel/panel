@@ -195,7 +195,10 @@ function localeToFlag(code?: string): string {
   if (region && region.length === 2) {
     const base = 0x1f1e6;
     const offsetA = 'A'.charCodeAt(0);
-    return String.fromCodePoint(region.charCodeAt(0) - offsetA + base, region.charCodeAt(1) - offsetA + base);
+    return String.fromCodePoint(
+      region.charCodeAt(0) - offsetA + base,
+      region.charCodeAt(1) - offsetA + base,
+    );
   }
   return '🌐';
 }

@@ -251,8 +251,12 @@ async function copyToClipboard(text: string) {
                       {{ isExpired(key.expiresAt) ? t('admin.api.expired') : t('common.active') }}
                     </UBadge>
                   </div>
-                  <p v-if="key.memo" class="text-sm text-muted-foreground wrap-break-word">{{ key.memo }}</p>
-                  <div class="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4">
+                  <p v-if="key.memo" class="text-sm text-muted-foreground wrap-break-word">
+                    {{ key.memo }}
+                  </p>
+                  <div
+                    class="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4"
+                  >
                     <span>
                       {{ t('common.created') }}:
                       <NuxtTime

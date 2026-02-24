@@ -249,7 +249,9 @@ async function handleExportEgg() {
           </UAlert>
 
           <template v-else-if="egg">
-            <header class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+            <header
+              class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
+            >
               <div class="flex-1">
                 <div class="flex items-center gap-2 min-w-0">
                   <UButton
@@ -377,7 +379,9 @@ async function handleExportEgg() {
 
               <div v-else class="divide-y divide-default">
                 <div v-for="variable in egg.variables" :key="variable.id" class="py-4">
-                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <div
+                    class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4"
+                  >
                     <div class="flex-1">
                       <div class="flex items-center gap-2 flex-wrap">
                         <span class="font-medium break-words">{{ variable.name }}</span>
@@ -416,7 +420,9 @@ async function handleExportEgg() {
                           <span class="text-muted-foreground"
                             >{{ t('admin.eggs.validation') }}:</span
                           >
-                          <code class="rounded bg-muted px-1 py-0.5 break-all">{{ variable.rules }}</code>
+                          <code class="rounded bg-muted px-1 py-0.5 break-all">{{
+                            variable.rules
+                          }}</code>
                         </div>
                       </div>
                     </div>

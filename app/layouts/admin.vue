@@ -521,7 +521,9 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
                 <h1 class="text-base font-semibold text-foreground sm:text-lg truncate">
                   {{ adminTitle }}
                 </h1>
-                <p class="hidden text-xs text-muted-foreground sm:block truncate">{{ adminSubtitle }}</p>
+                <p class="hidden text-xs text-muted-foreground sm:block truncate">
+                  {{ adminSubtitle }}
+                </p>
               </div>
             </template>
           </UDashboardNavbar>

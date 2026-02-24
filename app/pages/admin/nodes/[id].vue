@@ -329,7 +329,9 @@ async function handleMaintenanceAction(action: string) {
     }
   } catch (actionError) {
     const message =
-      actionError instanceof Error ? actionError.message : t('admin.nodes.failedToActionNode', { action });
+      actionError instanceof Error
+        ? actionError.message
+        : t('admin.nodes.failedToActionNode', { action });
     toast.add({
       title: t('common.error'),
       description: message,
@@ -396,7 +398,9 @@ async function togglePrimaryAllocation(row: AdminWingsNodeAllocationSummary) {
     await refreshNode();
   } catch (allocationError) {
     const message =
-      allocationError instanceof Error ? allocationError.message : t('admin.nodes.failedToUpdateAllocation');
+      allocationError instanceof Error
+        ? allocationError.message
+        : t('admin.nodes.failedToUpdateAllocation');
     toast.add({
       title: t('common.error'),
       description: message,
@@ -450,7 +454,9 @@ async function handleDeleteAllocation(row: AdminWingsNodeAllocationSummary) {
     await refreshNode();
   } catch (deleteError) {
     const message =
-      deleteError instanceof Error ? deleteError.message : t('admin.nodes.failedToDeleteAllocation');
+      deleteError instanceof Error
+        ? deleteError.message
+        : t('admin.nodes.failedToDeleteAllocation');
     toast.add({
       title: t('common.error'),
       description: message,
@@ -491,7 +497,9 @@ async function handleTransferServers() {
     await refreshNode();
   } catch (transferError) {
     const message =
-      transferError instanceof Error ? transferError.message : t('admin.nodes.failedToInitiateTransfer');
+      transferError instanceof Error
+        ? transferError.message
+        : t('admin.nodes.failedToInitiateTransfer');
     toast.add({
       title: t('common.error'),
       description: message,
@@ -599,7 +607,9 @@ async function handleCreateAllocations() {
       title: t('common.error'),
       description:
         err.data?.message ||
-        (createError instanceof Error ? createError.message : t('admin.nodes.failedToCreateAllocations')),
+        (createError instanceof Error
+          ? createError.message
+          : t('admin.nodes.failedToCreateAllocations')),
       color: 'error',
     });
   } finally {
@@ -663,11 +673,27 @@ async function handleCreateAllocations() {
             v-model="tab"
             variant="link"
             :items="[
-              { label: t('admin.nodes.tabs.overview'), value: 'overview', icon: 'i-lucide-layout-dashboard' },
+              {
+                label: t('admin.nodes.tabs.overview'),
+                value: 'overview',
+                icon: 'i-lucide-layout-dashboard',
+              },
               { label: t('admin.nodes.tabs.servers'), value: 'servers', icon: 'i-lucide-server' },
-              { label: t('admin.nodes.tabs.allocations'), value: 'allocations', icon: 'i-lucide-plug-2' },
-              { label: t('admin.nodes.tabs.settings'), value: 'settings', icon: 'i-lucide-settings-2' },
-              { label: t('admin.nodes.tabs.configuration'), value: 'configuration', icon: 'i-lucide-terminal' },
+              {
+                label: t('admin.nodes.tabs.allocations'),
+                value: 'allocations',
+                icon: 'i-lucide-plug-2',
+              },
+              {
+                label: t('admin.nodes.tabs.settings'),
+                value: 'settings',
+                icon: 'i-lucide-settings-2',
+              },
+              {
+                label: t('admin.nodes.tabs.configuration'),
+                value: 'configuration',
+                icon: 'i-lucide-terminal',
+              },
               { label: t('admin.nodes.tabs.system'), value: 'system', icon: 'i-lucide-cpu' },
             ]"
             class="w-full text-left"

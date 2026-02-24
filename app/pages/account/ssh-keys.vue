@@ -341,7 +341,9 @@ async function confirmDelete() {
               <div
                 class="flex-1 min-w-0 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
               >
-                <div class="flex-1 min-w-0 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+                <div
+                  class="flex-1 min-w-0 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
+                >
                   <div class="flex items-center gap-2 min-w-0">
                     <span class="text-sm font-medium font-mono">{{ key.name }}</span>
                     <UIcon
@@ -353,7 +355,9 @@ async function confirmDelete() {
                       class="size-4 text-muted-foreground shrink-0"
                     />
                   </div>
-                  <div class="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-2">
+                  <div
+                    class="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-2"
+                  >
                     <span class="font-medium">{{ t('account.sshKeys.fingerprint') }}:</span>
                     <code class="text-xs font-mono break-all leading-5">{{ key.fingerprint }}</code>
                   </div>

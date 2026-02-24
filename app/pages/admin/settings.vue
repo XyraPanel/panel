@@ -89,7 +89,9 @@ const openSections = ref<Record<string, boolean>>({
                     <UIcon :name="section.icon" class="size-5 text-primary" />
                     <div class="min-w-0">
                       <h3 class="text-base font-semibold break-words">{{ section.label }}</h3>
-                      <p class="text-sm text-muted-foreground break-words">{{ section.description }}</p>
+                      <p class="text-sm text-muted-foreground break-words">
+                        {{ section.description }}
+                      </p>
                     </div>
                   </div>
                   <UIcon

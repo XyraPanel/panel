@@ -679,7 +679,9 @@ function getStatusLabel(enabled: boolean) {
                 :key="item.id"
                 class="rounded-xl border border-default/70 bg-muted/10 p-4 shadow-sm"
               >
-                <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+                <div
+                  class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
+                >
                   <div class="space-y-1">
                     <div class="flex items-center gap-2">
                       <h3 class="text-base font-semibold text-foreground">{{ item.name }}</h3>

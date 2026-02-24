@@ -256,7 +256,9 @@ async function deleteDatabase() {
             />
 
             <div v-else class="overflow-hidden rounded-lg border border-default">
-              <div class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
+              <div
+                class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid"
+              >
                 <span class="col-span-3">{{ t('server.databases.name') }}</span>
                 <span class="col-span-3">{{ t('server.databases.host') }}</span>
                 <span class="col-span-3">{{ t('server.databases.username') }}</span>
@@ -276,7 +278,9 @@ async function deleteDatabase() {
                     {{ db.host.hostname }}:{{ db.host.port }}
                   </div>
                   <div class="sm:col-span-3">
-                    <code class="rounded bg-muted px-2 py-1 text-xs break-all">{{ db.username }}</code>
+                    <code class="rounded bg-muted px-2 py-1 text-xs break-all">{{
+                      db.username
+                    }}</code>
                   </div>
                   <div class="sm:col-span-2 text-xs text-muted-foreground break-all">
                     {{ db.remote }}

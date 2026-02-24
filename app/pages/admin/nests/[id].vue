@@ -160,7 +160,9 @@ function handleFileChange(event: Event) {
           </UAlert>
 
           <template v-else-if="nest">
-            <header class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+            <header
+              class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
+            >
               <div class="flex-1">
                 <div class="flex items-center gap-2 min-w-0">
                   <UButton icon="i-lucide-arrow-left" size="xs" variant="ghost" to="/admin/nests" />

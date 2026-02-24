@@ -239,7 +239,9 @@ async function createAllocation() {
               </div>
 
               <div v-else class="overflow-hidden rounded-lg border border-default">
-                <div class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
+                <div
+                  class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid"
+                >
                   <span class="col-span-4">{{ t('server.network.ip') }}</span>
                   <span class="col-span-2">{{ t('server.network.port') }}</span>
                   <span class="col-span-3">{{ t('common.notes') }}</span>
@@ -251,7 +253,9 @@ async function createAllocation() {
                     :key="allocation.id"
                     class="flex flex-col gap-2 px-4 py-3 text-sm sm:grid sm:grid-cols-12 sm:items-center sm:gap-2"
                   >
-                    <span class="sm:col-span-4 font-medium break-all">{{ formatIp(allocation) }}</span>
+                    <span class="sm:col-span-4 font-medium break-all">{{
+                      formatIp(allocation)
+                    }}</span>
                     <span class="sm:col-span-2 text-muted-foreground">{{ allocation.port }}</span>
                     <span class="sm:col-span-3 text-xs text-muted-foreground wrap-break-word">{{
                       allocation.notes || t('common.na')

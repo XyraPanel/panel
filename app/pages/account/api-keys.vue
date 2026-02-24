@@ -549,9 +549,13 @@ async function copyToken() {
               <div
                 class="flex-1 min-w-0 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
               >
-                <div class="flex-1 min-w-0 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+                <div
+                  class="flex-1 min-w-0 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
+                >
                   <div class="flex items-center gap-2 min-w-0">
-                    <code class="text-sm font-medium font-mono break-all leading-5">{{ key.identifier }}</code>
+                    <code class="text-sm font-medium font-mono break-all leading-5">{{
+                      key.identifier
+                    }}</code>
                     <UIcon
                       :name="
                         expandedKeys.has(key.identifier)
@@ -574,7 +578,9 @@ async function copyToken() {
                   </p>
                 </div>
 
-                <div class="flex flex-col gap-1 text-xs text-muted-foreground shrink-0 sm:flex-row sm:items-center sm:gap-2">
+                <div
+                  class="flex flex-col gap-1 text-xs text-muted-foreground shrink-0 sm:flex-row sm:items-center sm:gap-2"
+                >
                   <span class="truncate">
                     {{ t('account.apiKeys.created') }}:
                     <NuxtTime :datetime="key.created_at" class="font-medium" />
