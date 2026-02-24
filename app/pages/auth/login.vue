@@ -29,6 +29,15 @@ definePageMeta({
   auth: false,
 });
 
+useSeoMeta({
+  title: () => `${t('auth.signIn')} | ${appName.value}`,
+  description: () => t('auth.enterUsernameOrEmail'),
+  ogTitle: () => `${t('auth.signIn')} | ${appName.value}`,
+  ogDescription: () => t('auth.enterUsernameOrEmail'),
+  twitterTitle: () => `${t('auth.signIn')} | ${appName.value}`,
+  twitterDescription: () => t('auth.enterUsernameOrEmail'),
+});
+
 const requiresToken = ref(false);
 const turnstileToken = ref<string | undefined>(undefined);
 const turnstileRef = ref<{ reset: () => void } | null>(null);

@@ -26,6 +26,15 @@ definePageMeta({
   auth: true,
 });
 
+useSeoMeta({
+  title: () => `${t('auth.passwordResetRequired')} | ${appName.value}`,
+  description: () => t('auth.chooseNewPasswordToContinue'),
+  ogTitle: () => `${t('auth.passwordResetRequired')} | ${appName.value}`,
+  ogDescription: () => t('auth.chooseNewPasswordToContinue'),
+  twitterTitle: () => `${t('auth.passwordResetRequired')} | ${appName.value}`,
+  twitterDescription: () => t('auth.chooseNewPasswordToContinue'),
+});
+
 const schema = accountForcedPasswordSchema;
 
 const fields: AuthFormField[] = [

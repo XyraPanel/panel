@@ -7,6 +7,15 @@ definePageMeta({
   auth: false,
 });
 
+useSeoMeta({
+  title: () => `${t('auth.resetYourPassword')} | ${appName.value}`,
+  description: () => t('auth.enterEmailOrUsername'),
+  ogTitle: () => `${t('auth.resetYourPassword')} | ${appName.value}`,
+  ogDescription: () => t('auth.enterEmailOrUsername'),
+  twitterTitle: () => `${t('auth.resetYourPassword')} | ${appName.value}`,
+  twitterDescription: () => t('auth.enterEmailOrUsername'),
+});
+
 const { t } = useI18n();
 const toast = useToast();
 const router = useRouter();

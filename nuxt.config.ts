@@ -555,6 +555,55 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: process.env.APP_NAME || 'XyraPanel',
+      titleTemplate: '%s | ' + (process.env.APP_NAME || 'XyraPanel'),
+      meta: [
+        {
+          name: 'description',
+          content:
+            process.env.APP_DESCRIPTION ||
+            'XyraPanel manage game servers, players, backups, and infrastructure from one secure dashboard.',
+        },
+        {
+          name: 'theme-color',
+          content: '#ffffff',
+        },
+        {
+          property: 'og:title',
+          content: process.env.APP_NAME || 'XyraPanel',
+        },
+        {
+          property: 'og:description',
+          content:
+            process.env.APP_DESCRIPTION ||
+            'XyraPanel manage game servers, players, backups, and infrastructure from one secure dashboard.',
+        },
+        {
+          property: 'og:type',
+          content: 'website',
+        },
+        {
+          property: 'og:image',
+          content: '/pwa-512x512.png',
+        },
+        {
+          name: 'twitter:card',
+          content: 'summary_large_image',
+        },
+        {
+          name: 'twitter:title',
+          content: process.env.APP_NAME || 'XyraPanel',
+        },
+        {
+          name: 'twitter:description',
+          content:
+            process.env.APP_DESCRIPTION ||
+            'XyraPanel manage game servers, players, backups, and infrastructure from one secure dashboard.',
+        },
+        {
+          name: 'twitter:image',
+          content: '/pwa-512x512.png',
+        },
+      ],
       link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
     },
   },
@@ -563,6 +612,8 @@ export default defineNuxtConfig({
   },
   robots: {
     blockAiBots: true, // Block AI bots from crawling !
+    groups: [{ userAgent: ['*'], disallow: ['/'] }],
+    sitemap: [],
   },
   experimental: {
     buildCache: true,
