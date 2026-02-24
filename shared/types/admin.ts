@@ -26,34 +26,6 @@ export interface AuditEventsPayload {
 
 export type AdminActivityEntry = AuditEventResponse;
 
-export interface AdminScheduleResponse {
-  id: string;
-  name: string;
-  description?: string;
-  serverName: string;
-  cron: string;
-  nextRun: string | null;
-  lastRun?: string | null;
-  enabled: boolean;
-  type?: 'wings' | 'nitro';
-}
-
-export interface NitroTasksResponse {
-  tasks: Record<string, { description?: string }>;
-  scheduledTasks: Array<{ cron: string; tasks: string[] }>;
-}
-
-export interface NitroTaskSchedule {
-  name: string;
-  cron: string;
-  description?: string;
-  tasks: string[];
-  type: 'nitro';
-}
-
-export interface AdminSchedulesPayload {
-  data: AdminScheduleResponse[];
-}
 
 export interface AdminUsersPayload {
   data: AdminUserResponse[];
@@ -204,7 +176,6 @@ export interface ApiKeyPermissions {
   audit?: PermissionAction[];
   dashboard?: PermissionAction[];
   panel_settings?: PermissionAction[];
-  schedules?: PermissionAction[];
   api_keys?: PermissionAction[];
 }
 

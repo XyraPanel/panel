@@ -20,7 +20,6 @@ export const ADMIN_ACL_RESOURCES = {
   AUDIT: 'audit',
   DASHBOARD: 'dashboard',
   PANEL_SETTINGS: 'panel_settings',
-  SCHEDULES: 'schedules',
   API_KEYS: 'api_keys',
 };
 
@@ -48,7 +47,6 @@ const RESOURCE_TO_PERMISSION_KEY: Record<AdminAclResource, keyof ApiKeyPermissio
   [ADMIN_ACL_RESOURCES.AUDIT]: 'audit',
   [ADMIN_ACL_RESOURCES.DASHBOARD]: 'dashboard',
   [ADMIN_ACL_RESOURCES.PANEL_SETTINGS]: 'panel_settings',
-  [ADMIN_ACL_RESOURCES.SCHEDULES]: 'schedules',
   [ADMIN_ACL_RESOURCES.API_KEYS]: 'api_keys',
 };
 

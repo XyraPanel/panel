@@ -35,16 +35,16 @@ export const PERMISSIONS = {
   'startup.read': 'View startup settings',
   'startup.update': 'Modify startup settings',
 
+  'schedule.create': 'Create schedules',
+  'schedule.read': 'View schedules',
+  'schedule.update': 'Modify schedules',
+  'schedule.delete': 'Delete schedules',
+
   'database.create': 'Create databases',
   'database.read': 'View databases',
   'database.update': 'Modify databases',
   'database.delete': 'Delete databases',
   'database.view_password': 'View database passwords',
-
-  'schedule.create': 'Create schedules',
-  'schedule.read': 'View schedules',
-  'schedule.update': 'Modify schedules',
-  'schedule.delete': 'Delete schedules',
 
   'settings.rename': 'Rename server',
   'settings.reinstall': 'Reinstall server',

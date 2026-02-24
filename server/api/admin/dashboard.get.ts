@@ -17,7 +17,6 @@ import type {
 } from '#shared/types/admin';
 
 type DashboardSection = 'full' | 'critical' | 'incidents';
-type ScheduledTaskPayload = { tasks?: string[] };
 
 function parseMetadata(raw: string | null): Record<string, unknown> | null {
   if (!raw) return null;
@@ -34,13 +33,6 @@ function parseMetadata(raw: string | null): Record<string, unknown> | null {
   } catch {
     return { raw };
   }
-}
-
-function getHeaderValue(value: string | string[] | undefined, fallback = ''): string {
-  if (Array.isArray(value)) {
-    return value[0] ?? fallback;
-  }
-  return value ?? fallback;
 }
 
 function formatHelperRange(current: number, total: number, suffix: string): string {
@@ -66,75 +58,8 @@ function getEmptyDashboardResponse(): DashboardResponse {
   };
 }
 
-async function fetchNitroScheduleCount(event: H3Event): Promise<number> {
-  try {
-    const host = getHeaderValue(event.node.req.headers.host, 'localhost');
-    const protocol = getHeaderValue(event.node.req.headers['x-forwarded-proto'], 'http');
-    const cookie = getHeaderValue(event.node.req.headers.cookie);
-    const url = `${protocol}://${host}/api/admin/schedules/nitro-tasks`;
-
-    const response = await fetch(url, {
-      headers: {
-        cookie,
-      },
-    });
-
-    if (!response.ok) {
-      return 0;
-    }
-
-    const payload: unknown = await response.json();
-    const scheduledTasks = extractScheduledTasks(payload);
-
-    return scheduledTasks.reduce(
-      (count: number, scheduledTask: ScheduledTaskPayload) =>
-        count + (scheduledTask.tasks?.length ?? 0),
-      0,
-    );
-  } catch {
-    return 0;
-  }
-}
-
-function extractScheduledTasks(payload: unknown): ScheduledTaskPayload[] {
-  const normalizeTasks = (value: unknown): ScheduledTaskPayload[] => {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value
-      .filter((entry) => entry && typeof entry === 'object')
-      .map((entry) => {
-        const tasks =
-          'tasks' in entry && Array.isArray(entry.tasks)
-            ? entry.tasks.filter((task: unknown): task is string => typeof task === 'string')
-            : undefined;
-        return tasks ? { tasks } : {};
-      });
-  };
-
-  if (!payload || typeof payload !== 'object') {
-    return [];
-  }
-
-  if ('scheduledTasks' in payload) {
-    return normalizeTasks(payload.scheduledTasks);
-  }
-
-  if (
-    'data' in payload &&
-    payload.data &&
-    typeof payload.data === 'object' &&
-    'scheduledTasks' in payload.data
-  ) {
-    return normalizeTasks(payload.data.scheduledTasks);
-  }
-
-  return [];
-}
-
 async function fetchCriticalData(
-  event: H3Event,
+  _event: H3Event,
 ): Promise<Pick<DashboardResponse, 'metrics' | 'nodes' | 'operations'>> {
   const db = useDrizzle();
   const nodes = await listWingsNodes();
@@ -183,29 +108,8 @@ async function fetchCriticalData(
     .where(eq(tables.users.role, 'admin'));
   const adminUsersRow = adminUsersResult[0];
 
-  const scheduleRows = await db
-    .select({
-      enabled: tables.serverSchedules.enabled,
-      nextRunAt: tables.serverSchedules.nextRunAt,
-    })
-    .from(tables.serverSchedules);
-
   const totalUsers = Number(userCounts?.totalUsers ?? 0);
   const adminUsers = Number(adminUsersRow?.value ?? 0);
-  const activeServerSchedules = scheduleRows.filter(
-    (schedule: { enabled: boolean | null }) => schedule.enabled,
-  ).length;
-  const nitroScheduleCount = await fetchNitroScheduleCount(event);
-  const activeSchedules = activeServerSchedules + nitroScheduleCount;
-  const dueSoonThreshold = Date.now() + 30 * 60 * 1000;
-  const dueSoonCount = scheduleRows.filter(
-    (schedule: { enabled: boolean | null; nextRunAt: string | null }) => {
-      if (!schedule.enabled || !schedule.nextRunAt) {
-        return false;
-      }
-      return new Date(schedule.nextRunAt).getTime() <= dueSoonThreshold;
-    },
-  ).length;
 
   const metrics: DashboardMetric[] = [
     {
@@ -234,18 +138,6 @@ async function fetchCriticalData(
       icon: 'i-lucide-users',
       helper:
         totalUsers > 0 ? `${adminUsers} admin${adminUsers === 1 ? '' : 's'}` : 'No users recorded',
-    },
-    {
-      key: 'active-schedules',
-      label: 'Active schedules',
-      value: activeSchedules,
-      icon: 'i-lucide-calendar-clock',
-      helper:
-        dueSoonCount > 0
-          ? `${dueSoonCount} due within 30 min`
-          : nitroScheduleCount > 0
-            ? `${nitroScheduleCount} panel task${nitroScheduleCount === 1 ? '' : 's'}`
-            : null,
     },
   ];
 
@@ -276,12 +168,6 @@ async function fetchCriticalData(
       detail:
         'Only one administrator account exists. Invite a teammate to ensure redundant access.',
     });
-  if (dueSoonCount > 0)
-    operations.push({
-      key: 'review-schedules',
-      label: 'Review upcoming schedules',
-      detail: `${dueSoonCount} schedule${dueSoonCount === 1 ? '' : 's'} scheduled within 30 minutes.`,
-    });
   if (operations.length === 0)
     operations.push({
       key: 'all-clear',
@@ -311,7 +197,7 @@ async function fetchIncidents(): Promise<DashboardIncident[]> {
   const usersByEmail = new Map(
     users
       .filter((user) => typeof user.email === 'string' && user.email.length > 0)
-      .map((user) => [user.email!.toLowerCase(), user] as const),
+      .map((user) => [user.email.toLowerCase(), user] as const),
   );
 
   const audits = await db
@@ -331,7 +217,7 @@ async function fetchIncidents(): Promise<DashboardIncident[]> {
   return audits.map(
     (event: {
       id: string;
-      occurredAt: Date;
+      occurredAt: Date | string;
       actor: string;
       action: string;
       targetType: string;
