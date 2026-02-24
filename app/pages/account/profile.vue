@@ -174,66 +174,65 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
 
 <template>
   <div>
-    <div>
-      <UCard :ui="{ body: 'space-y-4' }">
-        <template #header>
-          <div>
-            <h2 class="text-lg font-semibold">{{ t('account.profile.profileDetails') }}</h2>
-            <p class="text-sm text-muted-foreground">
-              {{ t('account.profile.keepAccountUpdated') }}
-            </p>
-          </div>
-        </template>
-
-        <div v-if="showSkeleton" class="space-y-3">
-          <USkeleton class="h-10 w-full" />
-          <USkeleton class="h-10 w-full" />
-          <USkeleton class="h-10 w-44" />
+    <UCard :ui="{ body: 'space-y-4' }">
+      <template #header>
+        <div class="space-y-1">
+          <h2 class="text-lg font-semibold">{{ t('account.profile.profileDetails') }}</h2>
+          <p class="text-sm text-muted-foreground">
+            {{ t('account.profile.keepAccountUpdated') }}
+          </p>
         </div>
-        <template v-else>
-          <UAlert v-if="loadError" color="error" icon="i-lucide-alert-triangle">
-            <template #title>{{ t('account.profile.profileUnavailable') }}</template>
-            <template #description>{{ loadError }}</template>
-          </UAlert>
+      </template>
 
-          <UForm
-            :schema="schema"
-            :state="form"
-            class="grid gap-4 md:grid-cols-2"
-            :disabled="isSaving"
-            @submit="handleSubmit"
-          >
-            <UFormField :label="t('account.profile.username')" name="username" required>
-              <UInput
-                v-model="form.username"
-                :placeholder="t('account.profile.enterUsername')"
-                class="w-full"
-              />
-            </UFormField>
+      <div v-if="showSkeleton" class="space-y-3">
+        <USkeleton class="h-10 w-full" />
+        <USkeleton class="h-10 w-full" />
+        <USkeleton class="h-10 w-44" />
+      </div>
+      <template v-else>
+        <UAlert v-if="loadError" color="error" icon="i-lucide-alert-triangle">
+          <template #title>{{ t('account.profile.profileUnavailable') }}</template>
+          <template #description>{{ loadError }}</template>
+        </UAlert>
 
-            <UFormField :label="t('account.profile.email')" name="email" required>
-              <UInput
-                v-model="form.email"
-                type="email"
-                :placeholder="t('account.profile.enterEmail')"
-                class="w-full"
-              />
-            </UFormField>
+        <UForm
+          :schema="schema"
+          :state="form"
+          class="grid gap-4 md:grid-cols-2"
+          :disabled="isSaving"
+          @submit="handleSubmit"
+        >
+          <UFormField :label="t('account.profile.username')" name="username" required>
+            <UInput
+              v-model="form.username"
+              :placeholder="t('account.profile.enterUsername')"
+              class="w-full"
+            />
+          </UFormField>
 
-            <div class="md:col-span-2">
-              <UButton
-                type="submit"
-                variant="subtle"
-                color="primary"
-                :loading="isSaving"
-                :disabled="disableSubmit"
-              >
-                {{ t('account.profile.saveChanges') }}
-              </UButton>
-            </div>
-          </UForm>
-        </template>
-      </UCard>
-    </div>
+          <UFormField :label="t('account.profile.email')" name="email" required>
+            <UInput
+              v-model="form.email"
+              type="email"
+              :placeholder="t('account.profile.enterEmail')"
+              class="w-full"
+            />
+          </UFormField>
+
+          <div class="flex flex-col gap-2 md:col-span-2">
+            <UButton
+              type="submit"
+              variant="subtle"
+              color="primary"
+              class="w-full sm:w-auto justify-center"
+              :loading="isSaving"
+              :disabled="disableSubmit"
+            >
+              {{ t('account.profile.saveChanges') }}
+            </UButton>
+          </div>
+        </UForm>
+      </template>
+    </UCard>
   </div>
 </template>

@@ -496,7 +496,9 @@ const isEditorDirty = computed(() => {
               </UAlert>
             </div>
 
-            <div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+            <div
+              class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between mb-6"
+            >
               <div
                 v-if="currentDirectoryLabel !== '/' || breadcrumbs.length"
                 class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground"
@@ -519,6 +521,7 @@ const isEditorDirty = computed(() => {
               <ServerFilesActionToolbar
                 :actions="fileActions"
                 :show-loading-badge="directoryPending"
+                class="w-full sm:w-auto"
               >
                 <UInput
                   ref="fileUploadInput"
@@ -574,19 +577,19 @@ const isEditorDirty = computed(() => {
               <UCard v-else>
                 <template #header>
                   <nav
-                    class="flex items-center justify-between gap-2 text-xs text-muted-foreground"
+                    class="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
                   >
                     <UButton
                       variant="ghost"
                       color="neutral"
                       type="button"
-                      class="flex items-center gap-2 hover:text-foreground"
+                      class="flex items-center gap-2 hover:text-foreground w-full sm:w-auto justify-start"
                       @click="selectedFile = null"
                     >
                       <UIcon name="i-lucide-arrow-left" class="size-3" />
                       {{ t('server.files.backToFiles') }}
                     </UButton>
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
                       <span class="uppercase">{{ t('server.files.editing') }}</span>
                       <span class="font-semibold text-foreground">{{ selectedFile.name }}</span>
                       <UBadge color="neutral">{{ editorLanguageLabel }}</UBadge>
@@ -661,6 +664,7 @@ const isEditorDirty = computed(() => {
                       variant="ghost"
                       color="neutral"
                       :disabled="!isEditorDirty || fileSaving"
+                      class="w-full sm:w-auto justify-center"
                       @click="resetEditor"
                     >
                       {{ t('server.files.resetChanges') }}
@@ -670,6 +674,7 @@ const isEditorDirty = computed(() => {
                       icon="i-lucide-save"
                       :loading="fileSaving"
                       :disabled="!isEditorDirty || fileSaving"
+                      class="w-full sm:w-auto justify-center"
                       @click="saveEditor"
                     >
                       {{ t('server.files.saveChanges') }}

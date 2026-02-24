@@ -82,17 +82,21 @@ const openSections = ref<Record<string, boolean>>({
           <div v-for="section in availableSections" :key="section.id">
             <UCollapsible v-model:open="openSections[section.id]" :unmount-on-hide="false">
               <template #default>
-                <div class="flex w-full items-center justify-between p-4 cursor-pointer text-left">
-                  <div class="flex items-center gap-3">
+                <div
+                  class="flex w-full flex-col gap-3 p-4 cursor-pointer text-left sm:flex-row sm:items-center sm:justify-between"
+                >
+                  <div class="flex min-w-0 items-start gap-3 sm:items-center">
                     <UIcon :name="section.icon" class="size-5 text-primary" />
-                    <div>
-                      <h3 class="text-base font-semibold">{{ section.label }}</h3>
-                      <p class="text-sm text-muted-foreground">{{ section.description }}</p>
+                    <div class="min-w-0">
+                      <h3 class="text-base font-semibold break-words">{{ section.label }}</h3>
+                      <p class="text-sm text-muted-foreground break-words">
+                        {{ section.description }}
+                      </p>
                     </div>
                   </div>
                   <UIcon
                     name="i-lucide-chevron-down"
-                    class="size-5 text-muted-foreground transition-transform duration-200"
+                    class="size-5 text-muted-foreground transition-transform duration-200 self-end sm:self-auto shrink-0"
                     :class="{ 'rotate-180': openSections[section.id] }"
                   />
                 </div>

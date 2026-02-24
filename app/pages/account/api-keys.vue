@@ -493,13 +493,23 @@ async function copyToken() {
     </UModal>
 
     <div>
-      <UCard :ui="{ body: 'space-y-3' }">
+      <UCard :ui="{ body: 'space-y-4' }">
         <template #header>
-          <div class="flex items-center justify-between">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div v-if="apiKeys.length > 0" class="flex-1">
-              <USelect v-model="sortOrder" :items="sortOptions" value-key="value" class="w-40" />
+              <USelect
+                v-model="sortOrder"
+                :items="sortOptions"
+                value-key="value"
+                class="w-full sm:w-48"
+              />
             </div>
-            <UButton variant="subtle" icon="i-lucide-plus" @click="showCreateModal = true">
+            <UButton
+              variant="subtle"
+              icon="i-lucide-plus"
+              class="w-full sm:w-auto justify-center"
+              @click="showCreateModal = true"
+            >
               {{ t('account.apiKeys.createKey') }}
             </UButton>
           </div>
@@ -531,7 +541,7 @@ async function copyToken() {
               variant="ghost"
               color="neutral"
               type="button"
-              class="w-full flex items-center gap-3 p-3 text-left hover:bg-elevated/50 transition-colors"
+              class="w-full flex flex-col gap-3 p-3 text-left hover:bg-elevated/50 transition-colors sm:flex-row sm:items-center"
               @click="toggleKey(key.identifier)"
             >
               <UIcon name="i-lucide-key" class="size-5 shrink-0 text-primary" />
@@ -539,9 +549,13 @@ async function copyToken() {
               <div
                 class="flex-1 min-w-0 flex flex-col gap-2 md:flex-row md:items-center md:justify-between"
               >
-                <div class="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                <div
+                  class="flex-1 min-w-0 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
+                >
                   <div class="flex items-center gap-2 min-w-0">
-                    <code class="text-sm font-medium font-mono">{{ key.identifier }}</code>
+                    <code class="text-sm font-medium font-mono break-all leading-5">{{
+                      key.identifier
+                    }}</code>
                     <UIcon
                       :name="
                         expandedKeys.has(key.identifier)
@@ -559,12 +573,14 @@ async function copyToken() {
                   >
                     {{ t('account.apiKeys.ipRestricted') }}
                   </UBadge>
-                  <p v-if="key.description" class="text-sm text-muted-foreground">
+                  <p v-if="key.description" class="text-sm text-muted-foreground wrap-break-word">
                     {{ key.description }}
                   </p>
                 </div>
 
-                <div class="flex items-center gap-2 text-xs text-muted-foreground shrink-0">
+                <div
+                  class="flex flex-col gap-1 text-xs text-muted-foreground shrink-0 sm:flex-row sm:items-center sm:gap-2"
+                >
                   <span class="truncate">
                     {{ t('account.apiKeys.created') }}:
                     <NuxtTime :datetime="key.created_at" class="font-medium" />
@@ -576,7 +592,7 @@ async function copyToken() {
                   </span>
                 </div>
 
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex items-center gap-2 shrink-0 justify-end sm:justify-start">
                   <UButton
                     variant="ghost"
                     color="error"
@@ -619,7 +635,7 @@ async function copyToken() {
 
           <div
             v-if="apiKeysPagination && apiKeysPagination.totalPages > 1"
-            class="flex items-center justify-between border-t border-default pt-4"
+            class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-default pt-4"
           >
             <div class="text-sm text-muted-foreground">
               {{

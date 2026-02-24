@@ -63,11 +63,11 @@ async function renameServer() {
 
     showRenameModal.value = false;
     await refreshNuxtData(`server-${serverId.value}-settings`);
-  } catch (error) {
-    const err = error as { data?: { message?: string } };
+  } catch (renameError) {
+    const renameErr = renameError as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
-      description: err.data?.message || t('common.error'),
+      description: renameErr.data?.message || t('common.error'),
       color: 'error',
     });
   } finally {
@@ -90,11 +90,11 @@ async function reinstallServer() {
 
     showReinstallModal.value = false;
     await refreshNuxtData(`server-${serverId.value}-settings`);
-  } catch (error) {
-    const err = error as { data?: { message?: string } };
+  } catch (reinstallError) {
+    const reinstallErr = reinstallError as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
-      description: err.data?.message || t('common.error'),
+      description: reinstallErr.data?.message || t('common.error'),
       color: 'error',
     });
   } finally {
@@ -147,13 +147,14 @@ function formatIo(io: number | null): string {
           <template v-else>
             <UCard>
               <template #header>
-                <div class="flex flex-wrap items-center justify-between gap-3">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 class="text-lg font-semibold">{{ t('server.settings.title') }}</h2>
-                  <div class="flex flex-wrap items-center gap-2">
+                  <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                     <UButton
                       icon="i-lucide-pencil"
                       size="sm"
                       variant="ghost"
+                      class="w-full sm:w-auto justify-center"
                       @click="openRenameModal"
                     >
                       {{ t('server.files.rename') }}
@@ -164,6 +165,7 @@ function formatIo(io: number | null): string {
                       variant="subtle"
                       size="sm"
                       :disabled="server?.suspended"
+                      class="w-full sm:w-auto justify-center"
                       @click="showReinstallModal = true"
                     >
                       {{ t('server.settings.reinstallServer') }}
@@ -172,7 +174,7 @@ function formatIo(io: number | null): string {
                 </div>
               </template>
 
-              <div class="grid gap-4 md:grid-cols-2">
+              <div class="grid gap-4 sm:grid-cols-2">
                 <div class="rounded-md border border-default bg-muted/30 px-4 py-3">
                   <p class="text-xs uppercase tracking-wide text-muted-foreground">
                     {{ t('common.name') }}

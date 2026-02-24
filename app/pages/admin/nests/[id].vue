@@ -147,7 +147,7 @@ function handleFileChange(event: Event) {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
+      <UContainer class="pt-2 sm:pt-4">
         <section class="space-y-6">
           <div v-if="pending" class="space-y-4">
             <USkeleton class="h-8 w-64" />
@@ -160,25 +160,30 @@ function handleFileChange(event: Event) {
           </UAlert>
 
           <template v-else-if="nest">
-            <header class="flex flex-wrap items-start justify-between gap-4">
+            <header
+              class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
+            >
               <div class="flex-1">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 min-w-0">
                   <UButton icon="i-lucide-arrow-left" size="xs" variant="ghost" to="/admin/nests" />
-                  <h1 class="text-xl font-semibold">{{ nest.name }}</h1>
+                  <h1 class="text-xl font-semibold break-words">{{ nest.name }}</h1>
                 </div>
                 <p v-if="nest.description" class="mt-1 text-sm text-muted-foreground">
                   {{ nest.description }}
                 </p>
-                <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                <div
+                  class="mt-2 flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4"
+                >
                   <span>{{ t('admin.nests.author') }}: {{ nest.author }}</span>
-                  <span>{{ t('admin.nests.uuid') }}: {{ nest.uuid }}</span>
+                  <span class="break-all">{{ t('admin.nests.uuid') }}: {{ nest.uuid }}</span>
                 </div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
                 <UButton
                   icon="i-lucide-upload"
                   color="neutral"
                   variant="outline"
+                  class="w-full sm:w-auto justify-center"
                   @click="openImportEggModal"
                 >
                   {{ t('admin.nests.createEgg.importEgg') }}
@@ -187,6 +192,7 @@ function handleFileChange(event: Event) {
                   icon="i-lucide-plus"
                   color="primary"
                   variant="subtle"
+                  class="w-full sm:w-auto justify-center"
                   @click="openCreateEggModal"
                 >
                   {{ t('admin.nests.createEgg.createEgg') }}
@@ -219,27 +225,29 @@ function handleFileChange(event: Event) {
                 <div
                   v-for="egg in eggs"
                   :key="egg.id"
-                  class="flex items-start justify-between py-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                  class="flex flex-col gap-3 py-4 hover:bg-muted/50 cursor-pointer transition-colors sm:flex-row sm:items-start sm:justify-between sm:gap-4"
                   @click="viewEgg(egg)"
                 >
                   <div class="flex-1">
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 flex-wrap">
                       <UIcon name="i-lucide-egg" class="size-4 text-primary" />
-                      <span class="font-medium">{{ egg.name }}</span>
+                      <span class="font-medium break-words">{{ egg.name }}</span>
                     </div>
                     <p v-if="egg.description" class="mt-1 text-sm text-muted-foreground">
                       {{ egg.description }}
                     </p>
-                    <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
-                      <span class="flex items-center gap-1">
+                    <div
+                      class="mt-2 flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4"
+                    >
+                      <span class="flex items-center gap-1 min-w-0">
                         <UIcon name="i-lucide-container" class="size-3" />
-                        {{ egg.dockerImage }}
+                        <span class="break-all">{{ egg.dockerImage }}</span>
                       </span>
                       <span>{{ t('admin.nests.author') }}: {{ egg.author }}</span>
                     </div>
                   </div>
 
-                  <div class="flex items-center gap-2" @click.stop>
+                  <div class="flex items-center gap-2 self-start sm:self-auto" @click.stop>
                     <UButton
                       icon="i-lucide-arrow-right"
                       size="xs"
@@ -320,11 +328,21 @@ function handleFileChange(event: Event) {
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
-          <UButton variant="ghost" :disabled="isSubmitting" @click="showCreateEggModal = false">
+        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <UButton
+            variant="ghost"
+            class="w-full sm:w-auto justify-center"
+            :disabled="isSubmitting"
+            @click="showCreateEggModal = false"
+          >
             {{ t('common.cancel') }}
           </UButton>
-          <UButton color="primary" :loading="isSubmitting" @click="handleCreateEgg">
+          <UButton
+            color="primary"
+            class="w-full sm:w-auto justify-center"
+            :loading="isSubmitting"
+            @click="handleCreateEgg"
+          >
             {{ t('admin.nests.createEgg.createEgg') }}
           </UButton>
         </div>
@@ -360,12 +378,18 @@ function handleFileChange(event: Event) {
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
-          <UButton variant="ghost" :disabled="isSubmitting" @click="showImportEggModal = false">
+        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <UButton
+            variant="ghost"
+            class="w-full sm:w-auto justify-center"
+            :disabled="isSubmitting"
+            @click="showImportEggModal = false"
+          >
             {{ t('common.cancel') }}
           </UButton>
           <UButton
             color="primary"
+            class="w-full sm:w-auto justify-center"
             :loading="isSubmitting"
             :disabled="!importFile"
             @click="handleImportEgg"

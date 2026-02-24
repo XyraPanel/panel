@@ -114,16 +114,22 @@ async function handleDelete() {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
-        <section class="space-y-6">
+      <UContainer class="pt-2 sm:pt-4">
+        <section class="space-y-4 sm:space-y-6">
           <UCard>
             <template #header>
-              <div class="flex justify-end">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                  <p v-if="hosts.length > 0">
+                    {{ t('admin.databaseHosts.showingDatabaseHosts', { count: hosts.length }) }}
+                  </p>
+                </div>
                 <UButton
                   icon="i-lucide-plus"
                   color="primary"
                   variant="subtle"
-                  @click="openCreateModal"
+                  class="w-full sm:w-auto justify-center"
+                  @click="showCreateModal = true"
                 >
                   {{ t('admin.databaseHosts.addDatabaseHost') }}
                 </UButton>

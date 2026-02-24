@@ -152,14 +152,20 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
       <UContainer>
         <UCard :ui="{ body: 'space-y-3' }">
           <template #header>
-            <div class="flex items-center justify-between">
-              <div>
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div class="space-y-1">
                 <h2 class="text-lg font-semibold">{{ t('server.activity.recentEvents') }}</h2>
                 <p class="text-xs text-muted-foreground">
                   {{ t('server.activity.auditDescription') }}
                 </p>
               </div>
-              <UBadge v-if="pagination" color="neutral" variant="soft" size="xs">
+              <UBadge
+                v-if="pagination"
+                color="neutral"
+                variant="soft"
+                size="xs"
+                class="self-start sm:self-auto"
+              >
                 {{ pagination.total }} {{ t('activity.total') }}
               </UBadge>
             </div>
@@ -201,17 +207,17 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
                   variant="ghost"
                   color="neutral"
                   type="button"
-                  class="w-full flex flex-col gap-2 p-3 text-left hover:bg-elevated/50 transition-colors md:flex-row md:items-center md:justify-between"
+                  class="w-full flex flex-col gap-2 p-3 text-left hover:bg-elevated/50 transition-colors sm:flex-row sm:items-center sm:justify-between"
                   @click="toggleEntry(entry.id)"
                 >
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2">
+                  <div class="flex-1 min-w-0 space-y-1">
+                    <div class="flex items-center gap-2 flex-wrap">
                       <UIcon
                         :name="getActionIcon(entry.action)"
                         class="size-4"
                         :class="`text-${getActionColor(entry.action)}`"
                       />
-                      <p class="text-sm font-medium font-mono truncate">{{ entry.action }}</p>
+                      <p class="text-sm font-medium font-mono break-all">{{ entry.action }}</p>
                       <UIcon
                         :name="
                           expandedEntries.has(entry.id)
@@ -234,8 +240,8 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
                       >
                     </div>
                   </div>
-                  <div class="text-xs text-muted-foreground shrink-0">
-                    <NuxtTime :datetime="entry.occurredAt" relative />
+                  <div class="text-xs text-muted-foreground shrink-0 sm:ml-4 sm:text-right">
+                    <NuxtTime :datetime="entry.occurredAt" relative class="block" />
                   </div>
                 </UButton>
 
@@ -243,7 +249,9 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
                   v-if="expandedEntries.has(entry.id)"
                   class="border-t border-default bg-muted/30 p-4"
                 >
-                  <div class="flex items-center justify-between mb-2">
+                  <div
+                    class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2"
+                  >
                     <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                       {{ t('account.activity.auditLogEntry') }}
                     </p>
@@ -251,6 +259,7 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
                       variant="ghost"
                       size="xs"
                       icon="i-lucide-copy"
+                      class="w-full sm:w-auto justify-center"
                       @click.stop="copyJson(entry)"
                     >
                       {{ t('account.activity.copyJSON') }}

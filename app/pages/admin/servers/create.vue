@@ -326,7 +326,7 @@ const stepTitles = [
     <UPageBody>
       <div class="mx-auto max-w-4xl space-y-6">
         <header>
-          <div class="flex items-center gap-2 text-sm text-muted-foreground">
+          <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
             <NuxtLink to="/admin/servers" class="hover:text-foreground">Servers</NuxtLink>
             <UIcon name="i-lucide-chevron-right" class="size-4" />
             <span>Create Server</span>
@@ -338,34 +338,36 @@ const stepTitles = [
         </header>
 
         <UCard>
-          <div class="flex items-center justify-between">
-            <div v-for="step in totalSteps" :key="step" class="flex flex-1 items-center">
-              <div class="flex flex-col items-center">
-                <div
-                  class="flex size-10 items-center justify-center rounded-full border-2 font-semibold transition-colors"
-                  :class="
-                    step === currentStep
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : step < currentStep
-                        ? 'border-primary bg-primary/10 text-primary'
-                        : 'border-muted bg-background text-muted-foreground'
-                  "
-                >
-                  <UIcon v-if="step < currentStep" name="i-lucide-check" class="size-5" />
-                  <span v-else>{{ step }}</span>
+          <div class="overflow-x-auto pb-1">
+            <div class="flex min-w-180 items-center justify-between">
+              <div v-for="step in totalSteps" :key="step" class="flex flex-1 items-center">
+                <div class="flex flex-col items-center">
+                  <div
+                    class="flex size-10 items-center justify-center rounded-full border-2 font-semibold transition-colors"
+                    :class="
+                      step === currentStep
+                        ? 'border-primary bg-primary text-primary-foreground'
+                        : step < currentStep
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-muted bg-background text-muted-foreground'
+                    "
+                  >
+                    <UIcon v-if="step < currentStep" name="i-lucide-check" class="size-5" />
+                    <span v-else>{{ step }}</span>
+                  </div>
+                  <span
+                    class="mt-2 text-xs font-medium text-center"
+                    :class="step === currentStep ? 'text-foreground' : 'text-muted-foreground'"
+                  >
+                    {{ stepTitles[step - 1] }}
+                  </span>
                 </div>
-                <span
-                  class="mt-2 text-xs font-medium"
-                  :class="step === currentStep ? 'text-foreground' : 'text-muted-foreground'"
-                >
-                  {{ stepTitles[step - 1] }}
-                </span>
+                <div
+                  v-if="step < totalSteps"
+                  class="mx-2 h-0.5 flex-1 transition-colors"
+                  :class="step < currentStep ? 'bg-primary' : 'bg-muted'"
+                />
               </div>
-              <div
-                v-if="step < totalSteps"
-                class="mx-2 h-0.5 flex-1 transition-colors"
-                :class="step < currentStep ? 'bg-primary' : 'bg-muted'"
-              />
             </div>
           </div>
         </UCard>
@@ -406,6 +408,7 @@ const stepTitles = [
                   placeholder: t('admin.servers.create.serverOwnerSearchPlaceholder'),
                 }"
                 :filter-fields="['label', 'description']"
+                class="w-full"
               >
                 <template #item-label="{ item }">
                   <div class="flex flex-col">
@@ -511,7 +514,7 @@ const stepTitles = [
           </div>
 
           <div v-if="currentStep === 4" class="space-y-4">
-            <div class="grid grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <UFormField :label="t('admin.servers.create.memory')" name="memory" required>
                 <UInput
                   v-model.number="form.memory"
@@ -598,7 +601,7 @@ const stepTitles = [
               <h3 class="text-sm font-semibold mb-3">
                 {{ t('admin.servers.create.featureLimits') }}
               </h3>
-              <div class="grid grid-cols-3 gap-4">
+              <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 <UFormField :label="t('admin.servers.create.databaseLimit')" name="databases">
                   <UInputNumber
                     v-model="form.databases"
@@ -717,6 +720,7 @@ const stepTitles = [
                   <UInput
                     v-model="form.environment![variable.envVariable]"
                     :placeholder="variable.defaultValue || ''"
+                    class="w-full"
                   />
                   <template v-if="variable.description" #help>
                     {{ variable.description }}
@@ -725,7 +729,7 @@ const stepTitles = [
               </div>
             </div>
 
-            <div class="flex gap-4">
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
               <UFormField :label="t('admin.servers.create.skipInstallScripts')" name="skipScripts">
                 <USwitch v-model="form.skipScripts" />
               </UFormField>
@@ -748,7 +752,7 @@ const stepTitles = [
             </UAlert>
 
             <div class="space-y-3 rounded-lg border border-default p-4">
-              <div class="grid grid-cols-2 gap-3 text-sm">
+              <div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                 <div>
                   <span class="font-medium">{{ t('admin.servers.create.serverNameLabel') }}</span>
                   <span class="ml-2 text-muted-foreground">{{ form.name }}</span>
@@ -790,15 +794,26 @@ const stepTitles = [
           </div>
 
           <template #footer>
-            <div class="flex justify-between">
-              <UButton v-if="currentStep > 1" variant="ghost" @click="prevStep">
-                <UIcon name="i-lucide-chevron-left" class="mr-1 size-4" />
-                Previous
-              </UButton>
-              <div v-else />
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div class="w-full sm:w-auto">
+                <UButton
+                  v-if="currentStep > 1"
+                  variant="ghost"
+                  class="w-full sm:w-auto justify-center"
+                  @click="prevStep"
+                >
+                  <UIcon name="i-lucide-chevron-left" class="mr-1 size-4" />
+                  Previous
+                </UButton>
+              </div>
 
-              <div class="flex gap-2">
-                <UButton variant="ghost" color="error" @click="router.push('/admin/servers')">
+              <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:justify-end">
+                <UButton
+                  variant="ghost"
+                  color="error"
+                  class="w-full sm:w-auto justify-center"
+                  @click="router.push('/admin/servers')"
+                >
                   Cancel
                 </UButton>
 
@@ -806,6 +821,7 @@ const stepTitles = [
                   v-if="currentStep < totalSteps"
                   color="primary"
                   variant="subtle"
+                  class="w-full sm:w-auto justify-center"
                   :disabled="!canProceed(currentStep)"
                   @click="nextStep"
                 >
@@ -817,6 +833,7 @@ const stepTitles = [
                   v-else
                   color="primary"
                   variant="subtle"
+                  class="w-full sm:w-auto justify-center"
                   :loading="isSubmitting"
                   @click="createServer"
                 >

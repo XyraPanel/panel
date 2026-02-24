@@ -335,21 +335,21 @@ const table = useTemplateRef('table');
   <div>
     <UPage>
       <UPageBody>
-        <UContainer>
-          <section class="space-y-6">
+        <UContainer class="pt-2 sm:pt-4">
+          <section class="space-y-4 sm:space-y-6">
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                     <p v-if="servers.length > 0" class="text-xs text-muted-foreground">
                       {{ t('admin.servers.showingServersCount', { count: servers.length }) }}
                     </p>
-                    <div v-if="servers.length > 0">
+                    <div v-if="servers.length > 0" class="w-full sm:w-48">
                       <USelect
                         v-model="sortOrder"
                         :items="sortOptions"
                         value-key="value"
-                        class="w-40"
+                        class="w-full"
                         :aria-label="t('common.filter')"
                       />
                     </div>
@@ -358,6 +358,7 @@ const table = useTemplateRef('table');
                     icon="i-lucide-plus"
                     color="primary"
                     variant="subtle"
+                    class="w-full sm:w-auto justify-center"
                     to="/admin/servers/create"
                   >
                     {{ t('admin.servers.createServer') }}
@@ -381,7 +382,7 @@ const table = useTemplateRef('table');
 
               <div
                 v-if="serversPagination && serversPagination.total_pages > 1"
-                class="flex items-center justify-between border-t border-default pt-4"
+                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-default pt-4"
               >
                 <div class="text-sm text-muted-foreground">
                   {{

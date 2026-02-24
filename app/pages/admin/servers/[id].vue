@@ -96,7 +96,10 @@ const server = computed(() => serverData.value?.data ?? null);
                   icon: 'i-lucide-settings',
                 },
               ]"
-              class="w-full"
+              class="w-full text-left"
+              :ui="{
+                list: 'flex flex-wrap gap-2 sm:gap-3',
+              }"
             />
 
             <UCard v-if="tab === 'overview'">

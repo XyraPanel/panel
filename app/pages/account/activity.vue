@@ -116,10 +116,10 @@ async function copyJson(entry: (typeof entries.value)[0]) {
       title: t('common.copied'),
       description: t('common.copiedToClipboard'),
     });
-  } catch (error) {
+  } catch (err) {
     toast.add({
       title: t('common.failedToCopy'),
-      description: error instanceof Error ? error.message : t('common.failedToCopy'),
+      description: err instanceof Error ? err.message : t('common.failedToCopy'),
       color: 'error',
     });
   }
@@ -128,9 +128,12 @@ async function copyJson(entry: (typeof entries.value)[0]) {
 
 <template>
   <div>
-    <UCard :ui="{ body: 'space-y-3' }">
-      <div v-if="pagination" class="flex items-center justify-between">
-        <UBadge color="neutral" variant="soft" size="xs">
+    <UCard :ui="{ body: 'space-y-4' }">
+      <div
+        v-if="pagination"
+        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+      >
+        <UBadge color="neutral" variant="soft" size="xs" class="w-fit">
           {{ pagination.total }} {{ t('account.activity.total') }}
         </UBadge>
         <USelect
@@ -138,7 +141,7 @@ async function copyJson(entry: (typeof entries.value)[0]) {
           v-model="sortOrder"
           :items="sortOptions"
           value-key="value"
-          class="w-40"
+          class="w-full sm:w-48"
           :aria-label="t('common.filter')"
         />
       </div>
@@ -233,7 +236,7 @@ async function copyJson(entry: (typeof entries.value)[0]) {
 
         <div
           v-if="pagination && pagination.totalPages > 1"
-          class="flex items-center justify-between border-t border-default pt-4"
+          class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-default pt-4"
         >
           <div class="text-sm text-muted-foreground">
             {{

@@ -615,7 +615,7 @@ function getStatusLabel(enabled: boolean) {
 
           <UCard>
             <template #header>
-              <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                   <p class="text-xs uppercase tracking-wide text-muted-foreground">
                     {{ t('server.schedules.scheduleInsights') }}
@@ -628,7 +628,7 @@ function getStatusLabel(enabled: boolean) {
                   icon="i-lucide-plus"
                   color="primary"
                   variant="soft"
-                  class="ml-auto"
+                  class="w-full sm:w-auto justify-center"
                   @click="openCreateModal"
                 >
                   {{ t('server.schedules.newSchedule') }}
@@ -679,7 +679,9 @@ function getStatusLabel(enabled: boolean) {
                 :key="item.id"
                 class="rounded-xl border border-default/70 bg-muted/10 p-4 shadow-sm"
               >
-                <div class="flex flex-wrap items-start justify-between gap-4">
+                <div
+                  class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between"
+                >
                   <div class="space-y-1">
                     <div class="flex items-center gap-2">
                       <h3 class="text-base font-semibold text-foreground">{{ item.name }}</h3>
@@ -703,7 +705,7 @@ function getStatusLabel(enabled: boolean) {
                     </p>
                   </div>
 
-                  <div class="flex items-center gap-2">
+                  <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                     <UButton
                       size="sm"
                       variant="solid"
@@ -794,13 +796,14 @@ function getStatusLabel(enabled: boolean) {
                   class="mt-4 rounded-lg border border-dashed border-default/80 bg-background/50 p-3"
                 >
                   <div
-                    class="flex items-center justify-between text-xs font-semibold text-muted-foreground"
+                    class="flex flex-col gap-2 text-xs font-semibold text-muted-foreground sm:flex-row sm:items-center sm:justify-between"
                   >
                     <span>{{ t('server.schedules.tasksTitle') }}</span>
                     <UButton
                       size="xs"
                       variant="ghost"
                       icon="i-lucide-arrow-up-right"
+                      class="w-full sm:w-auto justify-center"
                       @click="openTaskModal(item)"
                     >
                       {{ t('server.schedules.manageTasksAction') }}
@@ -813,7 +816,7 @@ function getStatusLabel(enabled: boolean) {
                     <div
                       v-for="task in item.tasks.slice(0, 3)"
                       :key="task.id"
-                      class="flex items-start justify-between rounded-md border border-default/50 bg-muted/40 p-2 text-xs"
+                      class="flex flex-col gap-2 rounded-md border border-default/50 bg-muted/40 p-2 text-xs sm:flex-row sm:items-start sm:justify-between"
                     >
                       <div>
                         <p class="font-semibold capitalize text-foreground">

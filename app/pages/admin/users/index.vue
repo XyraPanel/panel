@@ -288,27 +288,34 @@ async function handleDelete() {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
-        <section class="space-y-6">
+      <UContainer class="pt-2 sm:pt-4">
+        <section class="space-y-4 sm:space-y-6">
           <UCard :ui="{ body: 'space-y-3' }">
             <template #header>
-              <div class="flex justify-end gap-2">
-                <UButton
-                  icon="i-lucide-search"
-                  color="neutral"
-                  variant="subtle"
-                  @click="openSearchModal"
-                >
-                  {{ t('common.search') }}
-                </UButton>
-                <UButton
-                  icon="i-lucide-user-plus"
-                  color="primary"
-                  variant="subtle"
-                  @click="openCreateModal"
-                >
-                  {{ t('admin.users.createUser') }}
-                </UButton>
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-xs text-muted-foreground" v-if="pagination">
+                  {{ t('admin.users.showingUsers', { count: users.length }) }}
+                </p>
+                <div class="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full sm:w-auto">
+                  <UButton
+                    icon="i-lucide-search"
+                    color="neutral"
+                    variant="subtle"
+                    class="w-full sm:w-auto justify-center"
+                    @click="openSearchModal"
+                  >
+                    {{ t('common.search') }}
+                  </UButton>
+                  <UButton
+                    icon="i-lucide-user-plus"
+                    color="primary"
+                    variant="subtle"
+                    class="w-full sm:w-auto justify-center"
+                    @click="openCreateModal"
+                  >
+                    {{ t('admin.users.createUser') }}
+                  </UButton>
+                </div>
               </div>
             </template>
 
@@ -322,125 +329,135 @@ async function handleDelete() {
                 :title="t('admin.users.failedToLoadUsers')"
               />
 
-              <UTable :data="users" :columns="columns" :loading="loading" sticky class="w-full">
-                <template #loading>
-                  <div class="space-y-2 p-4">
-                    <USkeleton v-for="i in 4" :key="`row-skeleton-${i}`" class="h-10 w-full" />
-                  </div>
-                </template>
-
-                <template #empty>
-                  <div class="px-4 py-6 text-center text-sm text-muted-foreground">
-                    {{ t('admin.users.noUsers') }}
-                  </div>
-                </template>
-
-                <template #username-cell="{ row }">
-                  <div class="flex items-center gap-2">
-                    <UAvatar v-bind="getUserAvatar(row.original)" size="xs" />
-                    <div class="flex flex-col">
-                      <div class="flex items-center gap-1">
-                        <NuxtLink
-                          :to="`/admin/users/${row.original.id}`"
-                          class="font-semibold hover:text-primary"
-                        >
-                          {{ row.original.username }}
-                        </NuxtLink>
-                        <UIcon
-                          v-if="row.original.rootAdmin"
-                          name="i-lucide-star"
-                          class="h-4 w-4 text-warning"
-                        />
-                      </div>
-                      <p v-if="row.original.name" class="text-xs text-muted-foreground">
-                        {{ row.original.name }}
-                      </p>
+              <div class="overflow-x-auto">
+                <UTable
+                  :data="users"
+                  :columns="columns"
+                  :loading="loading"
+                  sticky
+                  class="min-w-full"
+                >
+                  <template #loading>
+                    <div class="space-y-2 p-4">
+                      <USkeleton v-for="i in 4" :key="`row-skeleton-${i}`" class="h-10 w-full" />
                     </div>
-                  </div>
-                </template>
+                  </template>
 
-                <template #email-cell="{ row }">
-                  <span class="text-xs text-muted-foreground">{{ row.original.email }}</span>
-                </template>
+                  <template #empty>
+                    <div class="px-4 py-6 text-center text-sm text-muted-foreground">
+                      {{ t('admin.users.noUsers') }}
+                    </div>
+                  </template>
 
-                <template #twoFactorEnabled-cell="{ row }">
-                  <UIcon
-                    :name="row.original.twoFactorEnabled ? 'i-lucide-lock' : 'i-lucide-unlock'"
-                    :class="
-                      row.original.twoFactorEnabled ? 'text-success' : 'text-muted-foreground'
-                    "
-                    class="h-4 w-4"
-                  />
-                </template>
+                  <template #username-cell="{ row }">
+                    <div class="flex items-center gap-2">
+                      <UAvatar v-bind="getUserAvatar(row.original)" size="xs" />
+                      <div class="flex flex-col">
+                        <div class="flex items-center gap-1">
+                          <NuxtLink
+                            :to="`/admin/users/${row.original.id}`"
+                            class="font-semibold hover:text-primary"
+                          >
+                            {{ row.original.username }}
+                          </NuxtLink>
+                          <UIcon
+                            v-if="row.original.rootAdmin"
+                            name="i-lucide-star"
+                            class="h-4 w-4 text-warning"
+                          />
+                        </div>
+                        <p v-if="row.original.name" class="text-xs text-muted-foreground">
+                          {{ row.original.name }}
+                        </p>
+                      </div>
+                    </div>
+                  </template>
 
-                <template #serversOwned-cell="{ row }">
-                  <div class="flex items-center gap-2 text-sm">
-                    <span>{{ row.original.serversOwned ?? 0 }}</span>
-                    <span class="text-muted-foreground">/</span>
-                    <span class="text-muted-foreground">{{ row.original.serversAccess ?? 0 }}</span>
-                  </div>
-                </template>
+                  <template #email-cell="{ row }">
+                    <span class="text-xs text-muted-foreground">{{ row.original.email }}</span>
+                  </template>
 
-                <template #role-cell="{ row }">
-                  <UBadge
-                    :color="row.original.role === 'admin' ? 'error' : 'neutral'"
-                    size="sm"
-                    variant="subtle"
-                  >
-                    {{
-                      row.original.role === 'admin'
-                        ? t('admin.users.admin')
-                        : t('admin.users.userRole')
-                    }}
-                  </UBadge>
-                </template>
-
-                <template #createdAt-cell="{ row }">
-                  <NuxtTime
-                    class="text-xs text-muted-foreground"
-                    :datetime="row.original.createdAt"
-                  />
-                </template>
-
-                <template #actions-header>
-                  <span class="sr-only">{{ t('admin.users.actions') }}</span>
-                </template>
-
-                <template #actions-cell="{ row }">
-                  <div class="flex gap-1 justify-end">
-                    <UButton
-                      icon="i-lucide-user-circle"
-                      size="xs"
-                      variant="ghost"
-                      :to="`/admin/users/${row.original.id}`"
-                      :aria-label="t('admin.users.viewProfile')"
-                    />
-                    <UButton
-                      icon="i-lucide-pencil"
-                      size="xs"
-                      color="info"
-                      variant="ghost"
-                      :aria-label="t('common.edit')"
-                      @click="openEditModal(row.original)"
-                    />
-                    <UButton
-                      icon="i-lucide-trash"
-                      size="xs"
-                      variant="ghost"
-                      color="error"
-                      :aria-label="t('common.delete')"
-                      @click="
-                        userToDelete = row.original;
-                        showDeleteModal = true;
+                  <template #twoFactorEnabled-cell="{ row }">
+                    <UIcon
+                      :name="row.original.twoFactorEnabled ? 'i-lucide-lock' : 'i-lucide-unlock'"
+                      :class="
+                        row.original.twoFactorEnabled ? 'text-success' : 'text-muted-foreground'
                       "
+                      class="h-4 w-4"
                     />
-                  </div>
-                </template>
-              </UTable>
+                  </template>
+
+                  <template #serversOwned-cell="{ row }">
+                    <div class="flex items-center gap-2 text-sm">
+                      <span>{{ row.original.serversOwned ?? 0 }}</span>
+                      <span class="text-muted-foreground">/</span>
+                      <span class="text-muted-foreground">{{
+                        row.original.serversAccess ?? 0
+                      }}</span>
+                    </div>
+                  </template>
+
+                  <template #role-cell="{ row }">
+                    <UBadge
+                      :color="row.original.role === 'admin' ? 'error' : 'neutral'"
+                      size="sm"
+                      variant="subtle"
+                    >
+                      {{
+                        row.original.role === 'admin'
+                          ? t('admin.users.admin')
+                          : t('admin.users.userRole')
+                      }}
+                    </UBadge>
+                  </template>
+
+                  <template #createdAt-cell="{ row }">
+                    <NuxtTime
+                      class="text-xs text-muted-foreground"
+                      :datetime="row.original.createdAt"
+                    />
+                  </template>
+
+                  <template #actions-header>
+                    <span class="sr-only">{{ t('admin.users.actions') }}</span>
+                  </template>
+
+                  <template #actions-cell="{ row }">
+                    <div class="flex gap-1 justify-end">
+                      <UButton
+                        icon="i-lucide-user-circle"
+                        size="xs"
+                        variant="ghost"
+                        :to="`/admin/users/${row.original.id}`"
+                        :aria-label="t('admin.users.viewProfile')"
+                      />
+                      <UButton
+                        icon="i-lucide-pencil"
+                        size="xs"
+                        color="info"
+                        variant="ghost"
+                        :aria-label="t('common.edit')"
+                        @click="openEditModal(row.original)"
+                      />
+                      <UButton
+                        icon="i-lucide-trash"
+                        size="xs"
+                        variant="ghost"
+                        color="error"
+                        :aria-label="t('common.delete')"
+                        @click="
+                          userToDelete = row.original;
+                          showDeleteModal = true;
+                        "
+                      />
+                    </div>
+                  </template>
+                </UTable>
+              </div>
 
               <div
                 v-if="pagination"
-                class="flex items-center justify-between border-t border-default pt-4"
+                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-default pt-4"
               >
                 <p class="text-xs text-muted-foreground">
                   {{ t('admin.users.showingUsers', { count: users.length }) }}

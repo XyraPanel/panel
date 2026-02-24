@@ -174,8 +174,8 @@ async function copyInstallCommand() {
       await navigator.clipboard.writeText(tokenModal.command);
       toast.add({ title: t('admin.nodes.commandCopied'), color: 'primary' });
     }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : t('common.failedToCopy');
+  } catch (copyError) {
+    const message = copyError instanceof Error ? copyError.message : t('common.failedToCopy');
     toast.add({ title: t('common.failedToCopy'), description: message, color: 'error' });
   }
 }
@@ -279,15 +279,21 @@ watch(
   <div>
     <UPage>
       <UPageBody>
-        <UContainer>
-          <section class="space-y-6">
+        <UContainer class="pt-2 sm:pt-4">
+          <section class="space-y-4 sm:space-y-6">
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
-                <div class="flex justify-end">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                    <p v-if="nodes.length > 0">
+                      {{ t('admin.nodes.showingNodes', { count: nodes.length }) }}
+                    </p>
+                  </div>
                   <UButton
                     icon="i-lucide-plus"
                     color="primary"
                     variant="subtle"
+                    class="w-full sm:w-auto justify-center"
                     @click="showCreate = true"
                   >
                     {{ t('admin.nodes.addNode') }}
@@ -314,7 +320,7 @@ watch(
                 />
                 <div v-else class="overflow-hidden rounded-lg border border-default">
                   <div
-                    class="grid grid-cols-12 bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                    class="bg-muted/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden sm:grid sm:grid-cols-12"
                   >
                     <span class="col-span-4">{{ t('common.name') }}</span>
                     <span class="col-span-4">{{ t('admin.nodes.endpoint') }}</span>
@@ -325,9 +331,9 @@ watch(
                     <div
                       v-for="node in nodes"
                       :key="node.id"
-                      class="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm"
+                      class="flex flex-col gap-3 px-4 py-3 text-sm sm:grid sm:grid-cols-12 sm:items-center sm:gap-2"
                     >
-                      <div class="col-span-4 space-y-1">
+                      <div class="flex flex-col gap-1 sm:col-span-4">
                         <NuxtLink
                           :to="`/admin/nodes/${node.id}`"
                           class="text-sm font-semibold text-primary hover:underline"
@@ -337,23 +343,25 @@ watch(
                         <p class="text-xs text-muted-foreground">
                           {{ t('admin.nodes.id') }}: {{ node.id }}
                         </p>
-                        <p v-if="node.description" class="text-xs text-muted-foreground">
+                        <p
+                          v-if="node.description"
+                          class="text-xs text-muted-foreground wrap-break-word"
+                        >
                           {{ node.description }}
                         </p>
                       </div>
-                      <div class="col-span-4 space-y-1 text-xs text-muted-foreground">
-                        <code class="block truncate">{{ node.baseURL }}</code>
-                        <span>{{
-                          node.allowInsecure
-                            ? t('admin.nodes.tlsVerificationDisabled')
-                            : t('admin.nodes.tlsVerificationEnforced')
-                        }}</span>
+                      <div class="flex flex-col gap-1 text-xs text-muted-foreground sm:col-span-4">
+                        <code class="block break-all sm:truncate">{{ node.baseURL }}</code>
+                        <span
+                          >{ node.allowInsecure ? t('admin.nodes.tlsVerificationDisabled') :
+                          t('admin.nodes.tlsVerificationEnforced') }}</span
+                        >
                         <span>
                           {{ t('admin.nodes.updated') }}
                           <NuxtTime :datetime="node.updatedAt" />
                         </span>
                       </div>
-                      <div class="col-span-2">
+                      <div class="sm:col-span-2">
                         <UBadge
                           :color="node.hasToken ? 'neutral' : 'warning'"
                           :variant="node.hasToken ? 'outline' : 'soft'"
@@ -366,7 +374,7 @@ watch(
                           }}
                         </UBadge>
                       </div>
-                      <div class="col-span-2 flex justify-end gap-2">
+                      <div class="flex flex-wrap items-center gap-2 sm:col-span-2 sm:justify-end">
                         <UButton
                           icon="i-lucide-activity"
                           size="xs"

@@ -327,9 +327,11 @@ async function handleMaintenanceAction(action: string) {
         break;
       }
     }
-  } catch (error) {
+  } catch (actionError) {
     const message =
-      error instanceof Error ? error.message : t('admin.nodes.failedToActionNode', { action });
+      actionError instanceof Error
+        ? actionError.message
+        : t('admin.nodes.failedToActionNode', { action });
     toast.add({
       title: t('common.error'),
       description: message,
@@ -394,9 +396,11 @@ async function togglePrimaryAllocation(row: AdminWingsNodeAllocationSummary) {
 
     await allocationTable.refresh();
     await refreshNode();
-  } catch (error) {
+  } catch (allocationError) {
     const message =
-      error instanceof Error ? error.message : t('admin.nodes.failedToUpdateAllocation');
+      allocationError instanceof Error
+        ? allocationError.message
+        : t('admin.nodes.failedToUpdateAllocation');
     toast.add({
       title: t('common.error'),
       description: message,
@@ -448,9 +452,11 @@ async function handleDeleteAllocation(row: AdminWingsNodeAllocationSummary) {
     }
     await allocationTable.refresh();
     await refreshNode();
-  } catch (error) {
+  } catch (deleteError) {
     const message =
-      error instanceof Error ? error.message : t('admin.nodes.failedToDeleteAllocation');
+      deleteError instanceof Error
+        ? deleteError.message
+        : t('admin.nodes.failedToDeleteAllocation');
     toast.add({
       title: t('common.error'),
       description: message,
@@ -489,9 +495,11 @@ async function handleTransferServers() {
 
     await serverTable.refresh();
     await refreshNode();
-  } catch (error) {
+  } catch (transferError) {
     const message =
-      error instanceof Error ? error.message : t('admin.nodes.failedToInitiateTransfer');
+      transferError instanceof Error
+        ? transferError.message
+        : t('admin.nodes.failedToInitiateTransfer');
     toast.add({
       title: t('common.error'),
       description: message,
@@ -593,13 +601,15 @@ async function handleCreateAllocations() {
 
     await allocationTable.refresh();
     await refreshNode();
-  } catch (error) {
-    const err = error as { data?: { message?: string } };
+  } catch (createError) {
+    const err = createError as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
       description:
         err.data?.message ||
-        (error instanceof Error ? error.message : t('admin.nodes.failedToCreateAllocations')),
+        (createError instanceof Error
+          ? createError.message
+          : t('admin.nodes.failedToCreateAllocations')),
       color: 'error',
     });
   } finally {
@@ -672,21 +682,24 @@ async function handleCreateAllocations() {
               {
                 label: t('admin.nodes.tabs.allocations'),
                 value: 'allocations',
-                icon: 'i-lucide-network',
+                icon: 'i-lucide-plug-2',
               },
               {
                 label: t('admin.nodes.tabs.settings'),
                 value: 'settings',
-                icon: 'i-lucide-settings',
+                icon: 'i-lucide-settings-2',
               },
               {
                 label: t('admin.nodes.tabs.configuration'),
                 value: 'configuration',
-                icon: 'i-lucide-file-code',
+                icon: 'i-lucide-terminal',
               },
-              { label: t('admin.nodes.tabs.system'), value: 'system', icon: 'i-lucide-activity' },
+              { label: t('admin.nodes.tabs.system'), value: 'system', icon: 'i-lucide-cpu' },
             ]"
-            class="w-full"
+            class="w-full text-left"
+            :ui="{
+              list: 'flex flex-wrap gap-2 sm:gap-3',
+            }"
           />
 
           <div v-if="tab === 'overview'" class="grid gap-4 lg:grid-cols-2">

@@ -198,20 +198,21 @@ onMounted(() => {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
+      <UContainer class="pt-2 sm:pt-4">
         <div class="space-y-6">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-1 items-start gap-3 min-w-0">
               <UButton
                 icon="i-lucide-arrow-left"
                 variant="ghost"
                 color="neutral"
+                class="shrink-0"
                 :to="`/server/${serverId}/schedules`"
               >
                 {{ t('common.back') }}
               </UButton>
-              <div>
-                <h1 class="text-xl font-semibold">
+              <div class="min-w-0">
+                <h1 class="text-xl font-semibold break-words">
                   {{
                     isNew
                       ? t('server.schedules.createSchedule')
@@ -224,12 +225,13 @@ onMounted(() => {
               </div>
             </div>
 
-            <div class="flex items-center gap-2">
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
               <UButton
                 v-if="!isNew"
                 icon="i-lucide-trash-2"
                 color="error"
                 variant="ghost"
+                class="w-full sm:w-auto justify-center"
                 @click="deleteSchedule"
               >
                 {{ t('common.delete') }}
@@ -237,6 +239,7 @@ onMounted(() => {
               <UButton
                 icon="i-lucide-save"
                 color="primary"
+                class="w-full sm:w-auto justify-center"
                 :loading="saving"
                 :disabled="loading"
                 @click="saveSchedule"
@@ -282,7 +285,7 @@ onMounted(() => {
                   <label class="mb-2 block text-sm font-medium">{{
                     t('server.schedules.actionType')
                   }}</label>
-                  <div class="grid gap-3 md:grid-cols-3">
+                  <div class="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
                     <div
                       v-for="action in actionTypes"
                       :key="action.value"
@@ -307,7 +310,7 @@ onMounted(() => {
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <USwitch v-model="form.enabled" />
                   <label class="text-sm font-medium">{{
                     t('server.schedules.enableThisSchedule')
@@ -336,7 +339,7 @@ onMounted(() => {
                   <label class="mb-2 block text-sm font-medium">{{
                     t('server.schedules.quickPresets')
                   }}</label>
-                  <div class="grid gap-2 md:grid-cols-3">
+                  <div class="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
                     <UButton
                       v-for="preset in cronPresets"
                       :key="preset.value"

@@ -69,9 +69,9 @@ function toggleEntry(id: string) {
   }
 }
 
-function formatJson(data: Record<string, unknown> | null): string {
-  if (!data) return 'null';
-  return JSON.stringify(data, null, 2);
+function formatJson(jsonData: Record<string, unknown> | null): string {
+  if (!jsonData) return 'null';
+  return JSON.stringify(jsonData, null, 2);
 }
 
 function getFullAuditData(entry: (typeof activities.value)[0]) {
@@ -104,19 +104,19 @@ async function copyJson(entry: (typeof activities.value)[0]) {
       title: t('common.copied'),
       description: t('common.copiedToClipboard'),
     });
-  } catch (error) {
+  } catch (copyError) {
     toast.add({
       title: t('common.failedToCopy'),
-      description: error instanceof Error ? error.message : t('common.failedToCopy'),
+      description: copyError instanceof Error ? copyError.message : t('common.failedToCopy'),
       color: 'error',
     });
   }
 }
 
-function convertToCsv(data: AdminActivityEntry[]) {
-  if (!data.length) return '';
+function convertToCsv(csvData: AdminActivityEntry[]) {
+  if (!csvData.length) return '';
 
-  const rows = data.map((entry) => ({
+  const rows = csvData.map((entry) => ({
     id: entry.id,
     occurredAt: entry.occurredAt,
     actor: entry.actorDisplay || entry.actor,
@@ -167,10 +167,10 @@ function exportCsv() {
       title: 'Export successful',
       description: `Exported ${activities.value.length} audit events to CSV.`,
     });
-  } catch (error) {
+  } catch (exportError) {
     toast.add({
       title: 'Export failed',
-      description: error instanceof Error ? error.message : 'Unable to export CSV.',
+      description: exportError instanceof Error ? exportError.message : 'Unable to export CSV.',
       color: 'error',
     });
   }
@@ -180,30 +180,29 @@ function exportCsv() {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
-        <section class="space-y-6">
+      <UContainer class="pt-2 sm:pt-4">
+        <section class="space-y-4 sm:space-y-6">
           <UCard :ui="{ body: 'space-y-3' }">
             <template #header>
-              <div class="flex items-center justify-between">
-                <div />
-                <div class="flex items-center gap-2">
-                  <div v-if="activities.length > 0">
-                    <USelect
-                      v-model="sortOrder"
-                      :items="sortOptions"
-                      value-key="value"
-                      class="w-40"
-                      :aria-label="t('common.filter')"
-                    />
-                  </div>
-                  <UBadge v-if="pending" color="primary" variant="soft">{{
-                    t('common.loading')
-                  }}</UBadge>
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-wrap items-center gap-2">
+                  <UBadge :color="pending ? 'neutral' : 'primary'" variant="subtle" size="xs">
+                    {{ t('admin.activity.auditLog') }}
+                  </UBadge>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  <USelect
+                    v-model="sortOrder"
+                    :items="sortOptions"
+                    value-key="value"
+                    class="w-full sm:w-40"
+                  />
                   <UButton
                     icon="i-lucide-download"
                     color="neutral"
                     variant="outline"
                     :disabled="pending || activities.length === 0"
+                    class="w-full sm:w-auto justify-center"
                     @click="exportCsv"
                   >
                     {{ t('admin.activity.exportCsv') }}
@@ -312,7 +311,7 @@ function exportCsv() {
 
               <div
                 v-if="pagination && pagination.total > itemsPerPage"
-                class="flex items-center justify-between border-t border-default pt-4"
+                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-default pt-4"
               >
                 <p class="text-xs text-muted-foreground">
                   {{

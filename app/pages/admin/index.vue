@@ -110,8 +110,8 @@ onMounted(() => {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
-        <section class="space-y-6">
+      <UContainer class="pt-2 sm:pt-4">
+        <section class="space-y-4 sm:space-y-6">
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <template v-if="showCriticalSkeleton">
               <UCard v-for="i in 4" :key="`metric-skeleton-${i}`" :ui="{ body: 'space-y-3' }">
@@ -132,16 +132,16 @@ onMounted(() => {
             </template>
             <template v-else>
               <UCard v-for="metric in metrics" :key="metric.key" :ui="{ body: 'space-y-3' }">
-                <div class="flex items-center justify-between">
-                  <div>
+                <div class="flex items-start justify-between gap-3">
+                  <div class="min-w-0">
                     <p class="text-xs uppercase tracking-wide text-muted-foreground">
                       {{ metric.label }}
                     </p>
                     <p class="mt-2 text-2xl font-semibold">{{ metric.value }}</p>
                   </div>
-                  <UIcon :name="metric.icon" class="size-6 text-primary" />
+                  <UIcon :name="metric.icon" class="size-6 text-primary shrink-0" />
                 </div>
-                <div class="text-xs text-muted-foreground">
+                <div class="text-xs text-muted-foreground wrap-break-word">
                   <span>{{ metric.helper ?? t('admin.dashboard.noAdditionalContext') }}</span>
                 </div>
               </UCard>
@@ -151,9 +151,9 @@ onMounted(() => {
           <div class="grid gap-4 xl:grid-cols-2 items-start">
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <h2 class="text-lg font-semibold">{{ t('admin.dashboard.nodeHealth') }}</h2>
-                  <UBadge :color="loading ? 'neutral' : 'primary'" :variant="'soft'">
+                  <UBadge :color="loading ? 'neutral' : 'primary'" :variant="'soft'" class="w-fit">
                     {{
                       loading
                         ? t('admin.dashboard.loading')
@@ -200,7 +200,7 @@ onMounted(() => {
                           }}
                         </UBadge>
                       </div>
-                      <p class="text-xs text-muted-foreground">{{ node.fqdn }}</p>
+                      <p class="text-xs text-muted-foreground break-all">{{ node.fqdn }}</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                       <span class="inline-flex items-center gap-1">
@@ -222,7 +222,8 @@ onMounted(() => {
                         v-if="node.issue"
                         class="inline-flex items-center gap-1 text-destructive"
                       >
-                        <UIcon name="i-lucide-alert-triangle" class="size-3" /> {{ node.issue }}
+                        <UIcon name="i-lucide-alert-triangle" class="size-3 shrink-0" />
+                        <span class="wrap-break-word">{{ node.issue }}</span>
                       </span>
                       <span v-if="node.lastSeenAt" class="inline-flex items-center gap-1">
                         <UIcon name="i-lucide-clock" class="size-3" />
@@ -236,9 +237,15 @@ onMounted(() => {
 
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <h2 class="text-lg font-semibold">{{ t('admin.dashboard.openIncidents') }}</h2>
-                  <UButton size="xs" variant="subtle" color="primary" :disabled="loading">
+                  <UButton
+                    size="xs"
+                    variant="subtle"
+                    color="primary"
+                    class="w-full sm:w-auto justify-center"
+                    :disabled="loading"
+                  >
                     {{ t('admin.dashboard.viewAll') }}
                   </UButton>
                 </div>
@@ -269,23 +276,29 @@ onMounted(() => {
                     <div
                       class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                     >
-                      <span class="text-sm font-semibold">{{ incident.action }}</span>
-                      <NuxtTime :datetime="incident.occurredAt" locale="en-US" />
+                      <span class="text-sm font-semibold wrap-break-word">{{
+                        incident.action
+                      }}</span>
+                      <NuxtTime
+                        :datetime="incident.occurredAt"
+                        locale="en-US"
+                        class="text-xs text-muted-foreground"
+                      />
                     </div>
                     <div class="mt-2 space-y-1 text-xs text-muted-foreground">
                       <div
                         v-if="incident.actorUsername || incident.actorEmail || incident.actor"
-                        class="flex items-center gap-2"
+                        class="flex items-center gap-2 min-w-0"
                       >
                         <UIcon name="i-lucide-user" class="size-3" />
                         <NuxtLink
                           v-if="incident.actorUserId"
                           :to="`/admin/users/${incident.actorUserId}`"
-                          class="text-primary hover:underline"
+                          class="text-primary hover:underline break-all"
                         >
                           {{ getIncidentActorLabel(incident) }}
                         </NuxtLink>
-                        <span v-else>{{ getIncidentActorLabel(incident) }}</span>
+                        <span v-else class="break-all">{{ getIncidentActorLabel(incident) }}</span>
                       </div>
                       <div class="flex items-center gap-2 text-muted-foreground/80">
                         <UIcon name="i-lucide-clock" class="size-3" />

@@ -244,14 +244,14 @@ async function confirmDelete() {
         <section class="space-y-6">
           <UCard>
             <template #header>
-              <div class="flex flex-wrap items-center justify-between gap-3">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 class="text-lg font-semibold">{{ t('server.backups.recentBackups') }}</h2>
                 <UButton
                   icon="i-lucide-archive"
                   color="primary"
                   variant="subtle"
                   :loading="creating"
-                  class="ml-auto"
+                  class="w-full sm:w-auto justify-center"
                   @click="createBackup"
                 >
                   {{ t('server.backups.createBackup') }}
@@ -277,7 +277,7 @@ async function confirmDelete() {
               class="overflow-hidden rounded-lg border border-default"
             >
               <div
-                class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid"
               >
                 <span class="col-span-4">{{ t('server.backups.backup') }}</span>
                 <span class="col-span-2">{{ t('server.backups.size') }}</span>
@@ -289,22 +289,22 @@ async function confirmDelete() {
                 <div
                   v-for="i in 3"
                   :key="`skeleton-${i}`"
-                  class="grid grid-cols-12 items-center gap-2 px-4 py-3"
+                  class="flex flex-col gap-2 px-4 py-3 sm:grid sm:grid-cols-12 sm:items-center sm:gap-2"
                 >
-                  <div class="col-span-4 space-y-2">
+                  <div class="flex flex-col gap-2 sm:col-span-4">
                     <USkeleton class="h-4 w-32" />
                     <USkeleton class="h-3 w-48" />
                   </div>
-                  <div class="col-span-2">
+                  <div class="sm:col-span-2">
                     <USkeleton class="h-4 w-16" />
                   </div>
-                  <div class="col-span-3">
+                  <div class="sm:col-span-3">
                     <USkeleton class="h-4 w-40" />
                   </div>
-                  <div class="col-span-2">
+                  <div class="sm:col-span-2">
                     <USkeleton class="h-4 w-20" />
                   </div>
-                  <div class="col-span-1">
+                  <div class="sm:col-span-1">
                     <USkeleton class="h-5 w-16" />
                   </div>
                 </div>
@@ -324,7 +324,7 @@ async function confirmDelete() {
 
             <div v-else class="overflow-hidden rounded-lg border border-default">
               <div
-                class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid"
               >
                 <span class="col-span-4">{{ t('server.backups.backup') }}</span>
                 <span class="col-span-2">{{ t('server.backups.size') }}</span>
@@ -336,23 +336,23 @@ async function confirmDelete() {
                 <div
                   v-for="backup in backups"
                   :key="backup.id"
-                  class="grid grid-cols-12 items-center px-4 py-3 text-sm"
+                  class="flex flex-col gap-3 px-4 py-3 text-sm sm:grid sm:grid-cols-12 sm:items-center sm:gap-2"
                 >
-                  <div class="col-span-4">
-                    <div class="flex items-center gap-2">
-                      <p class="font-medium">{{ backup.name }}</p>
+                  <div class="flex flex-col gap-1 sm:col-span-4">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <p class="font-medium wrap-break-word">{{ backup.name }}</p>
                       <UIcon
                         v-if="backup.isLocked"
                         name="i-lucide-lock"
                         class="size-3 text-error"
                       />
                     </div>
-                    <p class="text-xs text-muted-foreground">{{ backup.uuid }}</p>
+                    <p class="text-xs text-muted-foreground break-all">{{ backup.uuid }}</p>
                   </div>
-                  <span class="col-span-2 text-sm text-muted-foreground">{{
+                  <span class="sm:col-span-2 text-sm text-muted-foreground">{{
                     formatBytes(backup.bytes)
                   }}</span>
-                  <span class="col-span-3 text-sm text-muted-foreground">
+                  <span class="sm:col-span-3 text-sm text-muted-foreground">
                     <NuxtTime
                       v-if="backup.completedAt || backup.createdAt"
                       :datetime="backup.completedAt || backup.createdAt"
@@ -365,10 +365,10 @@ async function confirmDelete() {
                     />
                     <span v-else>{{ t('server.backups.inProgressEllipsis') }}</span>
                   </span>
-                  <span class="col-span-2 text-sm text-muted-foreground">{{
+                  <span class="sm:col-span-2 text-sm text-muted-foreground">{{
                     getStorageLabel(backup.disk)
                   }}</span>
-                  <div class="col-span-1">
+                  <div class="sm:col-span-1">
                     <UBadge
                       :color="getBackupStatus(backup).color"
                       :variant="getBackupStatus(backup).variant"
@@ -377,12 +377,13 @@ async function confirmDelete() {
                       {{ getBackupStatus(backup).label }}
                     </UBadge>
                   </div>
-                  <div class="col-span-12 flex items-center justify-end gap-2">
+                  <div class="flex flex-wrap items-center gap-2 sm:col-span-12 sm:justify-end">
                     <UButton
                       :icon="backup.isLocked ? 'i-lucide-unlock' : 'i-lucide-lock'"
                       size="xs"
                       variant="ghost"
                       :loading="operatingBackupId === backup.uuid"
+                      class="w-full sm:w-auto justify-center"
                       @click="toggleLock(backup.uuid)"
                     >
                       {{ backup.isLocked ? t('server.backups.unlock') : t('server.backups.lock') }}
@@ -394,6 +395,7 @@ async function confirmDelete() {
                       color="primary"
                       :loading="operatingBackupId === backup.uuid"
                       :disabled="!backup.completedAt || !backup.isSuccessful"
+                      class="w-full sm:w-auto justify-center"
                       @click="downloadBackup(backup.uuid)"
                     >
                       {{ t('server.backups.download') }}
@@ -405,6 +407,7 @@ async function confirmDelete() {
                       color="warning"
                       :loading="operatingBackupId === backup.uuid"
                       :disabled="!backup.completedAt || !backup.isSuccessful"
+                      class="w-full sm:w-auto justify-center"
                       @click="openRestoreModal(backup)"
                     >
                       {{ t('server.backups.restore') }}
@@ -416,6 +419,7 @@ async function confirmDelete() {
                       color="error"
                       :loading="operatingBackupId === backup.uuid"
                       :disabled="backup.isLocked"
+                      class="w-full sm:w-auto justify-center"
                       @click="openDeleteModal(backup)"
                     >
                       {{ t('server.backups.delete') }}
