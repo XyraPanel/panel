@@ -153,13 +153,13 @@ async function submitInvite() {
         <section class="space-y-6">
           <UCard>
             <template #header>
-              <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 class="text-lg font-semibold">{{ t('server.users.invitedUsers') }}</h2>
                 <UButton
                   icon="i-lucide-user-plus"
                   color="primary"
                   variant="soft"
-                  class="ml-auto"
+                  class="w-full sm:w-auto justify-center"
                   @click="openInviteModal"
                 >
                   {{ t('server.users.inviteUser') }}
@@ -206,7 +206,7 @@ async function submitInvite() {
                     <h3 class="font-semibold">{{ user.username }}</h3>
                     <UBadge color="primary" size="xs">{{ t('server.users.active') }}</UBadge>
                   </div>
-                  <p class="text-xs text-muted-foreground">
+                  <p class="text-xs text-muted-foreground break-all">
                     {{ user.email }} · {{ t('server.users.added') }}
                     <NuxtTime :datetime="user.createdAt" relative />
                   </p>
@@ -215,7 +215,7 @@ async function submitInvite() {
                   <span
                     v-for="perm in user.permissions"
                     :key="perm"
-                    class="rounded bg-muted px-2 py-1"
+                    class="rounded bg-muted px-2 py-1 break-all"
                     >{{ perm }}</span
                   >
                 </div>

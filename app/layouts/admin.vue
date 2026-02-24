@@ -516,17 +516,19 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
             <template #left>
               <div
                 v-if="adminTitle"
-                class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2"
+                class="hidden sm:flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2"
               >
-                <h1 class="text-base font-semibold text-foreground sm:text-lg">{{ adminTitle }}</h1>
-                <p class="text-xs text-muted-foreground">{{ adminSubtitle }}</p>
+                <h1 class="text-base font-semibold text-foreground sm:text-lg truncate">
+                  {{ adminTitle }}
+                </h1>
+                <p class="hidden text-xs text-muted-foreground sm:block truncate">{{ adminSubtitle }}</p>
               </div>
             </template>
           </UDashboardNavbar>
         </header>
 
         <main class="flex-1 overflow-y-auto">
-          <div class="mx-auto w-full px-4 py-5 sm:px-6 space-y-6">
+          <div class="mx-auto w-full px-4 py-3 sm:px-6 sm:py-5 space-y-4 sm:space-y-6">
             <UAlert
               v-if="showTwoFactorPrompt"
               color="warning"

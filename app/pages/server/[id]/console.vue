@@ -250,11 +250,11 @@ function handlePowerAction(action: PowerAction) {
 
 function handleSearch() {
   if (!import.meta.client) return;
-  const { t } = useI18n();
+  const { t: translate } = useI18n();
   const term =
     typeof globalThis !== 'undefined' && 'prompt' in globalThis
       ? (globalThis as { prompt?: (message: string) => string | null }).prompt?.(
-          t('server.console.search'),
+          translate('server.console.search'),
         )
       : null;
   if (term) {
@@ -275,13 +275,14 @@ function handleSearch() {
         />
 
         <div class="space-y-4">
-          <div class="flex flex-wrap items-center gap-4">
-            <div class="flex items-center gap-2">
+          <div class="flex flex-wrap items-center gap-3 sm:gap-4">
+            <div class="flex items-center gap-2 flex-nowrap overflow-x-auto pb-1">
               <UButton
                 icon="i-lucide-play"
                 color="success"
                 size="sm"
                 :disabled="!connected || serverState === 'running' || serverState === 'starting'"
+                class="shrink-0"
                 @click="() => handlePowerAction('start')"
               >
                 {{ t('server.console.start') }}
@@ -291,6 +292,7 @@ function handleSearch() {
                 color="warning"
                 size="sm"
                 :disabled="!connected || serverState !== 'running'"
+                class="shrink-0"
                 @click="() => handlePowerAction('restart')"
               >
                 {{ t('server.console.restart') }}
@@ -300,6 +302,7 @@ function handleSearch() {
                 color="error"
                 size="sm"
                 :disabled="!connected || serverState === 'offline' || serverState === 'stopping'"
+                class="shrink-0"
                 @click="() => handlePowerAction('stop')"
               >
                 {{ t('server.console.stop') }}
@@ -310,6 +313,7 @@ function handleSearch() {
                 variant="ghost"
                 size="sm"
                 :disabled="!connected || serverState === 'offline'"
+                class="shrink-0"
                 @click="() => handlePowerAction('kill')"
               >
                 {{ t('server.console.kill') }}
@@ -353,14 +357,15 @@ function handleSearch() {
 
           <UCard>
             <template #header>
-              <div class="flex items-center justify-between">
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <h2 class="text-lg font-semibold">{{ t('server.console.title') }}</h2>
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
                   <UButton
                     icon="i-lucide-bar-chart-3"
                     size="xs"
                     variant="ghost"
                     :color="showStats ? 'primary' : 'neutral'"
+                    class="w-full sm:w-auto justify-center"
                     @click="showStats = !showStats"
                   >
                     {{ t('server.console.stats') }}

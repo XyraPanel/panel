@@ -143,15 +143,19 @@ async function handleDelete() {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
-        <section class="space-y-6">
+      <UContainer class="pt-2 sm:pt-4">
+        <section class="space-y-4 sm:space-y-6">
           <UCard>
             <template #header>
-              <div class="flex justify-end">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                  <p v-if="mounts.length > 0">{{ t('admin.mounts.showingMounts', { count: mounts.length }) }}</p>
+                </div>
                 <UButton
                   icon="i-lucide-plus"
                   color="primary"
                   variant="subtle"
+                  class="w-full sm:w-auto justify-center"
                   @click="openCreateModal"
                 >
                   {{ t('admin.mounts.createMount') }}
@@ -179,10 +183,10 @@ async function handleDelete() {
               <div
                 v-for="mount in mounts"
                 :key="mount.id"
-                class="flex items-start justify-between py-4"
+                class="flex flex-col gap-3 py-4 sm:flex-row sm:items-start sm:justify-between"
               >
                 <div class="flex-1">
-                  <div class="flex items-center gap-2">
+                  <div class="flex flex-wrap items-center gap-2">
                     <UIcon name="i-lucide-folder-tree" class="size-4 text-primary" />
                     <span class="font-medium">{{ mount.name }}</span>
                     <UBadge v-if="mount.readOnly" size="xs" color="neutral">{{
@@ -192,17 +196,17 @@ async function handleDelete() {
                       >{{ t('admin.mounts.userMountable') }}
                     </UBadge>
                   </div>
-                  <p v-if="mount.description" class="mt-1 text-sm text-muted-foreground">
+                  <p v-if="mount.description" class="mt-1 text-sm text-muted-foreground wrap-break-word">
                     {{ mount.description }}
                   </p>
-                  <div class="mt-2 space-y-1 text-xs text-muted-foreground">
-                    <div class="flex items-center gap-2">
+                  <div class="mt-2 space-y-2 text-xs text-muted-foreground">
+                    <div class="flex flex-wrap items-center gap-2">
                       <span>{{ t('admin.mounts.source') }}:</span>
                       <code class="rounded bg-muted px-1 py-0.5">{{ mount.source }}</code>
                       <span>→</span>
                       <code class="rounded bg-muted px-1 py-0.5">{{ mount.target }}</code>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <div class="flex flex-wrap items-center gap-3">
                       <span
                         >{{ mount.eggs.length }}
                         {{
@@ -227,13 +231,14 @@ async function handleDelete() {
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                   <UButton
                     icon="i-lucide-trash"
                     size="xs"
                     variant="ghost"
                     color="error"
                     :aria-label="t('common.delete')"
+                    class="w-full sm:w-auto justify-center"
                     @click="
                       mountToDelete = mount;
                       showDeleteModal = true;

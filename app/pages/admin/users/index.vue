@@ -288,27 +288,34 @@ async function handleDelete() {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
-        <section class="space-y-6">
+      <UContainer class="pt-2 sm:pt-4">
+        <section class="space-y-4 sm:space-y-6">
           <UCard :ui="{ body: 'space-y-3' }">
             <template #header>
-              <div class="flex justify-end gap-2">
-                <UButton
-                  icon="i-lucide-search"
-                  color="neutral"
-                  variant="subtle"
-                  @click="openSearchModal"
-                >
-                  {{ t('common.search') }}
-                </UButton>
-                <UButton
-                  icon="i-lucide-user-plus"
-                  color="primary"
-                  variant="subtle"
-                  @click="openCreateModal"
-                >
-                  {{ t('admin.users.createUser') }}
-                </UButton>
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p class="text-xs text-muted-foreground" v-if="pagination">
+                  {{ t('admin.users.showingUsers', { count: users.length }) }}
+                </p>
+                <div class="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full sm:w-auto">
+                  <UButton
+                    icon="i-lucide-search"
+                    color="neutral"
+                    variant="subtle"
+                    class="w-full sm:w-auto justify-center"
+                    @click="openSearchModal"
+                  >
+                    {{ t('common.search') }}
+                  </UButton>
+                  <UButton
+                    icon="i-lucide-user-plus"
+                    color="primary"
+                    variant="subtle"
+                    class="w-full sm:w-auto justify-center"
+                    @click="openCreateModal"
+                  >
+                    {{ t('admin.users.createUser') }}
+                  </UButton>
+                </div>
               </div>
             </template>
 
@@ -322,7 +329,8 @@ async function handleDelete() {
                 :title="t('admin.users.failedToLoadUsers')"
               />
 
-              <UTable :data="users" :columns="columns" :loading="loading" sticky class="w-full">
+              <div class="overflow-x-auto">
+                <UTable :data="users" :columns="columns" :loading="loading" sticky class="min-w-full">
                 <template #loading>
                   <div class="space-y-2 p-4">
                     <USkeleton v-for="i in 4" :key="`row-skeleton-${i}`" class="h-10 w-full" />
@@ -436,11 +444,12 @@ async function handleDelete() {
                     />
                   </div>
                 </template>
-              </UTable>
+                </UTable>
+              </div>
 
               <div
                 v-if="pagination"
-                class="flex items-center justify-between border-t border-default pt-4"
+                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-default pt-4"
               >
                 <p class="text-xs text-muted-foreground">
                   {{ t('admin.users.showingUsers', { count: users.length }) }}

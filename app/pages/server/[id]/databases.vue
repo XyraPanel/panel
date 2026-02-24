@@ -206,14 +206,14 @@ async function deleteDatabase() {
         <section class="space-y-6">
           <UCard>
             <template #header>
-              <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <h2 class="text-lg font-semibold">{{ t('server.databases.title') }}</h2>
                 <UButton
                   v-if="hostAvailable"
                   icon="i-lucide-plus"
                   color="primary"
                   variant="soft"
-                  class="ml-auto"
+                  class="w-full sm:w-auto justify-center"
                   @click="showCreateModal = true"
                 >
                   {{ t('server.databases.createDatabase') }}
@@ -256,9 +256,7 @@ async function deleteDatabase() {
             />
 
             <div v-else class="overflow-hidden rounded-lg border border-default">
-              <div
-                class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-              >
+              <div class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
                 <span class="col-span-3">{{ t('server.databases.name') }}</span>
                 <span class="col-span-3">{{ t('server.databases.host') }}</span>
                 <span class="col-span-3">{{ t('server.databases.username') }}</span>
@@ -269,32 +267,33 @@ async function deleteDatabase() {
                 <div
                   v-for="db in databases"
                   :key="db.id"
-                  class="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm"
+                  class="flex flex-col gap-3 px-4 py-3 text-sm sm:grid sm:grid-cols-12 sm:items-center sm:gap-2"
                 >
-                  <div class="col-span-3">
-                    <div class="font-medium">{{ db.name }}</div>
+                  <div class="sm:col-span-3">
+                    <div class="font-medium wrap-break-word">{{ db.name }}</div>
                   </div>
-                  <div class="col-span-3 text-sm text-muted-foreground">
+                  <div class="sm:col-span-3 text-sm text-muted-foreground break-all">
                     {{ db.host.hostname }}:{{ db.host.port }}
                   </div>
-                  <div class="col-span-3">
-                    <code class="rounded bg-muted px-2 py-1 text-xs">{{ db.username }}</code>
+                  <div class="sm:col-span-3">
+                    <code class="rounded bg-muted px-2 py-1 text-xs break-all">{{ db.username }}</code>
                   </div>
-                  <div class="col-span-2 text-xs text-muted-foreground">
+                  <div class="sm:col-span-2 text-xs text-muted-foreground break-all">
                     {{ db.remote }}
                   </div>
-                  <div class="col-span-1">
+                  <div class="sm:col-span-1">
                     <UBadge :color="getStatusColor(db.status)" size="xs">
                       {{ getStatusLabel(db.status) }}
                     </UBadge>
                   </div>
-                  <div class="col-span-12 flex items-center justify-end gap-2">
+                  <div class="flex flex-wrap items-center gap-2 sm:col-span-12 sm:justify-end">
                     <UButton
                       icon="i-lucide-key-round"
                       size="xs"
                       variant="ghost"
                       color="primary"
                       :loading="operatingDatabaseId === db.id"
+                      class="w-full sm:w-auto justify-center"
                       @click="rotatePassword(db.id)"
                     >
                       {{ t('server.databases.rotatePassword') }}
@@ -305,6 +304,7 @@ async function deleteDatabase() {
                       variant="ghost"
                       color="error"
                       :loading="operatingDatabaseId === db.id"
+                      class="w-full sm:w-auto justify-center"
                       @click="confirmDelete(db.id)"
                     >
                       {{ t('server.databases.delete') }}

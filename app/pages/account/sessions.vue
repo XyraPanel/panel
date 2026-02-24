@@ -290,13 +290,16 @@ async function handleSignOutAll(includeCurrent = false) {
     </div>
 
     <div>
-      <UCard :ui="{ body: 'space-y-3' }">
-        <div v-if="hasSessions && !sessionsPending" class="flex items-center justify-end mb-2">
+      <UCard :ui="{ body: 'space-y-4' }">
+        <div
+          v-if="hasSessions && !sessionsPending"
+          class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+        >
           <USelect
             v-model="sortOrder"
             :items="sortOptions"
             value-key="value"
-            class="w-40"
+            class="w-full sm:w-48"
             :aria-label="t('common.filter')"
           />
         </div>
@@ -323,12 +326,14 @@ async function handleSignOutAll(includeCurrent = false) {
             :key="session.token"
             class="rounded-lg border border-default overflow-hidden"
           >
-            <div class="w-full flex items-center gap-3 p-3 hover:bg-elevated/50 transition-colors">
+            <div
+              class="w-full flex flex-col gap-3 p-3 hover:bg-elevated/50 transition-colors sm:flex-row sm:items-center"
+            >
               <UButton
                 variant="ghost"
                 color="neutral"
                 type="button"
-                class="flex flex-1 items-center gap-3 text-left cursor-pointer bg-transparent border-0 p-0 min-w-0"
+                class="flex flex-1 items-start sm:items-center gap-3 text-left cursor-pointer bg-transparent border-0 p-0 min-w-0"
                 @click="toggleSession(session.token)"
               >
                 <UIcon
@@ -414,7 +419,7 @@ async function handleSignOutAll(includeCurrent = false) {
                 </div>
               </UButton>
 
-              <div class="flex items-center gap-2 shrink-0">
+              <div class="flex items-center gap-2 shrink-0 justify-end sm:justify-start">
                 <UButton
                   variant="ghost"
                   color="error"
@@ -454,7 +459,7 @@ async function handleSignOutAll(includeCurrent = false) {
 
           <div
             v-if="sessionsPagination && sessionsPagination.totalPages > 1"
-            class="flex items-center justify-between border-t border-default pt-4"
+            class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-default pt-4"
           >
             <div class="text-sm text-muted-foreground">
               {{

@@ -282,11 +282,12 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
 
 <template>
   <div class="space-y-4">
-    <div class="flex flex-wrap items-center justify-between gap-4">
-      <div class="flex gap-2">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:flex-wrap">
+      <div class="flex flex-wrap gap-2">
         <UButton
           :color="filter === 'all' ? 'primary' : 'neutral'"
           variant="soft"
+          class="w-full sm:w-auto justify-center"
           @click="filter = 'all'"
         >
           {{ t('common.all') }} ({{ allocations.length }})
@@ -294,6 +295,7 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
         <UButton
           :color="filter === 'assigned' ? 'primary' : 'neutral'"
           variant="soft"
+          class="w-full sm:w-auto justify-center"
           @click="filter = 'assigned'"
         >
           {{ t('admin.nodes.allocations.assigned') }} ({{ assignedCount }})
@@ -301,6 +303,7 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
         <UButton
           :color="filter === 'unassigned' ? 'primary' : 'neutral'"
           variant="soft"
+          class="w-full sm:w-auto justify-center"
           @click="filter = 'unassigned'"
         >
           {{ t('admin.nodes.allocations.unassigned') }} ({{ unassignedCount }})
@@ -311,6 +314,7 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
         icon="i-lucide-plus"
         color="primary"
         variant="subtle"
+        class="w-full sm:w-auto justify-center"
         @click="showCreateModal = true"
       >
         {{ t('admin.nodes.createAllocations') }}
@@ -318,7 +322,8 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
     </div>
 
     <UCard>
-      <UTable :rows="paginatedAllocations" :columns="columns" :loading="pending">
+      <div class="overflow-x-auto">
+        <UTable :rows="paginatedAllocations" :columns="columns" :loading="pending" class="min-w-full">
         <template #ip-data="{ row }">
           <code class="text-sm">{{ (row as unknown as Allocation).ip }}</code>
         </template>
@@ -358,10 +363,11 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
             @click="deleteAllocation(row as unknown as Allocation)"
           />
         </template>
-      </UTable>
+        </UTable>
+      </div>
 
       <template #footer>
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="text-sm text-muted-foreground">
             {{
               t('admin.nodes.allocations.showingAllocations', {

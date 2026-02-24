@@ -61,10 +61,10 @@ async function setPrimaryAllocation(allocation: ServerAllocation) {
     });
     await refresh();
   } catch (err) {
-    const error = err as { data?: { message?: string } };
+    const primaryError = err as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
-      description: error.data?.message || t('server.network.failedToSetPrimary'),
+      description: primaryError.data?.message || t('server.network.failedToSetPrimary'),
       color: 'error',
     });
   } finally {
@@ -85,10 +85,10 @@ async function createAllocation() {
     });
     await refresh();
   } catch (err) {
-    const error = err as { data?: { message?: string } };
+    const createError = err as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
-      description: error.data?.message || t('server.network.failedToCreateAllocation'),
+      description: createError.data?.message || t('server.network.failedToCreateAllocation'),
       color: 'error',
     });
   } finally {
@@ -122,7 +122,7 @@ async function createAllocation() {
           <template v-else>
             <UCard>
               <template #header>
-                <div class="flex flex-wrap items-start justify-between gap-4">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <h2 class="text-lg font-semibold">
                       {{ t('server.network.primaryAllocation') }}
@@ -179,8 +179,8 @@ async function createAllocation() {
                     variant="subtle"
                   >
                     <template #description>
-                      <div class="flex items-center justify-between gap-2">
-                        <code class="text-xs"
+                      <div class="flex flex-wrap items-center justify-between gap-2">
+                        <code class="text-xs break-all"
                           >{{ formatIp(primaryAllocation) }}:{{ primaryAllocation.port }}</code
                         >
                         <ServerCopyButton
@@ -192,7 +192,7 @@ async function createAllocation() {
                   </UAlert>
                   <div
                     v-if="primaryAllocation.notes"
-                    class="rounded-md border border-dashed border-default px-4 py-3 text-xs text-muted-foreground"
+                    class="rounded-md border border-dashed border-default px-4 py-3 text-xs text-muted-foreground wrap-break-word"
                   >
                     {{ primaryAllocation.notes }}
                   </div>
@@ -202,7 +202,7 @@ async function createAllocation() {
 
             <UCard>
               <template #header>
-                <div class="flex items-center justify-between">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <h2 class="text-lg font-semibold">
                     {{ t('server.network.additionalAllocations') }}
                   </h2>
@@ -210,6 +210,7 @@ async function createAllocation() {
                     v-if="canCreateAllocation"
                     :loading="isCreatingAllocation"
                     size="sm"
+                    class="w-full sm:w-auto justify-center"
                     @click="createAllocation"
                   >
                     <UIcon name="i-lucide-plus" class="size-4" />
@@ -238,9 +239,7 @@ async function createAllocation() {
               </div>
 
               <div v-else class="overflow-hidden rounded-lg border border-default">
-                <div
-                  class="grid grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-                >
+                <div class="hidden grid-cols-12 bg-muted/50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sm:grid">
                   <span class="col-span-4">{{ t('server.network.ip') }}</span>
                   <span class="col-span-2">{{ t('server.network.port') }}</span>
                   <span class="col-span-3">{{ t('common.notes') }}</span>
@@ -250,14 +249,14 @@ async function createAllocation() {
                   <div
                     v-for="allocation in additionalAllocations"
                     :key="allocation.id"
-                    class="grid grid-cols-12 items-center gap-2 px-4 py-3 text-sm"
+                    class="flex flex-col gap-2 px-4 py-3 text-sm sm:grid sm:grid-cols-12 sm:items-center sm:gap-2"
                   >
-                    <span class="col-span-4 font-medium">{{ formatIp(allocation) }}</span>
-                    <span class="col-span-2 text-muted-foreground">{{ allocation.port }}</span>
-                    <span class="col-span-3 text-xs text-muted-foreground">{{
+                    <span class="sm:col-span-4 font-medium break-all">{{ formatIp(allocation) }}</span>
+                    <span class="sm:col-span-2 text-muted-foreground">{{ allocation.port }}</span>
+                    <span class="sm:col-span-3 text-xs text-muted-foreground wrap-break-word">{{
                       allocation.notes || t('common.na')
                     }}</span>
-                    <div class="col-span-3 flex justify-end">
+                    <div class="flex flex-wrap items-center gap-2 sm:col-span-3 sm:justify-end">
                       <UButton
                         size="xs"
                         variant="subtle"
@@ -265,6 +264,7 @@ async function createAllocation() {
                         icon="i-lucide-arrow-up-to-line"
                         :loading="settingPrimaryId === allocation.id"
                         :disabled="settingPrimaryId !== null"
+                        class="w-full sm:w-auto justify-center"
                         @click="setPrimaryAllocation(allocation)"
                       >
                         {{ t('server.network.makePrimary') }}

@@ -158,29 +158,36 @@ onBeforeRouteLeave((to, from, next) => {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
+      <UContainer class="pt-2 sm:pt-4">
         <div class="space-y-4">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-              <UButton icon="i-lucide-arrow-left" variant="ghost" color="neutral" @click="cancel">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex flex-1 items-start gap-3 min-w-0">
+              <UButton
+                icon="i-lucide-arrow-left"
+                variant="ghost"
+                color="neutral"
+                class="shrink-0"
+                @click="cancel"
+              >
                 {{ t('common.back') }}
               </UButton>
-              <div>
-                <h1 class="text-xl font-semibold">{{ fileName }}</h1>
-                <p class="text-xs text-muted-foreground">{{ filePath }}</p>
+              <div class="min-w-0">
+                <h1 class="text-xl font-semibold break-words">{{ fileName }}</h1>
+                <p class="text-xs text-muted-foreground break-all">{{ filePath }}</p>
               </div>
-              <UBadge v-if="hasChanges" color="warning" size="xs">
+              <UBadge v-if="hasChanges" color="warning" size="xs" class="shrink-0">
                 {{ t('server.files.unsavedChanges') }}
               </UBadge>
             </div>
 
-            <div class="flex items-center gap-2">
-              <UBadge variant="soft" size="xs">
+            <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+              <UBadge variant="soft" size="xs" class="w-fit">
                 {{ language }}
               </UBadge>
               <UButton
                 icon="i-lucide-save"
                 color="primary"
+                class="w-full sm:w-auto justify-center"
                 :loading="saving"
                 :disabled="!hasChanges || loading"
                 @click="saveFile"

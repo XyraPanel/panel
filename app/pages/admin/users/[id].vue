@@ -52,8 +52,8 @@ async function runAction<T>(
     }
 
     return result;
-  } catch (error) {
-    const description = error instanceof Error ? error.message : t('common.unexpectedError');
+  } catch (actionError) {
+    const description = actionError instanceof Error ? actionError.message : t('common.unexpectedError');
     toast.add({
       title: t('admin.users.actionFailed'),
       description,
@@ -185,8 +185,8 @@ async function setTemporaryPassword() {
     try {
       await navigator.clipboard.writeText(temporaryPassword);
       copied = true;
-    } catch (error) {
-      console.error('Failed to copy temporary password to clipboard', error);
+    } catch (copyError) {
+      console.error('Failed to copy temporary password to clipboard', copyError);
     }
   }
 
@@ -616,7 +616,15 @@ async function impersonateUser() {
               </UAlert>
             </div>
 
-            <UTabs v-model="tab" variant="link" :items="tabItems" class="w-full" />
+            <UTabs
+              v-model="tab"
+              variant="link"
+              :items="tabItems"
+              class="w-full text-left"
+              :ui="{
+                list: 'flex flex-wrap gap-2 sm:gap-3',
+              }"
+            />
 
             <AdminUserOverviewTab v-if="tab === 'overview'" :profile="profile" />
             <AdminUserServersTab

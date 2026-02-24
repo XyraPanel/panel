@@ -368,14 +368,14 @@ async function disableTotp() {
         </UCard>
 
         <UCard :ui="{ body: 'space-y-4' }">
-          <div class="flex flex-col gap-2 pb-2 md:flex-row md:items-center md:justify-between">
+          <div class="flex flex-col gap-3 pb-2 sm:flex-row sm:items-center sm:justify-between">
             <div class="space-y-1">
               <p class="text-sm font-semibold">{{ t('account.security.twoFactor.title') }}</p>
               <p class="text-xs text-muted-foreground">
                 {{ t('account.security.twoFactor.description') }}
               </p>
             </div>
-            <UBadge :color="totpEnabled ? 'success' : 'warning'" variant="subtle">
+            <UBadge :color="totpEnabled ? 'success' : 'warning'" variant="subtle" class="w-fit">
               {{
                 totpEnabled
                   ? t('account.security.twoFactor.enabled')

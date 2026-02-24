@@ -126,15 +126,21 @@ async function handleDelete() {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
-        <section class="space-y-6">
+      <UContainer class="pt-2 sm:pt-4">
+        <section class="space-y-4 sm:space-y-6">
           <UCard>
             <template #header>
-              <div class="flex justify-end">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-center gap-2 text-xs text-muted-foreground">
+                  <p v-if="locations.length > 0">
+                    {{ t('admin.locations.showingLocations', { count: locations.length }) }}
+                  </p>
+                </div>
                 <UButton
                   icon="i-lucide-plus"
                   color="primary"
                   variant="subtle"
+                  class="w-full sm:w-auto justify-center"
                   @click="openCreateModal"
                 >
                   {{ t('admin.locations.createLocation') }}
@@ -162,10 +168,10 @@ async function handleDelete() {
               <div
                 v-for="location in locations"
                 :key="location.id"
-                class="flex items-center justify-between py-4"
+                class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div class="flex-1">
-                  <div class="flex items-center gap-2">
+                  <div class="flex flex-wrap items-center gap-2">
                     <UIcon name="i-lucide-map-pin" class="size-4 text-primary" />
                     <span class="font-medium">{{ location.short }}</span>
                     <UBadge v-if="location.nodeCount > 0" size="xs" color="neutral">
@@ -177,18 +183,19 @@ async function handleDelete() {
                       }}
                     </UBadge>
                   </div>
-                  <p v-if="location.long" class="mt-1 text-sm text-muted-foreground">
+                  <p v-if="location.long" class="mt-1 text-sm text-muted-foreground wrap-break-word">
                     {{ location.long }}
                   </p>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                   <UButton
                     icon="i-lucide-pencil"
                     size="xs"
                     variant="ghost"
                     color="info"
                     :aria-label="t('common.edit')"
+                    class="w-full sm:w-auto justify-center"
                     @click="openEditModal(location)"
                   />
                   <UButton
@@ -198,6 +205,7 @@ async function handleDelete() {
                     color="error"
                     :aria-label="t('common.delete')"
                     :disabled="location.nodeCount > 0"
+                    class="w-full sm:w-auto justify-center"
                     @click="
                       locationToDelete = location;
                       showDeleteModal = true;

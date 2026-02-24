@@ -111,7 +111,7 @@ function viewNest(nest: NestWithEggCount) {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
+      <UContainer class="pt-2 sm:pt-4">
         <section class="space-y-6">
           <UCard>
             <template #header>
@@ -120,6 +120,7 @@ function viewNest(nest: NestWithEggCount) {
                   icon="i-lucide-plus"
                   color="primary"
                   variant="subtle"
+                  class="w-full sm:w-auto justify-center"
                   @click="openCreateModal"
                 >
                   {{ t('admin.nests.createNest') }}
@@ -147,13 +148,13 @@ function viewNest(nest: NestWithEggCount) {
               <div
                 v-for="nest in nests"
                 :key="nest.id"
-                class="flex items-start justify-between py-4 hover:bg-muted/50 cursor-pointer transition-colors"
+                class="flex flex-col gap-3 py-4 hover:bg-muted/50 cursor-pointer transition-colors sm:flex-row sm:items-start sm:justify-between sm:gap-4"
                 @click="viewNest(nest)"
               >
                 <div class="flex-1">
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
                     <UIcon name="i-lucide-box" class="size-5 text-primary" />
-                    <span class="font-semibold">{{ nest.name }}</span>
+                    <span class="font-semibold break-words">{{ nest.name }}</span>
                     <UBadge size="sm" color="neutral" variant="outline">
                       {{ nest.eggCount }}
                       {{ nest.eggCount !== 1 ? t('admin.nests.eggs') : t('admin.nests.egg') }}
@@ -162,13 +163,15 @@ function viewNest(nest: NestWithEggCount) {
                   <p v-if="nest.description" class="mt-1 text-sm text-muted-foreground">
                     {{ nest.description }}
                   </p>
-                  <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                  <div
+                    class="mt-2 flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4"
+                  >
                     <span>{{ t('admin.nests.author') }}: {{ nest.author }}</span>
-                    <span>{{ t('admin.nests.uuid') }}: {{ nest.uuid.slice(0, 8) }}</span>
+                    <span class="break-all">{{ t('admin.nests.uuid') }}: {{ nest.uuid.slice(0, 8) }}</span>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2" @click.stop>
+                <div class="flex items-center gap-2 self-start sm:self-auto" @click.stop>
                   <UButton
                     icon="i-lucide-arrow-right"
                     size="xs"
@@ -241,16 +244,23 @@ function viewNest(nest: NestWithEggCount) {
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
+        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
           <UButton
             variant="ghost"
             color="error"
+            class="w-full sm:w-auto justify-center"
             :disabled="isSubmitting"
             @click="showCreateModal = false"
           >
             {{ t('common.cancel') }}
           </UButton>
-          <UButton color="primary" variant="subtle" :loading="isSubmitting" @click="handleSubmit">
+          <UButton
+            color="primary"
+            variant="subtle"
+            class="w-full sm:w-auto justify-center"
+            :loading="isSubmitting"
+            @click="handleSubmit"
+          >
             {{ t('admin.nests.createNest') }}
           </UButton>
         </div>
@@ -261,7 +271,7 @@ function viewNest(nest: NestWithEggCount) {
       v-model:open="showDeleteModal"
       :title="t('admin.nests.deleteNest')"
       :description="t('admin.nests.confirmDeleteDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
+      :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:justify-end' }"
     >
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
@@ -279,10 +289,21 @@ function viewNest(nest: NestWithEggCount) {
       </template>
 
       <template #footer>
-        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+        <UButton
+          variant="ghost"
+          class="w-full sm:w-auto justify-center"
+          :disabled="isDeleting"
+          @click="resetDeleteModal"
+        >
           {{ t('common.cancel') }}
         </UButton>
-        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
+        <UButton
+          color="error"
+          icon="i-lucide-trash-2"
+          class="w-full sm:w-auto justify-center"
+          :loading="isDeleting"
+          @click="handleDelete"
+        >
           {{ t('admin.nests.deleteNest') }}
         </UButton>
       </template>

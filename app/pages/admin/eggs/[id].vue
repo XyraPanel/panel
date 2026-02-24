@@ -236,7 +236,7 @@ async function handleExportEgg() {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
+      <UContainer class="pt-2 sm:pt-4">
         <section class="space-y-6">
           <div v-if="pending" class="space-y-4">
             <USkeleton class="h-8 w-64" />
@@ -249,31 +249,34 @@ async function handleExportEgg() {
           </UAlert>
 
           <template v-else-if="egg">
-            <header class="flex flex-wrap items-start justify-between gap-4">
+            <header class="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
               <div class="flex-1">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 min-w-0">
                   <UButton
                     icon="i-lucide-arrow-left"
                     size="xs"
                     variant="ghost"
                     :to="`/admin/nests/${egg.nestId}`"
                   />
-                  <h1 class="text-xl font-semibold">{{ egg.name }}</h1>
+                  <h1 class="text-xl font-semibold break-words">{{ egg.name }}</h1>
                 </div>
                 <p v-if="egg.description" class="mt-1 text-sm text-muted-foreground">
                   {{ egg.description }}
                 </p>
-                <div class="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                <div
+                  class="mt-2 flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4"
+                >
                   <span>{{ t('admin.nests.author') }}: {{ egg.author }}</span>
-                  <span>{{ t('admin.nests.uuid') }}: {{ egg.uuid }}</span>
+                  <span class="break-all">{{ t('admin.nests.uuid') }}: {{ egg.uuid }}</span>
                 </div>
               </div>
-              <div class="flex items-center gap-2">
+              <div class="flex w-full sm:w-auto items-center gap-2">
                 <UButton
                   icon="i-lucide-download"
                   size="sm"
                   color="neutral"
                   variant="outline"
+                  class="w-full sm:w-auto justify-center"
                   @click="handleExportEgg"
                 >
                   {{ t('admin.eggs.exportEgg') }}
@@ -326,6 +329,7 @@ async function handleExportEgg() {
                   <UButton
                     color="primary"
                     variant="subtle"
+                    class="w-full sm:w-auto justify-center"
                     :loading="isSavingConfig"
                     :disabled="isSavingConfig"
                     @click="handleSaveConfig"
@@ -338,8 +342,8 @@ async function handleExportEgg() {
 
             <UCard>
               <template #header>
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-2">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex items-center gap-2 flex-wrap">
                     <h2 class="text-lg font-semibold">
                       {{ t('admin.eggs.environmentVariables') }}
                     </h2>
@@ -352,6 +356,7 @@ async function handleExportEgg() {
                     size="sm"
                     color="primary"
                     variant="subtle"
+                    class="w-full sm:w-auto justify-center"
                     @click="openCreateVariableModal"
                   >
                     {{ t('admin.eggs.addVariable') }}
@@ -372,10 +377,10 @@ async function handleExportEgg() {
 
               <div v-else class="divide-y divide-default">
                 <div v-for="variable in egg.variables" :key="variable.id" class="py-4">
-                  <div class="flex items-start justify-between">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <div class="flex-1">
-                      <div class="flex items-center gap-2">
-                        <span class="font-medium">{{ variable.name }}</span>
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <span class="font-medium break-words">{{ variable.name }}</span>
                         <UBadge
                           v-if="variable.userEditable"
                           size="sm"
@@ -391,32 +396,32 @@ async function handleExportEgg() {
                         {{ variable.description }}
                       </p>
                       <div class="mt-2 space-y-1 text-xs">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 min-w-0">
                           <span class="text-muted-foreground"
                             >{{ t('admin.eggs.environmentVariable') }}:</span
                           >
-                          <code class="rounded bg-muted px-1 py-0.5">{{
+                          <code class="rounded bg-muted px-1 py-0.5 break-all">{{
                             variable.envVariable
                           }}</code>
                         </div>
-                        <div v-if="variable.defaultValue" class="flex items-center gap-2">
+                        <div v-if="variable.defaultValue" class="flex items-center gap-2 min-w-0">
                           <span class="text-muted-foreground"
                             >{{ t('admin.eggs.defaultValue') }}:</span
                           >
-                          <code class="rounded bg-muted px-1 py-0.5">{{
+                          <code class="rounded bg-muted px-1 py-0.5 break-all">{{
                             variable.defaultValue
                           }}</code>
                         </div>
-                        <div v-if="variable.rules" class="flex items-center gap-2">
+                        <div v-if="variable.rules" class="flex items-center gap-2 min-w-0">
                           <span class="text-muted-foreground"
                             >{{ t('admin.eggs.validation') }}:</span
                           >
-                          <code class="rounded bg-muted px-1 py-0.5">{{ variable.rules }}</code>
+                          <code class="rounded bg-muted px-1 py-0.5 break-all">{{ variable.rules }}</code>
                         </div>
                       </div>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center gap-2 self-start sm:self-auto">
                       <UButton
                         icon="i-lucide-pencil"
                         size="xs"
@@ -477,6 +482,7 @@ async function handleExportEgg() {
                   <UButton
                     color="primary"
                     variant="subtle"
+                    class="w-full sm:w-auto justify-center"
                     :loading="isSavingConfig"
                     :disabled="isSavingConfig"
                     @click="handleSaveConfig"
@@ -558,7 +564,7 @@ async function handleExportEgg() {
             </template>
           </UFormField>
 
-          <div class="flex gap-4">
+          <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
             <UFormField :label="t('admin.eggs.userViewable')" name="userViewable">
               <USwitch v-model="variableForm.userViewable" :disabled="isSubmitting" />
               <template #help>
@@ -577,11 +583,21 @@ async function handleExportEgg() {
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
-          <UButton variant="ghost" :disabled="isSubmitting" @click="showVariableModal = false">
+        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+          <UButton
+            variant="ghost"
+            class="w-full sm:w-auto justify-center"
+            :disabled="isSubmitting"
+            @click="showVariableModal = false"
+          >
             {{ t('common.cancel') }}
           </UButton>
-          <UButton color="primary" :loading="isSubmitting" @click="handleVariableSubmit">
+          <UButton
+            color="primary"
+            class="w-full sm:w-auto justify-center"
+            :loading="isSubmitting"
+            @click="handleVariableSubmit"
+          >
             {{ editingVariable ? t('common.update') : t('common.create') }}
           </UButton>
         </div>
@@ -592,7 +608,7 @@ async function handleExportEgg() {
       v-model:open="showDeleteVariableModal"
       :title="t('admin.eggs.deleteVariable')"
       :description="t('admin.eggs.confirmDeleteVariableDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
+      :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:justify-end' }"
     >
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
@@ -611,13 +627,19 @@ async function handleExportEgg() {
       </template>
 
       <template #footer>
-        <UButton variant="ghost" :disabled="isDeletingVariable" @click="resetDeleteVariableModal">
+        <UButton
+          variant="ghost"
+          class="w-full sm:w-auto justify-center"
+          :disabled="isDeletingVariable"
+          @click="resetDeleteVariableModal"
+        >
           {{ t('common.cancel') }}
         </UButton>
         <UButton
           color="error"
           variant="subtle"
           icon="i-lucide-trash-2"
+          class="w-full sm:w-auto justify-center"
           :loading="isDeletingVariable"
           @click="handleDeleteVariable"
         >

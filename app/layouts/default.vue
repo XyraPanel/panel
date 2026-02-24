@@ -172,6 +172,43 @@ const uiLocales = computed(() => {
   });
 });
 
+const localeFlagMap: Record<string, string> = {
+  en: '🇺🇸',
+  'en-US': '🇺🇸',
+  'en-GB': '🇬🇧',
+  es: '🇪🇸',
+  de: '🇩🇪',
+  fr: '🇫🇷',
+  it: '🇮🇹',
+  nl: '🇳🇱',
+  ar: '🇸🇦',
+  el: '🇬🇷',
+  tr: '🇹🇷',
+};
+
+function localeToFlag(code?: string): string {
+  if (!code) return '🌐';
+  if (localeFlagMap[code]) return localeFlagMap[code];
+  const parts = code.split('-');
+  if (parts.length === 0) return '🌐';
+  const region = parts[parts.length - 1]?.toUpperCase();
+  if (region && region.length === 2) {
+    const base = 0x1f1e6;
+    const offsetA = 'A'.charCodeAt(0);
+    return String.fromCodePoint(region.charCodeAt(0) - offsetA + base, region.charCodeAt(1) - offsetA + base);
+  }
+  return '🌐';
+}
+
+const currentFlag = computed(() => localeToFlag(locale.value));
+const localeDropdownItems = computed(() => [
+  uiLocales.value.map((loc) => ({
+    label: loc.name || loc.language || loc.code,
+    active: loc.code === locale.value,
+    click: () => handleLocaleChange(loc.code),
+  })),
+]);
+
 async function handleLocaleChange(newLocale: string | undefined) {
   if (!newLocale || newLocale === locale.value) return;
 
@@ -226,7 +263,24 @@ async function handleLocaleChange(newLocale: string | undefined) {
       </template>
 
       <template #footer="{ collapsed }">
+        <div class="sm:hidden px-2 pb-2">
+          <UButton
+            color="neutral"
+            variant="ghost"
+            class="w-full justify-start"
+            :block="collapsed"
+            type="button"
+            @click.prevent
+          >
+            <template #leading>
+              <UAvatar v-bind="userAvatar" size="sm" />
+            </template>
+            <span>{{ displayUserLabel }}</span>
+          </UButton>
+        </div>
+
         <UDropdownMenu
+          class="hidden sm:block"
           :items="[
             [
               { label: t('account.profile.title'), to: localePath('/account/profile') },
@@ -268,20 +322,38 @@ async function handleLocaleChange(newLocale: string | undefined) {
             <template #left>
               <div
                 v-if="pageTitle"
-                class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2"
+                class="hidden sm:flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2"
               >
-                <h1 class="text-base font-semibold text-foreground sm:text-lg">{{ pageTitle }}</h1>
-                <p v-if="pageSubtitle" class="text-xs text-muted-foreground">{{ pageSubtitle }}</p>
+                <h1 class="text-base font-semibold text-foreground sm:text-lg truncate">
+                  {{ pageTitle }}
+                </h1>
+                <p
+                  v-if="pageSubtitle"
+                  class="hidden text-xs text-muted-foreground sm:block truncate"
+                >
+                  {{ pageSubtitle }}
+                </p>
               </div>
             </template>
             <template #right>
               <div class="flex items-center gap-2">
+                <UDropdownMenu
+                  v-if="uiLocales.length"
+                  class="sm:hidden"
+                  :items="localeDropdownItems"
+                >
+                  <UButton size="sm" variant="ghost" class="w-10 justify-center" @click.prevent>
+                    <span class="text-lg" aria-hidden="true">{{ currentFlag }}</span>
+                    <span class="sr-only">{{ t('common.language') }}</span>
+                  </UButton>
+                </UDropdownMenu>
+
                 <ULocaleSelect
                   :model-value="locale"
                   :locales="uiLocales"
                   size="sm"
                   variant="ghost"
-                  class="w-32"
+                  class="hidden w-32 sm:block"
                   @update:model-value="handleLocaleChange($event)"
                 />
                 <UButton

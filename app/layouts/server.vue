@@ -151,7 +151,7 @@ const currentPageTitle = computed(() => {
           >
             <template #left>
               <div
-                class="flex flex-col gap-0.5 leading-tight sm:flex-row sm:items-baseline sm:gap-2"
+                class="hidden flex-col gap-0.5 leading-tight sm:flex sm:flex-row sm:items-baseline sm:gap-2"
               >
                 <h1 class="text-base font-semibold text-foreground sm:text-lg">
                   {{ serverName }}

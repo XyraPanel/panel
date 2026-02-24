@@ -196,21 +196,21 @@ async function copyToClipboard(text: string) {
 <template>
   <UPage>
     <UPageBody>
-      <UContainer>
-        <section class="space-y-6">
+      <UContainer class="pt-2 sm:pt-4">
+        <section class="space-y-4 sm:space-y-6">
           <UCard>
             <template #header>
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                   <p v-if="apiKeys.length > 0" class="text-xs text-muted-foreground">
                     {{ t('admin.api.showingApiKeys', { count: apiKeys.length }) }}
                   </p>
-                  <div v-if="apiKeys.length > 0">
+                  <div v-if="apiKeys.length > 0" class="w-full sm:w-48">
                     <USelect
                       v-model="sortOrder"
                       :items="sortOptions"
                       value-key="value"
-                      class="w-40"
+                      class="w-full"
                     />
                   </div>
                 </div>
@@ -218,6 +218,7 @@ async function copyToClipboard(text: string) {
                   icon="i-lucide-plus"
                   color="primary"
                   variant="subtle"
+                  class="w-full sm:w-auto justify-center"
                   @click="showCreateModal = true"
                 >
                   {{ t('admin.api.createApiKey') }}
@@ -236,11 +237,11 @@ async function copyToClipboard(text: string) {
               <div
                 v-for="key in sortedApiKeys"
                 :key="key.id"
-                class="flex items-center justify-between gap-4 py-4"
+                class="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
               >
                 <div class="flex-1 space-y-1">
-                  <div class="flex items-center gap-2">
-                    <code class="text-sm font-mono">{{ key.identifier }}</code>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <code class="text-sm font-mono break-all leading-5">{{ key.identifier }}</code>
                     <UBadge
                       v-if="key.expiresAt"
                       :color="isExpired(key.expiresAt) ? 'error' : 'neutral'"
@@ -250,8 +251,8 @@ async function copyToClipboard(text: string) {
                       {{ isExpired(key.expiresAt) ? t('admin.api.expired') : t('common.active') }}
                     </UBadge>
                   </div>
-                  <p v-if="key.memo" class="text-sm text-muted-foreground">{{ key.memo }}</p>
-                  <div class="flex items-center gap-4 text-xs text-muted-foreground">
+                  <p v-if="key.memo" class="text-sm text-muted-foreground wrap-break-word">{{ key.memo }}</p>
+                  <div class="flex flex-col gap-1 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4">
                     <span>
                       {{ t('common.created') }}:
                       <NuxtTime
@@ -284,6 +285,7 @@ async function copyToClipboard(text: string) {
                   color="error"
                   variant="ghost"
                   size="sm"
+                  class="w-full sm:w-auto justify-center"
                   @click="
                     keyToDelete = key;
                     showDeleteModal = true;

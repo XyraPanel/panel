@@ -124,8 +124,8 @@ const scopeToggleText = computed(() => {
 
 <template>
   <div class="space-y-6">
-    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div class="flex items-center gap-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div class="flex items-center gap-3 sm:gap-4">
         <USwitch
           v-if="isAdmin"
           v-model="showAll"
@@ -135,7 +135,7 @@ const scopeToggleText = computed(() => {
           unchecked-icon="i-lucide-user"
           :disabled="loading"
           :label="scopeToggleText"
-          class="w-full sm:w-auto lg:min-w-[220px]"
+          class="w-full sm:w-auto lg:min-w-55"
         />
       </div>
       <UInput
@@ -196,7 +196,7 @@ const scopeToggleText = computed(() => {
                 >
                   <UIcon name="i-lucide-server" class="size-5" />
                 </div>
-                <div class="space-y-1">
+                <div class="space-y-1 min-w-0">
                   <div class="flex flex-wrap items-center gap-2">
                     <NuxtLink
                       :to="`/server/${server.identifier}/console`"
@@ -204,10 +204,12 @@ const scopeToggleText = computed(() => {
                     >
                       {{ server.name }}
                     </NuxtLink>
-                    <UBadge size="sm" color="neutral" variant="soft">{{
-                      server.identifier
-                    }}</UBadge>
-                    <UBadge size="sm" color="neutral" variant="soft">{{ server.nodeName }}</UBadge>
+                    <UBadge size="sm" color="neutral" variant="soft" class="break-all">
+                      {{ server.identifier }}
+                    </UBadge>
+                    <UBadge size="sm" color="neutral" variant="soft" class="break-all">
+                      {{ server.nodeName }}
+                    </UBadge>
                     <UBadge
                       :color="statusBadge(server.status, server.suspended).color"
                       size="sm"
@@ -222,7 +224,7 @@ const scopeToggleText = computed(() => {
                   <div
                     class="flex flex-wrap items-center gap-2 text-xs font-medium text-muted-foreground"
                   >
-                    <span class="inline-flex items-center gap-1">
+                    <span class="inline-flex items-center gap-1 break-all">
                       <UIcon name="i-lucide-network" class="size-3.5 text-foreground/70" />
                       {{ t('server.list.primaryAllocationLabel') }}:
                       <span class="text-foreground">
@@ -232,40 +234,27 @@ const scopeToggleText = computed(() => {
                   </div>
                   <p
                     v-if="cleanedDescription(server.description)"
-                    class="text-sm text-muted-foreground line-clamp-1"
+                    class="text-sm text-muted-foreground wrap-break-word line-clamp-2"
                   >
                     {{ cleanedDescription(server.description) }}
                   </p>
                 </div>
               </div>
 
-              <div
-                class="flex flex-1 flex-wrap items-center justify-start gap-2 text-[11px] text-muted-foreground md:flex-none md:justify-end"
-              >
-                <div
-                  class="flex flex-wrap items-center gap-3 text-xs md:text-sm text-muted-foreground"
-                >
-                  <div class="inline-flex items-center gap-1">
-                    <UIcon name="i-lucide-gauge" class="size-4 text-foreground/60" />
-                    <span class="text-foreground/80">{{ t('server.list.cpuLimit') }}:</span>
-                    <span class="font-mono text-foreground">{{
-                      formatLimit(server.limits, 'cpu')
-                    }}</span>
-                  </div>
-                  <div class="inline-flex items-center gap-1">
-                    <UIcon name="i-lucide-memory-stick" class="size-4 text-foreground/60" />
-                    <span class="text-foreground/80">{{ t('server.list.memoryLimit') }}:</span>
-                    <span class="font-mono text-foreground">{{
-                      formatLimit(server.limits, 'memory')
-                    }}</span>
-                  </div>
-                  <div class="inline-flex items-center gap-1">
-                    <UIcon name="i-lucide-hard-drive" class="size-4 text-foreground/60" />
-                    <span class="text-foreground/80">{{ t('server.list.diskLimit') }}:</span>
-                    <span class="font-mono text-foreground">{{
-                      formatLimit(server.limits, 'disk')
-                    }}</span>
-                  </div>
+              <div class="flex flex-wrap items-center gap-2 md:flex-col md:items-end md:gap-2">
+                <div class="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                  <span class="inline-flex items-center gap-1">
+                    <UIcon name="i-lucide-cpu" class="size-3.5" />
+                    {{ formatLimit(server.limits, 'cpu') }} CPU
+                  </span>
+                  <span class="inline-flex items-center gap-1">
+                    <UIcon name="i-lucide-hard-drive" class="size-3.5" />
+                    {{ formatLimit(server.limits, 'disk') }}
+                  </span>
+                  <span class="inline-flex items-center gap-1">
+                    <UIcon name="i-lucide-memory-stick" class="size-3.5" />
+                    {{ formatLimit(server.limits, 'memory') }}
+                  </span>
                 </div>
               </div>
             </div>

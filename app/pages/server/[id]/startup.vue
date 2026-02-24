@@ -165,8 +165,8 @@ async function updateDockerImage() {
     });
 
     await refresh();
-  } catch (error) {
-    const err = error as { data?: { message?: string } };
+  } catch (dockerError) {
+    const err = dockerError as { data?: { message?: string } };
     toast.add({
       title: t('common.error'),
       description: err.data?.message || t('server.startup.failedToUpdateDockerImage'),
@@ -205,9 +205,11 @@ async function updateDockerImage() {
           <template v-else>
             <UCard>
               <template #header>
-                <div class="flex items-center gap-2">
-                  <UIcon name="i-lucide-rocket" class="size-5" />
-                  <h2 class="text-lg font-semibold">{{ t('server.startup.startupCommand') }}</h2>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                  <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-rocket" class="size-5" />
+                    <h2 class="text-lg font-semibold">{{ t('server.startup.startupCommand') }}</h2>
+                  </div>
                 </div>
               </template>
 
@@ -229,9 +231,11 @@ async function updateDockerImage() {
 
             <UCard>
               <template #header>
-                <div class="flex items-center gap-2">
-                  <UIcon name="i-lucide-container" class="size-5" />
-                  <h2 class="text-lg font-semibold">{{ t('server.startup.dockerImage') }}</h2>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                  <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-container" class="size-5" />
+                    <h2 class="text-lg font-semibold">{{ t('server.startup.dockerImage') }}</h2>
+                  </div>
                 </div>
               </template>
 
@@ -250,13 +254,14 @@ async function updateDockerImage() {
                     />
                   </UFormField>
 
-                  <div class="flex justify-end mt-4">
+                  <div class="flex flex-wrap justify-end gap-2 mt-4">
                     <UButton
                       icon="i-lucide-check"
                       color="primary"
                       variant="subtle"
                       :loading="isChangingDockerImage"
                       :disabled="isChangingDockerImage || selectedDockerImage === dockerImage"
+                      class="w-full sm:w-auto justify-center"
                       @click="updateDockerImage"
                     >
                       {{ t('server.startup.updateDockerImage') }}
@@ -293,11 +298,13 @@ async function updateDockerImage() {
 
             <UCard>
               <template #header>
-                <div class="flex items-center gap-2">
-                  <UIcon name="i-lucide-variable" class="size-5" />
-                  <h2 class="text-lg font-semibold">
-                    {{ t('server.startup.environmentVariables') }}
-                  </h2>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
+                  <div class="flex items-center gap-2">
+                    <UIcon name="i-lucide-variable" class="size-5" />
+                    <h2 class="text-lg font-semibold">
+                      {{ t('server.startup.environmentVariables') }}
+                    </h2>
+                  </div>
                 </div>
               </template>
 
@@ -368,12 +375,13 @@ async function updateDockerImage() {
                           </code>
                         </template>
                       </div>
-                      <div v-if="variable.isEditable" class="flex gap-2">
+                      <div v-if="variable.isEditable" class="flex flex-wrap gap-2 sm:flex-nowrap">
                         <UButton
                           size="sm"
                           color="primary"
                           :loading="savingVariables[variable.key]"
                           :disabled="savingVariables[variable.key] || !hasVariableChanged(variable)"
+                          class="w-full sm:w-auto justify-center"
                           @click="saveVariable(variable)"
                         >
                           {{ t('common.save') }}
@@ -383,6 +391,7 @@ async function updateDockerImage() {
                           variant="ghost"
                           color="neutral"
                           :disabled="savingVariables[variable.key]"
+                          class="w-full sm:w-auto justify-center"
                           @click="variableValues[variable.key] = variable.value ?? ''"
                         >
                           {{ t('common.reset') }}
