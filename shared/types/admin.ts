@@ -26,7 +26,6 @@ export interface AuditEventsPayload {
 
 export type AdminActivityEntry = AuditEventResponse;
 
-
 export interface AdminUsersPayload {
   data: AdminUserResponse[];
   pagination?: {

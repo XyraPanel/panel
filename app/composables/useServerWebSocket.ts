@@ -37,7 +37,13 @@ function getOrCreateInstance(serverId: string) {
   return websocketInstances.get(serverId)!;
 }
 
-const allowedServerStates = ['offline', 'starting', 'stopping', 'running', 'stopped'] as const satisfies readonly ServerState[];
+const allowedServerStates = [
+  'offline',
+  'starting',
+  'stopping',
+  'running',
+  'stopped',
+] as const satisfies readonly ServerState[];
 
 const isServerState = (value: unknown): value is ServerState =>
   typeof value === 'string' && (allowedServerStates as readonly string[]).includes(value);
@@ -206,15 +212,15 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
     }
 
     if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-      console.warn(`[WebSocket] Max reconnect attempts (${MAX_RECONNECT_ATTEMPTS}) reached, giving up`);
+      console.warn(
+        `[WebSocket] Max reconnect attempts (${MAX_RECONNECT_ATTEMPTS}) reached, giving up`,
+      );
       error.value = t('server.websocket.connectionFailed');
       return;
     }
 
-    const backoff = delay ?? Math.min(
-      RECONNECT_BASE_DELAY * Math.pow(2, reconnectAttempts),
-      RECONNECT_MAX_DELAY,
-    );
+    const backoff =
+      delay ?? Math.min(RECONNECT_BASE_DELAY * Math.pow(2, reconnectAttempts), RECONNECT_MAX_DELAY);
     reconnectAttempts++;
     console.log(`[WebSocket] Scheduling reconnect #${reconnectAttempts} in ${backoff}ms`);
 
@@ -283,8 +289,9 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
 
   const handleStats = (raw: string) => {
     try {
-      const parsed = parseJson<WingsStatsPayload>(raw, (data): data is WingsStatsPayload =>
-        typeof data === 'object' && data !== null,
+      const parsed = parseJson<WingsStatsPayload>(
+        raw,
+        (data): data is WingsStatsPayload => typeof data === 'object' && data !== null,
       );
       if (parsed) {
         const mapped = mapWingsStats(parsed);
@@ -427,10 +434,10 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
         {
           const raw = message.args?.[0];
           if (typeof raw === 'string') {
-            const payload = parseJson<
-              { progress?: number; status?: string; message?: string }
-            >(raw, (data): data is { progress?: number; status?: string; message?: string } =>
-              typeof data === 'object' && data !== null,
+            const payload = parseJson<{ progress?: number; status?: string; message?: string }>(
+              raw,
+              (data): data is { progress?: number; status?: string; message?: string } =>
+                typeof data === 'object' && data !== null,
             );
             if (payload) {
               if (typeof payload.status === 'string') {
@@ -761,7 +768,9 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
         if (errorData && typeof errorData === 'object' && errorData !== null) {
           const msg = (errorData as { message?: unknown }).message;
           if (typeof msg === 'string') {
-            throw new Error(msg || fetchErrObj.message || t('server.websocket.failedToFetchCredentials'));
+            throw new Error(
+              msg || fetchErrObj.message || t('server.websocket.failedToFetchCredentials'),
+            );
           }
         }
 
