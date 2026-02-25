@@ -104,6 +104,12 @@ export interface AccountProfileResponse {
 export interface AccountSessionsResponse {
   data: UserSessionSummary[];
   currentToken: string | null;
+  pagination?: {
+    page: number;
+    perPage: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface AccountSessionRow {

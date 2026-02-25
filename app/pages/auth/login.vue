@@ -12,11 +12,11 @@ const { status } = storeToRefs(authStore);
 const runtimeConfig = useRuntimeConfig();
 const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel');
 const { data: brandingSettings } = await useFetch('/api/branding', {
-  key: 'auth-login-branding-settings',
+  key: 'branding-settings',
   default: () =>
     ({
-      showBrandLogo: false,
-      brandLogoUrl: null,
+      showBrandLogo: true,
+      brandLogoUrl: '/logo.png',
     }) as { showBrandLogo: boolean; brandLogoUrl: string | null },
 });
 const route = useRoute();

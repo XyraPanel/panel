@@ -60,8 +60,15 @@ import type {
   MeResponse,
   DashboardData,
 } from '#shared/types/dashboard';
-import type { AccountSessionsResponse } from '#shared/types/auth';
-import type { SecuritySettings } from '#shared/types/admin';
+
+type AccountSessionCountResponse = {
+  count: number;
+};
+
+type DashboardSecuritySummary = {
+  announcementEnabled: boolean;
+  announcementMessage: string;
+};
 
 definePageMeta({
   auth: true,
@@ -72,20 +79,14 @@ const authStore = useAuthStore();
 const isAdminUser = computed(() => authStore.isAdmin || authStore.user?.role === 'admin');
 
 const isHydrated = ref(false);
-const defaultSecuritySettings: SecuritySettings = {
-  enforceTwoFactor: false,
-  maintenanceMode: false,
-  maintenanceMessage: '',
+const defaultSecuritySettings: DashboardSecuritySummary = {
   announcementEnabled: false,
   announcementMessage: '',
-  sessionTimeoutMinutes: 60,
-  queueConcurrency: 4,
-  queueRetryLimit: 3,
 };
 
-const [meFetch, dashboardFetch, sessionsFetch, securityFetch] = await Promise.all([
-  useFetch<MeResponse>('/api/me', {
-    key: 'dashboard-me',
+const [meFetch, dashboardFetch, sessionCountFetch, securityFetch] = await Promise.all([
+  useFetch<MeResponse>('/api/account/identity', {
+    key: 'dashboard-identity',
     dedupe: 'defer',
   }),
   useFetch<ClientDashboardResponse>('/api/dashboard', {
@@ -93,18 +94,18 @@ const [meFetch, dashboardFetch, sessionsFetch, securityFetch] = await Promise.al
     query: { section: 'metrics' },
     dedupe: 'defer',
   }),
-  useFetch<AccountSessionsResponse>('/api/account/sessions', {
-    key: 'dashboard-sessions',
+  useFetch<AccountSessionCountResponse>('/api/account/sessions/count', {
+    key: 'dashboard-session-count',
     dedupe: 'defer',
   }),
-  useAsyncData<SecuritySettings>(
+  useAsyncData<DashboardSecuritySummary>(
     'dashboard-security-settings',
     async () => {
       if (!isAdminUser.value) {
         return defaultSecuritySettings;
       }
 
-      return await $fetch<SecuritySettings>('/api/admin/settings/security');
+      return await $fetch<DashboardSecuritySummary>('/api/admin/settings/security/summary');
     },
     {
       default: () => defaultSecuritySettings,
@@ -117,7 +118,7 @@ const { data: meData, error: meError } = meFetch;
 
 const { data: dashboardResponse, error: dashboardError } = dashboardFetch;
 
-const { data: sessionsResponse } = sessionsFetch;
+const { data: sessionCountResponse } = sessionCountFetch;
 
 const { data: securitySettings } = securityFetch;
 
@@ -135,9 +136,9 @@ if (import.meta.client) {
   void callOnce(async () => {
     await new Promise((resolve) => setTimeout(resolve, 250));
     await refreshNuxtData([
-      'dashboard-me',
+      'dashboard-identity',
       'dashboard-data',
-      'dashboard-sessions',
+      'dashboard-session-count',
       'dashboard-security-settings',
     ]);
   });
@@ -191,13 +192,11 @@ function translateMetric(metric: ClientDashboardMetric): ClientDashboardMetric {
 }
 
 const dashboardData = computed<DashboardData | null>(() => {
-  if (!meData.value || !dashboardResponse.value || !sessionsResponse.value) {
+  if (!meData.value || !dashboardResponse.value || !sessionCountResponse.value) {
     return null;
   }
 
-  const activeSessions = Array.isArray(sessionsResponse.value.data)
-    ? sessionsResponse.value.data.length
-    : 0;
+  const activeSessions = Math.max(0, sessionCountResponse.value.count ?? 0);
 
   const description =
     activeSessions === 0
@@ -234,7 +233,7 @@ const dashboardData = computed<DashboardData | null>(() => {
 });
 
 const dashboardPending = computed(
-  () => !meData.value || !dashboardResponse.value || !sessionsResponse.value,
+  () => !meData.value || !dashboardResponse.value || !sessionCountResponse.value,
 );
 
 const metrics = computed<ClientDashboardMetric[]>(

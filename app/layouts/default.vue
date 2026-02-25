@@ -42,7 +42,7 @@ const { data: securitySettings } = await useFetch<{
   maintenanceMode: boolean;
   maintenanceMessage: string;
 }>('/api/maintenance-status', {
-  key: 'default-layout-security-settings',
+  key: 'maintenance-status',
   default: () => ({
     maintenanceMode: false,
     maintenanceMessage: '',
@@ -50,7 +50,7 @@ const { data: securitySettings } = await useFetch<{
 });
 
 const { data: brandingSettings } = await useFetch('/api/branding', {
-  key: 'default-layout-branding-settings',
+  key: 'branding-settings',
   default: () =>
     ({
       showBrandLogo: true,

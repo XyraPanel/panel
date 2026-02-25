@@ -11,7 +11,31 @@ export default defineEventHandler(async (event) => {
 
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NESTS, ADMIN_ACL_PERMISSIONS.READ);
 
+  const query = getQuery(event);
+  const view = Array.isArray(query.view) ? query.view[0] : query.view;
   const db = useDrizzle();
+
+  if (view === 'options') {
+    const options = await db
+      .select({
+        id: tables.nests.id,
+        name: tables.nests.name,
+      })
+      .from(tables.nests)
+      .orderBy(tables.nests.name);
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.nest.options.listed',
+      targetType: 'settings',
+      metadata: {
+        count: options.length,
+      },
+    });
+
+    return { data: options };
+  }
 
   const nests = await db
     .select({

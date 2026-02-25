@@ -1,4 +1,5 @@
 import { useDrizzle, tables, eq, inArray } from '#server/utils/drizzle';
+import { count, desc } from 'drizzle-orm';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAccountUser } from '#server/utils/security';
 
@@ -7,6 +8,22 @@ export default defineEventHandler(async (event) => {
   const user = accountContext.user;
 
   const db = useDrizzle();
+  const query = getQuery(event);
+  const pageParam = Array.isArray(query.page) ? query.page[0] : query.page;
+  const limitParam = Array.isArray(query.limit) ? query.limit[0] : query.limit;
+  const page = Math.max(1, Number.parseInt(typeof pageParam === 'string' ? pageParam : '1', 10));
+  const limit = Math.min(
+    100,
+    Math.max(1, Number.parseInt(typeof limitParam === 'string' ? limitParam : '25', 10)),
+  );
+  const offset = (page - 1) * limit;
+
+  const totalResult = await db
+    .select({ count: count() })
+    .from(tables.apiKeys)
+    .where(eq(tables.apiKeys.userId, user.id));
+
+  const total = totalResult[0]?.count ?? 0;
 
   const keys = await db
     .select({
@@ -17,7 +34,9 @@ export default defineEventHandler(async (event) => {
     })
     .from(tables.apiKeys)
     .where(eq(tables.apiKeys.userId, user.id))
-    .orderBy(tables.apiKeys.createdAt);
+    .orderBy(desc(tables.apiKeys.createdAt))
+    .limit(limit)
+    .offset(offset);
 
   if (!keys.length) {
     await recordAuditEventFromRequest(event, {
@@ -26,10 +45,18 @@ export default defineEventHandler(async (event) => {
       action: 'account.api_keys.listed',
       targetType: 'user',
       targetId: user.id,
-      metadata: { count: 0 },
+      metadata: { page, limit, total, returned: 0 },
     });
 
-    return { data: [] };
+    return {
+      data: [],
+      pagination: {
+        page,
+        perPage: limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   const keyIds = keys.map((key) => key.id);
@@ -81,8 +108,16 @@ export default defineEventHandler(async (event) => {
     action: 'account.api_keys.listed',
     targetType: 'user',
     targetId: user.id,
-    metadata: { count: keys.length },
+    metadata: { page, limit, total, returned: keys.length },
   });
 
-  return { data };
+  return {
+    data,
+    pagination: {
+      page,
+      perPage: limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  };
 });

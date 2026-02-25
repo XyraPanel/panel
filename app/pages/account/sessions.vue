@@ -13,14 +13,7 @@ const currentPage = ref(1);
 const updatingSessions = ref(false);
 const sortOrder = ref<'newest' | 'oldest'>('newest');
 
-const { data: paginationSettings } = await useFetch<{ paginationLimit: number }>(
-  '/api/settings/pagination',
-  {
-    key: 'settings-pagination',
-    default: () => ({ paginationLimit: 25 }),
-  },
-);
-const itemsPerPage = computed(() => paginationSettings.value?.paginationLimit ?? 25);
+const itemsPerPage = usePaginationSettings();
 
 const toast = useToast();
 
@@ -28,12 +21,15 @@ const {
   data: sessionsResponse,
   pending: sessionsPending,
   error: sessionsFetchError,
-} = await useFetch<AccountSessionsResponse>('/api/account/sessions', {
+} = await useLazyFetch<AccountSessionsResponse>('/api/account/sessions', {
   key: 'account-sessions',
   query: computed(() => ({
     page: currentPage.value,
-    limit: itemsPerPage.value,
+    perPage: itemsPerPage.value,
+    sortOrder: sortOrder.value,
   })),
+  pick: ['data', 'pagination', 'currentToken'],
+  server: false, 
   default: () => ({
     data: [],
     currentToken: null,

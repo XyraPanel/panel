@@ -34,10 +34,19 @@ export default defineEventHandler(async (event): Promise<ServersResponse> => {
 
     const servers = await db
       .select({
-        server: tables.servers,
-        node: tables.wingsNodes,
-        limits: tables.serverLimits,
-        primaryAllocation: tables.serverAllocations,
+        uuid: tables.servers.uuid,
+        identifier: tables.servers.identifier,
+        name: tables.servers.name,
+        nodeId: tables.servers.nodeId,
+        description: tables.servers.description,
+        status: tables.servers.status,
+        suspended: tables.servers.suspended,
+        nodeName: tables.wingsNodes.name,
+        cpuLimit: tables.serverLimits.cpu,
+        memoryLimit: tables.serverLimits.memory,
+        diskLimit: tables.serverLimits.disk,
+        allocationIp: tables.serverAllocations.ip,
+        allocationPort: tables.serverAllocations.port,
       })
       .from(tables.servers)
       .leftJoin(tables.wingsNodes, eq(tables.servers.nodeId, tables.wingsNodes.id))
@@ -52,35 +61,35 @@ export default defineEventHandler(async (event): Promise<ServersResponse> => {
       .where(and(...whereConditions))
       .orderBy(desc(tables.servers.updatedAt));
 
-    const serverUuids = servers.map(({ server }) => server.uuid);
+    const serverUuids = servers.map((server) => server.uuid);
     const liveStatuses = await getMultipleServerStatuses(serverUuids);
     const statusMap = new Map(liveStatuses.map((status) => [status.serverUuid, status.state]));
 
-    const records: ServerListEntry[] = servers.map(
-      ({ server, node, limits, primaryAllocation }) => ({
-        uuid: server.uuid,
-        identifier: server.identifier,
-        name: server.name,
-        nodeId: server.nodeId!,
-        nodeName: node?.name || 'Unknown Node',
-        description: server.description || null,
-        limits: limits
+    const records: ServerListEntry[] = servers.map((server) => ({
+      uuid: server.uuid,
+      identifier: server.identifier,
+      name: server.name,
+      nodeId: server.nodeId!,
+      nodeName: server.nodeName || 'Unknown Node',
+      description: server.description || null,
+      limits:
+        server.cpuLimit !== null || server.memoryLimit !== null || server.diskLimit !== null
           ? {
-              cpu: limits.cpu ?? null,
-              memory: limits.memory ?? null,
-              disk: limits.disk ?? null,
+              cpu: server.cpuLimit ?? null,
+              memory: server.memoryLimit ?? null,
+              disk: server.diskLimit ?? null,
             }
           : null,
-        featureLimits: null,
-        status: statusMap.get(server.uuid) || server.status || 'unknown',
-        ownership: includeAll ? 'shared' : 'mine',
-        suspended: server.suspended || false,
-        isTransferring: false,
-        primaryAllocation: primaryAllocation
-          ? `${primaryAllocation.ip}:${primaryAllocation.port}`
+      featureLimits: null,
+      status: statusMap.get(server.uuid) || server.status || 'unknown',
+      ownership: includeAll ? 'shared' : 'mine',
+      suspended: server.suspended || false,
+      isTransferring: false,
+      primaryAllocation:
+        server.allocationIp !== null && server.allocationPort !== null
+          ? `${server.allocationIp}:${server.allocationPort}`
           : null,
-      }),
-    );
+    }));
 
     await recordAuditEventFromRequest(event, {
       actor: user.id,

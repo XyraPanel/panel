@@ -10,23 +10,18 @@ definePageMeta({
 
 const currentPage = ref(1);
 
-const { data: generalSettings } = await useFetch<{ paginationLimit: number }>(
-  '/api/admin/settings/general',
-  {
-    key: 'admin-settings-general',
-    default: () => ({ paginationLimit: 25 }),
-  },
-);
-const itemsPerPage = computed(() => generalSettings.value?.paginationLimit ?? 25);
+const itemsPerPage = usePaginationSettings();
 
 const {
   data,
   pending,
   error: fetchError,
-} = await useFetch('/api/admin/audit', {
+} = await useLazyFetch('/api/admin/audit', {
   query: computed(() => ({ limit: itemsPerPage.value, page: currentPage.value })),
   key: 'admin-activity',
   watch: [currentPage, itemsPerPage],
+  pick: ['data', 'pagination'],
+  server: false, 
 });
 
 const auditData = computed(() => data.value as AuditEventsPayload | null);

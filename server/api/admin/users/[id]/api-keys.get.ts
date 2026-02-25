@@ -16,11 +16,20 @@ export default defineEventHandler(async (event) => {
   }
 
   const query = getQuery(event);
-  const page = Math.max(1, Number.parseInt((query.page as string) ?? '1', 10) || 1);
-  const defaultLimit = await getNumericSetting(SETTINGS_KEYS.PAGINATION_LIMIT, 25);
+  const pageParam = Array.isArray(query.page) ? query.page[0] : query.page;
+  const limitParam = Array.isArray(query.limit) ? query.limit[0] : query.limit;
+  const page = Math.max(1, Number.parseInt(typeof pageParam === 'string' ? pageParam : '1', 10));
+  const defaultLimit =
+    typeof limitParam === 'string' && limitParam.length > 0
+      ? 25
+      : await getNumericSetting(SETTINGS_KEYS.PAGINATION_LIMIT, 25);
   const limit = Math.min(
     100,
-    Math.max(10, Number.parseInt((query.limit as string) ?? String(defaultLimit), 10) || 25),
+    Math.max(
+      10,
+      Number.parseInt(typeof limitParam === 'string' ? limitParam : String(defaultLimit), 10) ||
+        25,
+    ),
   );
   const offset = (page - 1) * limit;
 
@@ -63,7 +72,7 @@ export default defineEventHandler(async (event) => {
     .limit(limit)
     .offset(offset);
 
-  const formatTimestamp = (value: number | Date | null | undefined) => {
+  const formatTimestamp = (value: number | Date | string | null | undefined) => {
     if (!value) {
       return null;
     }
@@ -92,7 +101,7 @@ export default defineEventHandler(async (event) => {
       id: key.id,
       identifier: key.identifier,
       memo: key.memo,
-      createdAt: formatTimestamp(key.createdAt)!,
+      createdAt: formatTimestamp(key.createdAt) || new Date().toISOString(),
       lastUsedAt: formatTimestamp(key.lastUsedAt),
       expiresAt: formatTimestamp(key.expiresAt),
     })),

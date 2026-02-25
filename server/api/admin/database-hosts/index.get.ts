@@ -4,7 +4,7 @@ import { useDrizzle, tables } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
-import type { DatabaseHostWithStats } from '#shared/types/admin';
+import type { DatabaseHostListItem } from '#shared/types/admin';
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
@@ -24,12 +24,7 @@ export default defineEventHandler(async (event) => {
       hostname: tables.databaseHosts.hostname,
       port: tables.databaseHosts.port,
       username: tables.databaseHosts.username,
-      password: tables.databaseHosts.password,
-      database: tables.databaseHosts.database,
-      nodeId: tables.databaseHosts.nodeId,
       maxDatabases: tables.databaseHosts.maxDatabases,
-      createdAt: tables.databaseHosts.createdAt,
-      updatedAt: tables.databaseHosts.updatedAt,
       databaseCount: sql<number>`count(${tables.serverDatabases.id})`.as('databaseCount'),
     })
     .from(tables.databaseHosts)
@@ -40,18 +35,13 @@ export default defineEventHandler(async (event) => {
     .groupBy(tables.databaseHosts.id)
     .orderBy(tables.databaseHosts.name);
 
-  const data: DatabaseHostWithStats[] = hosts.map((host) => ({
+  const data: DatabaseHostListItem[] = hosts.map((host) => ({
     id: host.id,
     name: host.name,
     hostname: host.hostname,
     port: host.port,
     username: host.username,
-    password: host.password,
-    database: host.database,
-    nodeId: host.nodeId,
     maxDatabases: host.maxDatabases,
-    createdAt: new Date(host.createdAt).toISOString(),
-    updatedAt: new Date(host.updatedAt).toISOString(),
     databaseCount: Number(host.databaseCount) || 0,
   }));
 

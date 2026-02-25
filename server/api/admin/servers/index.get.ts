@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
     const query = getQuery(event);
     const parsed = adminServersPaginationSchema.safeParse({
       page: query.page,
-      perPage: query.per_page ?? query.perPage,
+      perPage: query.per_page ?? query.perPage ?? query.limit,
     });
 
     if (!parsed.success) {
@@ -37,17 +37,20 @@ export default defineEventHandler(async (event) => {
 
     const servers = await db
       .select({
-        server: tables.servers,
-        owner: tables.users,
-        node: tables.wingsNodes,
-        egg: tables.eggs,
-        nest: tables.nests,
+        id: tables.servers.id,
+        uuid: tables.servers.uuid,
+        identifier: tables.servers.identifier,
+        name: tables.servers.name,
+        status: tables.servers.status,
+        createdAt: tables.servers.createdAt,
+        ownerId: tables.users.id,
+        ownerUsername: tables.users.username,
+        nodeId: tables.wingsNodes.id,
+        nodeName: tables.wingsNodes.name,
       })
       .from(tables.servers)
       .leftJoin(tables.users, eq(tables.servers.ownerId, tables.users.id))
       .leftJoin(tables.wingsNodes, eq(tables.servers.nodeId, tables.wingsNodes.id))
-      .leftJoin(tables.eggs, eq(tables.servers.eggId, tables.eggs.id))
-      .leftJoin(tables.nests, eq(tables.servers.nestId, tables.nests.id))
       .where(isNotNull(tables.servers.nodeId))
       .orderBy(desc(tables.servers.updatedAt))
       .limit(perPage)
@@ -74,56 +77,33 @@ export default defineEventHandler(async (event) => {
     });
 
     return {
-      data: servers.map(({ server, owner, node, egg, nest }) => ({
+      data: servers.map((server) => ({
         id: server.id,
         uuid: server.uuid,
         identifier: server.identifier,
-        externalId: server.externalId,
         name: server.name,
-        description: server.description,
         status: server.status,
-        suspended: server.suspended,
-        owner: owner
+        owner: server.ownerId
           ? {
-              id: owner.id,
-              username: owner.username,
-              email: owner.email,
+              id: server.ownerId,
+              username: server.ownerUsername ?? '',
             }
           : null,
-        node: node
+        node: server.nodeId
           ? {
-              id: node.id,
-              name: node.name,
+              id: server.nodeId,
+              name: server.nodeName ?? '',
             }
           : null,
-        egg: egg
-          ? {
-              id: egg.id,
-              name: egg.name,
-            }
-          : null,
-        nest: nest
-          ? {
-              id: nest.id,
-              name: nest.name,
-            }
-          : null,
-        createdAt:
-          server.createdAt instanceof Date
-            ? server.createdAt
-            : new Date(server.createdAt).toISOString(),
-        updatedAt:
-          server.updatedAt instanceof Date
-            ? server.updatedAt
-            : new Date(server.updatedAt).toISOString(),
+        created_at: new Date(server.createdAt).toISOString(),
       })),
       meta: {
         pagination: {
           total: totalCount,
           count: servers.length,
-          perPage,
-          currentPage: page,
-          totalPages: Math.ceil(totalCount / perPage),
+          per_page: perPage,
+          current_page: page,
+          total_pages: Math.ceil(totalCount / perPage),
         },
       },
     };

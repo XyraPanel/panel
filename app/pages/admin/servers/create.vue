@@ -50,7 +50,9 @@ const { data: nodesData } = await useAsyncData('admin-nodes-for-server', () =>
 );
 
 const { data: usersData } = await useAsyncData('admin-users-for-server', () =>
-  requestFetch<{ data: UserOption[] }>('/api/admin/users'),
+  requestFetch<{ data: UserOption[] }>('/api/admin/users/options', {
+    query: { limit: 1000 },
+  }),
 );
 
 const authStore = useAuthStore();

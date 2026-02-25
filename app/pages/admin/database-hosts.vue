@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { DatabaseHostWithStats, CreateDatabaseHostPayload } from '#shared/types/admin';
+import type { DatabaseHostListItem, CreateDatabaseHostPayload } from '#shared/types/admin';
 
 definePageMeta({
   auth: true,
@@ -17,7 +17,7 @@ const {
   error,
   refresh,
 } = await useAsyncData('admin-database-hosts', () =>
-  requestFetch<{ data: DatabaseHostWithStats[] }>('/api/admin/database-hosts'),
+  requestFetch<{ data: DatabaseHostListItem[] }>('/api/admin/database-hosts'),
 );
 
 const hosts = computed(() => hostsData.value?.data ?? []);
@@ -26,7 +26,7 @@ const showCreateModal = ref(false);
 const showDeleteModal = ref(false);
 const isSubmitting = ref(false);
 const isDeleting = ref(false);
-const hostToDelete = ref<DatabaseHostWithStats | null>(null);
+const hostToDelete = ref<DatabaseHostListItem | null>(null);
 
 const resetDeleteModal = () => {
   showDeleteModal.value = false;

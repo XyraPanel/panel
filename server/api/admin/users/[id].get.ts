@@ -1,5 +1,5 @@
 import { useDrizzle, tables, eq, or } from '#server/utils/drizzle';
-import { desc } from 'drizzle-orm';
+import { count, desc } from 'drizzle-orm';
 import { requireAdmin } from '#server/utils/security';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
@@ -60,49 +60,18 @@ export default defineEventHandler(async (event) => {
     activityConditions.push(eq(tables.auditEvents.actor, user.username));
   }
 
-  const [servers, apiKeys, sessions, allActivityEvents] = await Promise.all([
-    // Servers query
+  const [serverCountResult, apiKeyCountResult, activityCountResult, sessions] = await Promise.all([
+    db.select({ count: count() }).from(tables.servers).where(eq(tables.servers.ownerId, user.id)),
+    db.select({ count: count() }).from(tables.apiKeys).where(eq(tables.apiKeys.userId, user.id)),
+    db.select({ count: count() }).from(tables.auditEvents).where(or(...activityConditions)),
     db
       .select({
-        id: tables.servers.id,
-        uuid: tables.servers.uuid,
-        identifier: tables.servers.identifier,
-        name: tables.servers.name,
-        status: tables.servers.status,
-        suspended: tables.servers.suspended,
-        createdAt: tables.servers.createdAt,
-        nodeName: tables.wingsNodes.name,
-      })
-      .from(tables.servers)
-      .leftJoin(tables.wingsNodes, eq(tables.servers.nodeId, tables.wingsNodes.id))
-      .where(eq(tables.servers.ownerId, user.id))
-      .orderBy(desc(tables.servers.createdAt)),
-
-    // API keys query
-    db
-      .select({
-        id: tables.apiKeys.id,
-        identifier: tables.apiKeys.identifier,
-        memo: tables.apiKeys.memo,
-        createdAt: tables.apiKeys.createdAt,
-        lastUsedAt: tables.apiKeys.lastUsedAt,
-        expiresAt: tables.apiKeys.expiresAt,
-      })
-      .from(tables.apiKeys)
-      .where(eq(tables.apiKeys.userId, user.id))
-      .orderBy(desc(tables.apiKeys.createdAt)),
-
-    // Sessions query
-    db
-      .select({
-        sessionToken: tables.sessions.sessionToken,
         expires: tables.sessions.expires,
         expiresAt: tables.sessions.expiresAt,
         sessionIpAddress: tables.sessions.ipAddress,
         metadataIpAddress: tables.sessionMetadata.ipAddress,
         lastSeenAt: tables.sessionMetadata.lastSeenAt,
         firstSeenAt: tables.sessionMetadata.firstSeenAt,
-        userAgent: tables.sessionMetadata.userAgent,
       })
       .from(tables.sessions)
       .leftJoin(
@@ -111,66 +80,37 @@ export default defineEventHandler(async (event) => {
       )
       .where(eq(tables.sessions.userId, user.id))
       .orderBy(desc(tables.sessions.expiresAt)),
-
-    // All activity events query
-    db
-      .select({
-        id: tables.auditEvents.id,
-        occurredAt: tables.auditEvents.occurredAt,
-        action: tables.auditEvents.action,
-        actor: tables.auditEvents.actor,
-        targetType: tables.auditEvents.targetType,
-        targetId: tables.auditEvents.targetId,
-        metadata: tables.auditEvents.metadata,
-      })
-      .from(tables.auditEvents)
-      .where(or(...activityConditions))
-      .orderBy(desc(tables.auditEvents.occurredAt))
-      .limit(100),
   ]);
+  const serverCount = serverCountResult[0]?.count ?? 0;
+  const apiKeyCount = apiKeyCountResult[0]?.count ?? 0;
+  const activityCount = activityCountResult[0]?.count ?? 0;
 
-  const securityEvents = allActivityEvents
-    .filter((event) => {
-      const action = event.action.toLowerCase();
-      return (
-        action.includes('login') ||
-        action.includes('sign') ||
-        action.includes('password') ||
-        action.includes('2fa') ||
-        action.includes('two_factor') ||
-        action.includes('security') ||
-        action.includes('session')
-      );
-    })
-    .slice(0, 5);
+  const isDateObject = (value: unknown): value is Date => value instanceof Date;
 
-  const formatTimestamp = (value: number | Date | null | undefined) => {
-    if (!value) {
+  const toDate = (value: unknown): Date | null => {
+    if (value === null || value === undefined) {
       return null;
     }
 
-    const date = value instanceof Date ? value : new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date.toISOString();
-  };
-
-  const isRecord = (value: unknown): value is Record<string, unknown> => {
-    return typeof value === 'object' && value !== null;
-  };
-
-  const parseMetadata = (value: string | null): Record<string, unknown> => {
-    if (!value) {
-      return {};
+    if (isDateObject(value)) {
+      return Number.isNaN(value.getTime()) ? null : value;
     }
 
-    try {
-      const parsed: unknown = JSON.parse(value);
-      if (isRecord(parsed)) {
-        return parsed;
-      }
-      return { value: parsed };
-    } catch {
-      return { raw: value };
+    if (typeof value !== 'string' && typeof value !== 'number') {
+      return null;
     }
+
+    if (typeof value === 'string' && value.trim().length === 0) {
+      return null;
+    }
+
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
+  };
+
+  const formatTimestamp = (value: string | number | Date | null | undefined) => {
+    const date = toDate(value);
+    return date ? date.toISOString() : null;
   };
 
   await recordAuditEventFromRequest(event, {
@@ -207,77 +147,18 @@ export default defineEventHandler(async (event) => {
         updatedAt: formatTimestamp(user.updatedAt)!,
       },
       stats: {
-        serverCount: servers.length,
-        apiKeyCount: apiKeys.length,
+        serverCount,
+        apiKeyCount,
+        activityCount,
       },
-      servers: servers.map((server) => ({
-        id: server.id,
-        uuid: server.uuid,
-        identifier: server.identifier,
-        name: server.name,
-        status: server.status,
-        suspended: Boolean(server.suspended),
-        nodeName: server.nodeName ?? null,
-        createdAt: formatTimestamp(server.createdAt)!,
-      })),
-      apiKeys: apiKeys.map((key) => ({
-        id: key.id,
-        identifier: key.identifier,
-        memo: key.memo,
-        createdAt: formatTimestamp(key.createdAt)!,
-        lastUsedAt: formatTimestamp(key.lastUsedAt),
-        expiresAt: formatTimestamp(key.expiresAt),
-      })),
-      activity: allActivityEvents.map((entry) => ({
-        id: entry.id,
-        occurredAt: formatTimestamp(entry.occurredAt)!,
-        action: entry.action,
-        target: entry.targetId ? `${entry.targetType}#${entry.targetId}` : entry.targetType,
-        actor: entry.actor,
-        details: parseMetadata(entry.metadata ?? null),
-      })),
       security: {
-        sessions: sessions.map((session) => {
-          const ipAddress = session.metadataIpAddress || session.sessionIpAddress || null;
-
-          let expiresDate: Date | null = null;
-          if (session.expiresAt) {
-            expiresDate =
-              session.expiresAt instanceof Date ? session.expiresAt : new Date(session.expiresAt);
-          } else if (session.expires) {
-            if (session.expires instanceof Date) {
-              expiresDate = session.expires;
-            } else if (typeof session.expires === 'number') {
-              expiresDate =
-                String(session.expires).length <= 10
-                  ? new Date(session.expires * 1000)
-                  : new Date(session.expires);
-            }
-          }
-
-          return {
-            sessionToken: session.sessionToken,
-            expiresAt: formatTimestamp(expiresDate),
-            ipAddress,
-            lastSeenAt: formatTimestamp(session.lastSeenAt),
-            userAgent: session.userAgent ?? null,
-          };
-        }),
         lastLogin: (() => {
           const allSessions = sessions
             .map((s) => ({
               lastSeenAt:
-                s.lastSeenAt instanceof Date
-                  ? s.lastSeenAt
-                  : s.lastSeenAt
-                    ? new Date(s.lastSeenAt)
-                    : null,
+                toDate(s.lastSeenAt),
               firstSeenAt:
-                s.firstSeenAt instanceof Date
-                  ? s.firstSeenAt
-                  : s.firstSeenAt
-                    ? new Date(s.firstSeenAt)
-                    : null,
+                toDate(s.firstSeenAt),
             }))
             .filter((s) => s.lastSeenAt || s.firstSeenAt);
 
@@ -296,17 +177,9 @@ export default defineEventHandler(async (event) => {
             .map((s) => ({
               ipAddress: s.metadataIpAddress || s.sessionIpAddress || null,
               lastSeenAt:
-                s.lastSeenAt instanceof Date
-                  ? s.lastSeenAt
-                  : s.lastSeenAt
-                    ? new Date(s.lastSeenAt)
-                    : null,
+                toDate(s.lastSeenAt),
               firstSeenAt:
-                s.firstSeenAt instanceof Date
-                  ? s.firstSeenAt
-                  : s.firstSeenAt
-                    ? new Date(s.firstSeenAt)
-                    : null,
+                toDate(s.firstSeenAt),
             }))
             .filter((s) => s.ipAddress && (s.lastSeenAt || s.firstSeenAt));
 
@@ -329,9 +202,9 @@ export default defineEventHandler(async (event) => {
         activeSessions: sessions.filter((s) => {
           if (!s.expires && !s.expiresAt) return false;
           const expires =
-            s.expiresAt instanceof Date
+            isDateObject(s.expiresAt)
               ? s.expiresAt
-              : s.expires instanceof Date
+              : isDateObject(s.expires)
                 ? s.expires
                 : typeof s.expires === 'number'
                   ? String(s.expires).length <= 10
@@ -339,15 +212,9 @@ export default defineEventHandler(async (event) => {
                     : new Date(s.expires)
                   : s.expiresAt
                     ? new Date(s.expiresAt)
-                    : null;
+                  : null;
           return expires && expires > new Date();
         }).length,
-        securityEvents: securityEvents.map((event) => ({
-          id: event.id,
-          occurredAt: formatTimestamp(event.occurredAt)!,
-          action: event.action,
-          details: parseMetadata(event.metadata ?? null),
-        })),
       },
     },
   };

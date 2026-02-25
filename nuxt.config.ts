@@ -555,7 +555,7 @@ export default defineNuxtConfig({
   app: {
     head: {
       title: process.env.APP_NAME || 'XyraPanel',
-      titleTemplate: '%s | ' + (process.env.APP_NAME || 'XyraPanel'),
+      titleTemplate: '%s',
       meta: [
         {
           name: 'description',

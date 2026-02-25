@@ -12,30 +12,17 @@ interface AdminServerRow {
   id: string;
   uuid: string;
   identifier: string;
-  external_id: string | null;
   name: string;
-  description: string | null;
   status: string | null;
-  suspended: boolean;
   owner: {
     id: string;
     username: string;
-    email: string;
   } | null;
   node: {
     id: string;
     name: string;
   } | null;
-  egg: {
-    id: string;
-    name: string;
-  } | null;
-  nest: {
-    id: string;
-    name: string;
-  } | null;
   created_at: Date | string;
-  updated_at: Date | string;
 }
 
 const { t } = useI18n();
@@ -49,14 +36,7 @@ const router = useRouter();
 
 const currentPage = ref(1);
 
-const { data: generalSettings } = await useFetch<{ paginationLimit: number }>(
-  '/api/admin/settings/general',
-  {
-    key: 'admin-settings-general',
-    default: () => ({ paginationLimit: 25 }),
-  },
-);
-const itemsPerPage = computed(() => generalSettings.value?.paginationLimit ?? 25);
+const itemsPerPage = usePaginationSettings();
 
 const {
   data: serversResponse,

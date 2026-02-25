@@ -17,12 +17,15 @@ function cleanedDescription(description?: string | null) {
 }
 
 const { t } = useI18n();
-const { data: me } = await useFetch<{ data: { role: string } }>('/api/me', {
-  key: 'user-role',
-  default: () => ({ data: { role: 'user' } }),
-});
+const { data: identity } = await useFetch<{ user: { role: string | null } | null }>(
+  '/api/account/identity',
+  {
+    key: 'account-identity',
+    default: () => ({ user: { role: 'user' } }),
+  },
+);
 
-const isAdmin = computed(() => me.value?.data?.role === 'admin');
+const isAdmin = computed(() => identity.value?.user?.role === 'admin');
 
 watch(isAdmin, (admin) => {
   if (!admin) {
@@ -43,13 +46,13 @@ const {
   data: serversResponse,
   pending: loading,
   error: fetchError,
-} = await useFetch<ServersResponse>('/api/servers', {
+} = await useLazyFetch('/api/servers', {
   key: 'servers-list',
   query: computed(() => ({ scope: scope.value })),
   watch: [scope],
 });
 
-const servers = computed(() => serversResponse.value?.data ?? []);
+const servers = computed(() => (serversResponse.value as ServersResponse | null)?.data ?? []);
 const error = computed(() => {
   if (!fetchError.value) return null;
   return fetchError.value instanceof Error ? fetchError.value.message : t('server.list.title');

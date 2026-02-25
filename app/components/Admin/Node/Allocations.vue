@@ -14,15 +14,8 @@ const toast = useToast();
 const page = ref(1);
 const filter = ref<'all' | 'assigned' | 'unassigned'>('all');
 const isCreating = ref(false);
-
-const { data: paginationSettings } = await useFetch<{ paginationLimit: number }>(
-  '/api/settings/pagination',
-  {
-    key: 'settings-pagination',
-    default: () => ({ paginationLimit: 25 }),
-  },
-);
-const pageSize = computed(() => paginationSettings.value?.paginationLimit ?? 25);
+const itemsPerPage = usePaginationSettings();
+const pageSize = computed(() => itemsPerPage.value);
 
 const {
   data: allocationsData,

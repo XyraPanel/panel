@@ -13,14 +13,7 @@ const serverId = computed(() => route.params.id as string);
 const currentPage = ref(1);
 const expandedEntries = ref<Set<string>>(new Set());
 
-const { data: paginationSettings } = await useFetch<{ paginationLimit: number }>(
-  '/api/settings/pagination',
-  {
-    key: 'settings-pagination',
-    default: () => ({ paginationLimit: 25 }),
-  },
-);
-const itemsPerPage = computed(() => paginationSettings.value?.paginationLimit ?? 25);
+const itemsPerPage = usePaginationSettings();
 
 watch(serverId, () => {
   currentPage.value = 1;

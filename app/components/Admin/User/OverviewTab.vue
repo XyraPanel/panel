@@ -14,17 +14,16 @@ const stats = computed(
     props.profile?.stats ?? {
       serverCount: 0,
       apiKeyCount: 0,
+      activityCount: 0,
     },
 );
 const security = computed(
   () =>
     props.profile?.security ?? {
-      sessions: [],
       lastLogin: null,
       lastLoginIp: null,
       uniqueIps: [],
       activeSessions: 0,
-      securityEvents: [],
     },
 );
 

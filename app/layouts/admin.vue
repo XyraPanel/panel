@@ -3,7 +3,7 @@ import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
 import type { CommandPaletteGroup, CommandPaletteItem } from '@nuxt/ui';
 import type { SessionUser } from '#shared/types/auth';
-import type { SecuritySettings, AdminNavItem } from '#shared/types/admin';
+import type { AdminNavItem } from '#shared/types/admin';
 import { useAuthStore } from '~/stores/auth';
 
 const { t } = useI18n();
@@ -171,26 +171,34 @@ const {
   status: authStatus,
 } = storeToRefs(authStore);
 
-const createDefaultSecuritySettings = (): SecuritySettings => ({
-  enforceTwoFactor: false,
-  maintenanceMode: false,
-  maintenanceMessage: '',
-  announcementEnabled: false,
-  announcementMessage: '',
-  sessionTimeoutMinutes: 60,
-  queueConcurrency: 4,
-  queueRetryLimit: 3,
-});
-
-const { data: securitySettings } = await useFetch<SecuritySettings>(
-  '/api/admin/settings/security',
-  {
-    key: 'admin-layout-security-settings',
-    default: () => createDefaultSecuritySettings(),
+const { data: dashboardData } = await useAsyncData(
+  'admin-dashboard',
+  async () => {
+    const response = await $fetch('/api/admin/dashboard' as string, {
+      query: { section: 'critical' }
+    });
+    return response;
   },
+  {
+    server: true,
+    default: () => ({
+      metrics: [],
+      nodes: [],
+      operations: [],
+      generatedAt: new Date().toISOString()
+    })
+  }
 );
 
 const sessionUser = computed<SessionUser | null>(() => storeUser.value ?? null);
+
+const { data: securitySettings } = await useFetch<{ enforceTwoFactor: boolean }>(
+  '/api/admin/settings/security/summary',
+  {
+    key: 'admin-layout-security-summary',
+    default: () => ({ enforceTwoFactor: false }),
+  },
+);
 
 const requiresTwoFactor = computed(() => Boolean(securitySettings.value?.enforceTwoFactor));
 const hasTwoFactor = computed(() =>

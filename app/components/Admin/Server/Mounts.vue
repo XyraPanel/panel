@@ -29,6 +29,7 @@ const {
   error: availableError,
 } = await useFetch<{ data: Mount[] }>('/api/admin/mounts', {
   key: 'admin-mounts-list',
+  query: { view: 'options' },
   default: () => ({ data: [] }),
 });
 const availableMounts = computed(() => availableMountsResponse.value?.data ?? []);

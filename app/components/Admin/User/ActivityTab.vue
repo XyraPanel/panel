@@ -15,7 +15,7 @@ const requestFetch = useRequestFetch();
 const activityPage = ref(1);
 const expandedActivityEntries = ref<Set<string>>(new Set());
 
-const { data: activityData } = await useAsyncData(
+const { data: activityData } = await useLazyAsyncData(
   `admin-user-activity-${props.userId}`,
   async () => {
     const url =
@@ -28,6 +28,7 @@ const { data: activityData } = await useAsyncData(
       pagination: { page: 1, perPage: props.itemsPerPage, total: 0, totalPages: 0 },
     }),
     watch: [activityPage, () => props.itemsPerPage, () => props.userId],
+    server: false,
   },
 );
 

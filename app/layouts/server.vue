@@ -5,16 +5,7 @@ const { t } = useI18n();
 const route = useRoute();
 
 const serverId = computed(() => route.params.id as string);
-
-const { data: serverResponse } = await useFetch(`/api/client/servers/${serverId.value}`, {
-  key: `server-${serverId.value}`,
-  watch: [serverId],
-});
-
-const server = computed(() => {
-  const response = serverResponse.value as { data: { name: string; identifier: string } } | null;
-  return response?.data ?? null;
-});
+const { server, loading: serverLoading } = useServerInfo(serverId.value);
 
 const serverName = computed(() => {
   const name = server.value?.name;

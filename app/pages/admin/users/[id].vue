@@ -83,29 +83,19 @@ watch(error, (value) => {
 const profile = computed(() => data.value?.data);
 const user = computed(() => profile.value?.user);
 
-const { data: generalSettings } = await useFetch<{ paginationLimit: number }>(
-  '/api/admin/settings/general',
-  {
-    key: 'admin-settings-general',
-    default: () => ({ paginationLimit: 25 }),
-  },
-);
-const itemsPerPage = computed(() => generalSettings.value?.paginationLimit ?? 25);
+const itemsPerPage = usePaginationSettings();
 
 const userStats = computed(
   () =>
     profile.value?.stats ?? {
       serverCount: 0,
       apiKeyCount: 0,
+      activityCount: 0,
     },
 );
-const serversCount = computed(
-  () => userStats.value.serverCount ?? profile.value?.servers?.length ?? 0,
-);
-const apiKeysCount = computed(
-  () => userStats.value.apiKeyCount ?? profile.value?.apiKeys?.length ?? 0,
-);
-const activityCount = computed(() => profile.value?.activity?.length ?? 0);
+const serversCount = computed(() => userStats.value.serverCount ?? 0);
+const apiKeysCount = computed(() => userStats.value.apiKeyCount ?? 0);
+const activityCount = computed(() => userStats.value.activityCount ?? 0);
 
 const isSuspended = computed(() => Boolean(user.value?.suspended));
 const hasTwoFactor = computed(() => Boolean(user.value?.twoFactorEnabled));

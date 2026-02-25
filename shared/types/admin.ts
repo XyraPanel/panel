@@ -112,28 +112,13 @@ export interface AdminUserProfilePayload {
   stats: {
     serverCount: number;
     apiKeyCount: number;
+    activityCount: number;
   };
-  servers: AdminUserServerSummary[];
-  apiKeys: AdminUserApiKeySummary[];
-  activity: AdminActivityEntry[];
   security: {
-    sessions: Array<{
-      sessionToken: string;
-      expiresAt: string | null;
-      ipAddress: string | null;
-      lastSeenAt: string | null;
-      userAgent: string | null;
-    }>;
     lastLogin: string | null;
     lastLoginIp: string | null;
     uniqueIps: string[];
     activeSessions: number;
-    securityEvents: Array<{
-      id: string;
-      occurredAt: string;
-      action: string;
-      details: Record<string, unknown>;
-    }>;
   };
 }
 
@@ -671,6 +656,12 @@ export interface MountWithRelations extends AdminMount {
   servers: string[];
 }
 
+export interface AdminMountListItem extends AdminMount {
+  eggCount: number;
+  nodeCount: number;
+  serverCount: number;
+}
+
 export interface CreateMountPayload {
   name: string;
   description?: string;
@@ -710,6 +701,16 @@ export interface DatabaseHost {
 export interface DatabaseHostWithStats extends DatabaseHost {
   databaseCount: number;
   nodeName?: string;
+}
+
+export interface DatabaseHostListItem {
+  id: string;
+  name: string;
+  hostname: string;
+  port: number;
+  username: string | null;
+  maxDatabases: number | null;
+  databaseCount: number;
 }
 
 export interface CreateDatabaseHostPayload {

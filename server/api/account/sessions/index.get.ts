@@ -1,16 +1,16 @@
 import type {
   UserSessionSummary,
   AccountSessionsResponse,
-  AuthContext,
   AccountSessionRow,
 } from '#shared/types/auth';
 import { requireAccountUser } from '#server/utils/security';
 import { parseUserAgent } from '#server/utils/user-agent';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { count, desc } from 'drizzle-orm';
 
 export default defineEventHandler(async (event): Promise<AccountSessionsResponse> => {
-  const middlewareAuth = (event.context as { auth?: AuthContext }).auth;
+  const middlewareAuth = event.context.auth;
   const accountContext = middlewareAuth
     ? { session: middlewareAuth.session, user: middlewareAuth.user }
     : await requireAccountUser(event);
@@ -21,12 +21,28 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
     throw createError({ status: 401, statusText: 'Unauthorized' });
   }
 
+  const query = getQuery(event);
+  const pageParam = Array.isArray(query.page) ? query.page[0] : query.page;
+  const limitParam = Array.isArray(query.limit) ? query.limit[0] : query.limit;
+  const page = Math.max(1, Number.parseInt(typeof pageParam === 'string' ? pageParam : '1', 10));
+  const limit = Math.min(
+    100,
+    Math.max(1, Number.parseInt(typeof limitParam === 'string' ? limitParam : '25', 10)),
+  );
+  const offset = (page - 1) * limit;
+
   const db = useDrizzle();
   let metadataAvailable = true;
   let rows: AccountSessionRow[];
 
+  const totalResult = await db
+    .select({ count: count() })
+    .from(tables.sessions)
+    .where(eq(tables.sessions.userId, user.id));
+  const total = totalResult[0]?.count ?? 0;
+
   try {
-    const query = db
+    const sessionQuery = db
       .select({
         sessionToken: tables.sessions.sessionToken,
         expires: tables.sessions.expires,
@@ -43,9 +59,12 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
         tables.sessionMetadata,
         eq(tables.sessionMetadata.sessionToken, tables.sessions.sessionToken),
       )
-      .where(eq(tables.sessions.userId, user.id));
+      .where(eq(tables.sessions.userId, user.id))
+      .orderBy(desc(tables.sessions.expiresAt))
+      .limit(limit)
+      .offset(offset);
 
-    rows = (await query) as AccountSessionRow[];
+    rows = (await sessionQuery) as AccountSessionRow[];
   } catch (error) {
     if (error instanceof Error && /session_metadata/i.test(error.message ?? '')) {
       metadataAvailable = false;
@@ -57,15 +76,18 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
           metadataUserAgent: tables.sessions.userAgent,
         })
         .from(tables.sessions)
-        .where(eq(tables.sessions.userId, user.id))) as AccountSessionRow[];
+        .where(eq(tables.sessions.userId, user.id))
+        .orderBy(desc(tables.sessions.expiresAt))
+        .limit(limit)
+        .offset(offset)) as AccountSessionRow[];
     } else {
       throw error;
     }
   }
 
   const currentToken =
-    (middlewareAuth?.session as any)?.session?.token ??
-    (accountContext.session as any)?.session?.token ??
+    middlewareAuth?.session?.session?.token ??
+    accountContext.session?.session?.token ??
     null;
 
   const currentIp = getRequestIP(event) || null;
@@ -86,7 +108,7 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
       const existingFirstSeen = currentRow.firstSeenAt
         ? currentRow.firstSeenAt instanceof Date
           ? currentRow.firstSeenAt.toISOString()
-          : (currentRow.firstSeenAt as string)
+          : currentRow.firstSeenAt
         : nowIso;
       await db
         .insert(tables.sessionMetadata)
@@ -97,7 +119,7 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
           deviceName: parsedInfo.device || null,
           browserName: parsedInfo.browser || null,
           osName: parsedInfo.os || null,
-          firstSeenAt: existingFirstSeen,
+          firstSeenAt: typeof existingFirstSeen === 'string' ? existingFirstSeen : new Date(existingFirstSeen).toISOString(),
           lastSeenAt: nowIso,
         })
         .onConflictDoUpdate({
@@ -116,8 +138,8 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
       currentRow.metadataBrowser = parsedInfo.browser || '';
       currentRow.metadataOs = parsedInfo.os || '';
       currentRow.metadataDevice = parsedInfo.device || '';
-      currentRow.firstSeenAt = existingFirstSeen as any;
-      currentRow.lastSeenAt = nowIso as any;
+      currentRow.firstSeenAt = existingFirstSeen;
+      currentRow.lastSeenAt = nowIso;
     }
   }
 
@@ -206,12 +228,18 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
     action: 'account.sessions.listed',
     targetType: 'user',
     targetId: user.id,
-    metadata: { count: data.length },
+    metadata: { page, limit, total, returned: data.length },
   });
 
   const response: AccountSessionsResponse = {
     data,
     currentToken: currentToken ?? null,
+    pagination: {
+      page,
+      perPage: limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
   };
 
   return response;

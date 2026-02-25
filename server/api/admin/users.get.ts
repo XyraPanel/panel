@@ -28,7 +28,21 @@ export default defineEventHandler(async (event): Promise<AdminUsersPayload> => {
   const total = totalResult[0]?.count ?? 0;
 
   const rows = await db
-    .select()
+    .select({
+      id: tables.users.id,
+      username: tables.users.username,
+      email: tables.users.email,
+      nameFirst: tables.users.nameFirst,
+      nameLast: tables.users.nameLast,
+      role: tables.users.role,
+      rootAdmin: tables.users.rootAdmin,
+      createdAt: tables.users.createdAt,
+      banned: tables.users.banned,
+      suspended: tables.users.suspended,
+      emailVerified: tables.users.emailVerified,
+      useTotp: tables.users.useTotp,
+      passwordResetRequired: tables.users.passwordResetRequired,
+    })
     .from(tables.users)
     .orderBy(desc(tables.users.createdAt))
     .limit(limit)

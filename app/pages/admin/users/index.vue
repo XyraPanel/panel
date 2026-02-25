@@ -2,6 +2,8 @@
 import type { TableColumn, CommandPaletteItem } from '@nuxt/ui';
 import type { AdminUserResponse, UsersResponse } from '#shared/types/api';
 
+type CommandPaletteUser = Pick<AdminUserResponse, 'id' | 'username' | 'email' | 'name' | 'role'>;
+
 const { t } = useI18n();
 
 definePageMeta({
@@ -13,41 +15,36 @@ const toast = useToast();
 const router = useRouter();
 const route = useRoute();
 const requestFetch = useRequestFetch();
+const untypedFetch = $fetch as (
+  input: string,
+  init?: Record<string, unknown>,
+) => Promise<unknown>;
 
 const page = ref(Number.parseInt((route.query.page as string) ?? '1', 10) || 1);
 const showSearchModal = ref(false);
 
-const { data: generalSettings } = await useFetch<{ paginationLimit: number }>(
-  '/api/admin/settings/general',
-  {
-    key: 'admin-settings-general',
-    default: () => ({ paginationLimit: 25 }),
-  },
-);
-const itemsPerPage = computed(() => generalSettings.value?.paginationLimit ?? 25);
+const itemsPerPage = usePaginationSettings();
 
-const {
-  data: usersData,
-  pending: loading,
-  error,
-  refresh: refreshUsers,
-} = await useAsyncData<UsersResponse>(
-  'admin-users',
-  () =>
+const { data: adminUsersData, pending: loading, error, refresh: refreshUsers } = await useAsyncData('admin-users-page', () => 
+  Promise.all([
     requestFetch<UsersResponse>('/api/admin/users' as string, {
-      query: {
-        page: page.value,
-        limit: itemsPerPage.value,
-      },
+      query: { page: page.value, limit: itemsPerPage.value },
     }),
+    requestFetch<{ data: CommandPaletteUser[] }>('/api/admin/users/options', {
+      query: { limit: 1000 },
+    })
+  ]),
   {
-    default: () => ({ data: [], pagination: undefined }),
     watch: [page, itemsPerPage],
-  },
+  }
 );
+
+const usersData = computed(() => adminUsersData.value?.[0]);
+const allUsersData = computed(() => adminUsersData.value?.[1]);
 
 const users = computed(() => usersData.value?.data ?? []);
 const pagination = computed(() => usersData.value?.pagination);
+const allUsers = computed<CommandPaletteUser[]>(() => allUsersData.value?.data ?? []);
 
 watch(
   () => route.query.page,
@@ -65,18 +62,6 @@ function handlePageChange(newPage: number) {
     query: { ...route.query, page: newPage },
   });
 }
-
-const { data: allUsersData, execute: executeAllUsersFetch } = await useFetch<UsersResponse>(
-  '/api/admin/users',
-  {
-    key: 'admin-users-all',
-    query: { limit: 1000, page: 1 },
-    default: () => ({ data: [] }),
-    lazy: true,
-  },
-);
-
-const allUsers = computed(() => allUsersData.value?.data ?? []);
 
 const commandPaletteGroups = computed(() => [
   {
@@ -108,7 +93,7 @@ const commandPaletteGroups = computed(() => [
 
 async function openSearchModal() {
   showSearchModal.value = true;
-  await executeAllUsersFetch();
+  // Data is already fetched in parallel
 }
 
 const columns = computed<TableColumn<AdminUserResponse>[]>(() => [
@@ -223,8 +208,8 @@ async function handleSubmit() {
 
   try {
     if (editingUser.value) {
-      await $fetch(`/api/admin/users/${editingUser.value.id}`, {
-        method: 'patch',
+      await untypedFetch(`/api/admin/users/${editingUser.value.id}`, {
+        method: 'PATCH',
         body: userForm.value,
       });
       toast.add({
@@ -263,7 +248,7 @@ async function handleDelete() {
 
   isDeleting.value = true;
   try {
-    await $fetch(`/api/admin/users/${userToDelete.value.id}`, {
+    await untypedFetch(`/api/admin/users/${userToDelete.value.id}`, {
       method: 'DELETE',
     });
     toast.add({

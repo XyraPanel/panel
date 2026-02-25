@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { USwitch } from '#components';
-import type { MountWithRelations, CreateMountPayload } from '#shared/types/admin';
+import type { AdminMountListItem, CreateMountPayload } from '#shared/types/admin';
 
 definePageMeta({
   auth: true,
@@ -16,11 +16,11 @@ const {
   pending,
   error,
   refresh,
-} = await useFetch('/api/admin/mounts', {
+} = await useFetch<{ data: AdminMountListItem[] }>('/api/admin/mounts', {
   key: 'admin-mounts',
 });
 
-const mounts = computed(() => mountsData.value?.data ?? []);
+const mounts = computed<AdminMountListItem[]>(() => mountsData.value?.data ?? []);
 
 const { data: nodesData } = await useFetch<{ data: { id: string; name: string }[] }>(
   '/api/admin/wings/nodes',
@@ -36,14 +36,14 @@ const { data: eggsData } = await useFetch<{
 });
 
 const nodeOptions = computed(() =>
-  (nodesData.value?.data ?? []).map((node) => ({
+  (nodesData.value?.data ?? []).map((node: { id: string; name: string }) => ({
     value: node.id,
     label: node.name,
   })),
 );
 
 const eggOptions = computed(() =>
-  (eggsData.value?.data ?? []).map((egg) => ({
+  (eggsData.value?.data ?? []).map((egg: { id: string; name: string; nestName?: string }) => ({
     value: egg.id,
     label: egg.nestName ? `${egg.nestName} • ${egg.name}` : egg.name,
   })),
@@ -53,7 +53,7 @@ const showCreateModal = ref(false);
 const showDeleteModal = ref(false);
 const isSubmitting = ref(false);
 const isDeleting = ref(false);
-const mountToDelete = ref<MountWithRelations | null>(null);
+const mountToDelete = ref<AdminMountListItem | null>(null);
 
 const resetDeleteModal = () => {
   showDeleteModal.value = false;
@@ -213,23 +213,21 @@ async function handleDelete() {
                     </div>
                     <div class="flex flex-wrap items-center gap-3">
                       <span
-                        >{{ mount.eggs.length }}
-                        {{
-                          mount.eggs.length !== 1 ? t('admin.nests.eggs') : t('admin.nests.egg')
-                        }}</span
+                        >{{ mount.eggCount }}
+                        {{ mount.eggCount !== 1 ? t('admin.nests.eggs') : t('admin.nests.egg') }}</span
                       >
                       <span
-                        >{{ mount.nodes.length }}
+                        >{{ mount.nodeCount }}
                         {{
-                          mount.nodes.length !== 1
+                          mount.nodeCount !== 1
                             ? t('admin.locations.nodes')
                             : t('admin.locations.node')
                         }}</span
                       >
                       <span
-                        >{{ mount.servers.length }}
+                        >{{ mount.serverCount }}
                         {{
-                          mount.servers.length !== 1 ? t('admin.dashboard.servers') : 'server'
+                          mount.serverCount !== 1 ? t('admin.dashboard.servers') : 'server'
                         }}</span
                       >
                     </div>
