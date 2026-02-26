@@ -43,17 +43,8 @@ export function getSessionUser(
     return null;
   }
 
-  const {
-    id,
-    username,
-    role,
-    permissions,
-    email,
-    name,
-    image,
-    remember,
-    passwordResetRequired,
-  } = user as Record<string, unknown>;
+  const { id, username, role, permissions, email, name, image, remember, passwordResetRequired } =
+    user as Record<string, unknown>;
 
   if (typeof id !== 'string' || typeof username !== 'string' || !isRole(role)) {
     return null;
@@ -70,7 +61,8 @@ export function getSessionUser(
     name: typeof name === 'string' ? name : null,
     image: typeof image === 'string' || image === null ? (image ?? null) : null,
     remember: typeof remember === 'boolean' ? remember : null,
-    passwordResetRequired: typeof passwordResetRequired === 'boolean' ? passwordResetRequired : false,
+    passwordResetRequired:
+      typeof passwordResetRequired === 'boolean' ? passwordResetRequired : false,
   };
 }
 

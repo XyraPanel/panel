@@ -16,7 +16,10 @@ export default defineEventHandler(async (event) => {
   try {
     const db = useDrizzle();
     const templateRows = await db
-      .select({ htmlContent: tables.emailTemplates.htmlContent, updatedAt: tables.emailTemplates.updatedAt })
+      .select({
+        htmlContent: tables.emailTemplates.htmlContent,
+        updatedAt: tables.emailTemplates.updatedAt,
+      })
       .from(tables.emailTemplates)
       .where(eq(tables.emailTemplates.templateId, id))
       .limit(1);

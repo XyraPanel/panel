@@ -23,7 +23,7 @@ function getExtendedRuntimeConfig(): ExtendedRuntimeConfig {
 
 function resolveEncryptionKey(): Buffer {
   const runtimeConfig = getExtendedRuntimeConfig();
-  
+
   const secret = runtimeConfig.auth?.tokenSecret || '';
 
   const material = secret.length > 0 ? secret : 'XyraPanel-development-secret';

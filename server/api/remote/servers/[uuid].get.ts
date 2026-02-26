@@ -295,9 +295,12 @@ export default defineEventHandler(async (event: H3Event) => {
       }
 
       if (replacement !== null && replacement !== undefined) {
-        const replaceStr = typeof replacement === 'string' || typeof replacement === 'number' || typeof replacement === 'boolean' 
-          ? String(replacement) 
-          : JSON.stringify(replacement);
+        const replaceStr =
+          typeof replacement === 'string' ||
+          typeof replacement === 'number' ||
+          typeof replacement === 'boolean'
+            ? String(replacement)
+            : JSON.stringify(replacement);
         result = result.replace(match[0], replaceStr);
       }
     }
@@ -359,13 +362,15 @@ export default defineEventHandler(async (event: H3Event) => {
                   replace.push({
                     match,
                     if_value: ifValue,
-                    replace_with: typeof replaceWith === 'number' ? replaceWith : String(replaceWith),
+                    replace_with:
+                      typeof replaceWith === 'number' ? replaceWith : String(replaceWith),
                   });
                 }
               } else {
                 replace.push({
                   match,
-                  replace_with: typeof replaceValue === 'number' ? replaceValue : String(replaceValue),
+                  replace_with:
+                    typeof replaceValue === 'number' ? replaceValue : String(replaceValue),
                 });
               }
             }

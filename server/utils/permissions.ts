@@ -51,8 +51,8 @@ export const PERMISSIONS = {
 } as const;
 
 type PermissionKey = keyof typeof PERMISSIONS;
-const PERMISSION_KEYS: PermissionKey[] = Object.keys(PERMISSIONS).filter((key): key is PermissionKey =>
-  Object.prototype.hasOwnProperty.call(PERMISSIONS, key),
+const PERMISSION_KEYS: PermissionKey[] = Object.keys(PERMISSIONS).filter(
+  (key): key is PermissionKey => Object.prototype.hasOwnProperty.call(PERMISSIONS, key),
 );
 
 function isPermissionKey(value: string): value is PermissionKey {
@@ -136,10 +136,7 @@ function resolveServerOwnerPermissions(): PermissionKey[] {
   return allPermissions.filter((permission) => !wingsPermissions.has(permission));
 }
 
-async function resolveUserPermissions(
-  userId: string,
-  serverId: string,
-): Promise<PermissionKey[]> {
+async function resolveUserPermissions(userId: string, serverId: string): Promise<PermissionKey[]> {
   const db = useDrizzle();
 
   const [server] = await db

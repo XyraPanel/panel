@@ -110,7 +110,10 @@ export default defineEventHandler(async (event) => {
   }
 });
 
-function getRowCount(result: { rowCount?: number | bigint | null; changes?: number | bigint | null }): number {
+function getRowCount(result: {
+  rowCount?: number | bigint | null;
+  changes?: number | bigint | null;
+}): number {
   const value = result?.rowCount ?? result?.changes ?? 0;
-  return typeof value === 'bigint' ? Number(value) : value ?? 0;
+  return typeof value === 'bigint' ? Number(value) : (value ?? 0);
 }

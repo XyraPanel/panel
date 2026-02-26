@@ -163,7 +163,9 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
 
-function isCreateServerPayload(value: unknown): value is { serverId: string; startOnCompletion?: boolean } {
+function isCreateServerPayload(
+  value: unknown,
+): value is { serverId: string; startOnCompletion?: boolean } {
   return (
     isRecord(value) &&
     typeof value.serverId === 'string' &&

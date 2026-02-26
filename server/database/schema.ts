@@ -396,7 +396,9 @@ export const serverBackups = pgTable(
     uuid: text('uuid').notNull(),
     name: text('name').notNull(),
     ignoredFiles: text('ignored_files'),
-    disk: text('disk', { enum: ['wings', 's3'] }).notNull().default('wings'),
+    disk: text('disk', { enum: ['wings', 's3'] })
+      .notNull()
+      .default('wings'),
     checksum: text('checksum'),
     bytes: integer('bytes').notNull().default(0),
     isSuccessful: boolean('is_successful').notNull().default(false),

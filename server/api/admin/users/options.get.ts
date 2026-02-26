@@ -10,7 +10,10 @@ export default defineEventHandler(async (event) => {
 
   const query = getQuery(event);
   const rawSearch = typeof query.search === 'string' ? query.search.trim() : '';
-  const limit = Math.min(1000, Math.max(1, Number.parseInt(typeof query.limit === 'string' ? query.limit : '250', 10) || 250));
+  const limit = Math.min(
+    1000,
+    Math.max(1, Number.parseInt(typeof query.limit === 'string' ? query.limit : '250', 10) || 250),
+  );
 
   const db = useDrizzle();
   const whereClause =

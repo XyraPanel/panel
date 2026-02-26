@@ -33,7 +33,9 @@ export function createWingsClient(node: WingsNodeConnection) {
   }
 
   function isServerDetailsResponse(value: unknown): value is WingsServerDetailsResponse {
-    return typeof value === 'object' && value !== null && 'state' in value && 'utilization' in value;
+    return (
+      typeof value === 'object' && value !== null && 'state' in value && 'utilization' in value
+    );
   }
 
   async function request<T>(
@@ -158,10 +160,14 @@ export function createWingsClient(node: WingsNodeConnection) {
     },
 
     async compressFiles(serverUuid: string, root: string, files: string[]) {
-      return request(`/api/servers/${serverUuid}/files/compress`, {
-        method: 'POST',
-        body: { root, files },
-      }, isCompressResponse);
+      return request(
+        `/api/servers/${serverUuid}/files/compress`,
+        {
+          method: 'POST',
+          body: { root, files },
+        },
+        isCompressResponse,
+      );
     },
 
     async decompressFile(serverUuid: string, root: string, file: string) {
@@ -190,9 +196,13 @@ export function createWingsClient(node: WingsNodeConnection) {
     },
 
     async createBackup(serverUuid: string) {
-      return request(`/api/servers/${serverUuid}/backup`, {
-        method: 'POST',
-      }, isUuidResponse);
+      return request(
+        `/api/servers/${serverUuid}/backup`,
+        {
+          method: 'POST',
+        },
+        isUuidResponse,
+      );
     },
 
     async deleteBackup(serverUuid: string, backupUuid: string) {
@@ -217,11 +227,7 @@ export function createWingsClient(node: WingsNodeConnection) {
     },
 
     async getServerDetails(serverUuid: string) {
-      return request(
-        `/api/servers/${serverUuid}`,
-        {},
-        isServerDetailsResponse,
-      );
+      return request(`/api/servers/${serverUuid}`, {}, isServerDetailsResponse);
     },
   };
 }

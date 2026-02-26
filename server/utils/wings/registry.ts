@@ -27,11 +27,15 @@ function isWingsSystemInformation(value: unknown): value is WingsSystemInformati
   return isRecord(value);
 }
 
-function isWingsServerConfigurationResponse(value: unknown): value is WingsServerConfigurationResponse {
+function isWingsServerConfigurationResponse(
+  value: unknown,
+): value is WingsServerConfigurationResponse {
   return isRecord(value) && 'settings' in value && 'process_configuration' in value;
 }
 
-function isWingsPaginatedResponse(value: unknown): value is WingsPaginatedResponse<WingsRemoteServer> {
+function isWingsPaginatedResponse(
+  value: unknown,
+): value is WingsPaginatedResponse<WingsRemoteServer> {
   return isRecord(value) && 'data' in value && Array.isArray(value.data) && 'meta' in value;
 }
 
@@ -102,12 +106,16 @@ export async function remoteGetSystemInformation(nodeId?: string, version?: numb
     const plainSecret = await getPlainTokenSecret(resolvedNodeId);
     const query =
       typeof version === 'number' && !Number.isNaN(version) ? { v: version } : undefined;
-    return await wingsFetch('/api/system', {
-      baseURL: node.baseURL,
-      token: plainSecret,
-      allowInsecure: node.allowInsecure,
-      query,
-    }, isWingsSystemInformation);
+    return await wingsFetch(
+      '/api/system',
+      {
+        baseURL: node.baseURL,
+        token: plainSecret,
+        allowInsecure: node.allowInsecure,
+        query,
+      },
+      isWingsSystemInformation,
+    );
   } catch (error) {
     throw toWingsHttpError(error, { operation: 'retrieve Wings system information', nodeId });
   }
@@ -288,16 +296,20 @@ export async function remoteCompressFiles(
 
   try {
     const node = await requireNode(nodeId);
-    return await wingsFetch(`/api/servers/${serverUuid}/files/compress`, {
-      baseURL: node.baseURL,
-      token: node.apiToken,
-      allowInsecure: node.allowInsecure,
-      method: 'POST',
-      body: {
-        root: normalizeRoot(root),
-        files: sanitizedFiles,
+    return await wingsFetch(
+      `/api/servers/${serverUuid}/files/compress`,
+      {
+        baseURL: node.baseURL,
+        token: node.apiToken,
+        allowInsecure: node.allowInsecure,
+        method: 'POST',
+        body: {
+          root: normalizeRoot(root),
+          files: sanitizedFiles,
+        },
       },
-    }, isCompressResponse);
+      isCompressResponse,
+    );
   } catch (error) {
     throw toWingsHttpError(error, { operation: 'compress files', nodeId });
   }
@@ -418,9 +430,17 @@ export async function remoteGetFileDownloadUrl(
   }
 }
 
-async function wingsFetch<T>(url: string, options: WingsHttpRequestOptions, validate: (data: unknown) => data is T): Promise<T>;
+async function wingsFetch<T>(
+  url: string,
+  options: WingsHttpRequestOptions,
+  validate: (data: unknown) => data is T,
+): Promise<T>;
 async function wingsFetch(url: string, options: WingsHttpRequestOptions): Promise<void>;
-async function wingsFetch<T>(url: string, options: WingsHttpRequestOptions, validate?: (data: unknown) => data is T): Promise<T | void> {
+async function wingsFetch<T>(
+  url: string,
+  options: WingsHttpRequestOptions,
+  validate?: (data: unknown) => data is T,
+): Promise<T | void> {
   const fullUrl = new URL(url, options.baseURL);
 
   if (options.query) {
@@ -559,11 +579,15 @@ export async function remoteListServers(nodeId?: string) {
     const node = await requireNode(nodeId);
     const resolvedNodeId = nodeId || node.id;
     const plainSecret = await getPlainTokenSecret(resolvedNodeId);
-    return await wingsFetch('/api/servers', {
-      baseURL: node.baseURL,
-      token: plainSecret,
-      allowInsecure: node.allowInsecure,
-    }, isWingsRemoteServerArray);
+    return await wingsFetch(
+      '/api/servers',
+      {
+        baseURL: node.baseURL,
+        token: plainSecret,
+        allowInsecure: node.allowInsecure,
+      },
+      isWingsRemoteServerArray,
+    );
   } catch (error) {
     throw toWingsHttpError(error, { operation: 'list Wings servers', nodeId });
   }
@@ -572,11 +596,15 @@ export async function remoteListServers(nodeId?: string) {
 export async function remoteGetServerConfiguration(uuid: string, nodeId?: string) {
   try {
     const node = await requireNode(nodeId);
-    return await wingsFetch(`/api/servers/${uuid}`, {
-      baseURL: node.baseURL,
-      token: node.apiToken,
-      allowInsecure: node.allowInsecure,
-    }, isWingsServerConfigurationResponse);
+    return await wingsFetch(
+      `/api/servers/${uuid}`,
+      {
+        baseURL: node.baseURL,
+        token: node.apiToken,
+        allowInsecure: node.allowInsecure,
+      },
+      isWingsServerConfigurationResponse,
+    );
   } catch (error) {
     throw toWingsHttpError(error, {
       operation: `retrieve configuration for server ${uuid}`,
@@ -588,11 +616,15 @@ export async function remoteGetServerConfiguration(uuid: string, nodeId?: string
 export async function remoteGetInstallationScript(uuid: string, nodeId?: string) {
   try {
     const node = await requireNode(nodeId);
-    return await wingsFetch(`/api/servers/${uuid}/install`, {
-      baseURL: node.baseURL,
-      token: node.apiToken,
-      allowInsecure: node.allowInsecure,
-    }, isRecord);
+    return await wingsFetch(
+      `/api/servers/${uuid}/install`,
+      {
+        baseURL: node.baseURL,
+        token: node.apiToken,
+        allowInsecure: node.allowInsecure,
+      },
+      isRecord,
+    );
   } catch (error) {
     throw toWingsHttpError(error, {
       operation: `download install script for server ${uuid}`,
@@ -606,15 +638,19 @@ export async function remotePaginateServers(page: number, perPage: number, nodeI
     const node = await requireNode(nodeId);
     const resolvedNodeId = nodeId || node.id;
     const plainSecret = await getPlainTokenSecret(resolvedNodeId);
-    const response = await wingsFetch('/api/servers', {
-      baseURL: node.baseURL,
-      token: plainSecret,
-      allowInsecure: node.allowInsecure,
-      query: {
-        page,
-        per_page: perPage,
+    const response = await wingsFetch(
+      '/api/servers',
+      {
+        baseURL: node.baseURL,
+        token: plainSecret,
+        allowInsecure: node.allowInsecure,
+        query: {
+          page,
+          per_page: perPage,
+        },
       },
-    }, isServerListOrPaginated);
+      isServerListOrPaginated,
+    );
 
     if (isWingsRemoteServerArray(response)) {
       return {
@@ -630,7 +666,8 @@ export async function remotePaginateServers(page: number, perPage: number, nodeI
       };
     }
 
-    if (!isWingsPaginatedResponse(response)) throw new Error('Wings returned unexpected shape for paginated servers');
+    if (!isWingsPaginatedResponse(response))
+      throw new Error('Wings returned unexpected shape for paginated servers');
     return response;
   } catch (error) {
     throw toWingsHttpError(error, { operation: 'paginate Wings servers', nodeId });
@@ -649,12 +686,16 @@ export async function remoteListServerDirectory(
 
     // Pterodactyl uses node's decrypted token secret (just the secret, not tokenId.tokenSecret)
     // Wings expects: Bearer <tokenSecret> (not tokenId.tokenSecret format for file operations)
-    const entries = await wingsFetch(`/api/servers/${serverUuid}/files/list-directory`, {
-      baseURL: node.baseURL,
-      token: connection.tokenSecret,
-      allowInsecure: node.allowInsecure,
-      query: { directory: directoryPath },
-    }, isWingsDirectoryEntryArray);
+    const entries = await wingsFetch(
+      `/api/servers/${serverUuid}/files/list-directory`,
+      {
+        baseURL: node.baseURL,
+        token: connection.tokenSecret,
+        allowInsecure: node.allowInsecure,
+        query: { directory: directoryPath },
+      },
+      isWingsDirectoryEntryArray,
+    );
 
     return {
       directory: directoryPath,
@@ -685,12 +726,16 @@ export async function remoteListServerDirectory(
         const { connection } = await resolveNodeConnection(node.id);
         const directoryPath = normalizeServerPath(directory);
 
-        const entries = await wingsFetch(`/api/servers/${serverUuid}/files/list-directory`, {
-          baseURL: node.baseURL,
-          token: connection.tokenSecret,
-          allowInsecure: node.allowInsecure,
-          query: { directory: directoryPath },
-        }, isWingsDirectoryEntryArray);
+        const entries = await wingsFetch(
+          `/api/servers/${serverUuid}/files/list-directory`,
+          {
+            baseURL: node.baseURL,
+            token: connection.tokenSecret,
+            allowInsecure: node.allowInsecure,
+            query: { directory: directoryPath },
+          },
+          isWingsDirectoryEntryArray,
+        );
 
         return {
           directory: directoryPath,

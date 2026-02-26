@@ -286,10 +286,7 @@ onMounted(() => {
                       />
                     </div>
                     <div class="mt-2 space-y-1 text-xs text-muted-foreground">
-                      <div
-                        v-if="incident.actor"
-                        class="flex items-center gap-2 min-w-0"
-                      >
+                      <div v-if="incident.actor" class="flex items-center gap-2 min-w-0">
                         <UIcon name="i-lucide-user" class="size-3" />
                         <NuxtLink
                           v-if="incident.actor?.userId"

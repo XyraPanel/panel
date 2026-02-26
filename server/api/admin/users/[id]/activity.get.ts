@@ -27,8 +27,7 @@ export default defineEventHandler(async (event) => {
     100,
     Math.max(
       10,
-      Number.parseInt(typeof limitParam === 'string' ? limitParam : String(defaultLimit), 10) ||
-        25,
+      Number.parseInt(typeof limitParam === 'string' ? limitParam : String(defaultLimit), 10) || 25,
     ),
   );
   const offset = (page - 1) * limit;

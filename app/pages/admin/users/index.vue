@@ -15,28 +15,32 @@ const toast = useToast();
 const router = useRouter();
 const route = useRoute();
 const requestFetch = useRequestFetch();
-const untypedFetch = $fetch as (
-  input: string,
-  init?: Record<string, unknown>,
-) => Promise<unknown>;
+const untypedFetch = $fetch as (input: string, init?: Record<string, unknown>) => Promise<unknown>;
 
 const page = ref(Number.parseInt((route.query.page as string) ?? '1', 10) || 1);
 const showSearchModal = ref(false);
 
 const itemsPerPage = usePaginationSettings();
 
-const { data: adminUsersData, pending: loading, error, refresh: refreshUsers } = await useAsyncData('admin-users-page', () => 
-  Promise.all([
-    requestFetch<UsersResponse>('/api/admin/users' as string, {
-      query: { page: page.value, limit: itemsPerPage.value },
-    }),
-    requestFetch<{ data: CommandPaletteUser[] }>('/api/admin/users/options', {
-      query: { limit: 1000 },
-    })
-  ]),
+const {
+  data: adminUsersData,
+  pending: loading,
+  error,
+  refresh: refreshUsers,
+} = await useAsyncData(
+  'admin-users-page',
+  () =>
+    Promise.all([
+      requestFetch<UsersResponse>('/api/admin/users' as string, {
+        query: { page: page.value, limit: itemsPerPage.value },
+      }),
+      requestFetch<{ data: CommandPaletteUser[] }>('/api/admin/users/options', {
+        query: { limit: 1000 },
+      }),
+    ]),
   {
     watch: [page, itemsPerPage],
-  }
+  },
 );
 
 const usersData = computed(() => adminUsersData.value?.[0]);

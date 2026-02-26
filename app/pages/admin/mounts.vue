@@ -214,7 +214,9 @@ async function handleDelete() {
                     <div class="flex flex-wrap items-center gap-3">
                       <span
                         >{{ mount.eggCount }}
-                        {{ mount.eggCount !== 1 ? t('admin.nests.eggs') : t('admin.nests.egg') }}</span
+                        {{
+                          mount.eggCount !== 1 ? t('admin.nests.eggs') : t('admin.nests.egg')
+                        }}</span
                       >
                       <span
                         >{{ mount.nodeCount }}

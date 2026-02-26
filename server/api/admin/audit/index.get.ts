@@ -27,9 +27,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle();
 
-  const conditions = [] as Array<
-    ReturnType<typeof and>   | ReturnType<typeof eq>
-  >;
+  const conditions = [] as Array<ReturnType<typeof and> | ReturnType<typeof eq>>;
 
   if (search) {
     conditions.push(
@@ -186,7 +184,9 @@ export default defineEventHandler(async (event) => {
         actorUserId: userInfo?.id,
         actorEmail: userInfo?.email || undefined,
         action: auditEvent.action,
-        target: auditEvent.targetId ? `${auditEvent.targetType}#${auditEvent.targetId}` : auditEvent.targetType,
+        target: auditEvent.targetId
+          ? `${auditEvent.targetType}#${auditEvent.targetId}`
+          : auditEvent.targetType,
         details: parseMetadata(auditEvent.metadata),
       };
     }),

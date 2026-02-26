@@ -1,9 +1,12 @@
 import { useDrizzle, tables, and, eq, lt } from '#server/utils/drizzle';
 import { debugLog, debugError } from '#server/utils/logger';
 
-function getRowCount(result: { changes?: number | bigint | null; rowCount?: number | bigint | null }): number {
+function getRowCount(result: {
+  changes?: number | bigint | null;
+  rowCount?: number | bigint | null;
+}): number {
   const value = result?.changes ?? result?.rowCount ?? 0;
-  return typeof value === 'bigint' ? Number(value) : value ?? 0;
+  return typeof value === 'bigint' ? Number(value) : (value ?? 0);
 }
 
 export default defineTask({

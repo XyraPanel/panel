@@ -66,10 +66,7 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
   const pageStr = typeof query.page === 'string' ? query.page : '1';
   const page = Math.max(Number.parseInt(pageStr, 10) || 1, 1);
   const limitStr = typeof query.limit === 'string' ? query.limit : '25';
-  const limit = Math.min(
-    Math.max(Number.parseInt(limitStr, 10) || 25, 1),
-    100,
-  );
+  const limit = Math.min(Math.max(Number.parseInt(limitStr, 10) || 25, 1), 100);
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();

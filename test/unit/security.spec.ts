@@ -27,19 +27,31 @@ vi.mock('../../server/utils/auth', () => ({
   normalizeHeadersForAuth: () => ({}),
 }));
 
-vi.stubGlobal('createError', (opts: { status?: number; statusCode?: number; statusText?: string; statusMessage?: string; message?: string }) => {
-  const err = new Error(opts.message ?? opts.statusText ?? opts.statusMessage);
-  Object.assign(err, {
-    statusCode: opts.statusCode ?? opts.status,
-    statusMessage: opts.statusMessage ?? opts.statusText,
-    ...opts,
-  });
-  return err;
-});
+vi.stubGlobal(
+  'createError',
+  (opts: {
+    status?: number;
+    statusCode?: number;
+    statusText?: string;
+    statusMessage?: string;
+    message?: string;
+  }) => {
+    const err = new Error(opts.message ?? opts.statusText ?? opts.statusMessage);
+    Object.assign(err, {
+      statusCode: opts.statusCode ?? opts.status,
+      statusMessage: opts.statusMessage ?? opts.statusText,
+      ...opts,
+    });
+    return err;
+  },
+);
 
 const { requireAuth, requireAdmin } = await import('../../server/utils/security');
 
-const mockEvent = createEvent(new IncomingMessage(new Socket()), new ServerResponse(new IncomingMessage(new Socket())));
+const mockEvent = createEvent(
+  new IncomingMessage(new Socket()),
+  new ServerResponse(new IncomingMessage(new Socket())),
+);
 
 describe('server/utils/security', () => {
   const mockGetServerSession = vi.mocked(getServerSession);

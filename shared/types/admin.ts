@@ -208,12 +208,10 @@ export interface DashboardIncident {
   id: string;
   occurredAt: string;
   action: string;
-  actor:
-    | {
-        label: string;
-        userId?: string;
-      }
-    | null;
+  actor: {
+    label: string;
+    userId?: string;
+  } | null;
 }
 
 export interface DashboardOperation {

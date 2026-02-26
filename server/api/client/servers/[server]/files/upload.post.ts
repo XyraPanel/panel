@@ -42,7 +42,11 @@ export default defineEventHandler(async (event) => {
     if (!wingsServer.nodeId) throw new Error('Server has no node assigned');
     if (!wingsServer.uuid || !wingsServer.id) throw new Error('Server not fully initialized');
 
-    if (typeof wingsServer.nodeId !== 'string' || typeof wingsServer.uuid !== 'string' || typeof wingsServer.id !== 'string') {
+    if (
+      typeof wingsServer.nodeId !== 'string' ||
+      typeof wingsServer.uuid !== 'string' ||
+      typeof wingsServer.id !== 'string'
+    ) {
       throw new Error('Server identifiers are invalid');
     }
 

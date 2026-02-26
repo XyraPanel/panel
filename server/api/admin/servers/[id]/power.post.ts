@@ -81,7 +81,9 @@ export default defineEventHandler(async (event) => {
     setImmediate(async () => {
       try {
         if (!server.eggId || !server.nodeId) {
-          console.error(`[Power Action] Server ${server.uuid} missing eggId or nodeId for provisioning`);
+          console.error(
+            `[Power Action] Server ${server.uuid} missing eggId or nodeId for provisioning`,
+          );
           return;
         }
         await provisionServerOnWings({

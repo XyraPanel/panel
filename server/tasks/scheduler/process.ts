@@ -189,7 +189,9 @@ async function executeTask(
   server: typeof tables.servers.$inferSelect,
   schedule: typeof tables.serverSchedules.$inferSelect,
 ) {
-  const isPowerAction = (value: string | null | undefined): value is 'start' | 'stop' | 'restart' | 'kill' =>
+  const isPowerAction = (
+    value: string | null | undefined,
+  ): value is 'start' | 'stop' | 'restart' | 'kill' =>
     value === 'start' || value === 'stop' || value === 'restart' || value === 'kill';
 
   switch (task.action) {

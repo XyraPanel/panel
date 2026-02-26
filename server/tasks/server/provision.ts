@@ -2,7 +2,10 @@ import { provisionServerOnWings } from '#server/utils/server-provisioning';
 import { sendServerCreatedEmail, isEmailConfigured } from '#server/utils/email';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { debugLog, debugError } from '#server/utils/logger';
-import { serverProvisionConfigSchema, serverProvisionPayloadSchema } from '#shared/schema/admin/server';
+import {
+  serverProvisionConfigSchema,
+  serverProvisionPayloadSchema,
+} from '#shared/schema/admin/server';
 
 export default defineTask({
   meta: {
@@ -25,7 +28,10 @@ export default defineTask({
       if (ownerEmail && serverName && (await isEmailConfigured())) {
         try {
           await sendServerCreatedEmail(ownerEmail, serverName, serverConfig.serverUuid);
-          debugLog('[Server Provision Task] Sent creation email for server:', serverConfig.serverUuid);
+          debugLog(
+            '[Server Provision Task] Sent creation email for server:',
+            serverConfig.serverUuid,
+          );
         } catch (error) {
           debugError('[Server Provision Task] Failed to send server created email:', error);
           // Don't fail the task if email fails
@@ -34,7 +40,11 @@ export default defineTask({
 
       return { result: { success: true, serverUuid: serverConfig.serverUuid } };
     } catch (error) {
-      debugError('[Server Provision Task] Failed to provision server:', serverConfig.serverUuid, error);
+      debugError(
+        '[Server Provision Task] Failed to provision server:',
+        serverConfig.serverUuid,
+        error,
+      );
 
       try {
         await db

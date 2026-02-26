@@ -9,29 +9,31 @@ import type { UpdateWingsNodePayload, UpdateWingsNodeResponse } from '#shared/ty
 const MAX_BODY_SIZE = 32 * 1024;
 
 const ALLOWED_NODE_UPDATE_KEYS: readonly (keyof UpdateWingsNodePayload)[] = [
-    'name',
-    'description',
-    'fqdn',
-    'scheme',
-    'public',
-    'maintenanceMode',
-    'behindProxy',
-    'memory',
-    'memoryOverallocate',
-    'disk',
-    'diskOverallocate',
-    'uploadSize',
-    'daemonListen',
-    'daemonSftp',
-    'daemonBase',
-  ];
+  'name',
+  'description',
+  'fqdn',
+  'scheme',
+  'public',
+  'maintenanceMode',
+  'behindProxy',
+  'memory',
+  'memoryOverallocate',
+  'disk',
+  'diskOverallocate',
+  'uploadSize',
+  'daemonListen',
+  'daemonSftp',
+  'daemonBase',
+];
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function isAllowedKey(value: PropertyKey): value is keyof UpdateWingsNodePayload {
-  return typeof value === 'string' && (ALLOWED_NODE_UPDATE_KEYS as readonly string[]).includes(value);
+  return (
+    typeof value === 'string' && (ALLOWED_NODE_UPDATE_KEYS as readonly string[]).includes(value)
+  );
 }
 
 function validatePayload(payload: unknown): payload is UpdateWingsNodePayload {

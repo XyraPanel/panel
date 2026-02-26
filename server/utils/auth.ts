@@ -208,7 +208,7 @@ function createAuth() {
 
   type AdapterSchema = NonNullable<Parameters<typeof drizzleAdapter>[1]>['schema'];
 
-const adapterSchema: AdapterSchema = {
+  const adapterSchema: AdapterSchema = {
     user: tables.users,
     session: tables.sessions,
     account: tables.accounts,

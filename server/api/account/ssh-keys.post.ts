@@ -23,8 +23,8 @@ function parseSSHPublicKey(publicKey: string): { fingerprint: string; valid: boo
       return { fingerprint: '', valid: false };
     }
 
-    const validKeyType = keyType
-    const validKeyData = keyData
+    const validKeyType = keyType;
+    const validKeyData = keyData;
 
     const validTypes = [
       'ssh-rsa',

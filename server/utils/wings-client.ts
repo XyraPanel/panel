@@ -104,11 +104,13 @@ export class WingsClient {
             Authorization: this.getToken(),
             Accept: 'application/json',
             'Content-Type': 'application/json',
-            ...(options.headers && typeof options.headers === 'object' && !Array.isArray(options.headers)
+            ...(options.headers &&
+            typeof options.headers === 'object' &&
+            !Array.isArray(options.headers)
               ? Object.fromEntries(
                   options.headers instanceof Headers
                     ? options.headers.entries()
-                    : Object.entries(options.headers)
+                    : Object.entries(options.headers),
                 )
               : {}),
           },
@@ -550,15 +552,26 @@ export class WingsClient {
 
   async getWebSocketToken(serverUuid: string): Promise<{ token: string; socket: string }> {
     const response = await this.request(`/api/servers/${serverUuid}/ws`);
-    if (isRecord(response) && typeof response.token === 'string' && typeof response.socket === 'string') {
+    if (
+      isRecord(response) &&
+      typeof response.token === 'string' &&
+      typeof response.socket === 'string'
+    ) {
       return { token: response.token, socket: response.socket };
     }
     throw new WingsConnectionError('Invalid WebSocket token response');
   }
 
-  async getSignedDownloadUrl(serverUuid: string, backupUuid: string): Promise<{ token: string; socket: string }> {
+  async getSignedDownloadUrl(
+    serverUuid: string,
+    backupUuid: string,
+  ): Promise<{ token: string; socket: string }> {
     const response = await this.request(`/api/servers/${serverUuid}/backup/${backupUuid}/download`);
-    if (isRecord(response) && typeof response.token === 'string' && typeof response.socket === 'string') {
+    if (
+      isRecord(response) &&
+      typeof response.token === 'string' &&
+      typeof response.socket === 'string'
+    ) {
       return { token: response.token, socket: response.socket };
     }
     throw new WingsConnectionError('Invalid signed download url response');

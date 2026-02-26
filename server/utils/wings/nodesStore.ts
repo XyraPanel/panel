@@ -37,9 +37,12 @@ function toScheme(value: string | undefined | null): 'http' | 'https' {
   return value === 'http' ? 'http' : 'https';
 }
 
-function getRowCount(result: { rowCount?: number | bigint | null; changes?: number | bigint | null }): number {
+function getRowCount(result: {
+  rowCount?: number | bigint | null;
+  changes?: number | bigint | null;
+}): number {
   const value = result?.rowCount ?? result?.changes ?? 0;
-  return typeof value === 'bigint' ? Number(value) : value ?? 0;
+  return typeof value === 'bigint' ? Number(value) : (value ?? 0);
 }
 
 function formatCombinedToken(identifier: string, secret: string): string {

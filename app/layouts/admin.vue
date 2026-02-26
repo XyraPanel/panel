@@ -175,7 +175,7 @@ const { data: dashboardData } = await useAsyncData(
   'admin-dashboard',
   async () => {
     const response = await $fetch('/api/admin/dashboard' as string, {
-      query: { section: 'critical' }
+      query: { section: 'critical' },
     });
     return response;
   },
@@ -185,9 +185,9 @@ const { data: dashboardData } = await useAsyncData(
       metrics: [],
       nodes: [],
       operations: [],
-      generatedAt: new Date().toISOString()
-    })
-  }
+      generatedAt: new Date().toISOString(),
+    }),
+  },
 );
 
 const sessionUser = computed<SessionUser | null>(() => storeUser.value ?? null);

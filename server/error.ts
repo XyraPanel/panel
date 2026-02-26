@@ -95,7 +95,8 @@ export default async function errorHandler(
 
   const h3Error = isH3Error(error) ? error : null;
 
-  const fallbackStatus = 'status' in error && typeof error.status === 'number' ? error.status : undefined;
+  const fallbackStatus =
+    'status' in error && typeof error.status === 'number' ? error.status : undefined;
   const logStatus = h3Error?.statusCode || fallbackStatus;
   console.error('[Error Handler] Error caught:', {
     path,
@@ -114,7 +115,12 @@ export default async function errorHandler(
   }
 
   const status = h3Error?.statusCode || fallbackStatus || 500;
-  const statusText = h3Error?.statusMessage || ('statusText' in error && typeof error.statusText === 'string' ? error.statusText : undefined) || 'Internal Server Error';
+  const statusText =
+    h3Error?.statusMessage ||
+    ('statusText' in error && typeof error.statusText === 'string'
+      ? error.statusText
+      : undefined) ||
+    'Internal Server Error';
   const message = error.message || 'An error occurred';
 
   if (shouldAuditPrivilegedFailure(path, status)) {

@@ -223,7 +223,7 @@ export default defineEventHandler(async (event) => {
           .update(tables.servers)
           .set({
             status: 'install_failed',
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
           })
           .where(eq(tables.servers.id, serverId));
 

@@ -86,9 +86,7 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
   }
 
   const currentToken =
-    middlewareAuth?.session?.session?.token ??
-    accountContext.session?.session?.token ??
-    null;
+    middlewareAuth?.session?.session?.token ?? accountContext.session?.session?.token ?? null;
 
   const currentIp = getRequestIP(event) || null;
   const currentUserAgent = getHeader(event, 'user-agent') || '';
@@ -119,7 +117,10 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
           deviceName: parsedInfo.device || null,
           browserName: parsedInfo.browser || null,
           osName: parsedInfo.os || null,
-          firstSeenAt: typeof existingFirstSeen === 'string' ? existingFirstSeen : new Date(existingFirstSeen).toISOString(),
+          firstSeenAt:
+            typeof existingFirstSeen === 'string'
+              ? existingFirstSeen
+              : new Date(existingFirstSeen).toISOString(),
           lastSeenAt: nowIso,
         })
         .onConflictDoUpdate({
