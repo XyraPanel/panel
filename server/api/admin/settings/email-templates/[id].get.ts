@@ -16,12 +16,15 @@ export default defineEventHandler(async (event) => {
   try {
     const db = useDrizzle();
     const templateRows = await db
-      .select()
+      .select({
+        htmlContent: tables.emailTemplates.htmlContent,
+        updatedAt: tables.emailTemplates.updatedAt,
+      })
       .from(tables.emailTemplates)
       .where(eq(tables.emailTemplates.templateId, id))
       .limit(1);
 
-    const [template] = templateRows as { htmlContent: string; updatedAt: Date }[];
+    const template = templateRows[0];
 
     if (!template) {
       throw createError({
@@ -44,7 +47,7 @@ export default defineEventHandler(async (event) => {
       data: {
         id,
         content: template.htmlContent,
-        updatedAt: template.updatedAt,
+        updatedAt: new Date(template.updatedAt),
       },
     };
   } catch (err) {

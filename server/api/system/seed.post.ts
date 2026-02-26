@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     throw createError({
       statusCode: 500,
-      statusMessage: `Seed failed: ${(error as Error).message}`,
+      statusMessage: `Seed failed: ${error instanceof Error ? error.message : String(error)}`,
     });
   }
 });

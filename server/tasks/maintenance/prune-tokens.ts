@@ -1,6 +1,14 @@
 import { useDrizzle, tables, lt } from '#server/utils/drizzle';
 import { debugLog, debugError } from '#server/utils/logger';
 
+function getRowCount(result: {
+  changes?: number | bigint | null;
+  rowCount?: number | bigint | null;
+}): number {
+  const value = result?.changes ?? result?.rowCount ?? 0;
+  return typeof value === 'bigint' ? Number(value) : (value ?? 0);
+}
+
 export default defineTask({
   meta: {
     name: 'maintenance:prune-tokens',
@@ -15,18 +23,16 @@ export default defineTask({
 
       const verificationResult = await db
         .delete(tables.verificationTokens)
-        .where(lt(tables.verificationTokens.expires, now));
+        .where(lt(tables.verificationTokens.expires, now.toISOString()));
 
-      const verificationDeleted =
-        (verificationResult as any).changes ?? (verificationResult as any).rowCount ?? 0;
+      const verificationDeleted = getRowCount(verificationResult);
 
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       const recoveryResult = await db
         .delete(tables.recoveryTokens)
-        .where(lt(tables.recoveryTokens.createdAt, thirtyDaysAgo));
+        .where(lt(tables.recoveryTokens.createdAt, thirtyDaysAgo.toISOString()));
 
-      const recoveryDeleted =
-        (recoveryResult as any).changes ?? (recoveryResult as any).rowCount ?? 0;
+      const recoveryDeleted = getRowCount(recoveryResult);
 
       const totalDeleted = verificationDeleted + recoveryDeleted;
       debugLog(

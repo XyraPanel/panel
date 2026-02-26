@@ -1,6 +1,6 @@
 import { Pool } from 'pg';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { and, eq, or, inArray, isNull, isNotNull, lt, desc } from 'drizzle-orm';
+import { and, eq as drizzleEq, or, inArray, isNull, isNotNull, lt, desc } from 'drizzle-orm';
 import * as schema from '#server/database/schema';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -47,5 +47,4 @@ export function useDrizzle(): DrizzleDatabase {
 }
 
 export const tables = schema.tables;
-
-export { eq, and, or, inArray, isNull, isNotNull, lt, desc };
+export { drizzleEq as eq, and, or, inArray, isNull, isNotNull, lt, desc };

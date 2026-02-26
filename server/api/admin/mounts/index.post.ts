@@ -51,7 +51,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const mountId = randomUUID();
-  const now = new Date();
+  const now = new Date().toISOString();
 
   const newMount = {
     id: mountId,

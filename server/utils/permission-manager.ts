@@ -219,7 +219,7 @@ export class PermissionManager {
 
     for (const subuser of subusers) {
       try {
-        const permissions = JSON.parse(subuser.permissions) as Permission[];
+        const permissions = this.safeParsePermissions(subuser.permissions);
         const validPermissions = permissions.filter((p) => this.getAllPermissions().includes(p));
         const expandedPermissions = this.expandPermissions(validPermissions);
         serverPermissions.set(subuser.serverId, expandedPermissions);
@@ -410,7 +410,7 @@ export class PermissionManager {
       userId: subuser.userId,
       userName: subuser.userName,
       userEmail: subuser.userEmail,
-      permissions: JSON.parse(subuser.permissions || '[]') as Permission[],
+      permissions: this.safeParsePermissions(subuser.permissions),
       createdAt: subuser.createdAt,
       updatedAt: subuser.updatedAt,
     }));
@@ -473,7 +473,10 @@ export class PermissionManager {
     userPermissions: SerializedUserPermissions | UserPermissions,
   ): UserPermissions {
     if (userPermissions.serverPermissions instanceof Map) {
-      return userPermissions as UserPermissions;
+      return {
+        ...userPermissions,
+        serverPermissions: userPermissions.serverPermissions,
+      };
     }
 
     const entries = Array.isArray(userPermissions.serverPermissions)
@@ -482,8 +485,27 @@ export class PermissionManager {
 
     return {
       ...userPermissions,
-      serverPermissions: new Map(entries as Array<[string, Permission[]]>),
+      serverPermissions: new Map(entries),
     };
+  }
+
+  private safeParsePermissions(payload: unknown): Permission[] {
+    if (Array.isArray(payload)) {
+      return payload.filter((p): p is Permission => typeof p === 'string');
+    }
+
+    if (typeof payload === 'string' && payload.trim().length > 0) {
+      try {
+        const parsed = JSON.parse(payload);
+        return Array.isArray(parsed)
+          ? parsed.filter((p): p is Permission => typeof p === 'string')
+          : [];
+      } catch {
+        return [];
+      }
+    }
+
+    return [];
   }
 }
 

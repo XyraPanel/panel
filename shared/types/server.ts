@@ -375,7 +375,7 @@ export interface ServerStatus {
     uptime: number;
     disk_bytes: number;
   };
-  lastChecked: Date;
+  lastChecked: string;
   error?: string;
 }
 
@@ -391,7 +391,7 @@ export interface ServerResourceStats {
   networkRxBytes: number;
   networkTxBytes: number;
   uptime: number;
-  lastUpdated: Date;
+  lastUpdated: string;
 }
 
 export type NodeHealthStatus = 'online' | 'offline' | 'maintenance' | 'unknown';
@@ -405,7 +405,7 @@ export interface NodeResourceStats {
   cpuCount: number;
   cpuUsage: number;
   serverCount: number;
-  lastUpdated: Date | null;
+  lastUpdated: string | null;
   status: NodeHealthStatus;
   message?: string | null;
 }

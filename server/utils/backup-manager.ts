@@ -33,7 +33,7 @@ export class BackupManager {
 
     const backupName = options.name || `backup-${now.slice(0, 19).replace(/[T:]/g, '-')}`;
 
-    const backupRecord = {
+    const backupRecord: typeof tables.serverBackups.$inferInsert = {
       id: backupId,
       serverId,
       uuid: backupUuid,
@@ -168,7 +168,7 @@ export class BackupManager {
       throw new Error('Cannot restore failed backup');
     }
 
-    await client.restoreBackup(serverUuid, backupUuid, truncate);
+    await client.restoreBackup(serverUuid, backupUuid);
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({

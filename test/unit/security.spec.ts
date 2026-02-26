@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { H3Event } from 'h3';
+import { createEvent } from 'h3';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { Socket } from 'node:net';
 import { getServerSession } from '../../server/utils/session';
 import { requireAdminPermission } from '../../server/utils/permission-middleware';
 
@@ -25,13 +27,35 @@ vi.mock('../../server/utils/auth', () => ({
   normalizeHeadersForAuth: () => ({}),
 }));
 
+vi.stubGlobal(
+  'createError',
+  (opts: {
+    status?: number;
+    statusCode?: number;
+    statusText?: string;
+    statusMessage?: string;
+    message?: string;
+  }) => {
+    const err = new Error(opts.message ?? opts.statusText ?? opts.statusMessage);
+    Object.assign(err, {
+      statusCode: opts.statusCode ?? opts.status,
+      statusMessage: opts.statusMessage ?? opts.statusText,
+      ...opts,
+    });
+    return err;
+  },
+);
+
 const { requireAuth, requireAdmin } = await import('../../server/utils/security');
 
-const mockEvent = {} as H3Event;
+const mockEvent = createEvent(
+  new IncomingMessage(new Socket()),
+  new ServerResponse(new IncomingMessage(new Socket())),
+);
 
 describe('server/utils/security', () => {
-  const mockGetServerSession = getServerSession as unknown as ReturnType<typeof vi.fn>;
-  const mockRequireAdminPermission = requireAdminPermission as unknown as ReturnType<typeof vi.fn>;
+  const mockGetServerSession = vi.mocked(getServerSession);
+  const mockRequireAdminPermission = vi.mocked(requireAdminPermission);
 
   beforeEach(() => {
     vi.resetAllMocks();

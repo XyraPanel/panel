@@ -23,8 +23,8 @@ function parseSSHPublicKey(publicKey: string): { fingerprint: string; valid: boo
       return { fingerprint: '', valid: false };
     }
 
-    const validKeyType = keyType as string;
-    const validKeyData = keyData as string;
+    const validKeyType = keyType;
+    const validKeyData = keyData;
 
     const validTypes = [
       'ssh-rsa',
@@ -82,13 +82,13 @@ export default defineEventHandler(async (event) => {
   const keyId = randomUUID();
 
   await db.insert(tables.sshKeys).values({
-    id: keyId,
+    id: keyId as string,
     userId: user.id,
     name: body.name.trim(),
     fingerprint,
     publicKey: body.publicKey.trim(),
-    createdAt: new Date(now),
-    updatedAt: new Date(now),
+    createdAt: new Date(now).toISOString(),
+    updatedAt: new Date(now).toISOString(),
   });
 
   const keyResult = await db

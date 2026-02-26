@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
     },
   });
 
-  await invalidateServerBackupsCache(server.id as string);
+  await invalidateServerBackupsCache(server.id);
 
   return {
     object: 'backup',

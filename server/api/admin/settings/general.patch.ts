@@ -1,5 +1,5 @@
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
-import { SETTINGS_KEYS, deleteSetting, setSettings } from '#server/utils/settings';
+import { SETTINGS_KEYS, deleteSetting, setSettings, type SettingKey } from '#server/utils/settings';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { generalSettingsSchema } from '#shared/schema/admin/settings';
 
@@ -11,8 +11,8 @@ export default defineEventHandler(async (event) => {
     generalSettingsSchema,
     BODY_SIZE_LIMITS.SMALL,
   );
-  const updates: Record<string, string> = {};
-  const deletions: string[] = [];
+  const updates: Partial<Record<SettingKey, string>> = {};
+  const deletions: SettingKey[] = [];
 
   if (body.locale !== undefined) {
     updates[SETTINGS_KEYS.PANEL_LOCALE] = body.locale;
@@ -49,13 +49,9 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await setSettings(updates as Record<(typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS], string>);
+  await setSettings(updates);
 
-  await Promise.all(
-    deletions.map((key) =>
-      deleteSetting(key as (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS]),
-    ),
-  );
+  await Promise.all(deletions.map((key) => deleteSetting(key)));
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

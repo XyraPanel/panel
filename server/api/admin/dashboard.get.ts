@@ -18,23 +18,6 @@ import type {
 
 type DashboardSection = 'full' | 'critical' | 'incidents';
 
-function parseMetadata(raw: string | null): Record<string, unknown> | null {
-  if (!raw) return null;
-  try {
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      return { raw: String(parsed) };
-    }
-    const normalized: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(parsed)) {
-      normalized[key] = value;
-    }
-    return normalized;
-  } catch {
-    return { raw };
-  }
-}
-
 function formatHelperRange(current: number, total: number, suffix: string): string {
   if (total === 0) return `0 ${suffix}`;
   return `${current}/${total} ${suffix}`;
@@ -206,63 +189,45 @@ async function fetchIncidents(): Promise<DashboardIncident[]> {
       occurredAt: tables.auditEvents.occurredAt,
       actor: tables.auditEvents.actor,
       action: tables.auditEvents.action,
-      targetType: tables.auditEvents.targetType,
-      targetId: tables.auditEvents.targetId,
-      metadata: tables.auditEvents.metadata,
     })
     .from(tables.auditEvents)
     .orderBy(desc(tables.auditEvents.occurredAt))
     .limit(5);
 
-  return audits.map(
-    (event: {
-      id: string;
-      occurredAt: Date | string;
-      actor: string;
-      action: string;
-      targetType: string;
-      targetId: string | null;
-      metadata: string | null;
-    }) => ({
-      ...(function resolveActor() {
-        const actorRaw = String(event.actor);
-        const byId = usersById.get(actorRaw);
-        if (byId) {
-          return {
-            actorUserId: byId.id,
-            actorEmail: byId.email ?? undefined,
-            actorUsername: byId.displayUsername ?? undefined,
-          };
-        }
+  function resolveActor(actorRaw: string): DashboardIncident['actor'] {
+    const normalized = actorRaw.trim();
+    if (!normalized) return null;
 
-        if (actorRaw.includes('@')) {
-          const byEmail = usersByEmail.get(actorRaw.toLowerCase());
-          if (byEmail) {
-            return {
-              actorUserId: byEmail.id,
-              actorEmail: byEmail.email ?? undefined,
-              actorUsername: byEmail.displayUsername ?? undefined,
-            };
-          }
-        }
+    const byId = usersById.get(normalized);
+    if (byId) {
+      return {
+        label: byId.displayUsername || byId.email || normalized,
+        userId: byId.id,
+      };
+    }
 
+    if (normalized.includes('@')) {
+      const byEmail = usersByEmail.get(normalized.toLowerCase());
+      if (byEmail) {
         return {
-          actorUserId: undefined,
-          actorEmail: undefined,
-          actorUsername: undefined,
+          label: byEmail.displayUsername || byEmail.email || normalized,
+          userId: byEmail.id,
         };
-      })(),
-      id: event.id,
-      occurredAt:
-        typeof event.occurredAt === 'string'
-          ? event.occurredAt
-          : new Date(event.occurredAt).toISOString(),
-      actor: event.actor,
-      action: event.action,
-      target: event.targetId ? `${event.targetType}#${event.targetId}` : event.targetType,
-      metadata: parseMetadata(event.metadata),
-    }),
-  );
+      }
+    }
+
+    return { label: normalized };
+  }
+
+  return audits.map((event) => ({
+    id: event.id,
+    occurredAt:
+      typeof event.occurredAt === 'string'
+        ? event.occurredAt
+        : new Date(event.occurredAt).toISOString(),
+    action: event.action,
+    actor: resolveActor(String(event.actor)),
+  }));
 }
 
 export default defineEventHandler(async (event): Promise<{ data: DashboardResponse }> => {

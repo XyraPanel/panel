@@ -54,7 +54,7 @@ export default defineEventHandler(async (event: H3Event) => {
     });
   }
 
-  const now = new Date();
+  const now = new Date().toISOString();
   const oldAdditionalAllocations = parseAllocationList(transfer.oldAdditionalAllocations);
   const newAdditionalAllocations = parseAllocationList(transfer.newAdditionalAllocations);
 

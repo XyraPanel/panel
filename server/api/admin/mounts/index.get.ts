@@ -77,9 +77,7 @@ export default defineEventHandler(async (event) => {
 
   const eggCountMap = new Map(eggCounts.map((row) => [row.mountId, Number(row.value) || 0]));
   const nodeCountMap = new Map(nodeCounts.map((row) => [row.mountId, Number(row.value) || 0]));
-  const serverCountMap = new Map(
-    serverCounts.map((row) => [row.mountId, Number(row.value) || 0]),
-  );
+  const serverCountMap = new Map(serverCounts.map((row) => [row.mountId, Number(row.value) || 0]));
 
   const data: AdminMountListItem[] = mounts.map((mount) => ({
     id: mount.id,

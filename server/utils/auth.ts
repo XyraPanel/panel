@@ -206,7 +206,9 @@ function createAuth() {
     ? [process.env.BETTER_AUTH_IP_HEADER]
     : ['cf-connecting-ip', 'x-forwarded-for', 'x-real-ip'];
 
-  const adapterSchema = {
+  type AdapterSchema = NonNullable<Parameters<typeof drizzleAdapter>[1]>['schema'];
+
+  const adapterSchema: AdapterSchema = {
     user: tables.users,
     session: tables.sessions,
     account: tables.accounts,
@@ -220,7 +222,7 @@ function createAuth() {
   return betterAuth({
     database: drizzleAdapter(db, {
       provider: 'pg',
-      schema: adapterSchema as any,
+      schema: adapterSchema,
     }),
     account: {
       fields: {
@@ -270,9 +272,9 @@ function createAuth() {
           }).catch((error) => console.error('[auth][email][delete-account]', error));
         },
         beforeDelete: async (user, _request) => {
-          const db = useAuthDb();
+          const authDb = useAuthDb();
 
-          const result = await db
+          const result = await authDb
             .select({
               rootAdmin: tables.users.rootAdmin,
               role: tables.users.role,
@@ -314,11 +316,11 @@ function createAuth() {
       },
       resetPasswordTokenExpiresIn: 3600,
       onPasswordReset: async ({ user }, _request) => {
-        const db = useAuthDb();
+        const authDb = useAuthDb();
 
-        await db.delete(tables.sessions).where(eq(tables.sessions.userId, user.id));
+        await authDb.delete(tables.sessions).where(eq(tables.sessions.userId, user.id));
 
-        await db
+        await authDb
           .update(tables.users)
           .set({ passwordResetRequired: false })
           .where(eq(tables.users.id, user.id));
@@ -353,13 +355,13 @@ function createAuth() {
       sendVerificationEmail: async ({ user, token }, _request) => {
         const { sendEmailVerificationEmail } = await import('#server/utils/email');
         const rawUser = user as Record<string, unknown>;
-        const username =
+        const derivedUsername =
           typeof rawUser.username === 'string' ? rawUser.username : user.name || null;
         void sendEmailVerificationEmail({
           to: user.email,
           token,
           expiresAt: new Date(Date.now() + 60 * 60 * 24 * 1000),
-          username,
+          username: derivedUsername,
         }).catch((error) => console.error('[auth][email][verify-email]', error));
       },
     },
@@ -410,7 +412,6 @@ function createAuth() {
       onError: (error: unknown, ctx: AuthContext) => {
         const maybeRequest = 'request' in ctx ? (ctx as { request?: unknown }).request : undefined;
         const request = maybeRequest instanceof Request ? maybeRequest : undefined;
-        const isProduction = process.env.NODE_ENV === 'production';
         let path = 'unknown';
         if (request?.url) {
           try {
@@ -488,9 +489,9 @@ function createAuth() {
       apiKey({
         apiKeyHeaders: ['x-api-key'],
         customAPIKeyGetter: (ctx: ApiKeyRequestContext) => {
-          const bearer = ctx.headers?.get('authorization');
-          if (bearer?.startsWith('Bearer ')) {
-            const token = bearer.slice(7).trim();
+          const bearerHeader = ctx.headers?.get('authorization');
+          if (bearerHeader?.startsWith('Bearer ')) {
+            const token = bearerHeader.slice(7).trim();
             if (token) {
               return token;
             }

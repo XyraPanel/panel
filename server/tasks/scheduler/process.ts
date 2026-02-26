@@ -60,7 +60,7 @@ export default defineTask({
       debugLog(`[${now.toISOString()}] Processing scheduled tasks...`);
 
       const schedules = await db.query.serverSchedules.findMany({
-        where: (s, { eq }) => eq(s.enabled, true),
+        where: (s, { eq: whereEq }) => whereEq(s.enabled, true),
       });
 
       for (const schedule of schedules) {
@@ -113,7 +113,7 @@ async function processSchedule(scheduleId: string, db: ReturnType<typeof useDriz
 
   try {
     const schedule = await db.query.serverSchedules.findFirst({
-      where: (s, { eq }) => eq(s.id, scheduleId),
+      where: (s, { eq: whereEq }) => whereEq(s.id, scheduleId),
     });
 
     if (!schedule || !schedule.enabled) {
@@ -121,7 +121,7 @@ async function processSchedule(scheduleId: string, db: ReturnType<typeof useDriz
     }
 
     const tasks = await db.query.serverScheduleTasks.findMany({
-      where: (t, { eq }) => eq(t.scheduleId, scheduleId),
+      where: (t, { eq: whereEq }) => whereEq(t.scheduleId, scheduleId),
       orderBy: (t, { asc }) => [asc(t.sequenceId)],
     });
 
@@ -131,7 +131,7 @@ async function processSchedule(scheduleId: string, db: ReturnType<typeof useDriz
     }
 
     const server = await db.query.servers.findFirst({
-      where: (s, { eq }) => eq(s.id, schedule.serverId),
+      where: (s, { eq: whereEq }) => whereEq(s.id, schedule.serverId),
     });
 
     if (!server) {
@@ -170,8 +170,8 @@ async function processSchedule(scheduleId: string, db: ReturnType<typeof useDriz
     await db
       .update(tables.serverSchedules)
       .set({
-        lastRunAt: executedAt,
-        nextRunAt: nextRun,
+        lastRunAt: executedAt.toISOString(),
+        nextRunAt: nextRun.toISOString(),
         updatedAt: new Date().toISOString(),
       })
       .where(eq(tables.serverSchedules.id, scheduleId));
@@ -189,6 +189,11 @@ async function executeTask(
   server: typeof tables.servers.$inferSelect,
   schedule: typeof tables.serverSchedules.$inferSelect,
 ) {
+  const isPowerAction = (
+    value: string | null | undefined,
+  ): value is 'start' | 'stop' | 'restart' | 'kill' =>
+    value === 'start' || value === 'stop' || value === 'restart' || value === 'kill';
+
   switch (task.action) {
     case 'command': {
       const { client } = await getWingsClientForServer(server.uuid);
@@ -198,7 +203,10 @@ async function executeTask(
     }
 
     case 'power': {
-      const powerAction = task.payload as 'start' | 'stop' | 'restart' | 'kill';
+      if (!isPowerAction(task.payload)) {
+        throw new Error(`Invalid power action payload: ${task.payload ?? 'undefined'}`);
+      }
+      const powerAction = task.payload;
       await serverManager.powerAction(server.uuid, powerAction, { skipAudit: true });
       debugLog(`Power action executed on ${server.uuid}: ${powerAction}`);
       break;

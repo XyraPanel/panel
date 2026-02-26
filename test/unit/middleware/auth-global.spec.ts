@@ -1,18 +1,28 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { H3Event } from 'h3';
-import type { IncomingMessage } from 'node:http';
+import { createEvent } from 'h3';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { Socket } from 'node:net';
+
+const { mockSendRedirect, mockCreateError } = vi.hoisted(() => ({
+  mockSendRedirect: vi.fn(),
+  mockCreateError: vi.fn((error: unknown) => error),
+}));
 
 const defineEventHandlerStub = (handler: (event: H3Event) => Promise<unknown>) => handler;
 vi.stubGlobal('defineEventHandler', defineEventHandlerStub);
+vi.stubGlobal('sendRedirect', mockSendRedirect);
+vi.stubGlobal('createError', mockCreateError);
 
-const mockSendRedirect = vi.fn();
-const mockCreateError = vi.fn((error: unknown) => error);
-
-vi.mock('h3', () => ({
-  createError: mockCreateError,
-  sendRedirect: mockSendRedirect,
-  defineEventHandler: (handler: (event: H3Event) => Promise<unknown>) => handler,
-}));
+vi.mock('h3', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('h3')>();
+  return {
+    ...actual,
+    createError: mockCreateError,
+    sendRedirect: mockSendRedirect,
+    defineEventHandler: (handler: (event: H3Event) => Promise<unknown>) => handler,
+  };
+});
 
 const mockGetServerSession = vi.fn();
 vi.mock('~~/server/utils/session', () => ({
@@ -59,46 +69,31 @@ vi.mock('~~/server/utils/audit', () => ({
   recordAuditEventFromRequest: vi.fn(() => Promise.resolve()),
 }));
 
-type MiddlewareHandler = (event: H3Event) => Promise<unknown>;
-let middleware: MiddlewareHandler;
+let middleware: (event: H3Event) => Promise<unknown>;
 
-type MockRequest = IncomingMessage & {
-  headers: Record<string, string | string[] | undefined>;
-  method: string;
-  url: string;
-};
-
-const createRequest = (overrides: Partial<MockRequest> = {}): MockRequest =>
-  ({
-    headers: {},
-    method: 'GET',
-    url: '/',
-    ...overrides,
-  }) as MockRequest;
-
-interface EventOptions {
-  path?: string;
-  method?: string;
-  req?: Partial<MockRequest>;
+function createTestEvent(options: { path?: string; method?: string; url?: string } = {}): H3Event {
+  const socket = new Socket();
+  const req = new IncomingMessage(socket);
+  req.method = options.method ?? 'GET';
+  req.url = options.url ?? options.path ?? '/';
+  req.headers = {};
+  const res = new ServerResponse(req);
+  const event = createEvent(req, res);
+  event.context = {};
+  Object.defineProperty(event, 'path', { value: options.path ?? '/account', writable: true });
+  Object.defineProperty(event, 'method', { value: options.method ?? 'GET', writable: true });
+  return event;
 }
-
-const baseEvent = (options: EventOptions = {}): H3Event =>
-  ({
-    node: {
-      req: createRequest(options.req),
-    },
-    path: options.path ?? '/account',
-    method: options.method ?? 'GET',
-    context: {},
-  }) as H3Event;
 
 describe('auth.global middleware', () => {
   beforeEach(async () => {
     vi.resetAllMocks();
     mockSendRedirect.mockReset();
     mockRequireSessionUser.mockReset();
-    middleware = (await import('../../../server/middleware/auth.global.ts'))
-      .default as MiddlewareHandler;
+    const mod = await import('../../../server/middleware/auth.global.ts');
+    if (typeof mod.default === 'function') {
+      middleware = mod.default;
+    }
   });
 
   it('redirects to forced reset page when password reset required for page request', async () => {
@@ -111,7 +106,7 @@ describe('auth.global middleware', () => {
       passwordResetRequired: true,
     });
 
-    const event = baseEvent({ path: '/account', req: { url: '/account' } });
+    const event = createTestEvent({ path: '/account', url: '/account' });
 
     await middleware(event);
 
@@ -132,13 +127,10 @@ describe('auth.global middleware', () => {
       passwordResetRequired: false,
     });
 
-    const event = baseEvent({
+    const event = createTestEvent({
       path: '/api/account/password/force',
       method: 'PUT',
-      req: {
-        url: '/api/account/password/force',
-        method: 'PUT',
-      },
+      url: '/api/account/password/force',
     });
 
     await middleware(event);
@@ -156,11 +148,9 @@ describe('auth.global middleware', () => {
       passwordResetRequired: false,
     });
 
-    const event = baseEvent({
+    const event = createTestEvent({
       path: '/admin/settings',
-      req: {
-        url: '/admin/settings',
-      },
+      url: '/admin/settings',
     });
 
     await middleware(event);

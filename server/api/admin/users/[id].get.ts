@@ -63,7 +63,10 @@ export default defineEventHandler(async (event) => {
   const [serverCountResult, apiKeyCountResult, activityCountResult, sessions] = await Promise.all([
     db.select({ count: count() }).from(tables.servers).where(eq(tables.servers.ownerId, user.id)),
     db.select({ count: count() }).from(tables.apiKeys).where(eq(tables.apiKeys.userId, user.id)),
-    db.select({ count: count() }).from(tables.auditEvents).where(or(...activityConditions)),
+    db
+      .select({ count: count() })
+      .from(tables.auditEvents)
+      .where(or(...activityConditions)),
     db
       .select({
         expires: tables.sessions.expires,
@@ -155,10 +158,8 @@ export default defineEventHandler(async (event) => {
         lastLogin: (() => {
           const allSessions = sessions
             .map((s) => ({
-              lastSeenAt:
-                toDate(s.lastSeenAt),
-              firstSeenAt:
-                toDate(s.firstSeenAt),
+              lastSeenAt: toDate(s.lastSeenAt),
+              firstSeenAt: toDate(s.firstSeenAt),
             }))
             .filter((s) => s.lastSeenAt || s.firstSeenAt);
 
@@ -176,10 +177,8 @@ export default defineEventHandler(async (event) => {
           const sessionsWithTime = sessions
             .map((s) => ({
               ipAddress: s.metadataIpAddress || s.sessionIpAddress || null,
-              lastSeenAt:
-                toDate(s.lastSeenAt),
-              firstSeenAt:
-                toDate(s.firstSeenAt),
+              lastSeenAt: toDate(s.lastSeenAt),
+              firstSeenAt: toDate(s.firstSeenAt),
             }))
             .filter((s) => s.ipAddress && (s.lastSeenAt || s.firstSeenAt));
 
@@ -201,17 +200,16 @@ export default defineEventHandler(async (event) => {
         })(),
         activeSessions: sessions.filter((s) => {
           if (!s.expires && !s.expiresAt) return false;
-          const expires =
-            isDateObject(s.expiresAt)
-              ? s.expiresAt
-              : isDateObject(s.expires)
-                ? s.expires
-                : typeof s.expires === 'number'
-                  ? String(s.expires).length <= 10
-                    ? new Date(s.expires * 1000)
-                    : new Date(s.expires)
-                  : s.expiresAt
-                    ? new Date(s.expiresAt)
+          const expires = isDateObject(s.expiresAt)
+            ? s.expiresAt
+            : isDateObject(s.expires)
+              ? s.expires
+              : typeof s.expires === 'number'
+                ? String(s.expires).length <= 10
+                  ? new Date(s.expires * 1000)
+                  : new Date(s.expires)
+                : s.expiresAt
+                  ? new Date(s.expiresAt)
                   : null;
           return expires && expires > new Date();
         }).length,

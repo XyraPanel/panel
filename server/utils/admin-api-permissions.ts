@@ -3,19 +3,25 @@ import { checkApiKeyPermission, ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } fro
 import type { AdminAclResource, AdminAclPermission } from './admin-acl';
 import type { ApiKeyPermissions } from '#shared/types/admin';
 
+export function getContextApiKeyPermissions(event: H3Event): ApiKeyPermissions | null {
+  const contextAuth = event.context?.auth;
+  const apiKey = contextAuth && typeof contextAuth === 'object' ? contextAuth.apiKey : null;
+  if (!apiKey || typeof apiKey !== 'object') {
+    return null;
+  }
+
+  return apiKey.permissions ?? null;
+}
+
 export async function requireAdminApiKeyPermission(
   event: H3Event,
   resource: AdminAclResource,
   action: AdminAclPermission = ADMIN_ACL_PERMISSIONS.READ,
 ): Promise<void> {
-  const contextAuth = (event.context as { auth?: { apiKey?: { permissions: ApiKeyPermissions } } })
-    .auth;
-
-  if (!contextAuth?.apiKey) {
+  const apiKeyPermissions = getContextApiKeyPermissions(event);
+  if (!apiKeyPermissions) {
     return;
   }
-
-  const apiKeyPermissions = contextAuth.apiKey.permissions;
 
   if (!checkApiKeyPermission(apiKeyPermissions, resource, action)) {
     const actionName = action === ADMIN_ACL_PERMISSIONS.READ ? 'read' : 'write';

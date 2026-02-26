@@ -1,4 +1,3 @@
-import { appendResponseHeader, splitCookiesString } from 'h3';
 import { APIError } from 'better-auth/api';
 import { requireAdmin } from '#server/utils/security';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';

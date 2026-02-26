@@ -62,14 +62,14 @@ export function checkApiKeyPermission(
     return false;
   }
 
-  const permissionActions = permissions[permissionKey as keyof ApiKeyPermissions] ?? [];
+  const permissionActions = permissions[permissionKey] ?? [];
 
   if (!Array.isArray(permissionActions)) {
     return false;
   }
 
   const actionName = action === ADMIN_ACL_PERMISSIONS.READ ? 'read' : 'write';
-  return permissionActions.includes(actionName as 'read' | 'write');
+  return permissionActions.includes(actionName);
 }
 
 export function getResourceList(): AdminAclResource[] {

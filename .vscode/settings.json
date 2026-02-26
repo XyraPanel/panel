@@ -32,6 +32,6 @@
     "docker"
   ],
   "[shellscript]": {
-    "editor.defaultFormatter": "shakram02.bash-beautify"
+    "editor.defaultFormatter": "mads-hartmann.bash-ide-vscode"
   }
 }

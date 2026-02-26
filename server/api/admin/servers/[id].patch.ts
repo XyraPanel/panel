@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
     allocationLimit:
       allocationLimit !== undefined ? allocationLimit : (existingLimits?.allocationLimit ?? null),
     backupLimit: backupLimit !== undefined ? backupLimit : (existingLimits?.backupLimit ?? null),
-    updatedAt: new Date().toISOString() as string,
+    updatedAt: new Date().toISOString(),
   };
 
   if (existingLimits) {

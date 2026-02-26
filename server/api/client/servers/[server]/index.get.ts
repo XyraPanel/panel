@@ -126,10 +126,7 @@ export default defineEventHandler(async (event) => {
       swap: null,
       io: limits?.io ?? null,
     },
-    createdAt:
-      server.createdAt instanceof Date
-        ? server.createdAt
-        : new Date(server.createdAt).toISOString(),
+    createdAt: server.createdAt,
     allocations: {
       primary: primaryAllocation ? allocationMapper(primaryAllocation) : null,
       additional: additionalAllocations.map(allocationMapper),

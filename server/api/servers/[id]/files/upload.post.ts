@@ -32,9 +32,10 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const directory = formData.find(
+  const directoryField = formData.find(
     (field) => field.name === 'directory' && typeof field.data === 'string',
-  )?.data as string | undefined;
+  );
+  const directory = directoryField ? String(directoryField.data) : undefined;
   const files = formData.filter((field) => field.name === 'files' && field.type === 'file');
 
   if (!directory) {

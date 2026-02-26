@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createEvent as createH3Event } from 'h3';
-import { IncomingMessage, ServerResponse } from 'node-mock-http';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { Socket } from 'node:net';
 
 const mockRecordAuditEventFromRequest = vi.fn();
 
@@ -11,7 +12,8 @@ vi.mock('~~/server/utils/audit', () => ({
 const errorHandler = (await import('../../server/error')).default;
 
 function createTestEvent(path: string) {
-  const req = new IncomingMessage();
+  const socket = new Socket();
+  const req = new IncomingMessage(socket);
   req.method = 'GET';
   req.url = path;
   req.headers = {

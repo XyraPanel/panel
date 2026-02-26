@@ -162,7 +162,7 @@ export class ServerManager {
         actorType: 'user',
         action: `server.power.${action}`,
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: String(server.id),
         metadata: { action, serverUuid },
       });
     }
@@ -171,7 +171,7 @@ export class ServerManager {
   async reinstallServer(serverUuid: string, options: ServerManagerOptions = {}): Promise<void> {
     const { client, server } = await getWingsClientForServer(serverUuid);
 
-    const now = new Date();
+    const now = new Date().toISOString();
 
     await this.db
       .update(tables.servers)
@@ -195,10 +195,23 @@ export class ServerManager {
         })
         .where(eq(tables.servers.uuid, serverUuid));
 
-      const owner = await this.getServerOwnerContact(server.ownerId as string | undefined);
+      const ownerId =
+        typeof server.ownerId === 'string'
+          ? server.ownerId
+          : typeof server.ownerId === 'number' || typeof server.ownerId === 'bigint'
+            ? String(server.ownerId)
+            : undefined;
+
+      const owner = await this.getServerOwnerContact(ownerId);
       if (owner?.email) {
         try {
-          await sendServerReinstalledEmail(owner.email, server.name as string, serverUuid);
+          const serverName =
+            typeof server.name === 'string'
+              ? server.name
+              : typeof server.name === 'number' || typeof server.name === 'bigint'
+                ? String(server.name)
+                : '';
+          await sendServerReinstalledEmail(owner.email, serverName, serverUuid);
         } catch (error) {
           console.error('Failed to send server reinstalled email', error);
         }
@@ -210,7 +223,7 @@ export class ServerManager {
           actorType: 'user',
           action: 'server.reinstall',
           targetType: 'server',
-          targetId: server.id as string,
+          targetId: String(server.id),
           metadata: { serverUuid },
         });
       }
@@ -241,7 +254,8 @@ export class ServerManager {
     try {
       await this.powerAction(serverUuid, 'stop', { ...options, skipAudit: true });
     } catch (error) {
-      console.warn(`Failed to stop server during suspension: ${error}`);
+      const message = error instanceof Error ? error.message : String(error);
+      console.warn(`Failed to stop server during suspension: ${message}`);
     }
 
     await this.db
@@ -252,10 +266,10 @@ export class ServerManager {
       })
       .where(eq(tables.servers.uuid, serverUuid));
 
-    const owner = await this.getServerOwnerContact(server.ownerId as string | undefined);
+    const owner = await this.getServerOwnerContact(server.ownerId ?? undefined);
     if (owner?.email) {
       try {
-        await sendServerSuspendedEmail(owner.email, server.name as string);
+        await sendServerSuspendedEmail(owner.email, String(server.name ?? ''));
       } catch (error) {
         console.error('Failed to send server suspended email', error);
       }
@@ -267,7 +281,7 @@ export class ServerManager {
         actorType: 'user',
         action: 'server.suspend',
         targetType: 'server',
-        targetId: server.id,
+        targetId: String(server.id),
         metadata: { serverUuid },
       });
     }
@@ -298,7 +312,7 @@ export class ServerManager {
         actorType: 'user',
         action: 'server.unsuspend',
         targetType: 'server',
-        targetId: server.id,
+        targetId: String(server.id),
         metadata: { serverUuid },
       });
     }

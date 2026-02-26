@@ -29,7 +29,7 @@ const {
     sortOrder: sortOrder.value,
   })),
   pick: ['data', 'pagination', 'currentToken'],
-  server: false, 
+  server: false,
   default: () => ({
     data: [],
     currentToken: null,

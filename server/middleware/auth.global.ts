@@ -1,4 +1,4 @@
-import { createError, sendRedirect, type H3Event } from 'h3';
+import { type H3Event } from 'h3';
 import type { AuthContext, ResolvedSessionUser } from '#shared/types/auth';
 import type { ApiKeyPermissions, PermissionAction } from '#shared/types/admin';
 import { getServerSession } from '#server/utils/session';

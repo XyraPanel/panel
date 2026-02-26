@@ -11,7 +11,7 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   try {
-    deleteWingsNode(id);
+    await deleteWingsNode(id);
     await recordAuditEventFromRequest(event, {
       actor: session?.user?.id ?? 'admin',
       actorType: 'user',

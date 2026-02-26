@@ -29,10 +29,10 @@ export default defineTask({
     const hashedPassword = await bcrypt.hash(password, 12);
     const [nameFirst, ...nameRest] = name.split(' ');
     const nameLast = nameRest.join(' ') || null;
-    const timestamp = new Date();
+    const timestampIso = new Date().toISOString();
 
     const existingUser = await db.query.users.findFirst({
-      where: (u, { eq }) => eq(u.email, email),
+      where: (u, { eq: whereEq }) => whereEq(u.email, email),
       columns: { id: true },
     });
 
@@ -47,20 +47,20 @@ export default defineTask({
           nameLast,
           rootAdmin: true,
           role: 'admin',
-          updatedAt: timestamp,
+          updatedAt: timestampIso,
         })
         .where(eq(tables.users.id, existingUser.id));
 
       const existingAccount = await db.query.accounts.findFirst({
-        where: (acc, { and, eq }) =>
-          and(eq(acc.userId, existingUser.id), eq(acc.provider, 'credential')),
+        where: (acc, { and, eq: whereEq }) =>
+          and(whereEq(acc.userId, existingUser.id), whereEq(acc.provider, 'credential')),
         columns: { id: true },
       });
 
       if (existingAccount) {
         await db
           .update(tables.accounts)
-          .set({ password: hashedPassword, updatedAt: timestamp })
+          .set({ password: hashedPassword, updatedAt: timestampIso })
           .where(eq(tables.accounts.id, existingAccount.id));
       } else {
         await db.insert(tables.accounts).values({
@@ -72,8 +72,8 @@ export default defineTask({
           accountId: existingUser.id,
           providerId: 'credential',
           password: hashedPassword,
-          createdAt: timestamp,
-          updatedAt: timestamp,
+          createdAt: timestampIso,
+          updatedAt: timestampIso,
         });
       }
 
@@ -92,8 +92,8 @@ export default defineTask({
       language: 'en',
       rootAdmin: true,
       role: 'admin',
-      createdAt: timestamp,
-      updatedAt: timestamp,
+      createdAt: timestampIso,
+      updatedAt: timestampIso,
     });
 
     await db.insert(tables.accounts).values({
@@ -105,8 +105,8 @@ export default defineTask({
       accountId: userId,
       providerId: 'credential',
       password: hashedPassword,
-      createdAt: timestamp,
-      updatedAt: timestamp,
+      createdAt: timestampIso,
+      updatedAt: timestampIso,
     });
 
     return { result: 'created', email };

@@ -72,7 +72,7 @@ export default defineEventHandler(async (event) => {
   const username = `u${server.id.substring(0, 8)}_${safeName}`.substring(0, 32);
   const password = randomBytes(24).toString('hex');
   const remote = body.remote || '%';
-  const now = new Date();
+  const now = new Date().toISOString();
 
   await provisionDatabase(databaseHost, dbName, username, password, remote);
 
@@ -110,8 +110,8 @@ export default defineEventHandler(async (event) => {
       username,
       remote,
       max_connections: null,
-      created_at: now.toISOString(),
-      updated_at: now.toISOString(),
+      created_at: now,
+      updated_at: now,
     },
     meta: { password },
   };

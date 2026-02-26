@@ -122,7 +122,7 @@ export class FileManager {
         actorType: 'user',
         action: hadExistingFile ? 'server.file.edit' : 'server.file.create',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: String(server.id),
         metadata: {
           file: sanitizedPath,
           size: contentSize,
@@ -155,7 +155,7 @@ export class FileManager {
         actorType: 'user',
         action: 'server.file.delete',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: String(server.id),
         metadata: { directory: sanitizedDir, files },
       });
     }
@@ -180,7 +180,7 @@ export class FileManager {
         actorType: 'user',
         action: 'server.file.rename',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: String(server.id),
         metadata: { directory: sanitizedDir, renames },
       });
     }
@@ -200,7 +200,7 @@ export class FileManager {
         actorType: 'user',
         action: 'server.file.copy',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: String(server.id),
         metadata: { file: sanitizedPath },
       });
     }
@@ -226,7 +226,7 @@ export class FileManager {
         actorType: 'user',
         action: 'server.file.mkdir',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: String(server.id),
         metadata: { directory: sanitizedDir, name: sanitizedName },
       });
     }
@@ -251,7 +251,7 @@ export class FileManager {
         actorType: 'user',
         action: 'server.file.compress',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: String(server.id),
         metadata: { directory: sanitizedDir, files, archive: result.file },
       });
     }
@@ -276,7 +276,7 @@ export class FileManager {
         actorType: 'user',
         action: 'server.file.decompress',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: String(server.id),
         metadata: { directory: sanitizedDir, file },
       });
     }
@@ -301,7 +301,7 @@ export class FileManager {
         actorType: 'user',
         action: 'server.file.chmod',
         targetType: 'server',
-        targetId: server.id as string,
+        targetId: String(server.id),
         metadata: { directory: sanitizedDir, files },
       });
     }

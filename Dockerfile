@@ -2,12 +2,17 @@
 FROM node:22-alpine AS builder
 
 RUN apk add --no-cache libc6-compat
-RUN corepack enable && corepack prepare pnpm@10.29.3 --activate
+RUN corepack enable pnpm && corepack install -g pnpm@latest-10
 
 WORKDIR /app
 
-COPY pnpm-lock.yaml package.json ./
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+# fetch from pnpm-lock.yaml only
+COPY pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm fetch
+
+# install from the fetched store
+COPY package.json pnpm-lock.yaml ./
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --offline
 
 COPY . .
 

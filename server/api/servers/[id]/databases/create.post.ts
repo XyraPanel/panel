@@ -66,7 +66,7 @@ export default defineEventHandler(async (event) => {
   const dbUsername = `u${server.id.substring(0, 8)}_${safeName}`.substring(0, 32);
   const dbPassword = randomBytes(24).toString('hex');
   const remote = body.remote || '%';
-  const now = new Date();
+  const now = new Date().toISOString();
 
   await provisionDatabase(host, dbName, dbUsername, dbPassword, remote);
 

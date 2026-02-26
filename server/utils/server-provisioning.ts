@@ -153,7 +153,7 @@ async function buildProvisioningContext(
   const wingsNode: WingsNode = {
     id: node.id,
     fqdn: node.fqdn,
-    scheme: node.scheme as 'http' | 'https',
+    scheme: node.scheme,
     daemonListen: node.daemonListen,
     daemonSftp: node.daemonSftp,
     daemonBase: node.daemonBase,
@@ -322,7 +322,7 @@ export async function triggerServerInstallation(serverUuid: string): Promise<voi
   const wingsNode: WingsNode = {
     id: node.id,
     fqdn: node.fqdn,
-    scheme: node.scheme as 'http' | 'https',
+    scheme: node.scheme,
     daemonListen: node.daemonListen,
     daemonSftp: node.daemonSftp,
     daemonBase: node.daemonBase,
@@ -362,7 +362,7 @@ export async function checkInstallationStatus(serverUuid: string): Promise<{
   const wingsNode: WingsNode = {
     id: node.id,
     fqdn: node.fqdn,
-    scheme: node.scheme as 'http' | 'https',
+    scheme: node.scheme,
     daemonListen: node.daemonListen,
     daemonSftp: node.daemonSftp,
     daemonBase: node.daemonBase,

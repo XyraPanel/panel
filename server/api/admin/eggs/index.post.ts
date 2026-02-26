@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBodyWithLimit(event, createEggSchema, BODY_SIZE_LIMITS.MEDIUM);
 
   const db = useDrizzle();
-  const now = new Date();
+  const now = new Date().toISOString();
 
   const newEgg = {
     id: randomUUID(),

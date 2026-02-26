@@ -835,7 +835,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
           connecting.value = false;
           error.value = t('server.websocket.connectionTimeout');
           intentionalClose = true;
-          if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.OPEN) {
+          if (ws.readyState === 0 /* WebSocket.CONNECTING */) {
             ws.close();
           }
           scheduleReconnect();

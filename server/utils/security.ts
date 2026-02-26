@@ -1,4 +1,4 @@
-import { createError, type H3Event, readBody } from 'h3';
+import { type H3Event } from 'h3';
 import { getServerSession } from '#server/utils/session';
 import { requireAdminPermission } from '#server/utils/permission-middleware';
 import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';

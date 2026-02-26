@@ -4,7 +4,7 @@
   <a href="https://github.com/XyraPanel/panel/releases"><img src="https://img.shields.io/github/v/release/XyraPanel/panel?color=red&label=release" alt="Latest Release"></a>
   <a href="https://github.com/XyraPanel/panel/blob/main/LICENSE"><img src="https://img.shields.io/github/license/XyraPanel/panel?color=gray" alt="License"></a>
   <a href="https://crowdin.com/project/xyrapanel"><img src="https://img.shields.io/badge/Crowdin-gray?logo=crowdin" alt="Crowdin"></a>
-  <a href="https://discord.com/invite/NXdctQnMjs"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
+  <a href="https://xyrapanel.com/discord"><img src="https://img.shields.io/badge/Discord-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
 > [!CAUTION]

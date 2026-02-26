@@ -37,14 +37,14 @@ export async function buildRequestMetadata(
 
 export async function recordAuditEvent(input: LogActivityOptions): Promise<void> {
   const db = useDrizzle();
-  const now = new Date();
+  const now = new Date().toISOString();
 
   const actor = input.actor.trim();
   const actorValue = actor.length > 0 ? actor : 'system';
   const actorType = input.actorType ?? 'system';
 
   let serializedMetadata: string | null = null;
-  if (input.metadata && Object.keys(input.metadata as ActivityMetadata).length > 0) {
+  if (input.metadata && Object.keys(input.metadata).length > 0) {
     try {
       serializedMetadata = JSON.stringify(input.metadata);
     } catch {

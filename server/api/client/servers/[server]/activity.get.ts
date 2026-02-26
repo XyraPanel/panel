@@ -6,6 +6,28 @@ import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { requireAccountUser } from '#server/utils/security';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isActorType(value: unknown): value is ActorType {
+  return value === 'user' || value === 'system' || value === 'daemon';
+}
+
+function isTargetType(value: unknown): value is TargetType {
+  return (
+    value === 'user' ||
+    value === 'server' ||
+    value === 'backup' ||
+    value === 'node' ||
+    value === 'database' ||
+    value === 'file' ||
+    value === 'settings' ||
+    value === 'session' ||
+    value === 'api_key'
+  );
+}
+
 function parseMetadata(raw: string | null): Record<string, unknown> | null {
   if (!raw) {
     return null;
@@ -13,8 +35,8 @@ function parseMetadata(raw: string | null): Record<string, unknown> | null {
 
   try {
     const value = JSON.parse(raw) as unknown;
-    if (value && typeof value === 'object') {
-      return value as Record<string, unknown>;
+    if (isRecord(value)) {
+      return value;
     }
 
     return { value };
@@ -42,11 +64,10 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
   });
 
   const query = getQuery(event);
-  const page = Math.max(Number.parseInt((query.page as string) ?? '1', 10) || 1, 1);
-  const limit = Math.min(
-    Math.max(Number.parseInt((query.limit as string) ?? '25', 10) || 25, 1),
-    100,
-  );
+  const pageStr = typeof query.page === 'string' ? query.page : '1';
+  const page = Math.max(Number.parseInt(pageStr, 10) || 1, 1);
+  const limitStr = typeof query.limit === 'string' ? query.limit : '25';
+  const limit = Math.min(Math.max(Number.parseInt(limitStr, 10) || 25, 1), 100);
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();
@@ -77,12 +98,15 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
 
   const data: ServerActivityEvent[] = rows.map((row) => ({
     id: row.id,
-    occurredAt:
-      row.occurredAt instanceof Date ? row.occurredAt : new Date(row.occurredAt).toISOString(),
+    occurredAt: new Date(
+      typeof row.occurredAt === 'string' || typeof row.occurredAt === 'number'
+        ? row.occurredAt
+        : String(row.occurredAt),
+    ).toISOString(),
     actor: row.actor,
-    actorType: row.actorType as ActorType,
+    actorType: isActorType(row.actorType) ? row.actorType : 'system',
     action: row.action,
-    targetType: row.targetType as TargetType,
+    targetType: isTargetType(row.targetType) ? row.targetType : 'server',
     targetId: row.targetId,
     metadata: parseMetadata(row.metadata),
   }));

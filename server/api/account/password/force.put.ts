@@ -1,4 +1,3 @@
-import { assertMethod, createError } from 'h3';
 import { APIError } from 'better-auth/api';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
@@ -66,7 +65,7 @@ export default defineEventHandler(async (event) => {
       headers,
     });
 
-    const now = new Date();
+    const now = new Date().toISOString();
 
     await db
       .update(tables.users)
@@ -80,7 +79,7 @@ export default defineEventHandler(async (event) => {
       .delete(tables.sessions)
       .where(eq(tables.sessions.userId, user.id));
 
-    const revokedCount = (revokedResult as any)?.rowCount ?? 0;
+    const revokedCount = getRowCount(revokedResult);
 
     await recordAuditEventFromRequest(event, {
       actor: user.email || user.id,
@@ -110,3 +109,11 @@ export default defineEventHandler(async (event) => {
     throw error;
   }
 });
+
+function getRowCount(result: {
+  rowCount?: number | bigint | null;
+  changes?: number | bigint | null;
+}): number {
+  const value = result?.rowCount ?? result?.changes ?? 0;
+  return typeof value === 'bigint' ? Number(value) : (value ?? 0);
+}

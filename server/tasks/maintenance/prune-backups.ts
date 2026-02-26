@@ -1,6 +1,14 @@
 import { useDrizzle, tables, and, isNull, lt } from '#server/utils/drizzle';
 import { debugLog, debugError } from '#server/utils/logger';
 
+function getRowCount(result: {
+  changes?: number | bigint | null;
+  rowCount?: number | bigint | null;
+}): number {
+  const value = result?.changes ?? result?.rowCount ?? 0;
+  return typeof value === 'bigint' ? Number(value) : (value ?? 0);
+}
+
 export default defineTask({
   meta: {
     name: 'maintenance:prune-backups',
@@ -20,11 +28,11 @@ export default defineTask({
         .where(
           and(
             isNull(tables.serverBackups.completedAt),
-            lt(tables.serverBackups.createdAt, sevenDaysAgo),
+            lt(tables.serverBackups.createdAt, sevenDaysAgo.toISOString()),
           ),
         );
 
-      const deletedCount = (result as any).changes ?? (result as any).rowCount ?? 0;
+      const deletedCount = getRowCount(result);
 
       debugLog(
         `[${now.toISOString()}] Backup pruning complete. Deleted ${deletedCount} incomplete backups.`,

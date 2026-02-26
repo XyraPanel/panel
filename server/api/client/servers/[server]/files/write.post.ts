@@ -63,20 +63,20 @@ export default defineEventHandler(async (event) => {
 
     let hadExistingFile = false;
     try {
-      await client.getFileContents(server.uuid as string, file);
+      await client.getFileContents(server.uuid, file);
       hadExistingFile = true;
     } catch {
       // File doesn't exist, will be created
     }
 
-    await client.writeFileContents(server.uuid as string, file, content);
+    await client.writeFileContents(server.uuid, file, content);
 
     await recordAuditEvent({
       actor: accountContext.user.id,
       actorType: 'user',
       action: hadExistingFile ? 'server.file.edit' : 'server.file.create',
       targetType: 'server',
-      targetId: server.id as string,
+      targetId: server.id,
       metadata: {
         file,
         size: contentSize,

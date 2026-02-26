@@ -1,8 +1,42 @@
 import { formatAuthToken } from '#server/utils/wings/encryption';
-import type { WingsNodeConnection } from '#shared/types/wings';
+import type {
+  WingsNodeConnection,
+  WingsFileContentResponse,
+  WingsCompressResponse,
+  WingsUuidResponse,
+  WingsUrlResponse,
+  WingsServerDetailsResponse,
+} from '#shared/types/wings';
 
 export function createWingsClient(node: WingsNodeConnection) {
   const baseUrl = `${node.scheme}://${node.fqdn}:${node.daemonListen}`;
+
+  function hasStringProp(value: unknown, key: string): boolean {
+    if (typeof value !== 'object' || value === null || !(key in value)) return false;
+    return typeof Reflect.get(value, key) === 'string';
+  }
+
+  function isFileContentResponse(value: unknown): value is WingsFileContentResponse {
+    return hasStringProp(value, 'content');
+  }
+
+  function isCompressResponse(value: unknown): value is WingsCompressResponse {
+    return hasStringProp(value, 'file');
+  }
+
+  function isUuidResponse(value: unknown): value is WingsUuidResponse {
+    return hasStringProp(value, 'uuid');
+  }
+
+  function isUrlResponse(value: unknown): value is WingsUrlResponse {
+    return hasStringProp(value, 'url');
+  }
+
+  function isServerDetailsResponse(value: unknown): value is WingsServerDetailsResponse {
+    return (
+      typeof value === 'object' && value !== null && 'state' in value && 'utilization' in value
+    );
+  }
 
   async function request<T>(
     path: string,
@@ -10,8 +44,26 @@ export function createWingsClient(node: WingsNodeConnection) {
       method?: string;
       body?: unknown;
       headers?: Record<string, string>;
+    },
+    validate: (data: unknown) => data is T,
+  ): Promise<T>;
+  async function request(
+    path: string,
+    options?: {
+      method?: string;
+      body?: unknown;
+      headers?: Record<string, string>;
+    },
+  ): Promise<void>;
+  async function request<T>(
+    path: string,
+    options: {
+      method?: string;
+      body?: unknown;
+      headers?: Record<string, string>;
     } = {},
-  ): Promise<T> {
+    validate?: (data: unknown) => data is T,
+  ): Promise<T | void> {
     const url = `${baseUrl}${path}`;
 
     const authToken = formatAuthToken(node.tokenId, node.tokenSecret);
@@ -22,11 +74,6 @@ export function createWingsClient(node: WingsNodeConnection) {
       Authorization: `Bearer ${authToken}`,
       ...options.headers,
     };
-
-    // Allow insecure connections for local/development Wings instances
-    // if (node.allowInsecure) {
-    //   throw new Error('Insecure Wings connections are not supported. Disable "allowInsecure" on this node.')
-    // }
 
     const response = await fetch(url, {
       method: options.method || 'GET',
@@ -39,11 +86,15 @@ export function createWingsClient(node: WingsNodeConnection) {
       throw new Error(`Wings API error: ${response.status} - ${error}`);
     }
 
-    if (response.status === 204) {
-      return {} as T;
+    if (response.status === 204 || !validate) {
+      return;
     }
 
-    return response.json();
+    const data: unknown = await response.json();
+    if (!validate(data)) {
+      throw new Error(`Wings API returned unexpected response shape for ${path}`);
+    }
+    return data;
   }
 
   return {
@@ -62,8 +113,10 @@ export function createWingsClient(node: WingsNodeConnection) {
     },
 
     async getFileContents(serverUuid: string, filePath: string) {
-      return request<{ content: string }>(
+      return request(
         `/api/servers/${serverUuid}/files/contents?file=${encodeURIComponent(filePath)}`,
+        {},
+        isFileContentResponse,
       );
     },
 
@@ -107,10 +160,14 @@ export function createWingsClient(node: WingsNodeConnection) {
     },
 
     async compressFiles(serverUuid: string, root: string, files: string[]) {
-      return request<{ file: string }>(`/api/servers/${serverUuid}/files/compress`, {
-        method: 'POST',
-        body: { root, files },
-      });
+      return request(
+        `/api/servers/${serverUuid}/files/compress`,
+        {
+          method: 'POST',
+          body: { root, files },
+        },
+        isCompressResponse,
+      );
     },
 
     async decompressFile(serverUuid: string, root: string, file: string) {
@@ -139,9 +196,13 @@ export function createWingsClient(node: WingsNodeConnection) {
     },
 
     async createBackup(serverUuid: string) {
-      return request<{ uuid: string }>(`/api/servers/${serverUuid}/backup`, {
-        method: 'POST',
-      });
+      return request(
+        `/api/servers/${serverUuid}/backup`,
+        {
+          method: 'POST',
+        },
+        isUuidResponse,
+      );
     },
 
     async deleteBackup(serverUuid: string, backupUuid: string) {
@@ -157,26 +218,16 @@ export function createWingsClient(node: WingsNodeConnection) {
     },
 
     async getBackupDownloadUrl(serverUuid: string, backupUuid: string): Promise<string> {
-      const data = await request<{ url: string }>(
+      const data = await request(
         `/api/servers/${serverUuid}/backup/${backupUuid}/download`,
+        {},
+        isUrlResponse,
       );
       return data.url;
     },
 
     async getServerDetails(serverUuid: string) {
-      return request<{
-        state: string;
-        is_suspended: boolean;
-        utilization: {
-          memory_bytes: number;
-          memory_limit_bytes: number;
-          cpu_absolute: number;
-          network_rx_bytes: number;
-          network_tx_bytes: number;
-          uptime: number;
-          disk_bytes: number;
-        };
-      }>(`/api/servers/${serverUuid}`);
+      return request(`/api/servers/${serverUuid}`, {}, isServerDetailsResponse);
     },
   };
 }

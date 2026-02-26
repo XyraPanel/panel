@@ -33,6 +33,18 @@ function toNumber(value: unknown, fallback = 0): number {
   return Number.isNaN(parsed) ? fallback : parsed;
 }
 
+function toScheme(value: string | undefined | null): 'http' | 'https' {
+  return value === 'http' ? 'http' : 'https';
+}
+
+function getRowCount(result: {
+  rowCount?: number | bigint | null;
+  changes?: number | bigint | null;
+}): number {
+  const value = result?.rowCount ?? result?.changes ?? 0;
+  return typeof value === 'bigint' ? Number(value) : (value ?? 0);
+}
+
 function formatCombinedToken(identifier: string, secret: string): string {
   return `${identifier}.${secret}`;
 }
@@ -401,14 +413,14 @@ export async function createWingsNode(input: CreateWingsNodeInput): Promise<Stor
 
   const token = resolveTokenParts(input.apiToken);
 
-  const record = {
+  const record: typeof tables.wingsNodes.$inferInsert = {
     id,
     uuid: randomUUID(),
     name: input.name.trim(),
     description: input.description?.trim() || null,
     baseUrl: sanitized,
     fqdn,
-    scheme,
+    scheme: toScheme(scheme),
     public: input.public ?? true,
     maintenanceMode: input.maintenanceMode ?? false,
     allowInsecure: Boolean(input.allowInsecure),
@@ -462,12 +474,13 @@ export async function updateWingsNode(
     ? existing.apiToken
     : formatCombinedToken(existing.tokenIdentifier, existing.tokenSecret);
 
-  const scheme =
+  const resolvedScheme = toScheme(
     input.scheme !== undefined
       ? input.scheme.trim() || existing.scheme
       : baseUrlUpdates
         ? baseUrlUpdates.scheme
-        : existing.scheme;
+        : existing.scheme,
+  );
 
   const fqdn =
     input.fqdn !== undefined
@@ -489,15 +502,15 @@ export async function updateWingsNode(
     input.scheme === undefined &&
     input.daemonListen === undefined
       ? baseUrlUpdates.sanitized
-      : buildBaseUrlFromParts(scheme, fqdn, daemonListen);
+      : buildBaseUrlFromParts(resolvedScheme, fqdn, daemonListen);
 
-  const updated = {
+  const updated: Partial<typeof tables.wingsNodes.$inferInsert> = {
     name: input.name !== undefined ? input.name.trim() : existing.name,
     description:
       input.description !== undefined ? input.description.trim() || null : existing.description,
     baseUrl,
     fqdn,
-    scheme,
+    scheme: resolvedScheme,
     daemonListen,
     apiToken: tokenUpdates ? tokenUpdates.combined : existingToken,
     tokenIdentifier: tokenUpdates ? tokenUpdates.identifier : existing.tokenIdentifier,
@@ -542,8 +555,7 @@ export async function updateWingsNode(
 export async function deleteWingsNode(id: string): Promise<void> {
   const db = useDrizzle();
   const result = await db.delete(tables.wingsNodes).where(eq(tables.wingsNodes.id, id));
-  const rowCount = (result as { rowCount?: unknown })?.rowCount;
-  const changes = typeof rowCount === 'number' ? rowCount : 0;
+  const changes = getRowCount(result);
   if (changes === 0) {
     throw new Error(`Node ${id} not found`);
   }

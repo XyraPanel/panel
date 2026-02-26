@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   );
 
   const db = useDrizzle();
-  const now = new Date();
+  const now = new Date().toISOString();
 
   const newHost = {
     id: randomUUID(),

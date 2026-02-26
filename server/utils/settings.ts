@@ -35,7 +35,7 @@ export type SettingKey = (typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS];
 export async function getSetting(key: SettingKey): Promise<string | null> {
   const db = useDrizzle();
   const result = await db.query.settings.findFirst({
-    where: (s, { eq }) => eq(s.key, key),
+    where: (s, { eq: whereEq }) => whereEq(s.key, key),
     columns: { value: true },
   });
   return result?.value ?? null;
@@ -84,10 +84,15 @@ export async function setSetting(key: SettingKey, value: string): Promise<void> 
     .onConflictDoUpdate({ target: tables.settings.key, set: { value } });
 }
 
-export async function setSettings(settings: Record<SettingKey, string>): Promise<void> {
-  await Promise.all(
-    Object.entries(settings).map(([key, value]) => setSetting(key as SettingKey, value)),
-  );
+export async function setSettings(settings: Partial<Record<SettingKey, string>>): Promise<void> {
+  const tasks: Array<Promise<void>> = [];
+  for (const key of Object.values(SETTINGS_KEYS)) {
+    const value = settings[key];
+    if (typeof value === 'string') {
+      tasks.push(setSetting(key, value));
+    }
+  }
+  await Promise.all(tasks);
 }
 
 export async function deleteSetting(key: SettingKey): Promise<void> {

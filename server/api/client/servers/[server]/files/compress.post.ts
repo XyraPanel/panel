@@ -35,19 +35,17 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { client } = await getWingsClientForServer(server.uuid);
-    const result = (await client.compressFiles(server.uuid as string, root || '/', files)) as
-      | { archive?: string }
-      | undefined;
+    const result = await client.compressFiles(server.uuid, root || '/', files);
 
     await recordServerActivity({
       event,
       actorId: permissionContext.userId,
       action: 'server.file.compress',
-      server: { id: server.id as string, uuid: server.uuid as string },
+      server: { id: server.id, uuid: server.uuid },
       metadata: {
         root: root || '/',
         files,
-        archive: typeof result?.archive === 'string' ? result.archive : undefined,
+        archive: result.file,
       },
     });
 

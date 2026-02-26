@@ -80,11 +80,17 @@ export default defineEventHandler(async (event) => {
 
     setImmediate(async () => {
       try {
+        if (!server.eggId || !server.nodeId) {
+          console.error(
+            `[Power Action] Server ${server.uuid} missing eggId or nodeId for provisioning`,
+          );
+          return;
+        }
         await provisionServerOnWings({
-          serverId: server.id!,
-          serverUuid: server.uuid!,
-          eggId: server.eggId!,
-          nodeId: server.nodeId!,
+          serverId: server.id,
+          serverUuid: server.uuid,
+          eggId: server.eggId,
+          nodeId: server.nodeId,
           allocationId: primaryAllocation.id,
           environment: {},
           startOnCompletion: true,
@@ -120,7 +126,7 @@ export default defineEventHandler(async (event) => {
     const { getWingsClientForServer } = await import('#server/utils/wings-client');
     const { client } = await getWingsClientForServer(server.uuid);
 
-    await client.sendPowerAction(server.uuid, action as 'start' | 'stop' | 'restart' | 'kill');
+    await client.sendPowerAction(server.uuid, action);
 
     await recordAuditEventFromRequest(event, {
       actor: session.user.email || session.user.id,
@@ -145,10 +151,10 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    const err = error as Error;
+    const message = error instanceof Error ? error.message : String(error);
     throw createError({
       status: 500,
-      statusText: `Failed to send power command: ${err.message}`,
+      statusText: `Failed to send power command: ${message}`,
     });
   }
 });

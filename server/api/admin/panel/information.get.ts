@@ -6,11 +6,18 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import type { PanelInformation } from '#shared/types/admin';
 
+function isPackageJson(value: unknown): value is { version?: string } {
+  return typeof value === 'object' && value !== null && 'version' in value;
+}
+
 function getPackageVersion(): string {
   try {
     const pkgPath = resolve(process.cwd(), 'package.json');
-    const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8')) as { version?: string };
-    return pkg.version ?? '0.0.0';
+    const parsed = JSON.parse(readFileSync(pkgPath, 'utf-8')) as unknown;
+    if (isPackageJson(parsed) && typeof parsed.version === 'string') {
+      return parsed.version;
+    }
+    return '0.0.0';
   } catch {
     return '0.0.0';
   }

@@ -28,8 +28,8 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBodyWithLimit(event, serverCommandSchema, BODY_SIZE_LIMITS.SMALL);
 
   try {
-    const { client } = await getWingsClientForServer(server.uuid as string);
-    await client.sendCommand(server.uuid as string, body.command);
+    const { client } = await getWingsClientForServer(server.uuid);
+    await client.sendCommand(server.uuid, body.command);
 
     await recordServerActivity({
       event,

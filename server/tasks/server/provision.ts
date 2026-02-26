@@ -2,7 +2,10 @@ import { provisionServerOnWings } from '#server/utils/server-provisioning';
 import { sendServerCreatedEmail, isEmailConfigured } from '#server/utils/email';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { debugLog, debugError } from '#server/utils/logger';
-import type { ServerProvisioningConfig } from '#shared/types/server';
+import {
+  serverProvisionConfigSchema,
+  serverProvisionPayloadSchema,
+} from '#shared/schema/admin/server';
 
 export default defineTask({
   meta: {
@@ -10,31 +13,38 @@ export default defineTask({
     description: 'Provision a server on Wings in the background',
   },
   async run(event) {
-    const payload = event.payload as unknown as ServerProvisioningConfig & {
-      ownerEmail?: string;
-      serverName?: string;
-    };
-    debugLog('[Server Provision Task] Starting provisioning for server:', payload.serverUuid);
+    const { ownerEmail, serverName, ...configInput } = serverProvisionPayloadSchema.parse(
+      event.payload,
+    );
+    const serverConfig = serverProvisionConfigSchema.parse(configInput);
+    debugLog('[Server Provision Task] Starting provisioning for server:', serverConfig.serverUuid);
 
     const db = useDrizzle();
 
     try {
-      await provisionServerOnWings(payload);
-      debugLog('[Server Provision Task] Successfully provisioned server:', payload.serverUuid);
+      await provisionServerOnWings(serverConfig);
+      debugLog('[Server Provision Task] Successfully provisioned server:', serverConfig.serverUuid);
 
-      if (payload.ownerEmail && payload.serverName && (await isEmailConfigured())) {
+      if (ownerEmail && serverName && (await isEmailConfigured())) {
         try {
-          await sendServerCreatedEmail(payload.ownerEmail, payload.serverName, payload.serverUuid);
-          debugLog('[Server Provision Task] Sent creation email for server:', payload.serverUuid);
+          await sendServerCreatedEmail(ownerEmail, serverName, serverConfig.serverUuid);
+          debugLog(
+            '[Server Provision Task] Sent creation email for server:',
+            serverConfig.serverUuid,
+          );
         } catch (error) {
           debugError('[Server Provision Task] Failed to send server created email:', error);
           // Don't fail the task if email fails
         }
       }
 
-      return { result: { success: true, serverUuid: payload.serverUuid } };
+      return { result: { success: true, serverUuid: serverConfig.serverUuid } };
     } catch (error) {
-      debugError('[Server Provision Task] Failed to provision server:', payload.serverUuid, error);
+      debugError(
+        '[Server Provision Task] Failed to provision server:',
+        serverConfig.serverUuid,
+        error,
+      );
 
       try {
         await db
@@ -43,7 +53,7 @@ export default defineTask({
             status: 'install_failed',
             updatedAt: new Date().toISOString(),
           })
-          .where(eq(tables.servers.id, payload.serverId));
+          .where(eq(tables.servers.id, serverConfig.serverId));
       } catch (dbError) {
         debugError('[Server Provision Task] Failed to update server status:', dbError);
       }

@@ -5,8 +5,8 @@ export interface QueueJob {
   type: string;
   data: Record<string, unknown>;
   status: QueueJobStatus;
-  createdAt: Date;
-  startedAt?: Date;
-  completedAt?: Date;
+  createdAt: string;
+  startedAt?: string;
+  completedAt?: string;
   error?: string;
 }

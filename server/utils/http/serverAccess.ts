@@ -1,5 +1,4 @@
 import type { H3Event } from 'h3';
-import { createError, getQuery } from 'h3';
 import { getServerSession } from '#server/utils/session';
 import type {
   ServerAccessOptions as SharedServerAccessOptions,
@@ -16,6 +15,36 @@ import type { StoredWingsNode } from '#shared/types/wings';
 type ServerRequestContext = SharedServerRequestContext<typeof tables.servers.$inferSelect>;
 type ServerAccessOptions = SharedServerAccessOptions;
 
+type AuthContext = {
+  session?: Awaited<ReturnType<typeof getServerSession>>;
+  user?: ReturnType<typeof resolveSessionUser> | null;
+};
+
+function isAuthContext(value: unknown): value is AuthContext {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return false;
+  }
+
+  const session = Reflect.get(value, 'session');
+  const user = Reflect.get(value, 'user');
+
+  const sessionValid =
+    session === undefined || typeof session === 'object' || typeof session === 'string';
+  const userValid =
+    user === undefined || user === null || typeof user === 'object' || typeof user === 'string';
+
+  return sessionValid && userValid;
+}
+
+function getAuthContext(event: H3Event): AuthContext {
+  const auth = event.context?.auth;
+  if (isAuthContext(auth)) {
+    return auth;
+  }
+
+  return {};
+}
+
 export async function resolveServerRequest(
   event: H3Event,
   options: ServerAccessOptions = {},
@@ -30,14 +59,7 @@ export async function resolveServerRequest(
     });
   }
 
-  const contextAuth = (
-    event.context as {
-      auth?: {
-        session?: Awaited<ReturnType<typeof getServerSession>>;
-        user?: ReturnType<typeof resolveSessionUser>;
-      };
-    }
-  ).auth;
+  const contextAuth = getAuthContext(event);
 
   let user: ReturnType<typeof resolveSessionUser> | null = null;
 
@@ -114,7 +136,7 @@ export async function resolveServerRequest(
   const requiredPermissions = options.requiredPermissions ?? options.fallbackPermissions ?? [];
 
   if (requiredPermissions.length > 0) {
-    const permissionsArray = permissions as string[];
+    const permissionsArray = permissions;
 
     const permissionMap: Record<string, string[]> = {
       'file.write': ['file.write', 'file.update'], // file.write (Wings) maps to both file.write and file.update (Panel)
@@ -170,7 +192,7 @@ export async function resolveServerRequest(
   return {
     user,
     server,
-    permissions: permissions as string[],
+    permissions: permissions,
     isAdmin,
     isOwner,
     subuserPermissions,
