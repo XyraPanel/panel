@@ -70,7 +70,7 @@ watch(error, (value) => {
   if (value) {
     toast.add({
       title: t('admin.users.failedToLoadUserProfile'),
-      description: value.statusMessage || value.message,
+      description: value.message,
       color: 'error',
     });
 

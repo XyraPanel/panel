@@ -3,7 +3,7 @@ export default defineEventHandler(async (event) => {
   const authHeader = getRequestHeader(event, 'Authorization');
 
   if (!secret || authHeader !== `Bearer ${secret}`) {
-    throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
+    throw createError({ statusCode: 401, message: 'Unauthorized' });
   }
 
   const body = await readBody(event).catch(() => ({}));
@@ -22,7 +22,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     throw createError({
       statusCode: 500,
-      statusMessage: `Seed failed: ${error instanceof Error ? error.message : String(error)}`,
+      message: `Seed failed: ${error instanceof Error ? error.message : String(error)}`,
     });
   }
 });

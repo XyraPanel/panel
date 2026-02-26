@@ -18,7 +18,7 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
   const { user } = accountContext;
 
   if (!user?.id) {
-    throw createError({ status: 401, statusText: 'Unauthorized' });
+    throw createError({ status: 401, message: 'Unauthorized' });
   }
 
   const query = getQuery(event);

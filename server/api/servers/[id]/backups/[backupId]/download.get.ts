@@ -14,7 +14,6 @@ export default defineEventHandler(async (event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -22,7 +21,6 @@ export default defineEventHandler(async (event) => {
   if (!backupId) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing backup identifier',
     });
   }
@@ -44,11 +42,11 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (!backup) {
-    throw createError({ status: 404, statusText: 'Backup not found' });
+    throw createError({ status: 404, message: 'Backup not found' });
   }
 
   if (!server.nodeId) {
-    throw createError({ status: 500, statusText: 'Server has no assigned node' });
+    throw createError({ status: 500, message: 'Server has no assigned node' });
   }
 
   try {
@@ -72,8 +70,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     throw createError({
       status: 500,
-      statusText: 'Wings API Error',
-      message: error instanceof Error ? error.message : 'Failed to get backup download URL',
+      message: `Wings API Error: ${error instanceof Error ? error.message : 'Failed to get backup download URL'}`,
     });
   }
 });

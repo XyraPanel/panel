@@ -18,7 +18,6 @@ export default defineEventHandler(async (event) => {
   if (!locationId) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Location ID is required',
     });
   }
@@ -32,7 +31,7 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (!existing) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'Location not found' });
+    throw createError({ status: 404, message: 'Location not found' });
   }
 
   const nodesCount = await db
@@ -43,7 +42,6 @@ export default defineEventHandler(async (event) => {
   if (nodesCount.length > 0) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: `Cannot delete location with ${nodesCount.length} assigned node(s)`,
     });
   }

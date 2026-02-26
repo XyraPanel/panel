@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
   const { fingerprint, valid } = parseSSHPublicKey(body.publicKey);
 
   if (!valid) {
-    throw createError({ status: 400, statusText: 'Invalid SSH public key format' });
+    throw createError({ status: 400, message: 'Invalid SSH public key format' });
   }
 
   const db = useDrizzle();
@@ -69,13 +69,13 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (existingResult[0]) {
-    throw createError({ status: 409, statusText: 'This SSH key already exists' });
+    throw createError({ status: 409, message: 'This SSH key already exists' });
   }
 
   const userKeys = await db.select().from(tables.sshKeys).where(eq(tables.sshKeys.userId, user.id));
 
   if (userKeys.length >= 25) {
-    throw createError({ status: 400, statusText: 'Maximum of 25 SSH keys allowed per account' });
+    throw createError({ status: 400, message: 'Maximum of 25 SSH keys allowed per account' });
   }
 
   const now = Date.now();

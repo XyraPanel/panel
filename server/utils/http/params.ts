@@ -13,7 +13,6 @@ export async function requireRouteParam(
     if (!isRecord(input)) {
       throw createError({
         status: 400,
-        statusText: 'Bad Request',
         message: message ?? `Missing required route parameter: ${name}`,
       });
     }
@@ -22,7 +21,6 @@ export async function requireRouteParam(
     if (typeof rawValue !== 'string' || rawValue.trim().length === 0) {
       throw createError({
         status: 400,
-        statusText: 'Bad Request',
         message: message ?? `Missing required route parameter: ${name}`,
       });
     }
@@ -34,7 +32,6 @@ export async function requireRouteParam(
   if (typeof value !== 'string') {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: message ?? `Missing required route parameter: ${name}`,
     });
   }

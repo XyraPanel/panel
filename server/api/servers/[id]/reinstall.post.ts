@@ -7,7 +7,7 @@ import { recordServerActivity } from '#server/utils/server-activity';
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id');
   if (!identifier) {
-    throw createError({ status: 400, statusText: 'Server ID required' });
+    throw createError({ status: 400, message: 'Server ID required' });
   }
 
   const { user, session } = await requireAccountUser(event);
@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
   if (server.suspended) {
     throw createError({
       status: 400,
-      statusText: 'Cannot reinstall a suspended server',
+      message: 'Cannot reinstall a suspended server',
     });
   }
 
@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
     });
     throw createError({
       status: 500,
-      statusText: 'Failed to trigger reinstall on Wings',
+      message: `Failed to trigger reinstall on Wings: ${error instanceof Error ? error.message : 'Unknown error'}`,
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     });
   }

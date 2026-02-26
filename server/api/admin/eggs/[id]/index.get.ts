@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const eggId = getRouterParam(event, 'id');
   if (!eggId) {
-    throw createError({ status: 400, statusText: 'Bad Request', message: 'Egg ID is required' });
+    throw createError({ status: 400, message: 'Egg ID is required' });
   }
 
   const db = useDrizzle();
@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
   const [egg] = await db.select().from(tables.eggs).where(eq(tables.eggs.id, eggId)).limit(1);
 
   if (!egg) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found' });
+    throw createError({ status: 404, message: 'Egg not found' });
   }
 
   const variables = await db

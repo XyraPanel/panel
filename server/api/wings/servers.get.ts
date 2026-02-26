@@ -14,7 +14,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (Number.isNaN(page) || Number.isNaN(perPage) || perPage <= 0) {
     throw createError({
       status: 400,
-      statusText: 'Invalid pagination parameters',
+      message: 'Invalid pagination parameters: Use positive numeric values for page and per_page.',
       data: {
         errors: [{ detail: 'Use positive numeric values for page and per_page.' }],
       },

@@ -12,7 +12,7 @@ import { serverCommandSchema } from '#shared/schema/server/operations';
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server');
   if (!serverIdentifier) {
-    throw createError({ status: 400, statusText: 'Server identifier required' });
+    throw createError({ status: 400, message: 'Server identifier required' });
   }
 
   const accountContext = await requireAccountUser(event);
@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
     console.error('Wings command failed:', error);
     throw createError({
       status: 500,
-      statusText: 'Failed to send command to Wings',
+      message: 'Failed to send command to Wings',
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     });
   }

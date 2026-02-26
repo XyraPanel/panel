@@ -300,10 +300,6 @@ watch(selectedFile, async (file, previous) => {
       }
       if ('message' in error && error.message) {
         errorMessage = String(error.message);
-      } else if ('statusMessage' in error && error.statusMessage) {
-        errorMessage = String(error.statusMessage);
-      } else if ('statusText' in error && error.statusText) {
-        errorMessage = String(error.statusText);
       }
     } else if (typeof error === 'string' && error) {
       errorMessage = error;

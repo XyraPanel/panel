@@ -45,7 +45,7 @@ export default defineEventHandler(async (event) => {
   if (!file) {
     throw createError({
       status: 400,
-      statusText: 'File path is required',
+      message: 'File path is required',
     });
   }
 
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
   if (contentSize > MAX_FILE_SIZE) {
     throw createError({
       status: 413,
-      statusText: 'File content too large',
+      message: 'File content too large',
       data: { size: contentSize, maxSize: MAX_FILE_SIZE },
     });
   }
@@ -97,20 +97,20 @@ export default defineEventHandler(async (event) => {
     if (error instanceof WingsAuthError) {
       throw createError({
         status: 403,
-        statusText: 'Wings authentication failed',
+        message: 'Wings authentication failed',
       });
     }
 
     if (error instanceof WingsConnectionError) {
       throw createError({
         status: 503,
-        statusText: 'Wings daemon unavailable',
+        message: 'Wings daemon unavailable',
       });
     }
 
     throw createError({
       status: 500,
-      statusText: 'Failed to write file',
+      message: 'Failed to write file',
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     });
   }

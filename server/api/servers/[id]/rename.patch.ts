@@ -13,7 +13,7 @@ import { serverRenameSchema } from '#shared/schema/server/operations';
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id');
   if (!identifier) {
-    throw createError({ status: 400, statusText: 'Server ID required' });
+    throw createError({ status: 400, message: 'Server ID required' });
   }
 
   const { user, session } = await requireAccountUser(event);

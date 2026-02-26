@@ -37,20 +37,15 @@ export interface ResolvedSessionUser extends SessionUser {
   passwordResetRequired: boolean;
 }
 
-export interface ServerSessionUser extends SessionUser {
-  id: string;
-  username: string;
-  role: Role;
-  permissions: string[];
-  passwordResetRequired: boolean;
-}
+export interface ServerSessionUser extends ResolvedSessionUser {}
 
 export interface ExtendedSession {
   user: ServerSessionUser | null;
 }
+export type ServerSession = ExtendedSession | null;
 
 export interface AuthContext {
-  session: Awaited<ReturnType<typeof import('~~/server/utils/session').getServerSession>>;
+  session: ServerSession;
   user: ResolvedSessionUser;
   apiKey?: {
     id: string;

@@ -54,13 +54,12 @@ export default defineEventHandler(async (event) => {
 
   const userId = getRouterParam(event, 'id');
   if (!userId) {
-    throw createError({ status: 400, statusText: 'Bad Request', message: 'User ID is required' });
+    throw createError({ status: 400, message: 'User ID is required' });
   }
 
   if (userId === session.user.id) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Cannot impersonate yourself',
     });
   }
@@ -80,13 +79,12 @@ export default defineEventHandler(async (event) => {
   const user = userResult[0];
 
   if (!user) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' });
+    throw createError({ status: 404, message: 'User not found' });
   }
 
   if (user.banned) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Cannot impersonate a banned user',
     });
   }
@@ -130,14 +128,14 @@ export default defineEventHandler(async (event) => {
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to impersonate user',
+        message: error.message || 'Failed to impersonate user',
       });
     }
 
     const message = error instanceof Error ? error.message : 'Failed to impersonate user';
     throw createError({
       statusCode: 500,
-      statusMessage: message,
+      message: message,
     });
   }
 });

@@ -20,7 +20,6 @@ export default defineEventHandler(async (event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -28,7 +27,6 @@ export default defineEventHandler(async (event) => {
   if (!scheduleId) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing schedule identifier',
     });
   }
@@ -59,7 +57,7 @@ export default defineEventHandler(async (event) => {
   const schedule = scheduleRows[0];
 
   if (!schedule) {
-    throw createError({ status: 404, statusText: 'Schedule not found' });
+    throw createError({ status: 404, message: 'Schedule not found' });
   }
 
   const body = await readValidatedBodyWithLimit(
@@ -120,8 +118,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     throw createError({
       status: 500,
-      statusText: 'Database Error',
-      message: error instanceof Error ? error.message : 'Failed to update schedule',
+      message: `Database Error: ${error instanceof Error ? error.message : 'Failed to update schedule'}`,
     });
   }
 });

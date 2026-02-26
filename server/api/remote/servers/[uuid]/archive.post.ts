@@ -11,7 +11,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const { uuid } = event.context.params ?? {};
 
   if (!uuid || typeof uuid !== 'string') {
-    throw createError({ status: 400, statusText: 'Missing server UUID' });
+    throw createError({ status: 400, message: 'Missing server UUID' });
   }
 
   const nodeId = await getNodeIdFromAuth(event);
@@ -31,11 +31,11 @@ export default defineEventHandler(async (event: H3Event) => {
   const server = serverRows[0];
 
   if (!server) {
-    throw createError({ status: 404, statusText: 'Server not found' });
+    throw createError({ status: 404, message: 'Server not found' });
   }
 
   if (server.nodeId !== nodeId) {
-    throw createError({ status: 403, statusText: 'Server does not belong to this node' });
+    throw createError({ status: 403, message: 'Server does not belong to this node' });
   }
 
   if (successful) {

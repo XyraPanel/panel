@@ -58,7 +58,6 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     throw createError({
       status: 500,
-      statusText: 'Wings API Error',
       message: error instanceof Error ? error.message : 'Failed to create directory',
       cause: error,
     });

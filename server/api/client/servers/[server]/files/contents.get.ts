@@ -68,7 +68,7 @@ export default defineEventHandler(async (event) => {
     if (isBinaryFile(file)) {
       throw createError({
         status: 400,
-        statusText: 'Cannot view binary file',
+        message: 'Cannot view binary file',
         data: { isBinary: true },
       });
     }
@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
     if (content.length > MAX_FILE_SIZE) {
       throw createError({
         status: 413,
-        statusText: 'File too large to view',
+        message: 'File too large to view',
         data: { size: content.length, maxSize: MAX_FILE_SIZE },
       });
     }
@@ -96,14 +96,14 @@ export default defineEventHandler(async (event) => {
     if (error instanceof WingsAuthError) {
       throw createError({
         status: 403,
-        statusText: 'Wings authentication failed',
+        message: 'Wings authentication failed',
       });
     }
 
     if (error instanceof WingsConnectionError) {
       throw createError({
         status: 503,
-        statusText: 'Wings daemon unavailable',
+        message: 'Wings daemon unavailable',
       });
     }
 
@@ -113,7 +113,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       status: 500,
-      statusText: 'Failed to read file',
+      message: 'Failed to read file',
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     });
   }

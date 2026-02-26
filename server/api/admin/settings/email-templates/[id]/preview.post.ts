@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       status: 400,
-      statusText: 'Template ID is required',
+      message: 'Template ID is required',
     });
   }
 
@@ -136,9 +136,12 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (err) {
+    if (err && typeof err === 'object' && ('statusCode' in err || 'status' in err)) {
+      throw err;
+    }
     throw createError({
       status: 500,
-      statusText: `Failed to render template: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      message: `Failed to render template: ${err instanceof Error ? err.message : 'Unknown error'}`,
     });
   }
 });

@@ -16,7 +16,6 @@ export default defineEventHandler(async (event) => {
   if (!userId) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'User ID is required',
     });
   }
@@ -44,7 +43,7 @@ export default defineEventHandler(async (event) => {
   const user = userResult[0];
 
   if (!user) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' });
+    throw createError({ status: 404, message: 'User not found' });
   }
 
   const auth = getAuth();
@@ -128,14 +127,14 @@ export default defineEventHandler(async (event) => {
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to reset password',
+        message: error.message || 'Failed to reset password',
       });
     }
 
     const message = error instanceof Error ? error.message : 'Failed to reset password';
     throw createError({
       status: 500,
-      statusText: message,
+      message,
     });
   }
 });

@@ -42,7 +42,7 @@ describe('server/api/user/2fa/verify.post', () => {
   it('does not verify TOTP when request is unauthenticated', async () => {
     mockRequireAccountUser.mockRejectedValue({
       statusCode: 401,
-      statusMessage: 'Unauthorized',
+      message: 'Authentication required',
     });
 
     const event = createTestEvent();

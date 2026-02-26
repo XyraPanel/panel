@@ -26,7 +26,6 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'User ID is required',
     });
   }
@@ -56,7 +55,7 @@ export default defineEventHandler(async (event) => {
     let userRecord = userRecordResult[0];
 
     if (!userRecord) {
-      throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' });
+      throw createError({ status: 404, message: 'User not found' });
     }
 
     const changedFields = new Set<string>();
@@ -176,24 +175,27 @@ export default defineEventHandler(async (event) => {
     const user = updatedResult[0];
 
     if (!user) {
-      throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' });
+      throw createError({ status: 404, message: 'User not found' });
     }
 
     return {
       data: user,
     };
   } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
     if (error instanceof APIError) {
       const statusCode =
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to update user',
+        message: error.message || 'Failed to update user',
       });
     }
     throw createError({
       status: 500,
-      statusText: 'Failed to update user',
+      message: `Internal Server Error: ${error instanceof Error ? error.message : 'Failed to update user'}`,
     });
   }
 });

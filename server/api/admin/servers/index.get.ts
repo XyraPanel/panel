@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
     if (!parsed.success) {
       throw createError({
         status: 400,
-        statusText: 'Invalid pagination parameters',
+        message: 'Invalid pagination parameters',
         data: parsed.error.format(),
       });
     }
@@ -114,8 +114,7 @@ export default defineEventHandler(async (event) => {
     }
     throw createError({
       status: 500,
-      statusText: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'Failed to fetch servers',
+      message: `Internal Server Error: ${error instanceof Error ? error.message : 'Failed to fetch servers'}`,
     });
   }
 });

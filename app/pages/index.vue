@@ -250,7 +250,7 @@ function toErrorMessage(err: unknown, fallback: string) {
   if (err instanceof Error) {
     return err.message;
   }
-  if (typeof err === 'object' && err !== null) {
+  if (typeof err === 'object') {
     const errObj = err as Record<string, unknown>;
     if ('data' in errObj && typeof errObj.data === 'object' && errObj.data !== null) {
       const data = errObj.data as Record<string, unknown>;

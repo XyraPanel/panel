@@ -32,16 +32,19 @@ export default defineEventHandler(async (event) => {
 
     return { data: { success: true } };
   } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
     if (error instanceof APIError) {
       const statusCode = typeof error.status === 'number' ? error.status : 400;
       throw createError({
         status: statusCode,
-        statusText: error.message || 'Invalid or expired password reset token',
+        message: error.message || 'Invalid or expired password reset token',
       });
     }
     throw createError({
       status: 400,
-      statusText: 'Invalid or expired password reset token',
+      message: 'Invalid or expired password reset token',
     });
   }
 });

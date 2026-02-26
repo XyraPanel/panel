@@ -39,8 +39,7 @@ export default defineEventHandler(async (event) => {
   if (existing[0]) {
     throw createError({
       status: 409,
-      statusText: 'Conflict',
-      message: 'A user with this email already exists',
+      message: 'Conflict: A user with this email already exists',
     });
   }
 

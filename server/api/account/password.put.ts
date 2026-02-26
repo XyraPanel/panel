@@ -1,13 +1,12 @@
 import { APIError } from 'better-auth/api';
 import type { H3EventContext } from 'h3';
-import type { AuthContext } from '#shared/types/auth';
 import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
 import { resolveSessionUser } from '#server/utils/auth/sessionUser';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { accountPasswordUpdateSchema } from '#shared/schema/account';
 import { requireAuth, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
 
-function hasAuthContext(ctx: H3EventContext): ctx is H3EventContext & { auth?: AuthContext } {
+function hasAuthContext(ctx: H3EventContext): ctx is H3EventContext & { auth?: any } {
   return 'auth' in ctx;
 }
 
@@ -19,7 +18,7 @@ export default defineEventHandler(async (event) => {
   const session = middlewareAuth?.session ?? (await requireAuth(event));
 
   if (!session?.user?.id) {
-    throw createError({ status: 401, statusText: 'Unauthorized' });
+    throw createError({ status: 401, message: 'Unauthorized' });
   }
 
   const body = await readValidatedBodyWithLimit(
@@ -61,17 +60,18 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
     if (error instanceof APIError) {
       throw createError({
         status: Number(error.status) || 400,
-        statusText: 'Failed to change password',
         message: error.message || 'Failed to change password',
       });
     }
     const msg = error instanceof Error ? error.message : String(error);
     throw createError({
       status: 400,
-      statusText: 'Failed to change password',
       message: msg,
     });
   }

@@ -19,7 +19,6 @@ export default defineEventHandler(async (event) => {
   if (!locationId) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Location ID is required',
     });
   }
@@ -40,7 +39,7 @@ export default defineEventHandler(async (event) => {
   const existingRow = existing[0];
 
   if (!existingRow) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'Location not found' });
+    throw createError({ status: 404, message: 'Location not found' });
   }
 
   const updates: Partial<typeof tables.locations.$inferInsert> = {

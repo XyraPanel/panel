@@ -47,12 +47,12 @@ export default defineEventHandler(async (event) => {
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Invalid TOTP code',
+        message: error.message || 'Invalid TOTP code',
       });
     }
     throw createError({
       status: 500,
-      statusText: 'Failed to verify TOTP code',
+      message: 'Failed to verify TOTP code',
     });
   }
 });

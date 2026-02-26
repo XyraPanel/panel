@@ -11,12 +11,12 @@ export default defineEventHandler(async (event: H3Event) => {
 
   const { id } = event.context.params ?? {};
   if (!id || typeof id !== 'string') {
-    throw createError({ status: 400, statusText: 'Missing node id' });
+    throw createError({ status: 400, message: 'Missing node id' });
   }
 
   const existing = await findWingsNode(id);
   if (!existing) {
-    throw createError({ status: 404, statusText: 'Node not found' });
+    throw createError({ status: 404, message: 'Node not found' });
   }
 
   const body = await readValidatedBodyWithLimit(
@@ -43,6 +43,6 @@ export default defineEventHandler(async (event: H3Event) => {
     return { data: toWingsNodeSummary(node) };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unable to update node';
-    throw createError({ status: 400, statusText: message });
+    throw createError({ status: 400, message });
   }
 });

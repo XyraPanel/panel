@@ -27,7 +27,6 @@ export default defineEventHandler(async (event) => {
   if (!apiKey) {
     throw createError({
       status: 404,
-      statusText: 'Not Found',
       message: 'API key not found',
     });
   }
@@ -38,12 +37,15 @@ export default defineEventHandler(async (event) => {
       headers: normalizeHeadersForAuth(event.node.req.headers),
     });
   } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
     if (error instanceof APIError) {
       const statusCode =
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to delete API key',
+        message: error.message || 'Failed to delete API key',
       });
     }
     throw error;

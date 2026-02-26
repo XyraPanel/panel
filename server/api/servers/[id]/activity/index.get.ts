@@ -49,7 +49,7 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
   if (!serverIdentifier) {
     throw createError({
       status: 400,
-      statusText: 'Server identifier is required',
+      message: 'Server identifier is required',
     });
   }
 

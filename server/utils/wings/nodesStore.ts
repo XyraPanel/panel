@@ -170,7 +170,7 @@ export async function syncWingsNodeConfiguration(id: string, panelUrl: string): 
   });
 
   if (!response.ok) {
-    const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const error = new Error(`HTTP ${response.status}`);
     Object.assign(error, { response });
     throw error;
   }

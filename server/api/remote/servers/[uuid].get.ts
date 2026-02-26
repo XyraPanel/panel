@@ -42,7 +42,7 @@ function safeJsonParse(value: string | null | undefined, defaultValue: unknown =
 export default defineEventHandler(async (event: H3Event) => {
   const { uuid } = event.context.params ?? {};
   if (!uuid || typeof uuid !== 'string') {
-    throw createError({ status: 400, statusText: 'Missing server UUID' });
+    throw createError({ status: 400, message: 'Missing server UUID' });
   }
 
   const nodeId = await getNodeIdFromAuth(event);
@@ -56,13 +56,12 @@ export default defineEventHandler(async (event: H3Event) => {
     .limit(1);
 
   if (!server) {
-    throw createError({ status: 404, statusText: 'Server not found' });
+    throw createError({ status: 404, message: 'Server not found' });
   }
 
   if (server.nodeId !== nodeId) {
     throw createError({
       status: 403,
-      statusText: 'Forbidden',
       message: 'This server is not assigned to your node',
     });
   }
@@ -78,8 +77,7 @@ export default defineEventHandler(async (event: H3Event) => {
     debugError(`[Wings Config] Server ${uuid} has no primary allocation`);
     throw createError({
       status: 500,
-      statusText: 'Server configuration error',
-      message: 'Server is missing a primary allocation',
+      message: 'Server configuration error: Server is missing a primary allocation',
     });
   }
 
@@ -183,8 +181,7 @@ export default defineEventHandler(async (event: H3Event) => {
     debugError(`[Wings Config] Server ${uuid} has no egg configured`);
     throw createError({
       status: 500,
-      statusText: 'Server configuration error',
-      message: 'Server is missing egg configuration',
+      message: 'Server configuration error: Server is missing egg configuration',
     });
   }
 

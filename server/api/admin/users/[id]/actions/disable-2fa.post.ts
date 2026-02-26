@@ -11,7 +11,7 @@ export default defineEventHandler(async (event) => {
 
   const userId = getRouterParam(event, 'id');
   if (!userId) {
-    throw createError({ status: 400, statusText: 'Bad Request', message: 'User ID is required' });
+    throw createError({ status: 400, message: 'User ID is required' });
   }
 
   const body = await readValidatedBodyWithLimit(
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
   const existing = existingResult[0];
 
   if (!existing) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' });
+    throw createError({ status: 404, message: 'User not found' });
   }
 
   try {
@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
     const message = error instanceof Error ? error.message : 'Failed to disable 2FA';
     throw createError({
       status: 500,
-      statusText: message,
+      message,
     });
   }
 });

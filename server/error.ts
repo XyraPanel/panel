@@ -1,56 +1,8 @@
 import type { H3Event, H3Error } from 'h3';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
-type EventAuthContext = {
-  auth?: {
-    user?: {
-      id?: string | null;
-      email?: string | null;
-    } | null;
-    apiKey?: {
-      id?: string | null;
-    } | null;
-  };
-};
-
-function getEventAuthContext(event: H3Event): EventAuthContext | null {
-  const ctx = event.context;
-  if (!ctx || typeof ctx !== 'object' || !('auth' in ctx)) {
-    return null;
-  }
-
-  const auth = ctx.auth;
-  if (!auth || typeof auth !== 'object') {
-    return null;
-  }
-
-  const userCandidate = 'user' in auth ? auth.user : null;
-  const apiKeyCandidate = 'apiKey' in auth ? auth.apiKey : null;
-
-  const normalized: EventAuthContext = {
-    auth: {},
-  };
-
-  if (userCandidate && typeof userCandidate === 'object') {
-    normalized.auth!.user = {
-      id: 'id' in userCandidate && typeof userCandidate.id === 'string' ? userCandidate.id : null,
-      email:
-        'email' in userCandidate && typeof userCandidate.email === 'string'
-          ? userCandidate.email
-          : null,
-    };
-  }
-
-  if (apiKeyCandidate && typeof apiKeyCandidate === 'object') {
-    normalized.auth!.apiKey = {
-      id:
-        'id' in apiKeyCandidate && typeof apiKeyCandidate.id === 'string'
-          ? apiKeyCandidate.id
-          : null,
-    };
-  }
-
-  return normalized;
+function isH3Error(error: unknown): error is H3Error {
+  return !!error && typeof error === 'object' && 'statusCode' in error;
 }
 
 const PRIVILEGED_FAILURE_PATTERNS = [
@@ -70,81 +22,41 @@ function shouldAuditPrivilegedFailure(path: string, status: number): boolean {
 export default async function errorHandler(
   error: H3Error | Error,
   event: H3Event,
-  {
-    defaultHandler: _defaultHandler,
-  }: {
-    defaultHandler: (
-      error: H3Error | Error,
-      event: H3Event,
-      opts?: { silent?: boolean; json?: boolean },
-    ) => Promise<{
-      status: number;
-      statusText?: string;
-      headers: Record<string, string>;
-      body: string | Record<string, unknown>;
-    }>;
-  },
 ) {
-  const url = event.node.req.url || '';
-  const path = event.path || url.split('?')[0] || '';
-  const isApiRoute = path.startsWith('/api/') || url.startsWith('/api/');
+  const path = event.path || '';
+  const isApiRoute = path.startsWith('/api/');
 
-  const isH3Error = (e: H3Error | Error): e is H3Error => {
-    return 'statusCode' in e;
-  };
+  // Extract error details safely
+  const statusCode = isH3Error(error) ? error.statusCode : 500;
+  const message = error.message || 'An unexpected error occurred';
+  const data = isH3Error(error) ? error.data : undefined;
 
-  const h3Error = isH3Error(error) ? error : null;
-
-  const fallbackStatus =
-    'status' in error && typeof error.status === 'number' ? error.status : undefined;
-  const logStatus = h3Error?.statusCode || fallbackStatus;
-  console.error('[Error Handler] Error caught:', {
-    path,
-    url,
-    isApiRoute,
-    status: logStatus,
-    message: error.message,
-    accept: event.node.req.headers.accept,
+  // Always log errors to server console
+  console.error(`[Error Handler] ${event.method} ${path} (${statusCode}):`, {
+    message,
     errorName: error.name,
-    stack: error.stack?.split('\n').slice(0, 5).join('\n'),
-    data: h3Error?.data,
+    data,
+    stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
   });
 
-  if (!isApiRoute) {
-    return;
-  }
-
-  const status = h3Error?.statusCode || fallbackStatus || 500;
-  const statusText =
-    h3Error?.statusMessage ||
-    ('statusText' in error && typeof error.statusText === 'string'
-      ? error.statusText
-      : undefined) ||
-    'Internal Server Error';
-  const message = error.message || 'An error occurred';
-
-  if (shouldAuditPrivilegedFailure(path, status)) {
+  // Handle auditing for privileged failures
+  if (isApiRoute && shouldAuditPrivilegedFailure(path, statusCode)) {
     try {
-      const authContext = getEventAuthContext(event);
-      const auth = authContext?.auth;
-      const userId = auth?.user?.id ?? null;
-      const userEmail = auth?.user?.email ?? null;
-      const apiKeyId = auth?.apiKey?.id ?? null;
-
-      const actor = userEmail || userId || getRequestIP(event) || 'system';
+      const auth = event.context.auth;
+      const user = auth?.user;
+      const actor = user?.email || user?.id || getRequestIP(event) || 'system';
 
       await recordAuditEventFromRequest(event, {
         actor,
-        actorType: userId ? 'user' : 'system',
+        actorType: user?.id ? 'user' : 'system',
         action: 'security.request.denied',
         targetType: 'settings',
         targetId: path,
         metadata: {
-          status,
-          statusText,
+          statusCode,
           message,
           method: event.method,
-          apiKeyId: apiKeyId ?? undefined,
+          apiKeyId: auth?.apiKey?.id ?? undefined,
         },
       });
     } catch (auditError) {
@@ -152,36 +64,30 @@ export default async function errorHandler(
     }
   }
 
-  console.log('[Error Handler] Returning JSON for API route:', { path, status, statusText });
+  // Non-API routes are handled by Nuxt's default error page (error.vue)
+  if (!isApiRoute) {
+    return;
+  }
 
-  // For API routes ALWAYS return JSON - don't rely on defaultHandler
-  const body = JSON.stringify(
-    {
-      error: true,
-      url: url,
-      status,
-      statusText,
-      message,
-      ...(h3Error?.data ? { data: h3Error.data } : {}),
-      ...(process.env.NODE_ENV === 'development' && error.stack
-        ? {
-            stack: error.stack.split('\n').map((line: string) => line.trim()),
-          }
-        : {}),
-    },
-    null,
-    process.env.NODE_ENV === 'development' ? 2 : 0,
-  );
+  // API routes: return standardized JSON response
+  const isDev = process.env.NODE_ENV === 'development';
+  const body = {
+    error: true,
+    path,
+    status: statusCode,
+    message,
+    data,
+    ...(isDev && error.stack ? { stack: error.stack.split('\n').map((s) => s.trim()) } : {}),
+  };
 
-  return new Response(body, {
-    status,
-    statusText,
+  return new Response(JSON.stringify(body, null, isDev ? 2 : 0), {
+    status: statusCode,
     headers: {
       'Content-Type': 'application/json',
-      'x-content-type-options': 'nosniff',
-      'x-frame-options': 'DENY',
-      'referrer-policy': 'no-referrer',
-      'cache-control': 'no-cache',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+      'Referrer-Policy': 'no-referrer',
+      'Cache-Control': 'no-cache',
     },
   });
 }

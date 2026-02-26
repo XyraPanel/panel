@@ -18,7 +18,6 @@ export async function requireServerPermission(
   if (!user?.id) {
     throw createError({
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Authentication required',
     });
   }
@@ -26,7 +25,6 @@ export async function requireServerPermission(
   if (!options.serverId) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Server ID is required for permission check',
     });
   }
@@ -69,7 +67,6 @@ export async function requireServerPermission(
   if (!hasPermissions) {
     throw createError({
       status: 403,
-      statusText: 'Forbidden',
       message: `Missing required permissions: ${missingPermissions.join(', ')}`,
       data: {
         missingPermissions,
@@ -120,7 +117,6 @@ export async function requireAnyPermission(
   if (!user?.id) {
     throw createError({
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Authentication required',
     });
   }
@@ -146,7 +142,6 @@ export async function requireAnyPermission(
   if (!hasAnyPermission) {
     throw createError({
       status: 403,
-      statusText: 'Forbidden',
       message: `Missing any of required permissions: ${permissions.join(', ')}`,
       data: {
         requiredPermissions: permissions,
@@ -170,7 +165,6 @@ export async function requireAdminPermission(event: H3Event): Promise<Permission
   if (!user?.id) {
     throw createError({
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Authentication required',
     });
   }
@@ -180,7 +174,6 @@ export async function requireAdminPermission(event: H3Event): Promise<Permission
   if (!userPermissions.isAdmin) {
     throw createError({
       status: 403,
-      statusText: 'Forbidden',
       message: 'Administrator privileges required',
     });
   }

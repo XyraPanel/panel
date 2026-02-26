@@ -45,7 +45,6 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!checkRateLimit(clientIp)) {
     throw createError({
       status: 429,
-      statusText: 'Too Many Requests',
       message: 'Too many SFTP authentication attempts. Please try again later.',
     });
   }
@@ -56,7 +55,6 @@ export default defineEventHandler(async (event: H3Event) => {
   if (parts.length < 2) {
     throw createError({
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Invalid SFTP credentials format',
     });
   }
@@ -75,7 +73,6 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!server) {
     throw createError({
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Invalid SFTP credentials',
     });
   }
@@ -91,7 +88,6 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!user) {
     throw createError({
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Invalid SFTP credentials',
     });
   }
@@ -115,7 +111,6 @@ export default defineEventHandler(async (event: H3Event) => {
       ) {
         throw createError({
           status: 401,
-          statusText: 'Unauthorized',
           message: 'Invalid SFTP credentials',
         });
       }
@@ -125,7 +120,6 @@ export default defineEventHandler(async (event: H3Event) => {
       if (error instanceof APIError) {
         throw createError({
           status: 401,
-          statusText: 'Unauthorized',
           message: 'Invalid SFTP credentials',
         });
       }
@@ -164,14 +158,12 @@ export default defineEventHandler(async (event: H3Event) => {
       if (!sshKey) {
         throw createError({
           status: 401,
-          statusText: 'Unauthorized',
           message: 'Invalid SSH key',
         });
       }
     } catch {
       throw createError({
         status: 401,
-        statusText: 'Unauthorized',
         message: 'Invalid SSH key',
       });
     }
@@ -191,7 +183,6 @@ export default defineEventHandler(async (event: H3Event) => {
     if (!subuser) {
       throw createError({
         status: 403,
-        statusText: 'Forbidden',
         message: 'You do not have access to this server',
       });
     }

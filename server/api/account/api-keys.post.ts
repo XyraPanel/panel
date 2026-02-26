@@ -29,7 +29,6 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
       if (Number.isNaN(expiresAtMs) || expiresAtMs <= Date.now()) {
         throw createError({
           status: 400,
-          statusText: 'Bad Request',
           message: 'expiresAt must be a valid future datetime',
         });
       }
@@ -90,23 +89,21 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
       },
     };
   } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
     if (error instanceof APIError) {
       const statusCode =
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to create API key',
+        message: error.message || 'Failed to create API key',
       });
     }
     console.error('Error creating API key:', error);
 
-    if (error && typeof error === 'object' && 'status' in error) {
-      throw error;
-    }
-
     throw createError({
       status: 500,
-      statusText: 'Internal Server Error',
       message: error instanceof Error ? error.message : 'Failed to create API key',
     });
   }

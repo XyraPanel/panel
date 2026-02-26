@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   if (!serverId) {
     throw createError({
       status: 400,
-      statusText: 'Server identifier is required',
+      message: 'Server identifier is required',
     });
   }
 
@@ -72,20 +72,20 @@ export default defineEventHandler(async (event) => {
     if (error instanceof WingsAuthError) {
       throw createError({
         status: 403,
-        statusText: 'Wings authentication failed',
+        message: 'Wings authentication failed',
       });
     }
 
     if (error instanceof WingsConnectionError) {
       throw createError({
         status: 503,
-        statusText: 'Wings daemon unavailable',
+        message: 'Wings daemon unavailable',
       });
     }
 
     throw createError({
       status: 500,
-      statusText: 'Failed to create backup',
+      message: 'Failed to create backup',
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     });
   }

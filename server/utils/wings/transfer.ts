@@ -32,7 +32,7 @@ export function createWingsTransferClient(node: WingsNodeConnection) {
     if (!response.ok) {
       const message = await response.text();
       throw new Error(
-        `Wings transfer error: ${response.status} ${response.statusText} - ${message}`,
+        `Wings transfer error: ${response.status} - ${message}`,
       );
     }
 

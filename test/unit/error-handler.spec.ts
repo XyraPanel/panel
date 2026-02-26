@@ -41,20 +41,13 @@ describe('server/error handler', () => {
     const event = createTestEvent('/api/admin/users');
     const error = {
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Authentication required',
       name: 'H3Error',
       data: undefined,
       stack: '',
-    } as Error & { status: number; statusText: string; data?: unknown };
+    } as Error & { status: number; data?: unknown };
 
-    await errorHandler(error, event, {
-      defaultHandler: vi.fn(async () => ({
-        status: 500,
-        headers: {},
-        body: '',
-      })),
-    });
+    await errorHandler(error, event);
 
     expect(mockRecordAuditEventFromRequest).toHaveBeenCalledTimes(1);
     expect(mockRecordAuditEventFromRequest).toHaveBeenCalledWith(
@@ -71,19 +64,12 @@ describe('server/error handler', () => {
     const event = createTestEvent('/admin');
     const error = {
       status: 500,
-      statusText: 'Internal Server Error',
       message: 'Failure',
       name: 'H3Error',
       stack: '',
-    } as Error & { status: number; statusText: string };
+    } as Error & { status: number };
 
-    await errorHandler(error, event, {
-      defaultHandler: vi.fn(async () => ({
-        status: 500,
-        headers: {},
-        body: '',
-      })),
-    });
+    await errorHandler(error, event);
 
     expect(mockRecordAuditEventFromRequest).not.toHaveBeenCalled();
   });

@@ -25,7 +25,7 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
   if (!user || !user.id) {
     throw createError({
       status: 401,
-      statusText: 'User not found in session',
+      message: 'User not found in session',
     });
   }
 
@@ -39,7 +39,7 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
   if (!dbUserResult[0]) {
     throw createError({
       status: 404,
-      statusText: 'User not found in database. Please log out and log back in.',
+      message: 'User not found in database. Please log out and log back in.',
     });
   }
 
@@ -60,7 +60,6 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
     if (Number.isNaN(expiresAtMs) || expiresAtMs <= Date.now()) {
       throw createError({
         status: 400,
-        statusText: 'Bad Request',
         message: 'expiresAt must be a valid future datetime',
       });
     }
@@ -83,7 +82,7 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to create API key',
+        message: error.message || 'Failed to create API key',
       });
     }
     throw error;

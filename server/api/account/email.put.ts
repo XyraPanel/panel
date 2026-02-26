@@ -33,7 +33,7 @@ export default defineEventHandler(async (event): Promise<UpdateEmailResponse> =>
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Invalid password',
+        message: error.message || 'Invalid password',
       });
     }
     throw error;
@@ -53,7 +53,7 @@ export default defineEventHandler(async (event): Promise<UpdateEmailResponse> =>
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to request email change',
+        message: error.message || 'Failed to request email change',
       });
     }
     throw error;

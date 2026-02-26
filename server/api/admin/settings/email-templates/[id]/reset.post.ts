@@ -20,14 +20,14 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       status: 400,
-      statusText: 'Template ID is required',
+      message: 'Template ID is required',
     });
   }
 
   if (!defaultTemplates[id]) {
     throw createError({
       status: 404,
-      statusText: `No default template found for "${id}"`,
+      message: `No default template found for "${id}"`,
     });
   }
 
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
     if (updated.length === 0) {
       throw createError({
         status: 404,
-        statusText: `Template "${id}" not found`,
+        message: `Template "${id}" not found`,
       });
     }
 
@@ -75,7 +75,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       status: 500,
-      statusText: `Failed to reset template: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      message: `Failed to reset template: ${err instanceof Error ? err.message : 'Unknown error'}`,
     });
   }
 });

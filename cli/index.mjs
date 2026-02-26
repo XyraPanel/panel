@@ -237,7 +237,7 @@ const deployCommand = defineCommand({
       await runBinary('pnpm', ['run', 'build']);
     }
 
-    const processName = String(args.name ?? '');
+    const processName = String(args.name ?? defaultPm2App);
     logger.start(`Reloading PM2 process: ${processName}`);
     try {
       await runBinary('pm2', ['reload', processName, '--env', args.env, '--update-env']);

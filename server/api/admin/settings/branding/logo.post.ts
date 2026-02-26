@@ -36,7 +36,7 @@ export default defineEventHandler(async (event) => {
 
   const formData = await readMultipartFormData(event);
   if (!formData) {
-    throw createError({ status: 400, statusText: 'Bad Request', message: 'No form data received' });
+    throw createError({ status: 400, message: 'No form data received' });
   }
 
   const file = formData.find((field) => field.name === 'logo' && field.data);
@@ -44,7 +44,6 @@ export default defineEventHandler(async (event) => {
   if (!file) {
     throw createError({
       status: 422,
-      statusText: 'Unprocessable Entity',
       message: 'Logo file is required',
     });
   }
@@ -52,16 +51,14 @@ export default defineEventHandler(async (event) => {
   if (file.data.length > MAX_FILE_SIZE) {
     throw createError({
       status: 413,
-      statusText: 'Payload Too Large',
-      message: 'Logo must be less than 2MB',
+      message: 'Logo must be less than 2MB (Payload Too Large)',
     });
   }
 
   if (file.type && !ALLOWED_MIME_TYPES[file.type]) {
     throw createError({
       status: 415,
-      statusText: 'Unsupported Media Type',
-      message: 'Unsupported image format',
+      message: 'Unsupported image format (Unsupported Media Type)',
     });
   }
 

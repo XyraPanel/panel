@@ -9,7 +9,6 @@ export default defineEventHandler(async (event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -27,8 +26,7 @@ export default defineEventHandler(async (event) => {
   if (!formData) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
-      message: 'No form data provided',
+      message: 'Bad Request: No form data provided',
     });
   }
 
@@ -41,22 +39,20 @@ export default defineEventHandler(async (event) => {
   if (!directory) {
     throw createError({
       status: 422,
-      statusText: 'Unprocessable Entity',
-      message: 'Target directory is required',
+      message: 'Unprocessable Entity: Target directory is required',
     });
   }
 
   if (files.length === 0) {
     throw createError({
       status: 422,
-      statusText: 'Unprocessable Entity',
-      message: 'At least one file is required for upload',
+      message: 'Unprocessable Entity: At least one file is required for upload',
     });
   }
 
   try {
     if (!server.nodeId) {
-      throw createError({ status: 500, statusText: 'Server has no assigned node' });
+      throw createError({ status: 500, message: 'Server has no assigned node' });
     }
 
     await remoteUploadFiles(
@@ -90,8 +86,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     throw createError({
       status: 500,
-      statusText: 'Wings API Error',
-      message: error instanceof Error ? error.message : 'Failed to upload files',
+      message: `Wings API Error: ${error instanceof Error ? error.message : 'Failed to upload files'}`,
       cause: error,
     });
   }

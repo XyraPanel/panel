@@ -19,7 +19,7 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
 
   const serverId = getRouterParam(event, 'id');
   if (!serverId) {
-    throw createError({ status: 400, statusText: 'Server ID is required' });
+    throw createError({ status: 400, message: 'Server ID is required' });
   }
 
   const body = await readValidatedBodyWithLimit(event, serverActionSchema, BODY_SIZE_LIMITS.SMALL);
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
     .limit(1);
 
   if (!server) {
-    throw createError({ status: 404, statusText: 'Server not found' });
+    throw createError({ status: 404, message: 'Server not found' });
   }
 
   try {
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
         await serverManager.powerAction(server.uuid, body.action, options);
         break;
       default:
-        throw createError({ status: 400, statusText: 'Invalid action' });
+        throw createError({ status: 400, message: 'Invalid action' });
     }
 
     await recordAuditEventFromRequest(event, {
@@ -86,7 +86,7 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
     if (error instanceof WingsAuthError) {
       throw createError({
         status: 403,
-        statusText: 'Wings authentication failed',
+        message: 'Wings authentication failed',
         data: { error: error.message },
       });
     }
@@ -94,14 +94,14 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
     if (error instanceof WingsConnectionError) {
       throw createError({
         status: 503,
-        statusText: 'Wings daemon unavailable',
+        message: 'Wings daemon unavailable',
         data: { error: error.message },
       });
     }
 
     throw createError({
       status: 500,
-      statusText: `Failed to ${body.action} server`,
+      message: `Failed to ${body.action} server`,
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     });
   }

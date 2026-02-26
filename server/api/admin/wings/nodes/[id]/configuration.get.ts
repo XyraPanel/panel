@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   const { id } = event.context.params ?? {};
   if (!id || typeof id !== 'string') {
-    throw createError({ status: 400, statusText: 'Missing node id' });
+    throw createError({ status: 400, message: 'Missing node id' });
   }
 
   const runtimeConfig = useRuntimeConfig();
@@ -28,7 +28,10 @@ export default defineEventHandler(async (event) => {
 
     return { data: configuration };
   } catch (error: unknown) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
     const message = error instanceof Error ? error.message : 'Failed to build node configuration';
-    throw createError({ status: 404, statusText: message });
+    throw createError({ status: 404, message });
   }
 });

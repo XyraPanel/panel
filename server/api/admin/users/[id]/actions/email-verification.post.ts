@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const userId = getRouterParam(event, 'id');
   if (!userId) {
-    throw createError({ status: 400, statusText: 'Bad Request', message: 'User ID is required' });
+    throw createError({ status: 400, message: 'User ID is required' });
   }
 
   const body = await readValidatedBodyWithLimit(
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (!user) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' });
+    throw createError({ status: 404, message: 'User not found' });
   }
 
   try {
@@ -65,7 +65,6 @@ export default defineEventHandler(async (event) => {
         if (!user.email) {
           throw createError({
             status: 400,
-            statusText: 'Bad Request',
             message: 'User is missing an email address',
           });
         }
@@ -139,7 +138,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       status,
-      statusText: message,
+      message,
     });
   }
 });

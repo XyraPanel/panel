@@ -29,8 +29,7 @@ export default defineEventHandler(async (event) => {
     if (nodes.length !== body.nodeIds.length) {
       throw createError({
         status: 400,
-        statusText: 'Bad Request',
-        message: 'One or more nodes were not found',
+        message: 'One or more specified nodes were not found',
       });
     }
   }
@@ -44,8 +43,7 @@ export default defineEventHandler(async (event) => {
     if (eggs.length !== body.eggIds.length) {
       throw createError({
         status: 400,
-        statusText: 'Bad Request',
-        message: 'One or more eggs were not found',
+        message: 'One or more specified eggs were not found',
       });
     }
   }

@@ -15,7 +15,6 @@ export default defineEventHandler(async (event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -35,14 +34,13 @@ export default defineEventHandler(async (event) => {
   if (!filePath || contents === undefined) {
     throw createError({
       status: 422,
-      statusText: 'Unprocessable Entity',
-      message: 'File path and content are required',
+      message: 'Unprocessable Entity: File path and content are required',
     });
   }
 
   try {
     if (!server.nodeId) {
-      throw createError({ status: 500, statusText: 'Server has no assigned node' });
+      throw createError({ status: 500, message: 'Server has no assigned node' });
     }
 
     await remoteWriteFile(server.uuid, filePath, contents, server.nodeId);
@@ -69,8 +67,7 @@ export default defineEventHandler(async (event) => {
     });
     throw createError({
       status: 500,
-      statusText: 'Wings API Error',
-      message: error instanceof Error ? error.message : 'Failed to write file',
+      message: `Wings API Error: ${error instanceof Error ? error.message : 'Failed to write file'}`,
     });
   }
 });

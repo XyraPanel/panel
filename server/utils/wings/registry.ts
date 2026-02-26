@@ -400,7 +400,7 @@ export async function remoteUploadFiles(
   });
 
   if (!response.ok) {
-    const error = new Error(`HTTP ${response.status}: ${response.statusText}`);
+    const error = new Error(`HTTP ${response.status}`);
     Object.assign(error, { response });
     throw toWingsHttpError(error, { operation: 'upload files', nodeId });
   }
@@ -483,7 +483,7 @@ async function wingsFetch<T>(
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      let errorMessage = `HTTP ${response.status}`;
       try {
         const errorBody = await response.text();
         if (errorBody) {
@@ -494,7 +494,7 @@ async function wingsFetch<T>(
       }
 
       debugError(`[Wings Fetch] Request failed: ${fullUrl.toString()}`);
-      debugError(`[Wings Fetch] Status: ${response.status} ${response.statusText}`);
+      debugError(`[Wings Fetch] Status: ${response.status}`);
       debugError(`[Wings Fetch] Error message: ${errorMessage}`);
 
       const error = new Error(errorMessage);
@@ -786,7 +786,7 @@ export async function remoteGetFileContents(
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
       throw new Error(
-        `HTTP ${response.status}: ${response.statusText}${errorText ? ` - ${errorText}` : ''}`,
+        `HTTP ${response.status}${errorText ? ` - ${errorText}` : ''}`,
       );
     }
 
@@ -833,12 +833,11 @@ export async function remoteWriteFile(
 
       if (!response.ok) {
         const errorText = await response.text().catch(() => '');
-        const errorMessage = `HTTP ${response.status}: ${response.statusText}${errorText ? ` - ${errorText}` : ''}`;
+        const errorMessage = `HTTP ${response.status}${errorText ? ` - ${errorText}` : ''}`;
         debugError('[Wings Write] Wings rejected file write:', {
           serverUuid,
           filePath,
           status: response.status,
-          statusText: response.statusText,
           errorText,
         });
         throw new Error(errorMessage);

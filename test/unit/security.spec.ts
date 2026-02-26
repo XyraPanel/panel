@@ -32,14 +32,11 @@ vi.stubGlobal(
   (opts: {
     status?: number;
     statusCode?: number;
-    statusText?: string;
-    statusMessage?: string;
     message?: string;
   }) => {
-    const err = new Error(opts.message ?? opts.statusText ?? opts.statusMessage);
+    const err = new Error(opts.message);
     Object.assign(err, {
       statusCode: opts.statusCode ?? opts.status,
-      statusMessage: opts.statusMessage ?? opts.statusText,
       ...opts,
     });
     return err;
@@ -78,7 +75,7 @@ describe('server/utils/security', () => {
 
       await expect(requireAuth(mockEvent)).rejects.toMatchObject({
         statusCode: 401,
-        statusMessage: 'Unauthorized',
+        message: 'Authentication required',
       });
     });
   });
@@ -115,7 +112,7 @@ describe('server/utils/security', () => {
 
       await expect(requireAdmin(mockEvent)).rejects.toMatchObject({
         statusCode: 401,
-        statusMessage: 'Unauthorized',
+        message: 'Authentication required',
       });
     });
   });

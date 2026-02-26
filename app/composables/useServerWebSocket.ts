@@ -704,9 +704,9 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({
-            message: `HTTP ${response.status} ${response.statusText}`,
+            message: `HTTP ${response.status}`,
           }));
-          throw new Error(errorData.message || `HTTP ${response.status} ${response.statusText}`);
+          throw new Error(errorData.message || `HTTP ${response.status}`);
         }
 
         const responseData = await response.json();
@@ -765,7 +765,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
         }
 
         // $fetch throws H3Error objects for non-2xx responses
-        if (errorData && typeof errorData === 'object' && errorData !== null) {
+        if (errorData && typeof errorData === 'object') {
           const msg = (errorData as { message?: unknown }).message;
           if (typeof msg === 'string') {
             throw new Error(
@@ -782,7 +782,6 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
       }
 
       if (
-        !credentials ||
         typeof credentials.socket !== 'string' ||
         typeof credentials.token !== 'string'
       ) {

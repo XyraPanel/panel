@@ -37,13 +37,12 @@ export default defineEventHandler(async (event) => {
     const existing = existingResult[0];
 
     if (!existing) {
-      throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' });
+      throw createError({ status: 404, message: 'User not found' });
     }
 
     if (!existing.passwordResetRequired) {
       throw createError({
         status: 400,
-        statusText: 'Bad Request',
         message: 'Password reset not required',
       });
     }
@@ -55,7 +54,6 @@ export default defineEventHandler(async (event) => {
     if (verifyResult?.status) {
       throw createError({
         status: 400,
-        statusText: 'Bad Request',
         message: 'Choose a different password',
       });
     }
@@ -97,12 +95,15 @@ export default defineEventHandler(async (event) => {
       revokedSessions: revokedCount,
     };
   } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
     if (error instanceof APIError) {
       const statusCode =
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to update password',
+        message: error.message || 'Failed to update password',
       });
     }
 

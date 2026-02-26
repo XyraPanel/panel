@@ -39,7 +39,6 @@ export default defineEventHandler(async (event): Promise<WebSocketToken | WebSoc
   if (!id || typeof id !== 'string') {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -76,8 +75,7 @@ export default defineEventHandler(async (event): Promise<WebSocketToken | WebSoc
 
     throw createError({
       status: 502,
-      statusText: 'Failed to prepare websocket session',
-      message: error instanceof Error ? error.message : 'Failed to prepare websocket session',
+      message: `Failed to prepare websocket session: ${error instanceof Error ? error.message : 'Unknown error'}`,
     });
   }
 
@@ -87,8 +85,7 @@ export default defineEventHandler(async (event): Promise<WebSocketToken | WebSoc
   if (!nodeConnection) {
     throw createError({
       status: 500,
-      statusText: 'Node not available',
-      message: 'Server has no resolved Wings node',
+      message: 'Node not available: Server has no resolved Wings node',
     });
   }
 

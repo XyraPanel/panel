@@ -14,7 +14,6 @@ export default defineEventHandler(async (event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -32,7 +31,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBodyWithLimit(event, serverCommandSchema, BODY_SIZE_LIMITS.SMALL);
 
   if (!server.nodeId) {
-    throw createError({ status: 500, statusText: 'Server has no assigned node' });
+    throw createError({ status: 500, message: 'Server has no assigned node' });
   }
 
   try {
@@ -56,8 +55,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     throw createError({
       status: 500,
-      statusText: 'Wings API Error',
-      message: error instanceof Error ? error.message : 'Failed to send command',
+      message: `Wings API Error: ${error instanceof Error ? error.message : 'Failed to send command'}`,
     });
   }
 });

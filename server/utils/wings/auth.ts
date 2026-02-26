@@ -8,7 +8,6 @@ export async function getNodeIdFromAuth(event: H3Event): Promise<string> {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw createError({
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Missing or invalid Wings authentication token',
     });
   }
@@ -18,7 +17,6 @@ export async function getNodeIdFromAuth(event: H3Event): Promise<string> {
   if (!parsed) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'The Authorization header provided was not in a valid format.',
     });
   }
@@ -35,7 +33,6 @@ export async function getNodeIdFromAuth(event: H3Event): Promise<string> {
   if (!node) {
     throw createError({
       status: 403,
-      statusText: 'Forbidden',
       message: 'You are not authorized to access this resource.',
     });
   }
@@ -55,7 +52,6 @@ export async function getNodeIdFromAuth(event: H3Event): Promise<string> {
     if (!constantTimeCompare(token, decryptedToken)) {
       throw createError({
         status: 403,
-        statusText: 'Forbidden',
         message: 'You are not authorized to access this resource.',
       });
     }
@@ -71,7 +67,6 @@ export async function getNodeIdFromAuth(event: H3Event): Promise<string> {
 
     throw createError({
       status: 403,
-      statusText: 'Forbidden',
       message: 'You are not authorized to access this resource.',
     });
   }

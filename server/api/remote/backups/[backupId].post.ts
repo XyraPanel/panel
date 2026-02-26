@@ -12,7 +12,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const { backupId } = event.context.params ?? {};
 
   if (!backupId || typeof backupId !== 'string') {
-    throw createError({ status: 400, statusText: 'Missing backup ID' });
+    throw createError({ status: 400, message: 'Missing backup ID' });
   }
 
   const nodeId = await getNodeIdFromAuth(event);
@@ -32,7 +32,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const backup = backupRows[0];
 
   if (!backup) {
-    throw createError({ status: 404, statusText: 'Backup not found' });
+    throw createError({ status: 404, message: 'Backup not found' });
   }
 
   const updates = {

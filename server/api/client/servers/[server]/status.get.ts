@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
 
   const serverIdentifier = getRouterParam(event, 'server');
   if (!serverIdentifier) {
-    throw createError({ status: 400, statusText: 'Server identifier required' });
+    throw createError({ status: 400, message: 'Server identifier required' });
   }
 
   const { server } = await getServerWithAccess(serverIdentifier, accountContext.session);
@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     console.error('Failed to get server status:', error);
     throw createError({
       status: 500,
-      statusText: 'Failed to get server status',
+      message: 'Failed to get server status',
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     });
   }

@@ -2,19 +2,20 @@
 
 const isDev = process.env.NODE_ENV !== 'production';
 
-const redisStorageConfig = {
+const baseRedisConfig = {
   host: process.env.REDIS_HOST || (isDev ? 'localhost' : 'redis'),
   port: process.env.REDIS_PORT ? Number.parseInt(process.env.REDIS_PORT) : 6379,
   username: process.env.REDIS_USERNAME,
   password: process.env.REDIS_PASSWORD,
+};
+
+const redisStorageConfig = {
+  ...baseRedisConfig,
   tls: process.env.REDIS_TLS === 'true',
 };
 
 const redisRateLimiterOptions = {
-  host: process.env.REDIS_HOST || (isDev ? 'localhost' : 'redis'),
-  port: process.env.REDIS_PORT ? Number.parseInt(process.env.REDIS_PORT) : 6379,
-  username: process.env.REDIS_USERNAME,
-  password: process.env.REDIS_PASSWORD,
+  ...baseRedisConfig,
   ...(process.env.REDIS_TLS === 'true' ? { tls: {} } : {}),
 };
 

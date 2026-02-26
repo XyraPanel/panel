@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   if (!serverId) {
     throw createError({
       status: 400,
-      statusText: 'Server identifier is required',
+      message: 'Server identifier is required',
     });
   }
 
@@ -63,12 +63,14 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
     console.error('Failed to initiate server transfer:', error);
 
     throw createError({
       status: 500,
-      statusText: 'Failed to initiate server transfer',
-      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+      message: `Failed to initiate server transfer: ${error instanceof Error ? error.message : 'Unknown error'}`,
     });
   }
 });

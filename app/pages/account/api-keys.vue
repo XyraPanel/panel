@@ -213,9 +213,8 @@ async function createApiKey(event: FormSubmitEvent<KeyFormSchema>) {
       const err = error as {
         data?: { message?: string };
         message?: string;
-        statusMessage?: string;
       };
-      message = err.data?.message || err.message || err.statusMessage || message;
+      message = err.data?.message || err.message || message;
     }
 
     createError.value = message;

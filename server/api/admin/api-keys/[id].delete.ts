@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to delete API key',
+        message: error.message || 'Failed to delete API key',
       });
     }
     throw error;

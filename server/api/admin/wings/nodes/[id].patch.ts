@@ -53,18 +53,18 @@ async function readUpdatePayload(event: H3Event): Promise<UpdateWingsNodePayload
   const raw = await readRawBody(event, 'utf8');
 
   if (raw && raw.length > MAX_BODY_SIZE) {
-    throw createError({ status: 413, statusText: 'Payload too large' });
+    throw createError({ status: 413, message: 'Payload too large' });
   }
 
   let parsed: unknown;
   try {
     parsed = raw && raw.length > 0 ? JSON.parse(raw) : {};
   } catch (error) {
-    throw createError({ status: 400, statusText: 'Invalid JSON body', cause: error });
+    throw createError({ status: 400, message: 'Invalid JSON body', cause: error });
   }
 
   if (!validatePayload(parsed)) {
-    throw createError({ status: 400, statusText: 'Provide at least one property to update' });
+    throw createError({ status: 400, message: 'Provide at least one property to update' });
   }
 
   return parsed;
@@ -79,7 +79,7 @@ export default defineEventHandler(async (event): Promise<UpdateWingsNodeResponse
 
   const { id } = event.context.params ?? {};
   if (!id || typeof id !== 'string') {
-    throw createError({ status: 400, statusText: 'Missing node id' });
+    throw createError({ status: 400, message: 'Missing node id' });
   }
 
   const body = await readUpdatePayload(event);
@@ -107,6 +107,6 @@ export default defineEventHandler(async (event): Promise<UpdateWingsNodeResponse
     return { data: updatedNode };
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to update node';
-    throw createError({ status: 400, statusText: message });
+    throw createError({ status: 400, message });
   }
 });

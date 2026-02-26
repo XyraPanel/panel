@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Missing server identifier',
+      message: 'Missing server identifier',
     });
   }
 

@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
 
   const userId = getRouterParam(event, 'id');
   if (!userId) {
-    throw createError({ status: 400, statusText: 'Bad Request', message: 'User ID is required' });
+    throw createError({ status: 400, message: 'User ID is required' });
   }
 
   const rawBody = await readValidatedBodyWithLimit(event, patchUserSchema, BODY_SIZE_LIMITS.SMALL);
@@ -141,7 +141,6 @@ export default defineEventHandler(async (event) => {
     if (!updatedUser) {
       throw createError({
         status: 404,
-        statusText: 'Not Found',
         message: 'User not found after update',
       });
     }
@@ -162,12 +161,12 @@ export default defineEventHandler(async (event) => {
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to update user',
+        message: error.message || 'Failed to update user',
       });
     }
     throw createError({
       status: 500,
-      statusText: 'Failed to update user',
+      message: 'Failed to update user',
     });
   }
 });

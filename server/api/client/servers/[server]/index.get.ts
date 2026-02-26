@@ -11,7 +11,7 @@ import { requireAccountUser } from '#server/utils/security';
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server');
   if (!serverIdentifier) {
-    throw createError({ status: 400, statusText: 'Server identifier is required' });
+    throw createError({ status: 400, message: 'Server identifier is required' });
   }
 
   const accountContext = await requireAccountUser(event);

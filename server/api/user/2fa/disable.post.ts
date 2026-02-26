@@ -44,13 +44,13 @@ export default defineEventHandler(async (event) => {
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
       throw createError({
         statusCode,
-        statusMessage: error.message || 'Failed to disable 2FA',
+        message: error.message || 'Failed to disable 2FA',
       });
     }
 
     throw createError({
       status: 500,
-      statusText: 'Failed to disable 2FA',
+      message: 'Failed to disable 2FA',
     });
   }
 });

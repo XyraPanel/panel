@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const nodeId = getRouterParam(event, 'id');
   if (!nodeId) {
-    throw createError({ status: 400, statusText: 'Node ID is required' });
+    throw createError({ status: 400, message: 'Node ID is required' });
   }
 
   const db = useDrizzle();
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (!node) {
-    throw createError({ status: 404, statusText: 'Node not found' });
+    throw createError({ status: 404, message: 'Node not found' });
   }
 
   const wingsNode: WingsNode = {

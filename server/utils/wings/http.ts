@@ -38,7 +38,6 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
 
   if (isFetchError(error)) {
     const status = error.response?.status ?? 502;
-    const statusText = error.response?.statusText || 'Bad Gateway';
     const data = error.data;
 
     let message: string | undefined;
@@ -53,7 +52,6 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
 
     return createError({
       status,
-      statusText,
       message,
       data: {
         nodeId: options.nodeId,
@@ -67,16 +65,14 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
     if (error.message === 'No Wings node configured') {
       return createError({
         status: 503,
-        statusText: 'No Wings node configured',
-        message: 'Add a Wings node before attempting this operation.',
+        message: 'No Wings node configured: Add a Wings node before attempting this operation.',
       });
     }
 
     if (error.message === 'Multiple Wings nodes configured; specify nodeId') {
       return createError({
         status: 400,
-        statusText: 'Multiple Wings nodes configured',
-        message: 'Select a Wings node by providing a node query parameter.',
+        message: 'Multiple Wings nodes configured: Select a Wings node by providing a node query parameter.',
         data: {
           nodeId: options.nodeId,
         },
@@ -87,8 +83,7 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
     if (nodeNotFoundMatch) {
       return createError({
         status: 404,
-        statusText: 'Wings node not found',
-        message: `Wings node \u201c${nodeNotFoundMatch[1]}\u201d could not be located.`,
+        message: `Wings node not found: Wings node \u201c${nodeNotFoundMatch[1]}\u201d could not be located.`,
         data: {
           nodeId: nodeNotFoundMatch[1],
         },
@@ -97,8 +92,7 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
 
     return createError({
       status: 502,
-      statusText: 'Wings request failed',
-      message: `Unable to ${operation}.`,
+      message: `Wings request failed: Unable to ${operation}.`,
       data: {
         nodeId: options.nodeId,
         details: error.message,
@@ -109,8 +103,7 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
 
   return createError({
     status: 500,
-    statusText: 'Unexpected Wings error',
-    message: `Unable to ${operation}.`,
+    message: `Unexpected Wings error: Unable to ${operation}.`,
     data: {
       nodeId: options.nodeId,
       details: error,

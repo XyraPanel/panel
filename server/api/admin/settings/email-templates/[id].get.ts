@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   if (!id) {
     throw createError({
       status: 400,
-      statusText: 'Template ID is required',
+      message: 'Template ID is required',
     });
   }
 
@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
     if (!template) {
       throw createError({
         status: 404,
-        statusText: `Template "${id}" not found`,
+        message: `Template "${id}" not found`,
       });
     }
 
@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
     }
     throw createError({
       status: 500,
-      statusText: `Failed to retrieve template: ${err instanceof Error ? err.message : 'Unknown error'}`,
+      message: `Failed to retrieve template: ${err instanceof Error ? err.message : 'Unknown error'}`,
     });
   }
 });

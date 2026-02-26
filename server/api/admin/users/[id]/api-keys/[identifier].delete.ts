@@ -11,12 +11,12 @@ export default defineEventHandler(async (event) => {
 
   const userId = getRouterParam(event, 'id');
   if (!userId) {
-    throw createError({ status: 400, statusText: 'Missing user ID' });
+    throw createError({ status: 400, message: 'Missing user ID' });
   }
 
   const identifier = getRouterParam(event, 'identifier');
   if (!identifier) {
-    throw createError({ status: 400, statusText: 'Missing API key identifier' });
+    throw createError({ status: 400, message: 'Missing API key identifier' });
   }
 
   const db = useDrizzle();
@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (!targetUser) {
-    throw createError({ status: 404, statusText: 'User not found' });
+    throw createError({ status: 404, message: 'User not found' });
   }
 
   const [apiKey] = await db
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (!apiKey) {
-    throw createError({ status: 404, statusText: 'API key not found' });
+    throw createError({ status: 404, message: 'API key not found' });
   }
 
   await db.delete(tables.apiKeys).where(eq(tables.apiKeys.id, apiKey.id));

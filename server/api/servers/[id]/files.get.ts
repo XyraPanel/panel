@@ -11,7 +11,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Missing server identifier',
+      message: 'Missing server identifier',
     });
   }
 
@@ -69,8 +69,7 @@ export default defineEventHandler(async (event: H3Event) => {
     if (server.status === 'installing') {
       throw createError({
         status: 400,
-        statusText: 'Server not ready',
-        message: 'The server is currently installing. Please wait for installation to complete.',
+        message: 'Server not ready: The server is currently installing. Please wait for installation to complete.',
         data: {
           serverUuid: server.uuid,
           status: server.status,
@@ -85,9 +84,8 @@ export default defineEventHandler(async (event: H3Event) => {
     ) {
       throw createError({
         status: 404,
-        statusText: 'Server directory not found',
         message:
-          'The server directory does not exist. This usually happens when installation fails. Please try installing the server again using the "Install on Wings" button.',
+          'Server directory not found: The server directory does not exist. This usually happens when installation fails. Please try installing the server again using the "Install on Wings" button.',
         data: {
           serverUuid: server.uuid,
           status: server.status,
@@ -99,9 +97,8 @@ export default defineEventHandler(async (event: H3Event) => {
     if (status === 403) {
       throw createError({
         status: 502,
-        statusText: 'Wings Authentication Failed',
         message:
-          'Unable to authenticate with Wings daemon. The Wings node token may be incorrect. Please update your Wings configuration with the token from Admin → Wings → Nodes → [Your Node] → Configuration.',
+          'Wings Authentication Failed: Unable to authenticate with Wings daemon. The Wings node token may be incorrect. Please update your Wings configuration with the token from Admin → Wings → Nodes → [Your Node] → Configuration.',
         data: {
           serverUuid: server.uuid,
           directory,
@@ -119,8 +116,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
     throw createError({
       status,
-      statusText: 'Wings request failed',
-      message: errorMessage,
+      message: `Wings request failed: ${errorMessage}`,
       data: {
         serverUuid: server.uuid,
         directory,

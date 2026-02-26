@@ -22,8 +22,7 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
   if (!nestId || !typedEggData) {
     throw createError({
       status: 400,
-      statusText: 'Nest ID and egg data are required',
-      message: 'Missing nestId or eggData in request body',
+      message: 'Nest ID and egg data are required: Missing nestId or eggData in request body',
     });
   }
 
@@ -32,7 +31,6 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
   if (metaVersion && !ACCEPTED_VERSIONS.includes(metaVersion)) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: `Invalid egg format version: "${metaVersion}". Expected one of: ${ACCEPTED_VERSIONS.join(', ')}`,
     });
   }
@@ -40,7 +38,6 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
   if (!typedEggData.name || !typedEggData.author) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: `Egg file is missing required fields: ${[!typedEggData.name && 'name', !typedEggData.author && 'author'].filter(Boolean).join(', ')}`,
     });
   }
@@ -50,7 +47,7 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
   const [nest] = await db.select().from(tables.nests).where(eq(tables.nests.id, nestId)).limit(1);
 
   if (!nest) {
-    throw createError({ status: 404, statusText: 'Nest not found' });
+    throw createError({ status: 404, message: 'Nest not found' });
   }
 
   const now = new Date().toISOString();

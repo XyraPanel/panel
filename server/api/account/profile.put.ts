@@ -40,7 +40,7 @@ export default defineEventHandler(async (event) => {
   const currentUser = currentUserResult[0];
 
   if (!currentUser) {
-    throw createError({ status: 404, statusText: 'User not found' });
+    throw createError({ status: 404, message: 'User not found' });
   }
 
   const oldUsername = currentUser.username;
@@ -59,8 +59,7 @@ export default defineEventHandler(async (event) => {
       if (existingUser && existingUser.id !== user.id) {
         throw createError({
           status: 409,
-          statusText: 'Conflict',
-          message: 'Username already in use',
+          message: 'Conflict: Username already in use',
         });
       }
 
@@ -103,7 +102,7 @@ export default defineEventHandler(async (event) => {
               typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
             throw createError({
               statusCode,
-              statusMessage: error.message || 'Failed to request email change',
+              message: error.message || 'Failed to request email change',
             });
           }
           throw error;
@@ -146,7 +145,7 @@ export default defineEventHandler(async (event) => {
     const updatedUser = updatedUserResult[0];
 
     if (!updatedUser) {
-      throw createError({ status: 404, statusText: 'User not found after update' });
+      throw createError({ status: 404, message: 'User not found after update' });
     }
 
     return {
@@ -161,10 +160,9 @@ export default defineEventHandler(async (event) => {
     if (error && typeof error === 'object' && 'status' in error) {
       throw error;
     }
-    const message = error instanceof Error ? error.message : 'Unable to update profile';
     throw createError({
       status: 400,
-      statusText: message,
+      message: error instanceof Error ? error.message : 'Unable to update profile',
     });
   }
 });

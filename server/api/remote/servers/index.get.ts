@@ -32,7 +32,7 @@ export default defineEventHandler(async (event: H3Event) => {
       }));
       throw createError({
         status: 400,
-        statusText: 'Invalid pagination parameters',
+        message: 'Invalid pagination parameters',
         data: { errors },
       });
     }

@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
 
         throw createError({
           status: 500,
-          statusText: `Failed to suspend server: ${err.message}`,
+          message: `Failed to suspend server: ${err.message}`,
         });
       }
     }

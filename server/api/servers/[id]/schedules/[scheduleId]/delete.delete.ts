@@ -15,7 +15,6 @@ export default defineEventHandler(async (event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -23,7 +22,6 @@ export default defineEventHandler(async (event) => {
   if (!scheduleId) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing schedule identifier',
     });
   }
@@ -52,7 +50,7 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (!schedule) {
-    throw createError({ status: 404, statusText: 'Schedule not found' });
+    throw createError({ status: 404, message: 'Schedule not found' });
   }
 
   try {
@@ -87,8 +85,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     throw createError({
       status: 500,
-      statusText: 'Database Error',
-      message: error instanceof Error ? error.message : 'Failed to delete schedule',
+      message: `Database Error: ${error instanceof Error ? error.message : 'Failed to delete schedule'}`,
     });
   }
 });

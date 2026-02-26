@@ -28,7 +28,7 @@ const description = computed(() => {
   if (props.error.statusCode === 500) {
     return t('errors.internalServerError');
   }
-  return props.error.statusMessage || t('errors.noAdditionalContext');
+  return t('errors.noAdditionalContext');
 });
 
 const requestedUrl = computed(() => {

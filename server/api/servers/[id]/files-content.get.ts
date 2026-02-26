@@ -12,7 +12,6 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -35,7 +34,6 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!file) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing file path',
     });
   }
@@ -64,8 +62,7 @@ export default defineEventHandler(async (event: H3Event) => {
 
     throw createError({
       status: 502,
-      statusText: 'Wings request failed',
-      message: errorMessage,
+      message: `Wings request failed: ${errorMessage}`,
       cause: error,
     });
   }

@@ -14,7 +14,6 @@ export function requireSessionUser(
   if (!session?.user?.id) {
     throw createError({
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Authentication required',
     });
   }
@@ -24,7 +23,6 @@ export function requireSessionUser(
   if (!user) {
     throw createError({
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Invalid session user',
     });
   }

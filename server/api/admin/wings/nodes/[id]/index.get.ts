@@ -55,7 +55,7 @@ function toNumber(value: unknown, fallback = 0): number {
 export default defineEventHandler(async (event) => {
   const { id } = event.context.params ?? {};
   if (!id || typeof id !== 'string') {
-    throw createError({ status: 400, statusText: 'Missing node id' });
+    throw createError({ status: 400, message: 'Missing node id' });
   }
 
   await requireAdmin(event);
@@ -148,7 +148,7 @@ export default defineEventHandler(async (event) => {
     system = await remoteGetSystemInformation(id, 2);
   } catch (error) {
     if (isH3Error(error)) {
-      systemError = error.message || error.statusMessage || 'Failed to reach Wings node';
+      systemError = error.message || 'Failed to reach Wings node';
     } else if (error instanceof Error) {
       systemError = error.message;
     } else {

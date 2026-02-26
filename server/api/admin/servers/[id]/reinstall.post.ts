@@ -69,7 +69,7 @@ export default defineEventHandler(async (event) => {
     const err = error instanceof Error ? error : new Error(String(error));
     throw createError({
       status: 500,
-      statusText: `Failed to trigger server reinstall: ${err.message}`,
+      message: `Failed to trigger server reinstall: ${err.message}`,
     });
   }
 });

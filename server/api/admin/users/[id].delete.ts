@@ -11,13 +11,12 @@ export default defineEventHandler(async (event) => {
 
   const userId = getRouterParam(event, 'id');
   if (!userId) {
-    throw createError({ status: 400, statusText: 'Bad Request', message: 'User ID is required' });
+    throw createError({ status: 400, message: 'User ID is required' });
   }
 
   if (userId === session.user.id) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Cannot delete your own account',
     });
   }
@@ -37,7 +36,7 @@ export default defineEventHandler(async (event) => {
   const user = userResult[0];
 
   if (!user) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'User not found' });
+    throw createError({ status: 404, message: 'User not found' });
   }
 
   const serverCountResult = await db
@@ -50,7 +49,6 @@ export default defineEventHandler(async (event) => {
   if (serversOwned > 0) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: `Cannot delete user: owns ${serversOwned} server(s). Transfer or delete servers first.`,
     });
   }

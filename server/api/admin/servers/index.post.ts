@@ -29,7 +29,7 @@ export default defineEventHandler(async (event) => {
 
   const [egg] = await db.select().from(tables.eggs).where(eq(tables.eggs.id, body.eggId)).limit(1);
   if (!egg) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found' });
+    throw createError({ status: 404, message: 'Egg not found' });
   }
 
   const [node] = await db
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(tables.wingsNodes.id, body.nodeId))
     .limit(1);
   if (!node) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'Node not found' });
+    throw createError({ status: 404, message: 'Node not found' });
   }
 
   const [owner] = await db
@@ -47,7 +47,7 @@ export default defineEventHandler(async (event) => {
     .where(eq(tables.users.id, body.ownerId))
     .limit(1);
   if (!owner) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'Owner not found' });
+    throw createError({ status: 404, message: 'Owner not found' });
   }
 
   const [allocation] = await db
@@ -63,22 +63,20 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (!allocation) {
-    throw createError({ status: 404, statusText: 'Not Found', message: 'Allocation not found' });
+    throw createError({ status: 404, message: 'Allocation not found' });
   }
 
   if (allocation.serverId) {
     throw createError({
       status: 409,
-      statusText: 'Allocation in use',
-      message: 'Allocation already assigned to a server',
+      message: 'Allocation in use: Allocation already assigned to a server',
     });
   }
 
   if (allocation.nodeId !== body.nodeId) {
     throw createError({
       status: 400,
-      statusText: 'Invalid allocation',
-      message: 'Allocation does not belong to selected node',
+      message: 'Invalid allocation: Allocation does not belong to selected node',
     });
   }
 

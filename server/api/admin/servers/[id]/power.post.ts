@@ -13,7 +13,7 @@ const powerActionSchema = z.object({
 export default defineEventHandler(async (event) => {
   const { id: serverId } = event.context.params ?? {};
   if (!serverId || typeof serverId !== 'string') {
-    throw createError({ status: 400, statusText: 'Missing server id' });
+    throw createError({ status: 400, message: 'Missing server id' });
   }
 
   const session = await requireAdmin(event);
@@ -47,18 +47,18 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (!server) {
-    throw createError({ status: 404, statusText: 'Server not found' });
+    throw createError({ status: 404, message: 'Server not found' });
   }
 
   if (!server.nodeId) {
-    throw createError({ status: 400, statusText: 'Server has no assigned node' });
+    throw createError({ status: 400, message: 'Server has no assigned node' });
   }
 
   if (action === 'start' && (server.status === 'install_failed' || !server.status)) {
     if (!server.eggId) {
       throw createError({
         status: 400,
-        statusText: 'Server has no egg assigned. Cannot install server.',
+        message: 'Server has no egg assigned. Cannot install server.',
       });
     }
 
@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
     if (!primaryAllocation) {
       throw createError({
         status: 400,
-        statusText: 'Server has no primary allocation. Cannot install server.',
+        message: 'Server has no primary allocation. Cannot install server.',
       });
     }
 
@@ -119,7 +119,7 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   if (!node) {
-    throw createError({ status: 404, statusText: 'Node not found' });
+    throw createError({ status: 404, message: 'Node not found' });
   }
 
   try {
@@ -151,10 +151,9 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
     throw createError({
       status: 500,
-      statusText: `Failed to send power command: ${message}`,
+      message: `Failed to send power command: ${error instanceof Error ? error.message : String(error)}`,
     });
   }
 });

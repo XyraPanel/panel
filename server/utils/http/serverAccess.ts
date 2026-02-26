@@ -54,7 +54,6 @@ export async function resolveServerRequest(
   if (!identifier || typeof identifier !== 'string') {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -88,7 +87,6 @@ export async function resolveServerRequest(
   if (!user) {
     throw createError({
       status: 401,
-      statusText: 'Unauthorized',
       message: 'Authentication required',
     });
   }
@@ -96,7 +94,7 @@ export async function resolveServerRequest(
   const server = await findServerByIdentifier(identifier);
 
   if (!server) {
-    throw createError({ status: 404, statusText: 'Server not found' });
+    throw createError({ status: 404, message: 'Server not found' });
   }
 
   const isAdmin = user.role === 'admin';
@@ -120,7 +118,7 @@ export async function resolveServerRequest(
     const subuser = subuserRows[0];
 
     if (!subuser) {
-      throw createError({ status: 403, statusText: 'Forbidden' });
+      throw createError({ status: 403, message: 'Forbidden' });
     }
 
     subuserPermissions = normalizePermissionPayload(subuser.permissions);
@@ -160,7 +158,6 @@ export async function resolveServerRequest(
     if (missing.length > 0) {
       throw createError({
         status: 403,
-        statusText: 'Forbidden',
         message: `Missing permissions: ${missing.join(', ')}`,
       });
     }
@@ -173,7 +170,7 @@ export async function resolveServerRequest(
   if (requireNode) {
     const queryNodeIdRaw = getQuery(event).node;
     if (!server.nodeId) {
-      throw createError({ status: 500, statusText: 'Server has no assigned node' });
+      throw createError({ status: 500, message: 'Server has no assigned node' });
     }
 
     const resolved = await resolveNodeConnection(

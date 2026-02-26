@@ -10,7 +10,6 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -31,8 +30,7 @@ export default defineEventHandler(async (event: H3Event) => {
   if (!file) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
-      message: 'File path is required',
+      message: 'Bad Request: File path is required',
     });
   }
 
@@ -53,8 +51,7 @@ export default defineEventHandler(async (event: H3Event) => {
   } catch (error) {
     throw createError({
       status: 500,
-      statusText: 'Wings API Error',
-      message: error instanceof Error ? error.message : 'Failed to generate download URL',
+      message: `Wings API Error: ${error instanceof Error ? error.message : 'Failed to generate download URL'}`,
       cause: error,
     });
   }

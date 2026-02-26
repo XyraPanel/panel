@@ -27,7 +27,7 @@ function toNumber(value: unknown, fallback = 0): number {
 export default defineEventHandler(async (event): Promise<AdminWingsNodeAllocationsPayload> => {
   const { id } = event.context.params ?? {};
   if (!id || typeof id !== 'string') {
-    throw createError({ status: 400, statusText: 'Missing node id' });
+    throw createError({ status: 400, message: 'Missing node id' });
   }
 
   const session = await requireAdmin(event);

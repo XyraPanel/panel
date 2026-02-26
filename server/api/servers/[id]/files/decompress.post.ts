@@ -14,7 +14,6 @@ export default defineEventHandler(async (event) => {
   if (!identifier) {
     throw createError({
       status: 400,
-      statusText: 'Bad Request',
       message: 'Missing server identifier',
     });
   }
@@ -35,7 +34,7 @@ export default defineEventHandler(async (event) => {
 
   try {
     if (!server.nodeId) {
-      throw createError({ status: 500, statusText: 'Server has no assigned node' });
+      throw createError({ status: 500, message: 'Server has no assigned node' });
     }
 
     await remoteDecompressFile(server.uuid, body.root, body.file, server.nodeId);
@@ -57,8 +56,7 @@ export default defineEventHandler(async (event) => {
   } catch (error) {
     throw createError({
       status: 500,
-      statusText: 'Wings API Error',
-      message: error instanceof Error ? error.message : 'Failed to decompress file',
+      message: `Wings API Error: ${error instanceof Error ? error.message : 'Failed to decompress file'}`,
     });
   }
 });

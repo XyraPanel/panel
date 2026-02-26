@@ -34,7 +34,6 @@ export default defineEventHandler(async (event: H3Event) => {
     const message = error instanceof Error ? error.message : 'Unable to create node';
     throw createError({
       statusCode: 400,
-      statusMessage: 'Unable to create node',
       message,
       data: {
         message,
