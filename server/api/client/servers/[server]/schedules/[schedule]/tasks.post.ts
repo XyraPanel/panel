@@ -59,7 +59,7 @@ export default defineEventHandler(async (event) => {
     existingTasks.length > 0 ? Math.max(...existingTasks.map((t) => t.sequenceId)) + 1 : 1;
 
   const taskId = randomUUID();
-  const now = new Date();
+  const now = new Date().toISOString();
 
   await db.insert(tables.serverScheduleTasks).values({
     id: taskId,

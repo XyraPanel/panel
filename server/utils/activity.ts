@@ -30,7 +30,7 @@ export function logAuth(
   action: 'auth.login' | 'auth.logout' | 'auth.failed',
   metadata?: ActivityMetadata,
 ): void {
-  logActivity({
+  void logActivity({
     actor: userId,
     actorType: 'user',
     action,
@@ -44,7 +44,7 @@ export function log2FA(
   action: 'auth.2fa.enabled' | 'auth.2fa.disabled' | 'auth.2fa.verified' | 'auth.recovery.used',
   metadata?: ActivityMetadata,
 ): void {
-  logActivity({
+  void logActivity({
     actor: userId,
     actorType: 'user',
     action,
@@ -65,7 +65,7 @@ export function logUserEvent(
   targetUserId: string,
   metadata?: ActivityMetadata,
 ): void {
-  logActivity({
+  void logActivity({
     actor: actorId,
     actorType: 'user',
     action,
@@ -89,7 +89,7 @@ export function logServerEvent(
   serverId: string,
   metadata?: ActivityMetadata,
 ): void {
-  logActivity({
+  void logActivity({
     actor: actorId,
     actorType: 'user',
     action,

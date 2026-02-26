@@ -31,10 +31,7 @@ export default defineEventHandler(async (event) => {
       const templateData = await getTemplate(id);
       templateHtml = templateData.html;
     } else {
-      const templateData = body.data as Record<
-        string,
-        string | number | boolean | null | undefined
-      >;
+      const templateData = body.data;
       const template = await renderEmailTemplate(id, templateData);
       templateHtml = template.html;
     }

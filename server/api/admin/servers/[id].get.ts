@@ -126,9 +126,9 @@ export default defineEventHandler(async (event) => {
       allocationLimit: server.allocationLimit ?? null,
       databaseLimit: server.databaseLimit ?? null,
       backupLimit: server.backupLimit ?? 0,
-      installedAt: server.installedAt instanceof Date ? server.installedAt : server.installedAt,
-      createdAt: server.createdAt instanceof Date ? server.createdAt : server.createdAt,
-      updatedAt: server.updatedAt instanceof Date ? server.updatedAt : server.updatedAt,
+      installedAt: server.installedAt,
+      createdAt: server.createdAt,
+      updatedAt: server.updatedAt,
       owner: owner
         ? {
             id: owner.id,

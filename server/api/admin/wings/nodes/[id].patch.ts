@@ -8,12 +8,7 @@ import type { UpdateWingsNodePayload, UpdateWingsNodeResponse } from '#shared/ty
 
 const MAX_BODY_SIZE = 32 * 1024;
 
-function validatePayload(payload: unknown): payload is UpdateWingsNodePayload {
-  if (!payload || typeof payload !== 'object') {
-    return false;
-  }
-
-  const allowedKeys = new Set<keyof UpdateWingsNodePayload>([
+const ALLOWED_NODE_UPDATE_KEYS: readonly (keyof UpdateWingsNodePayload)[] = [
     'name',
     'description',
     'fqdn',
@@ -29,16 +24,27 @@ function validatePayload(payload: unknown): payload is UpdateWingsNodePayload {
     'daemonListen',
     'daemonSftp',
     'daemonBase',
-  ]);
+  ];
 
-  const entries = Object.entries(payload as Record<string, unknown>);
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isAllowedKey(value: PropertyKey): value is keyof UpdateWingsNodePayload {
+  return typeof value === 'string' && (ALLOWED_NODE_UPDATE_KEYS as readonly string[]).includes(value);
+}
+
+function validatePayload(payload: unknown): payload is UpdateWingsNodePayload {
+  if (!isPlainObject(payload)) {
+    return false;
+  }
+
+  const entries = Object.entries(payload);
   if (entries.length === 0) {
     return false;
   }
 
-  return entries.every(
-    ([key, value]) => allowedKeys.has(key as keyof UpdateWingsNodePayload) && value !== undefined,
-  );
+  return entries.every(([key, value]) => isAllowedKey(key) && value !== undefined);
 }
 
 async function readUpdatePayload(event: H3Event): Promise<UpdateWingsNodePayload> {

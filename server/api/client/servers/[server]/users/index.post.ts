@@ -67,7 +67,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const subuserId = randomUUID();
-  const now = new Date();
+  const now = new Date().toISOString();
 
   await db.insert(tables.serverSubusers).values({
     id: subuserId,

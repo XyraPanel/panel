@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
   );
 
   try {
-    const backup = await backupManager.createBackup(server.uuid as string, {
+    const backup = await backupManager.createBackup(server.uuid, {
       name,
       ignoredFiles: ignored,
       userId: accountContext.user.id,

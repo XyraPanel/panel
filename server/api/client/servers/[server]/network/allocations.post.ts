@@ -65,7 +65,7 @@ export default defineEventHandler(async (event) => {
     .from(tables.serverAllocations)
     .where(
       and(
-        eq(tables.serverAllocations.nodeId, server.nodeId!),
+        eq(tables.serverAllocations.nodeId, server.nodeId),
         eq(tables.serverAllocations.ip, primaryAllocation.ip),
         isNull(tables.serverAllocations.serverId),
       ),
@@ -107,9 +107,9 @@ export default defineEventHandler(async (event) => {
     action: 'server.allocation.created',
     server: { id: server.id, uuid: server.uuid },
     metadata: {
-      allocationId: updated!.id,
-      ip: updated!.ip,
-      port: updated!.port,
+      allocationId: updated.id,
+      ip: updated.ip,
+      port: updated.port,
     },
   });
 
@@ -117,12 +117,12 @@ export default defineEventHandler(async (event) => {
 
   return {
     data: {
-      id: updated!.id,
-      ip: updated!.ip,
-      port: updated!.port,
-      ip_alias: updated!.ipAlias,
-      is_primary: updated!.isPrimary,
-      notes: updated!.notes,
+      id: updated.id,
+      ip: updated.ip,
+      port: updated.port,
+      ip_alias: updated.ipAlias,
+      is_primary: updated.isPrimary,
+      notes: updated.notes,
       assigned: true,
     },
   };

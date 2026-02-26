@@ -1,5 +1,6 @@
 import { createTransport } from 'nodemailer';
-import type { Transporter, TransportOptions as NodemailerTransportOptions } from 'nodemailer';
+import type { Transporter } from 'nodemailer';
+import type SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { getSettings, getSettingWithDefault, SETTINGS_KEYS } from '#server/utils/settings';
 import type { EmailConfig } from '#shared/types/email';
 import {
@@ -17,7 +18,7 @@ let transporter: Transporter | null = null;
 
 function getAppName(): string {
   const runtimeConfig = useRuntimeConfig();
-  return (runtimeConfig.public?.appName as string) || 'XyraPanel';
+  return runtimeConfig.public?.appName || 'XyraPanel';
 }
 
 function sanitizeService(service?: string | null): string | null {
@@ -80,31 +81,37 @@ export async function initializeEmailService(config?: EmailConfig): Promise<void
   }
 
   if (emailConfig.service) {
-    transporter = createTransport({
+    const options: SMTPTransport.Options = {
       service: emailConfig.service,
       auth:
         emailConfig.user && emailConfig.pass
-          ? {
-              user: emailConfig.user,
-              pass: emailConfig.pass,
-            }
+          ? { user: emailConfig.user, pass: emailConfig.pass }
           : undefined,
-    } as NodemailerTransportOptions);
+    };
+
+    transporter = createTransport(options);
     return;
   }
 
-  transporter = createTransport({
-    host: emailConfig.host!,
+  if (!emailConfig.host) {
+    transporter = null;
+    if (process.env.NODE_ENV === 'production') {
+      console.warn('Email service host not configured; transport not initialized');
+    }
+    return;
+  }
+
+  const options: SMTPTransport.Options = {
+    host: emailConfig.host,
     port: emailConfig.port ?? 587,
     secure: emailConfig.secure ?? false,
     auth:
       emailConfig.user && emailConfig.pass
-        ? {
-            user: emailConfig.user,
-            pass: emailConfig.pass,
-          }
+        ? { user: emailConfig.user, pass: emailConfig.pass }
         : undefined,
-  });
+  };
+
+  transporter = createTransport(options);
 }
 
 export async function refreshEmailService(): Promise<void> {

@@ -9,9 +9,11 @@ export default defineEventHandler(async (event) => {
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ);
 
   const query = getQuery(event);
-  const search = query.search as string | undefined;
-  const page = Math.max(1, Number.parseInt(String(query.page ?? '1'), 10) || 1);
-  const limit = Math.min(200, Math.max(1, Number.parseInt(String(query.limit ?? '25'), 10) || 25));
+  const search = typeof query.search === 'string' ? query.search : undefined;
+  const pageStr = typeof query.page === 'string' ? query.page : '1';
+  const page = Math.max(1, Number.parseInt(pageStr, 10) || 1);
+  const limitStr = typeof query.limit === 'string' ? query.limit : '25';
+  const limit = Math.min(200, Math.max(1, Number.parseInt(limitStr, 10) || 25));
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();

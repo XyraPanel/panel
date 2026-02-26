@@ -12,7 +12,7 @@ function getDebugEnabled(): boolean {
 
   try {
     const config = useRuntimeConfig();
-    debugEnabled = config.debug === true || config.public?.debug === true;
+    debugEnabled =  config.debug ||  config.public?.debug;
   } catch {
     debugEnabled =
       process.env.DEBUG === 'true' ||

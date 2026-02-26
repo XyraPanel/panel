@@ -2,7 +2,7 @@ import { requireAdmin } from '#server/utils/security';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
-import { getWingsClient, WingsConnectionError, WingsAuthError } from '#server/utils/wings-client';
+import { getWingsClient } from '#server/utils/wings-client';
 import type { WingsNode } from '#shared/types/wings-client';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   const wingsNode: WingsNode = {
     id: node.id,
     fqdn: node.fqdn,
-    scheme: node.scheme as 'http' | 'https',
+    scheme: node.scheme === 'https' ? 'https' : 'http',
     daemonListen: node.daemonListen,
     daemonSftp: node.daemonSftp,
     daemonBase: node.daemonBase,

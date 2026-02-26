@@ -18,7 +18,13 @@ function normalizePart(part: string | number): string {
 export function buildCacheKey(...parts: Array<string | number | null | undefined>): string {
   const normalizedParts = parts
     .filter((part) => part !== undefined && part !== null && String(part).length > 0)
-    .map((part) => normalizePart(part as string | number));
+    .map((part) => {
+      if (typeof part === 'string' || typeof part === 'number') {
+        return normalizePart(part);
+      }
+
+      return normalizePart(String(part));
+    });
 
   return normalizedParts.length > 0
     ? [CACHE_NAMESPACE, ...normalizedParts].join(CACHE_SEPARATOR)

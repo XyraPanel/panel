@@ -1,5 +1,5 @@
 export const useServerData = (serverId: string) => {
-  const { data: serverMeta, pending: metaPending, error: metaError } = useFetch(
+  const { data: serverMeta, pending: metaPending, error: metaError } = useFetch<any>(
     `/api/client/servers/${serverId}/meta`,
     {
       key: `server-${serverId}-meta`,
@@ -8,21 +8,19 @@ export const useServerData = (serverId: string) => {
     }
   );
 
-  const { data: serverStats, pending: statsPending, refresh: refreshStats } = useLazyFetch(
+  const { data: serverStats, pending: statsPending, refresh: refreshStats } = useLazyFetch<any>(
     `/api/client/servers/${serverId}/stats`,
     {
       key: `server-${serverId}-stats`,
       server: false, 
-      lazy: true,   
     }
   );
 
-  const { data: serverResources, pending: resourcesPending, refresh: refreshResources } = useLazyFetch(
+  const { data: serverResources, pending: resourcesPending, refresh: refreshResources } = useLazyFetch<any>(
     `/api/client/servers/${serverId}/resources`,
     {
       key: `server-${serverId}-resources`,
       server: false,
-      lazy: true,
     }
   );
 

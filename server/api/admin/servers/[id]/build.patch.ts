@@ -58,8 +58,10 @@ export default defineEventHandler(async (event) => {
     .limit(1);
 
   const existingLimits = existingLimitsRows[0];
+  const fallbackMemoryOverallocate = existingLimits?.memoryOverallocate ?? 0;
+  const fallbackDiskOverallocate = existingLimits?.diskOverallocate ?? 0;
 
-  const updateData = {
+  const updateData: Partial<typeof tables.serverLimits.$inferInsert> = {
     cpu: typeof cpu === 'number' ? cpu : (existingLimits?.cpu ?? 100),
     memory: typeof memory === 'number' ? memory : (existingLimits?.memory ?? 512),
     swap: typeof swap === 'number' ? swap : (existingLimits?.swap ?? 0),
@@ -71,7 +73,7 @@ export default defineEventHandler(async (event) => {
     allocationLimit:
       allocationLimit !== undefined ? allocationLimit : (existingLimits?.allocationLimit ?? null),
     backupLimit: backupLimit !== undefined ? backupLimit : (existingLimits?.backupLimit ?? 0),
-    updatedAt: new Date().toISOString() as string,
+    updatedAt: new Date().toISOString(),
   };
 
   if (existingLimits) {
@@ -81,7 +83,7 @@ export default defineEventHandler(async (event) => {
       .where(eq(tables.serverLimits.serverId, serverId));
   } else {
     const nowIso = new Date().toISOString();
-    await db.insert(tables.serverLimits).values({
+    const insertData: typeof tables.serverLimits.$inferInsert = {
       serverId,
       cpu: cpu ?? 100,
       memory: memory ?? 512,
@@ -92,12 +94,14 @@ export default defineEventHandler(async (event) => {
       databaseLimit: databaseLimit ?? null,
       allocationLimit: allocationLimit ?? null,
       backupLimit: backupLimit ?? 0,
-      memoryOverallocate: null,
-      diskOverallocate: null,
+      memoryOverallocate: fallbackMemoryOverallocate,
+      diskOverallocate: fallbackDiskOverallocate,
       oomDisabled: server.oomDisabled ?? true,
       createdAt: nowIso,
       updatedAt: nowIso,
-    });
+    };
+
+    await db.insert(tables.serverLimits).values(insertData);
   }
 
   if (oomDisabled !== undefined) {

@@ -124,7 +124,9 @@ export default defineEventHandler(async (event) => {
     targetId: serverId,
     metadata: {
       serverUuid: server.uuid,
-      updatedFields: Object.keys(body).filter((k) => body[k as keyof typeof body] !== undefined),
+      updatedFields: Object.entries(body)
+        .filter(([, value]) => value !== undefined)
+        .map(([key]) => key),
     },
   });
 

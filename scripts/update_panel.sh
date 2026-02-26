@@ -64,7 +64,7 @@ log_step "Pulling latest source"
 git config --global --add safe.directory "$INSTALL_DIR"
 PREV_HASH=$(git -C "$INSTALL_DIR" rev-parse HEAD)
 git -C "$INSTALL_DIR" fetch --tags
-git -C "$INSTALL_DIR" stash --include-untracked 2>/dev/null || true
+git -C "$INSTALL_DIR" checkout -- .
 git -C "$INSTALL_DIR" pull --ff-only
 NEW_HASH=$(git -C "$INSTALL_DIR" rev-parse HEAD)
 
@@ -100,7 +100,6 @@ else
 fi
 chown -R "${PANEL_USER}:${PANEL_USER}" "$INSTALL_DIR"
 
-# restart
 PM2_APP="xyrapanel"
 PM2_ENV="production"
 ECOSYSTEM_FILE="${INSTALL_DIR}/ecosystem.config.cjs"
@@ -121,26 +120,6 @@ fi
 
 mkdir -p "${INSTALL_DIR}/.pm2/logs"
 
-log_step "Restarting XyraPanel"
-if pm2 reload "$PM2_APP" --update-env; then
-  log_success "PM2 reloaded ${PM2_APP}"
-else
-  log_warn "PM2 reload failed — attempting clean start"
-  if pm2 start "$ECOSYSTEM_FILE" --env "$PM2_ENV" --only "$PM2_APP" --update-env; then
-    log_success "PM2 started ${PM2_APP} via ecosystem config"
-  else
-    log_error "PM2 could not start ${PM2_APP}. Check pm2 logs for details."
-  fi
-fi
-
-log_start "Waiting for app to be ready"
-for i in $(seq 1 60); do
-  curl -sf http://127.0.0.1:3000 >/dev/null 2>&1 && break
-  printf "${GRAY}.${RESET}"; sleep 2
-done
-echo; log_success "App is responding on port 3000"
-
-# migrations
 log_step "Running database migrations"
 if [[ ! -f "$ENV_FILE" ]]; then
   log_warn "Cannot find ${ENV_FILE}; skipping automatic migrations"
@@ -149,15 +128,43 @@ elif [[ -z "${DATABASE_URL:-}" ]]; then
     log_info "Loaded DATABASE_URL for migrations"
   else
     log_warn "DATABASE_URL missing; run migrations manually after fixing .env"
-    printf '\n'
-    exit 0
   fi
 fi
 
-if "$PNPM_BIN" --dir "$INSTALL_DIR" db:migrate; then
-  log_success "Migrations applied"
+if [[ -n "${DATABASE_URL:-}" ]]; then
+  if "$PNPM_BIN" --dir "$INSTALL_DIR" db:migrate; then
+    log_success "Migrations applied"
+  else
+    log_warn "Migration failed — run manually: cd ${INSTALL_DIR} && pnpm db:migrate"
+  fi
+fi
+
+log_step "Restarting XyraPanel"
+if pm2 describe "$PM2_APP" &>/dev/null; then
+  pm2 delete "$PM2_APP" 2>/dev/null || true
+fi
+
+if pm2 start "$ECOSYSTEM_FILE" --env "$PM2_ENV" --only "$PM2_APP"; then
+  log_success "PM2 started ${PM2_APP}"
 else
-  log_warn "Migration failed — run manually: cd ${INSTALL_DIR} && pnpm db:migrate"
+  log_error "PM2 could not start ${PM2_APP}. Check: pm2 logs ${PM2_APP}"
+fi
+
+pm2 save --force 2>/dev/null || true
+
+log_start "Waiting for app to be ready"
+READY=false
+for i in $(seq 1 60); do
+  if curl -sf http://127.0.0.1:3000 >/dev/null 2>&1; then
+    READY=true; break
+  fi
+  printf "${GRAY}.${RESET}"; sleep 2
+done
+echo
+if [[ "$READY" == "true" ]]; then
+  log_success "App is responding on port 3000"
+else
+  log_warn "App did not respond within 120s — check: pm2 logs ${PM2_APP}"
 fi
 
 echo -e "

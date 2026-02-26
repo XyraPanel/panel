@@ -30,7 +30,7 @@ useHead(() => ({
 <template>
   <UApp :locale="currentLocale">
     <NuxtPwaAssets />
-    <NuxtLoadingIndicator color="#16a34a" error-color="#ef4444" :height="3" />
+    <NuxtLoadingIndicator color="#AA4A44" :height="2" />
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>

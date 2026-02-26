@@ -11,21 +11,9 @@ import {
 
 const SERVER_SUBUSERS_CACHE_TTL = 60;
 
-interface ServerSubuserRow {
-  id: string;
-  serverId: string;
-  userId: string;
-  permissions: string;
-  createdAt: Date;
-  updatedAt: Date;
-  username: string | null;
-  email: string | null;
-  image: string | null;
-}
-
 async function fetchServerSubusers(serverId: string): Promise<ServerSubuser[]> {
   const db = useDrizzle();
-  const subusers = (await db
+  const subusers = await db
     .select({
       id: tables.serverSubusers.id,
       serverId: tables.serverSubusers.serverId,
@@ -40,7 +28,7 @@ async function fetchServerSubusers(serverId: string): Promise<ServerSubuser[]> {
     .from(tables.serverSubusers)
     .leftJoin(tables.users, eq(tables.serverSubusers.userId, tables.users.id))
     .where(eq(tables.serverSubusers.serverId, serverId))
-    .orderBy(tables.users.username)) as ServerSubuserRow[];
+    .orderBy(tables.users.username);
 
   return subusers.map((row) => ({
     id: row.id,
@@ -49,10 +37,21 @@ async function fetchServerSubusers(serverId: string): Promise<ServerSubuser[]> {
     username: row.username || 'Unknown',
     email: row.email || '',
     image: row.image,
-    permissions: JSON.parse(row.permissions) as string[],
+    permissions: safeParsePermissions(row.permissions),
     createdAt: new Date(row.createdAt).toISOString(),
     updatedAt: new Date(row.updatedAt).toISOString(),
   }));
+}
+
+function safeParsePermissions(raw: unknown): string[] {
+  if (typeof raw !== 'string') return [];
+
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((p): p is string => typeof p === 'string') : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function listServerSubusers(serverId: string): Promise<ServerSubuser[]> {

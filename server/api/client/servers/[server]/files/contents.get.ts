@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const content = await client.getFileContents(server.uuid as string, file);
+    const content = await client.getFileContents(server.uuid, file);
 
     if (content.length > MAX_FILE_SIZE) {
       throw createError({

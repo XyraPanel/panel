@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const now = new Date();
+  const now = new Date().toISOString();
   await db
     .update(tables.serverSubusers)
     .set({

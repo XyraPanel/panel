@@ -1,17 +1,29 @@
 import { describe, it, expect, vi, beforeAll, beforeEach } from 'vitest';
 import type { H3Event } from 'h3';
+import { createEvent } from 'h3';
+import { IncomingMessage, ServerResponse } from 'node:http';
+import { Socket } from 'node:net';
+
+type MockH3Error = { status: number; statusText: string; message?: string };
+
+const { mockAssertMethod } = vi.hoisted(() => ({
+  mockAssertMethod: vi.fn(),
+}));
 
 const defineEventHandlerStub = (handler: (event: H3Event) => Promise<unknown>) => handler;
 vi.stubGlobal('defineEventHandler', defineEventHandlerStub);
+vi.stubGlobal('assertMethod', mockAssertMethod);
+vi.stubGlobal('createError', (err: MockH3Error) => err);
 
-const mockAssertMethod = vi.fn<(event: H3Event, method: string) => void>();
-type MockH3Error = { status: number; statusText: string; message?: string };
-
-vi.mock('h3', () => ({
-  assertMethod: mockAssertMethod,
-  createError: (err: MockH3Error) => err,
-  defineEventHandler: (handler: (event: H3Event) => Promise<unknown>) => handler,
-}));
+vi.mock('h3', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('h3')>();
+  return {
+    ...actual,
+    assertMethod: mockAssertMethod,
+    createError: (err: MockH3Error) => err,
+    defineEventHandler: (handler: (event: H3Event) => Promise<unknown>) => handler,
+  };
+});
 
 const mockRequireAccountUser =
   vi.fn<() => Promise<{ session: { id: string }; user: { id: string } }>>();
@@ -133,22 +145,24 @@ function createDb(selectResult: SelectRow | undefined, deletedChanges = 1) {
   };
 }
 
-const baseEvent = {
-  node: {
-    req: {
-      method: 'PUT',
-      headers: {},
-    },
-  },
-  context: {},
-} as H3Event;
+function createTestEvent(method: string): H3Event {
+  const socket = new Socket();
+  const req = new IncomingMessage(socket);
+  req.method = method;
+  req.headers = {};
+  const res = new ServerResponse(req);
+  const event = createEvent(req, res);
+  event.context = {};
+  return event;
+}
+
+const baseEvent = createTestEvent('PUT');
 
 describe('account/password/force.put handler', () => {
   beforeAll(async () => {
     const handlerModule = await import('../../../server/api/account/password/force.put.ts');
-    const importedHandler = handlerModule.default;
-    if (typeof importedHandler === 'function') {
-      handler = importedHandler as Handler;
+    if (typeof handlerModule.default === 'function') {
+      handler = handlerModule.default;
     } else {
       throw new Error('Imported handler is not a function');
     }

@@ -13,6 +13,14 @@ import type {
   PowerAction,
 } from '#shared/types/server';
 
+function isPowerAction(value: unknown): value is PowerAction {
+  return value === 'start' || value === 'stop' || value === 'restart' || value === 'kill';
+}
+
+function isTaskAction(value: unknown): value is TaskAction {
+  return value === 'command' || value === 'power' || value === 'backup';
+}
+
 export class TaskScheduler {
   private db = useDrizzle();
   private runningTasks = new Map<string, boolean>();
@@ -146,7 +154,10 @@ export class TaskScheduler {
         }
 
         case 'power': {
-          const powerAction = (task.payload ?? '') as PowerAction;
+          const powerAction = isPowerAction(task.payload) ? task.payload : null;
+          if (!powerAction) {
+            throw new Error(`Invalid power action payload: ${task.payload ?? ''}`);
+          }
           await serverManager.powerAction(serverUuid, powerAction, { skipAudit: true });
           output = `Power action executed: ${powerAction}`;
           break;
@@ -352,7 +363,7 @@ export class TaskScheduler {
       lastRunAt: undefined,
       tasks: taskRecords.map((t) => ({
         id: t.id,
-        action: t.action as TaskAction,
+        action: t.action,
         payload: t.payload,
         timeOffset: t.timeOffset,
         sequenceId: t.sequenceId,
@@ -427,7 +438,7 @@ export class TaskScheduler {
       lastRunAt: schedule.lastRunAt || undefined,
       tasks: tasks.map((t) => ({
         id: t.id,
-        action: t.action as TaskAction,
+        action: isTaskAction(t.action) ? t.action : 'command',
         payload: t.payload ?? '',
         timeOffset: t.timeOffset,
         sequenceId: t.sequenceId,

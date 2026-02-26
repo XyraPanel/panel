@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBodyWithLimit(event, createNestSchema, BODY_SIZE_LIMITS.SMALL);
 
   const db = useDrizzle();
-  const now = new Date();
+  const now = new Date().toISOString();
 
   const newNest = {
     id: randomUUID(),

@@ -34,14 +34,8 @@ export default defineEventHandler(async (event) => {
     port: allocation.port,
     notes: allocation.notes ?? null,
     isPrimary: Boolean(allocation.isPrimary),
-    createdAt:
-      allocation.createdAt instanceof Date
-        ? allocation.createdAt
-        : new Date(allocation.createdAt).toISOString(),
-    updatedAt:
-      allocation.updatedAt instanceof Date
-        ? allocation.updatedAt
-        : new Date(allocation.updatedAt).toISOString(),
+    createdAt: allocation.createdAt,
+    updatedAt: allocation.updatedAt,
   });
 
   const mappedAllocations = allocations.map(normalizeAllocation);

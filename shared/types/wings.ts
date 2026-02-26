@@ -244,3 +244,33 @@ export interface UpdateWingsNodeInput {
   daemonListen?: number;
   daemonSftp?: number;
 }
+
+export interface WingsFileContentResponse {
+  content: string;
+}
+
+export interface WingsCompressResponse {
+  file: string;
+}
+
+export interface WingsUuidResponse {
+  uuid: string;
+}
+
+export interface WingsUrlResponse {
+  url: string;
+}
+
+export interface WingsServerDetailsResponse {
+  state: string;
+  is_suspended: boolean;
+  utilization: {
+    memory_bytes: number;
+    memory_limit_bytes: number;
+    cpu_absolute: number;
+    network_rx_bytes: number;
+    network_tx_bytes: number;
+    uptime: number;
+    disk_bytes: number;
+  };
+}

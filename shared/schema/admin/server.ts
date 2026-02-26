@@ -190,9 +190,37 @@ export const serverProvisionSchema = z.object({
   startOnCompletion: z.boolean().optional(),
 });
 
+export const serverProvisionConfigSchema = z.object({
+  serverId: z.string(),
+  serverUuid: z.string(),
+  eggId: z.string(),
+  nodeId: z.string(),
+  allocationId: z.string(),
+  environment: z.record(z.string(), z.string()).optional(),
+  additionalAllocationIds: z.array(z.string()).optional(),
+  mountIds: z.array(z.string()).optional(),
+  dockerImageOverride: z.string().optional(),
+  skipScripts: z.boolean().optional(),
+  startOnCompletion: z.boolean().optional(),
+  dockerCredentials: z
+    .object({
+      registry: z.string().optional(),
+      username: z.string().optional(),
+      password: z.string().optional(),
+      imagePullPolicy: z.string().optional(),
+    })
+    .optional(),
+});
+
+export const serverProvisionPayloadSchema = serverProvisionConfigSchema.extend({
+  ownerEmail: z.string().optional(),
+  serverName: z.string().optional(),
+});
+
 export type ServerTransferInput = z.infer<typeof serverTransferSchema>;
 export type ServerTransferFormInput = z.infer<typeof serverTransferFormSchema>;
 export type ServerProvisionInput = z.infer<typeof serverProvisionSchema>;
+export type ServerProvisionConfigInput = z.infer<typeof serverProvisionConfigSchema>;
 
 export type CreateServerInput = z.infer<typeof createServerSchema>;
 export type UpdateServerBuildInput = z.infer<typeof updateServerBuildSchema>;

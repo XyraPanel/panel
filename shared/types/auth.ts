@@ -164,6 +164,7 @@ export interface RuntimeAuthConfig {
 
 export interface ExtendedRuntimeConfig {
   auth?: RuntimeAuthConfig;
+  public?: Record<string, unknown>;
 }
 
 export interface AuthCookieOptions {

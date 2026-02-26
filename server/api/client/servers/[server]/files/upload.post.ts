@@ -39,8 +39,19 @@ export default defineEventHandler(async (event) => {
       throw new Error('No files to upload');
     }
 
-    const nodeRow = requireNodeRow(wingsServer.nodeId as string);
-    const node = findWingsNode(wingsServer.nodeId as string);
+    if (!wingsServer.nodeId) throw new Error('Server has no node assigned');
+    if (!wingsServer.uuid || !wingsServer.id) throw new Error('Server not fully initialized');
+
+    if (typeof wingsServer.nodeId !== 'string' || typeof wingsServer.uuid !== 'string' || typeof wingsServer.id !== 'string') {
+      throw new Error('Server identifiers are invalid');
+    }
+
+    const nodeId = wingsServer.nodeId;
+    const serverUuid = wingsServer.uuid;
+    const serverId = wingsServer.id;
+
+    const nodeRow = await requireNodeRow(nodeId);
+    const node = await findWingsNode(nodeId);
     if (!node) {
       throw new Error('Node not found');
     }
@@ -52,7 +63,7 @@ export default defineEventHandler(async (event) => {
       },
       {
         user: { id: accountContext.user.id, uuid: accountContext.user.id },
-        server: { uuid: wingsServer.uuid as string },
+        server: { uuid: serverUuid },
         expiresIn: 900,
       },
     );
@@ -83,7 +94,7 @@ export default defineEventHandler(async (event) => {
       event,
       actorId: permissionContext.userId,
       action: 'server.file.upload',
-      server: { id: wingsServer.id as string, uuid: wingsServer.uuid as string },
+      server: { id: serverId, uuid: serverUuid },
       metadata: { directory, fileCount: fileFields.length },
     });
 

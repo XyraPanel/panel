@@ -19,7 +19,7 @@ export type ActivityAction =
   | 'admin.api_key.create'
   | 'admin.api_key.delete'
   | 'account.password.update'
-  | string;
+  | (string & {});
 
 export interface ActivityMetadata {
   ip?: string;

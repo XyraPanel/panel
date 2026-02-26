@@ -69,8 +69,8 @@ export default defineEventHandler(async (event: H3Event) => {
         .where(eq(tables.users.id, server.ownerId))
         .limit(1);
       const owner = ownerRows[0];
-      if (owner?.email) {
-        await sendBackupCompletedEmail(owner.email, server.name as string, backup.name);
+      if (owner?.email && server.name) {
+        await sendBackupCompletedEmail(owner.email, server.name, backup.name);
       }
     } catch {
       // Non-fatal — don't fail the callback if email sending fails

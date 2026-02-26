@@ -20,8 +20,8 @@ export default defineEventHandler(async (event) => {
   });
 
   try {
-    const { client } = await getWingsClientForServer(server.uuid as string);
-    const details = await client.getServerResources(server.uuid as string);
+    const { client } = await getWingsClientForServer(server.uuid);
+    const details = await client.getServerResources(server.uuid);
 
     return {
       data: {

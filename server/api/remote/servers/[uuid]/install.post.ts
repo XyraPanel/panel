@@ -39,7 +39,7 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   const newStatus = successful ? null : 'install_failed';
-  const now = new Date();
+  const now = new Date().toISOString();
 
   const updatedFields: Partial<typeof tables.servers.$inferInsert> = {
     status: newStatus,

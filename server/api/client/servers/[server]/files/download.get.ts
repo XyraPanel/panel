@@ -7,7 +7,7 @@ export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');
   const query = getQuery(event);
-  const file = query.file as string;
+  const file = typeof query.file === 'string' ? query.file : '';
 
   if (!serverId) {
     throw createError({

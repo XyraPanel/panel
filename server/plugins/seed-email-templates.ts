@@ -15,7 +15,7 @@ export default defineNitroPlugin(async () => {
 
       if (existing) continue;
 
-      const now = new Date();
+      const now = new Date().toISOString();
       await db.insert(tables.emailTemplates).values({
         id: randomUUID(),
         name: template.name,

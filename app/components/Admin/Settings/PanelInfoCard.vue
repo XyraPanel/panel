@@ -116,31 +116,31 @@ async function openReleaseNotes(url: string) {
       input: string,
       init?: Record<string, unknown>,
     ) => Promise<unknown>;
-    let data: ReleaseData | ReleaseData[] | string | null = null;
+    let releasePayload: ReleaseData | ReleaseData[] | string | null = null;
     try {
-      data = normalizeReleasePayload(await fetchExternal(url));
+      releasePayload = normalizeReleasePayload(await fetchExternal(url));
     } catch (err) {
       if (url.includes('/releases') && !url.includes('/latest')) {
         const latestUrl = url.endsWith('/') ? `${url}latest` : `${url}/latest`;
-        data = normalizeReleasePayload(await fetchExternal(latestUrl));
+        releasePayload = normalizeReleasePayload(await fetchExternal(latestUrl));
       } else {
         throw err;
       }
     }
 
-    if (Array.isArray(data) && data.length > 0) {
-      releaseVersions.value = data.map((release: ReleaseData) => ({
+    if (Array.isArray(releasePayload) && releasePayload.length > 0) {
+      releaseVersions.value = releasePayload.map((release: ReleaseData) => ({
         title: release.name || release.tag_name || release.tag || 'Release',
         description: release.markdown || release.body || release.description || '',
         date: release.publishedAt || release.createdAt,
       }));
     } else if (
-      data &&
-      typeof data === 'object' &&
-      !Array.isArray(data) &&
-      ('name' in data || 'tag_name' in data || 'tag' in data)
+      releasePayload &&
+      typeof releasePayload === 'object' &&
+      !Array.isArray(releasePayload) &&
+      ('name' in releasePayload || 'tag_name' in releasePayload || 'tag' in releasePayload)
     ) {
-      const release = data as ReleaseData;
+      const release = releasePayload as ReleaseData;
       releaseVersions.value = [
         {
           title: release.name || release.tag_name || release.tag || 'Release',
@@ -148,7 +148,7 @@ async function openReleaseNotes(url: string) {
           date: release.publishedAt || release.createdAt,
         },
       ];
-    } else if (typeof data === 'string') {
+    } else if (typeof releasePayload === 'string') {
       releaseNotesError.value = true;
     } else {
       releaseNotesError.value = true;

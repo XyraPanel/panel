@@ -16,15 +16,15 @@ const {
   data,
   pending,
   error: fetchError,
-} = await useLazyFetch('/api/admin/audit', {
+} = await useLazyFetch<AuditEventsPayload>('/api/admin/audit', {
   query: computed(() => ({ limit: itemsPerPage.value, page: currentPage.value })),
   key: 'admin-activity',
   watch: [currentPage, itemsPerPage],
-  pick: ['data', 'pagination'],
-  server: false, 
+  pick: ['data', 'pagination'] satisfies (keyof AuditEventsPayload)[],
+  server: false,
 });
 
-const auditData = computed(() => data.value as AuditEventsPayload | null);
+const auditData = computed(() => data.value ?? null);
 
 const activities = computed<AdminActivityEntry[]>(() => auditData.value?.data ?? []);
 const pagination = computed(() => auditData.value?.pagination);

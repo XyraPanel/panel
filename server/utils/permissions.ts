@@ -50,7 +50,20 @@ export const PERMISSIONS = {
   'settings.reinstall': 'Reinstall server',
 } as const;
 
+type PermissionKey = keyof typeof PERMISSIONS;
+const PERMISSION_KEYS: PermissionKey[] = Object.keys(PERMISSIONS).filter((key): key is PermissionKey =>
+  Object.prototype.hasOwnProperty.call(PERMISSIONS, key),
+);
+
+function isPermissionKey(value: string): value is PermissionKey {
+  return PERMISSION_KEYS.some((key) => key === value);
+}
+
 const SERVER_USER_PERMISSIONS_CACHE_TTL = 60;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
 
 function isTruthyPermissionValue(value: unknown): boolean {
   if (typeof value === 'boolean') {
@@ -98,14 +111,12 @@ function normalizePermissionList(payload: unknown): string[] {
     }
   }
 
-  if (typeof payload === 'object') {
-    const objectPayload = payload as Record<string, unknown>;
-
-    if (Array.isArray(objectPayload.permissions)) {
-      return normalizePermissionList(objectPayload.permissions);
+  if (isRecord(payload)) {
+    if (Array.isArray(payload.permissions)) {
+      return normalizePermissionList(payload.permissions);
     }
 
-    return Object.entries(objectPayload)
+    return Object.entries(payload)
       .filter(([, value]) => isTruthyPermissionValue(value))
       .map(([permission]) => permission.trim())
       .filter((permission) => permission.length > 0);
@@ -114,8 +125,12 @@ function normalizePermissionList(payload: unknown): string[] {
   return [];
 }
 
-function resolveServerOwnerPermissions(): Array<keyof typeof PERMISSIONS> {
-  const allPermissions = Object.keys(PERMISSIONS) as Array<keyof typeof PERMISSIONS>;
+function filterValidPermissionKeys(list: string[]): PermissionKey[] {
+  return list.filter(isPermissionKey);
+}
+
+function resolveServerOwnerPermissions(): PermissionKey[] {
+  const allPermissions = PERMISSION_KEYS;
   const wingsPermissions = new Set(['file.write', 'file.update']);
 
   return allPermissions.filter((permission) => !wingsPermissions.has(permission));
@@ -124,7 +139,7 @@ function resolveServerOwnerPermissions(): Array<keyof typeof PERMISSIONS> {
 async function resolveUserPermissions(
   userId: string,
   serverId: string,
-): Promise<Array<keyof typeof PERMISSIONS>> {
+): Promise<PermissionKey[]> {
   const db = useDrizzle();
 
   const [server] = await db
@@ -153,13 +168,13 @@ async function resolveUserPermissions(
     return [];
   }
 
-  return normalizePermissionList(subuser.permissions) as Array<keyof typeof PERMISSIONS>;
+  return filterValidPermissionKeys(normalizePermissionList(subuser.permissions));
 }
 
 export async function getUserPermissions(
   userId: string,
   serverId: string,
-): Promise<Array<keyof typeof PERMISSIONS>> {
+): Promise<PermissionKey[]> {
   const cacheKey = buildServerUserPermissionsCacheKey(serverId, userId);
   const cached = await withCache<unknown>(
     cacheKey,
@@ -169,7 +184,7 @@ export async function getUserPermissions(
     },
   );
 
-  const normalized = normalizePermissionList(cached) as Array<keyof typeof PERMISSIONS>;
+  const normalized = filterValidPermissionKeys(normalizePermissionList(cached));
 
   if (
     !Array.isArray(cached) ||

@@ -14,7 +14,7 @@ export default defineEventHandler(async (event: H3Event) => {
     throw createError({ status: 400, statusText: 'Missing node id' });
   }
 
-  const existing = findWingsNode(id);
+  const existing = await findWingsNode(id);
   if (!existing) {
     throw createError({ status: 404, statusText: 'Node not found' });
   }
@@ -26,7 +26,7 @@ export default defineEventHandler(async (event: H3Event) => {
   );
 
   try {
-    const node = updateWingsNode(id, body);
+    const node = await updateWingsNode(id, body);
 
     await recordAuditEventFromRequest(event, {
       actor: session?.user?.id ?? 'admin',

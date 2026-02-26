@@ -97,7 +97,7 @@ const error = computed<string | null>(() => {
 });
 
 function getIncidentActorLabel(incident: DashboardResponse['incidents'][number]): string {
-  return incident.actorEmail || incident.actorUsername || incident.actor;
+  return incident.actor?.label ?? t('admin.dashboard.unknownActor');
 }
 
 onMounted(() => {
@@ -287,13 +287,13 @@ onMounted(() => {
                     </div>
                     <div class="mt-2 space-y-1 text-xs text-muted-foreground">
                       <div
-                        v-if="incident.actorUsername || incident.actorEmail || incident.actor"
+                        v-if="incident.actor"
                         class="flex items-center gap-2 min-w-0"
                       >
                         <UIcon name="i-lucide-user" class="size-3" />
                         <NuxtLink
-                          v-if="incident.actorUserId"
-                          :to="`/admin/users/${incident.actorUserId}`"
+                          v-if="incident.actor?.userId"
+                          :to="`/admin/users/${incident.actor.userId}`"
                           class="text-primary hover:underline break-all"
                         >
                           {{ getIncidentActorLabel(incident) }}

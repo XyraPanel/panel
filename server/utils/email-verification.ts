@@ -70,7 +70,7 @@ export async function consumeEmailVerificationToken(
   }
 
   const userId = identifier.slice(EMAIL_VERIFICATION_TOKEN_PREFIX.length);
-  const expiresAt = record.expires instanceof Date ? record.expires : new Date(record.expires);
+  const expiresAt = new Date(record.expires);
 
   const deleteCondition = and(
     eq(tables.verificationTokens.identifier, identifier),

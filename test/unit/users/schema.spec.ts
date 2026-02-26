@@ -43,7 +43,7 @@ describe('createUserSchema - core validation', () => {
   it('rejects invalid role', () => {
     const invalid = {
       ...basePayload,
-      role: 'invalid-role' as 'admin' | 'user',
+      role: 'invalid-role',
     };
 
     const parsed = createUserSchema.safeParse(invalid);
@@ -155,10 +155,10 @@ describe('createUserSchema - field specific validation', () => {
   });
 
   it('accepts valid roles', () => {
-    const validRoles = ['user', 'admin'];
+    const validRoles = ['user', 'admin'] as const;
 
     validRoles.forEach((role) => {
-      const payload = { ...basePayload, role: role as 'user' | 'admin' };
+      const payload = { ...basePayload, role };
       const result = createUserSchema.safeParse(payload);
       expect(result.success).toBe(true);
     });

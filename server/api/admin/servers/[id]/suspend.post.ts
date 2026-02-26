@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
 
         await client.sendPowerAction(server.uuid, 'kill');
       } catch (error) {
-        const err = error as Error;
+        const err = error instanceof Error ? error : new Error(String(error));
 
         await db
           .update(tables.servers)

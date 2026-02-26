@@ -1,4 +1,8 @@
-import { createError, getValidatedRouterParams, type H3Event } from 'h3';
+import { type H3Event } from 'h3';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 export async function requireRouteParam(
   event: H3Event,
@@ -6,8 +10,7 @@ export async function requireRouteParam(
   message?: string,
 ): Promise<string> {
   const params = await getValidatedRouterParams(event, (input) => {
-    const value = (input as Record<string, unknown>)[name];
-    if (typeof value !== 'string' || value.trim().length === 0) {
+    if (!isRecord(input)) {
       throw createError({
         status: 400,
         statusText: 'Bad Request',
@@ -15,8 +18,26 @@ export async function requireRouteParam(
       });
     }
 
-    return { [name]: value.trim() };
+    const rawValue = input[name];
+    if (typeof rawValue !== 'string' || rawValue.trim().length === 0) {
+      throw createError({
+        status: 400,
+        statusText: 'Bad Request',
+        message: message ?? `Missing required route parameter: ${name}`,
+      });
+    }
+
+    return { [name]: rawValue.trim() };
   });
 
-  return params[name] as string;
+  const value = params[name];
+  if (typeof value !== 'string') {
+    throw createError({
+      status: 400,
+      statusText: 'Bad Request',
+      message: message ?? `Missing required route parameter: ${name}`,
+    });
+  }
+
+  return value;
 }

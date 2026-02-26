@@ -34,7 +34,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, statusText: 'Not Found', message: 'Egg not found' });
   }
 
-  const now = new Date();
+  const now = new Date().toISOString();
   const updates: Record<string, unknown> = { updatedAt: now };
 
   if (body.nestId) updates.nestId = body.nestId;

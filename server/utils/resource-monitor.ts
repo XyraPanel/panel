@@ -20,11 +20,11 @@ export class ResourceMonitor {
   async getServerResources(serverUuid: string): Promise<ServerResourceStats | null> {
     try {
       const { client, server } = await getWingsClientForServer(serverUuid);
-      const details = await client.getServerResources(server.uuid as string);
+      const details = await client.getServerResources(String(server.uuid));
 
       return {
-        serverId: server.id as string,
-        serverUuid: server.uuid as string,
+        serverId: String(server.id),
+        serverUuid: String(server.uuid),
         state: details.state || 'offline',
         isSuspended: details.isSuspended,
         memoryBytes: details.utilization.memory_bytes,
@@ -75,7 +75,7 @@ export class ResourceMonitor {
     const wingsNode = {
       id: node.id,
       fqdn: node.fqdn,
-      scheme: node.scheme as 'http' | 'https',
+      scheme: node.scheme,
       daemonListen: node.daemonListen,
       daemonSftp: node.daemonSftp,
       daemonBase: node.daemonBase,
@@ -97,9 +97,9 @@ export class ResourceMonitor {
         .from(tables.servers)
         .where(eq(tables.servers.nodeId, nodeId));
 
-      const lastSeenAt = new Date();
+      const lastSeenAt = new Date().toISOString();
 
-      Promise.resolve().then(async () => {
+      void Promise.resolve().then(async () => {
         try {
           await this.db
             .update(tables.wingsNodes)
@@ -141,7 +141,7 @@ export class ResourceMonitor {
         message = error.message;
       }
 
-      Promise.resolve().then(async () => {
+      void Promise.resolve().then(async () => {
         try {
           await this.db
             .update(tables.wingsNodes)
@@ -161,7 +161,7 @@ export class ResourceMonitor {
         cpuCount: 0,
         cpuUsage: 0,
         serverCount: 0,
-        lastUpdated: node.lastSeenAt ? new Date(node.lastSeenAt) : null,
+        lastUpdated: node.lastSeenAt ?? null,
         status,
         message,
       };

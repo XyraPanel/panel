@@ -35,9 +35,9 @@ export default defineEventHandler(async (event) => {
       start: string | null;
       memo: string | null;
       name: string | null;
-      lastUsedAt: Date | null;
-      expiresAt: Date | null;
-      createdAt: Date;
+      lastUsedAt: string | null;
+      expiresAt: string | null;
+      createdAt: string;
     }) => ({
       id: key.id,
       identifier: key.identifier || key.start || key.id,

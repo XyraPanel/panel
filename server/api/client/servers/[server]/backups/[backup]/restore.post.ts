@@ -78,7 +78,7 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    await client.restoreBackup(server.uuid, backup.uuid, truncate);
+    await client.restoreBackup(server.uuid, backup.uuid);
 
     await recordAuditEventFromRequest(event, {
       actor: accountContext.user.email || accountContext.user.id,

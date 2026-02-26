@@ -16,8 +16,8 @@ function parseCronField(field: string): number | null {
   return isNaN(val) ? null : val;
 }
 
-function calculateNextRun(cronExpression: string): Date {
-  const now = new Date();
+function calculateNextRun(cronExpression: string): string {
+  const now = new Date().toISOString();
   const parts = cronExpression.trim().split(/\s+/);
   const [minuteField = '*', hourField = '*', dayField = '*', monthField = '*', weekdayField = '*'] =
     parts;
@@ -41,7 +41,7 @@ function calculateNextRun(cronExpression: string): Date {
       (targetMonth === null || nextRun.getMonth() === targetMonth - 1) &&
       (targetWeekday === null || nextRun.getDay() === targetWeekday);
 
-    if (ok) return nextRun;
+    if (ok) return nextRun.toISOString();
     nextRun.setMinutes(nextRun.getMinutes() + 1);
   }
 
@@ -49,7 +49,7 @@ function calculateNextRun(cronExpression: string): Date {
   fallback.setMinutes(fallback.getMinutes() + 1);
   fallback.setSeconds(0);
   fallback.setMilliseconds(0);
-  return fallback;
+  return fallback.toISOString();
 }
 
 type ServerScheduleUpdate = typeof tables.serverSchedules.$inferInsert;

@@ -26,6 +26,9 @@ export default defineEventHandler(async (event: H3Event) => {
   const query = getQuery(event);
   const directory = typeof query.directory === 'string' ? query.directory : '/';
 
+  const isRecord = (value: unknown): value is Record<string, unknown> =>
+    typeof value === 'object' && value !== null && !Array.isArray(value);
+
   try {
     const nodeId = server.nodeId ? String(server.nodeId) : undefined;
     const listing = await remoteListServerDirectory(server.uuid, directory, nodeId);
@@ -44,12 +47,12 @@ export default defineEventHandler(async (event: H3Event) => {
     let status = 502;
     let errorData: Record<string, unknown> = {};
 
-    if (error && typeof error === 'object' && 'status' in error) {
-      const h3Error = error as { status: number; message?: string; data?: unknown };
-      status = h3Error.status;
-      errorMessage = h3Error.message || errorMessage;
-      if (h3Error.data && typeof h3Error.data === 'object') {
-        errorData = h3Error.data as Record<string, unknown>;
+    if (isRecord(error) && 'status' in error) {
+      status = typeof error.status === 'number' ? error.status : status;
+      errorMessage = typeof error.message === 'string' ? error.message : errorMessage;
+
+      if (isRecord(error.data)) {
+        errorData = error.data;
       }
     } else if (error instanceof Error) {
       errorMessage = error.message;

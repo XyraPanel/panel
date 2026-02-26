@@ -41,7 +41,7 @@ export async function getTemplate(name: string): Promise<{ html: string; subject
 function getCommonData(): TemplateData {
   const runtimeConfig = useRuntimeConfig();
   return {
-    appName: (runtimeConfig.public?.appName as string) || 'XyraPanel',
+    appName: (runtimeConfig.public?.appName) || 'XyraPanel',
     year: new Date().getFullYear(),
   };
 }
@@ -68,7 +68,10 @@ export async function renderEmailTemplate(
   const html = interpolateTemplate(template.html, mergedData);
 
   return {
-    subject: (data.subject as string) || template.subject || 'Message from ' + mergedData.appName,
+    subject:
+      (typeof data.subject === 'string' && data.subject.trim().length > 0
+        ? data.subject
+        : template.subject || `Message from ${mergedData.appName}`),
     html,
   };
 }

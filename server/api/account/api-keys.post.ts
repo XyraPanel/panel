@@ -19,7 +19,7 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
 
   try {
     const db = useDrizzle();
-    const now = new Date();
+    const now = new Date().toISOString();
     const auth = getAuth();
     const apiKeyPermId = randomUUID();
 
@@ -46,7 +46,7 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
     const apiKeyId = created.id;
 
     await db.insert(tables.apiKeyMetadata).values({
-      id: apiKeyPermId,
+      id: apiKeyPermId as string,
       apiKeyId: apiKeyId,
       keyType: 1,
       allowedIps: body.allowedIps ? JSON.stringify(body.allowedIps) : null,
@@ -83,7 +83,7 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
         description: body.memo || null,
         allowed_ips: body.allowedIps || [],
         last_used_at: null,
-        created_at: now.toISOString(),
+        created_at: now,
       },
       meta: {
         secret_token: created.key,

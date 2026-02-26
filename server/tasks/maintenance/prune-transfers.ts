@@ -1,6 +1,11 @@
 import { useDrizzle, tables, and, eq, lt } from '#server/utils/drizzle';
 import { debugLog, debugError } from '#server/utils/logger';
 
+function getRowCount(result: { changes?: number | bigint | null; rowCount?: number | bigint | null }): number {
+  const value = result?.changes ?? result?.rowCount ?? 0;
+  return typeof value === 'bigint' ? Number(value) : value ?? 0;
+}
+
 export default defineTask({
   meta: {
     name: 'maintenance:prune-transfers',
@@ -21,11 +26,11 @@ export default defineTask({
         .where(
           and(
             eq(tables.serverTransfers.successful, false),
-            lt(tables.serverTransfers.createdAt, thirtyDaysAgo),
+            lt(tables.serverTransfers.createdAt, thirtyDaysAgo.toISOString()),
           ),
         );
 
-      const archivedCount = (result as any).changes ?? (result as any).rowCount ?? 0;
+      const archivedCount = getRowCount(result);
 
       debugLog(
         `[${now.toISOString()}] Transfer pruning complete. Archived ${archivedCount} failed transfers.`,

@@ -1,4 +1,4 @@
-import { createError, getHeader, type H3Event } from 'h3';
+import { type H3Event } from 'h3';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { parseAuthToken, decryptToken } from '#server/utils/wings/encryption';
 

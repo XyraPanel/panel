@@ -35,13 +35,13 @@ export default defineEventHandler(async (event) => {
 
   try {
     const { client } = await getWingsClientForServer(server.uuid);
-    await client.deleteFiles(server.uuid as string, root || '/', files);
+    await client.deleteFiles(server.uuid, root || '/', files);
 
     await recordServerActivity({
       event,
       actorId: permissionContext.userId,
       action: 'server.file.delete',
-      server: { id: server.id as string, uuid: server.uuid as string },
+      server: { id: String(server.id), uuid: server.uuid },
       metadata: { root: root || '/', files },
     });
 

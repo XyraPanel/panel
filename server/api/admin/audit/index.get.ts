@@ -11,18 +11,24 @@ export default defineEventHandler(async (event) => {
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.AUDIT, ADMIN_ACL_PERMISSIONS.READ);
 
   const query = getQuery(event);
-  const page = Math.max(1, Number.parseInt((query.page as string) ?? '1', 10));
-  const limit = Math.min(Math.max(1, Number.parseInt((query.limit as string) ?? '50', 10)), 200);
-  const search = query.search as string | undefined;
-  const actor = query.actor as string | undefined;
-  const action = query.action as string | undefined;
-  const targetType = query.targetType as string | undefined;
+  const getQueryString = (value: unknown): string | undefined =>
+    typeof value === 'string' && value.length > 0 ? value : undefined;
+
+  const pageParam = getQueryString(query.page);
+  const limitParam = getQueryString(query.limit);
+  const search = getQueryString(query.search);
+  const actor = getQueryString(query.actor);
+  const action = getQueryString(query.action);
+  const targetType = getQueryString(query.targetType);
+
+  const page = Math.max(1, Number.parseInt(pageParam ?? '1', 10));
+  const limit = Math.min(Math.max(1, Number.parseInt(limitParam ?? '50', 10)), 200);
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();
 
   const conditions = [] as Array<
-    ReturnType<typeof and> | ReturnType<typeof or> | ReturnType<typeof eq>
+    ReturnType<typeof and>   | ReturnType<typeof eq>
   >;
 
   if (search) {
@@ -73,15 +79,18 @@ export default defineEventHandler(async (event) => {
     .limit(limit)
     .offset(offset);
 
+  const isRecord = (candidate: unknown): candidate is Record<string, unknown> =>
+    Boolean(candidate) && typeof candidate === 'object' && !Array.isArray(candidate);
+
   const parseMetadata = (value: string | null) => {
     if (!value) {
       return {};
     }
 
     try {
-      const parsed = JSON.parse(value);
-      if (parsed && typeof parsed === 'object') {
-        return parsed as Record<string, unknown>;
+      const parsed: unknown = JSON.parse(value);
+      if (isRecord(parsed)) {
+        return parsed;
       }
       return { value: parsed };
     } catch {
@@ -89,7 +98,7 @@ export default defineEventHandler(async (event) => {
     }
   };
 
-  const transformTimestamp = (raw: Date | number) => {
+  const transformTimestamp = (raw: Date | number | string) => {
     const date = raw instanceof Date ? raw : new Date(raw);
     return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
   };
@@ -97,12 +106,12 @@ export default defineEventHandler(async (event) => {
   const actorIds = new Set<string>();
   const actorEmails = new Set<string>();
 
-  events.forEach((event) => {
+  events.forEach((auditEvent) => {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (uuidRegex.test(event.actor)) {
-      actorIds.add(event.actor);
-    } else if (event.actor.includes('@')) {
-      actorEmails.add(event.actor);
+    if (uuidRegex.test(auditEvent.actor)) {
+      actorIds.add(auditEvent.actor);
+    } else if (auditEvent.actor.includes('@')) {
+      actorEmails.add(auditEvent.actor);
     }
   });
 
@@ -153,32 +162,32 @@ export default defineEventHandler(async (event) => {
   }
 
   const response = {
-    data: events.map((event) => {
+    data: events.map((auditEvent) => {
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-      const userInfo = uuidRegex.test(event.actor)
-        ? userMap.get(event.actor)
-        : event.actor.includes('@')
-          ? userMap.get(event.actor)
+      const userInfo = uuidRegex.test(auditEvent.actor)
+        ? userMap.get(auditEvent.actor)
+        : auditEvent.actor.includes('@')
+          ? userMap.get(auditEvent.actor)
           : null;
 
       let formattedActorDisplay: string | undefined;
       if (userInfo) {
-        const name = userInfo.username || userInfo.email || event.actor;
+        const name = userInfo.username || userInfo.email || auditEvent.actor;
         const email = userInfo.email;
         formattedActorDisplay = email && email !== name ? `${name} (${email})` : name;
       }
 
       return {
-        id: event.id,
-        occurredAt: transformTimestamp(event.occurredAt),
-        actor: event.actor,
+        id: auditEvent.id,
+        occurredAt: transformTimestamp(auditEvent.occurredAt),
+        actor: auditEvent.actor,
         actorDisplay: formattedActorDisplay,
         actorUserId: userInfo?.id,
         actorEmail: userInfo?.email || undefined,
-        action: event.action,
-        target: event.targetId ? `${event.targetType}#${event.targetId}` : event.targetType,
-        details: parseMetadata(event.metadata),
+        action: auditEvent.action,
+        target: auditEvent.targetId ? `${auditEvent.targetType}#${auditEvent.targetId}` : auditEvent.targetType,
+        details: parseMetadata(auditEvent.metadata),
       };
     }),
     pagination: {

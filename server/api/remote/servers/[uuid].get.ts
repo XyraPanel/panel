@@ -1,3 +1,7 @@
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 import { type H3Event } from 'h3';
 import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
@@ -274,18 +278,15 @@ export default defineEventHandler(async (event: H3Event) => {
 
       if (key.startsWith('server.')) {
         const path = key.replace(/^server\./, '').split('.');
-        let current: Record<string, unknown> | null = structure as unknown as Record<
-          string,
-          unknown
-        >;
+        let current: unknown = structure;
         for (const part of path) {
-          if (!current || typeof current !== 'object') {
+          if (!isPlainObject(current)) {
             current = null;
             break;
           }
-          current = (current[part] as Record<string, unknown> | null) ?? null;
+          current = current[part];
         }
-        replacement = current ?? '';
+        replacement = current;
       } else if (key.startsWith('env.')) {
         const envKey = key.replace(/^env\./, '');
         replacement = structure.build?.env?.[envKey] ?? '';
@@ -294,7 +295,10 @@ export default defineEventHandler(async (event: H3Event) => {
       }
 
       if (replacement !== null && replacement !== undefined) {
-        result = result.replace(match[0], String(replacement));
+        const replaceStr = typeof replacement === 'string' || typeof replacement === 'number' || typeof replacement === 'boolean' 
+          ? String(replacement) 
+          : JSON.stringify(replacement);
+        result = result.replace(match[0], replaceStr);
       }
     }
 
@@ -310,10 +314,10 @@ export default defineEventHandler(async (event: H3Event) => {
       return findData.map((item) => processFindValues(item, structure));
     }
 
-    if (findData && typeof findData === 'object') {
+    if (isPlainObject(findData)) {
       const processed: Record<string, unknown> = {};
-      for (const [entryKey, entryValue] of Object.entries(findData as Record<string, unknown>)) {
-        processed[entryKey] = processFindValues(entryValue, structure);
+      for (const entryKey of Object.keys(findData)) {
+        processed[entryKey] = processFindValues(findData[entryKey], structure);
       }
       return processed;
     }
@@ -332,10 +336,14 @@ export default defineEventHandler(async (event: H3Event) => {
     }>;
   }> = [];
 
-  if (configFiles && typeof configFiles === 'object' && !Array.isArray(configFiles)) {
+  if (isPlainObject(configFiles)) {
     for (const [file, data] of Object.entries(configFiles)) {
-      if (data && typeof data === 'object' && 'parser' in data) {
-        const fileData = data as { parser: string; find?: Record<string, unknown> };
+      if (isPlainObject(data) && 'parser' in data) {
+        const fileData = data as { parser?: unknown; find?: unknown };
+        if (typeof fileData.parser !== 'string') {
+          continue;
+        }
+
         const replace: Array<{
           match: string;
           replace_with: string | number;
@@ -343,26 +351,23 @@ export default defineEventHandler(async (event: H3Event) => {
         }> = [];
 
         if (fileData.find && typeof fileData.find === 'object') {
-          const processedFind = processFindValues(fileData.find, serverStructure) as Record<
-            string,
-            unknown
-          >;
-
-          for (const [match, replaceValue] of Object.entries(processedFind)) {
-            if (replaceValue && typeof replaceValue === 'object' && !Array.isArray(replaceValue)) {
-              for (const [ifValue, replaceWith] of Object.entries(replaceValue)) {
+          const processedFind = processFindValues(fileData.find, serverStructure);
+          if (isPlainObject(processedFind)) {
+            for (const [match, replaceValue] of Object.entries(processedFind)) {
+              if (isPlainObject(replaceValue)) {
+                for (const [ifValue, replaceWith] of Object.entries(replaceValue)) {
+                  replace.push({
+                    match,
+                    if_value: ifValue,
+                    replace_with: typeof replaceWith === 'number' ? replaceWith : String(replaceWith),
+                  });
+                }
+              } else {
                 replace.push({
                   match,
-                  if_value: ifValue,
-                  replace_with: typeof replaceWith === 'number' ? replaceWith : String(replaceWith),
+                  replace_with: typeof replaceValue === 'number' ? replaceValue : String(replaceValue),
                 });
               }
-            } else {
-              replace.push({
-                match,
-                replace_with:
-                  typeof replaceValue === 'number' ? replaceValue : String(replaceValue),
-              });
             }
           }
         }

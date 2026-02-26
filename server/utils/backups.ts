@@ -29,7 +29,7 @@ export async function listServerBackups(serverId: string): Promise<ServerBackup[
         uuid: row.uuid,
         name: row.name,
         ignoredFiles: row.ignoredFiles ? JSON.parse(row.ignoredFiles) : [],
-        disk: row.disk as 'wings' | 's3',
+        disk: row.disk,
         checksum: row.checksum,
         bytes: row.bytes,
         isSuccessful: row.isSuccessful,

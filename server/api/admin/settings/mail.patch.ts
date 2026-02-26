@@ -57,7 +57,7 @@ export default defineEventHandler(async (event) => {
 
   await setSettings(updates as Record<(typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS], string>);
 
-  refreshEmailService();
+  void refreshEmailService();
 
   await recordAuditEventFromRequest(event, {
     actor: session.user.email || session.user.id,

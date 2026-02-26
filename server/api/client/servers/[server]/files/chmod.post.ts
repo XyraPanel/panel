@@ -35,9 +35,9 @@ export default defineEventHandler(async (event) => {
   const targetRoot = root && root.length > 0 ? root : '/';
 
   try {
-    const { client } = await getWingsClientForServer(server.uuid as string);
+    const { client } = await getWingsClientForServer(server.uuid);
     await client.chmodFiles(
-      server.uuid as string,
+      server.uuid,
       targetRoot,
       files.map((entry) => ({
         ...entry,
@@ -49,7 +49,7 @@ export default defineEventHandler(async (event) => {
       event,
       actorId: permissionContext.userId,
       action: 'server.file.chmod',
-      server: { id: server.id as string, uuid: server.uuid as string },
+      server: { id: String(server.id), uuid: String(server.uuid) },
       metadata: { root: targetRoot, files: files.map((f) => ({ file: f.file, mode: f.mode })) },
     });
 

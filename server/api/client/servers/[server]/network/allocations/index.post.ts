@@ -64,7 +64,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const now = new Date();
+  const now = new Date().toISOString();
   const allocationId = allocation.id;
 
   await db

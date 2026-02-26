@@ -207,13 +207,13 @@ export interface DashboardNode {
 export interface DashboardIncident {
   id: string;
   occurredAt: string;
-  actor: string;
-  actorUsername?: string;
-  actorUserId?: string;
-  actorEmail?: string;
   action: string;
-  target: string | null;
-  metadata: Record<string, unknown> | null;
+  actor:
+    | {
+        label: string;
+        userId?: string;
+      }
+    | null;
 }
 
 export interface DashboardOperation {

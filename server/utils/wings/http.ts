@@ -1,4 +1,4 @@
-import { createError, type H3Error } from 'h3';
+import { type H3Error } from 'h3';
 import type { WingsErrorOptions, WingsFetchError, WingsQuery } from '#shared/types/wings';
 
 const NODE_QUERY_KEYS = ['node', 'node_id', 'nodeId'] as const;
@@ -41,13 +41,15 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
     const statusText = error.response?.statusText || 'Bad Gateway';
     const data = error.data;
 
-    const message =
-      typeof data === 'object' &&
-      data !== null &&
-      'message' in data &&
-      typeof (data as { message?: unknown }).message === 'string'
-        ? (data as { message: string }).message
-        : `Wings responded with status ${status}.`;
+    let message: string | undefined;
+    if (typeof data === 'object' && data !== null && 'message' in data) {
+      const candidate = (data as { message?: unknown }).message;
+      if (typeof candidate === 'string' && candidate.trim().length > 0) {
+        message = candidate;
+      }
+    }
+
+    message = message || `Wings responded with status ${status}.`;
 
     return createError({
       status,

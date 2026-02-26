@@ -73,7 +73,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const ipAlias = body.ipAlias as string | undefined;
+  const ipAlias = body.ipAlias
 
   const nowIso = new Date().toISOString();
   const allocationsToCreate: Array<typeof tables.serverAllocations.$inferInsert> = [];

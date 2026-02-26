@@ -4,8 +4,40 @@ import type {
   WingsFileObject,
   WingsBackup,
 } from '#shared/types/wings-client';
-import { decryptToken } from '#server/utils/wings/encryption';
-import { debugError } from '#server/utils/logger';
+import { decryptToken } from './wings/encryption';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isServerDetails(value: unknown): value is WingsServerDetails {
+  return (
+    isRecord(value) &&
+    typeof value.state === 'string' &&
+    typeof value.isSuspended === 'boolean' &&
+    isRecord(value.utilization)
+  );
+}
+
+function isWingsFileObject(value: unknown): value is WingsFileObject {
+  return (
+    isRecord(value) &&
+    typeof value.name === 'string' &&
+    typeof value.mode === 'string' &&
+    typeof value.mode_bits === 'string' &&
+    typeof value.size === 'number'
+  );
+}
+
+function isWingsBackup(value: unknown): value is WingsBackup {
+  return (
+    isRecord(value) &&
+    typeof value.uuid === 'string' &&
+    typeof value.name === 'string' &&
+    Array.isArray(value.ignored_files) &&
+    typeof value.sha256_hash === 'string'
+  );
+}
 
 export class WingsConnectionError extends Error {
   constructor(
@@ -56,7 +88,7 @@ export class WingsClient {
     return this.getToken();
   }
 
-  private async request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  private async request(path: string, options: RequestInit = {}): Promise<unknown> {
     let lastError: Error | null = null;
     const url = `${this.baseUrl}${path}`;
 
@@ -72,7 +104,13 @@ export class WingsClient {
             Authorization: this.getToken(),
             Accept: 'application/json',
             'Content-Type': 'application/json',
-            ...options.headers,
+            ...(options.headers && typeof options.headers === 'object' && !Array.isArray(options.headers)
+              ? Object.fromEntries(
+                  options.headers instanceof Headers
+                    ? options.headers.entries()
+                    : Object.entries(options.headers)
+                )
+              : {}),
           },
         });
 
@@ -97,20 +135,21 @@ export class WingsClient {
         }
 
         if (response.status === 204 || response.status === 202) {
-          return {} as T;
+          return undefined;
         }
 
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-          return {} as T;
+          return undefined;
         }
 
         const text = await response.text();
         if (!text || text.trim().length === 0) {
-          return {} as T;
+          return undefined;
         }
 
-        return JSON.parse(text) as T;
+        const parsed: unknown = JSON.parse(text);
+        return parsed;
       } catch (error) {
         clearTimeout(timeoutId);
 
@@ -157,11 +196,16 @@ export class WingsClient {
   }
 
   async getSystemInfo(): Promise<Record<string, unknown>> {
-    return this.request<Record<string, unknown>>('/api/system');
+    const data = await this.request('/api/system');
+    return isRecord(data) ? data : {};
   }
 
   async getServerDetails(serverUuid: string): Promise<WingsServerDetails> {
-    return this.request<WingsServerDetails>(`/api/servers/${serverUuid}`);
+    const data = await this.request(`/api/servers/${serverUuid}`);
+    if (isServerDetails(data)) {
+      return data;
+    }
+    throw new WingsConnectionError('Invalid server details response');
   }
 
   async sendPowerAction(
@@ -189,9 +233,9 @@ export class WingsClient {
     const params = new URLSearchParams({
       directory: this.normalizeDirectoryForWings(directory),
     });
-    return this.request<WingsFileObject[]>(
-      `/api/servers/${serverUuid}/files/list-directory?${params}`,
-    );
+    const data = await this.request(`/api/servers/${serverUuid}/files/list-directory?${params}`);
+    if (!Array.isArray(data)) return [];
+    return data.filter(isWingsFileObject);
   }
 
   async getFileContents(serverUuid: string, filePath: string): Promise<string> {
@@ -296,10 +340,14 @@ export class WingsClient {
     root: string,
     files: string[],
   ): Promise<{ file: string }> {
-    return this.request<{ file: string }>(`/api/servers/${serverUuid}/files/compress`, {
+    const data = await this.request(`/api/servers/${serverUuid}/files/compress`, {
       method: 'POST',
       body: JSON.stringify({ root, files }),
     });
+    if (isRecord(data) && typeof data.file === 'string') {
+      return { file: data.file };
+    }
+    throw new WingsConnectionError('Invalid compress response');
   }
 
   async decompressFile(serverUuid: string, root: string, file: string): Promise<void> {
@@ -342,10 +390,11 @@ export class WingsClient {
 
   async getFileDownloadUrl(serverUuid: string, filePath: string): Promise<string> {
     const params = new URLSearchParams({ file: filePath });
-    const response = await this.request<{ url: string }>(
-      `/api/servers/${serverUuid}/files/download?${params}`,
-    );
-    return response.url;
+    const response = await this.request(`/api/servers/${serverUuid}/files/download?${params}`);
+    if (isRecord(response) && typeof response.url === 'string') {
+      return response.url;
+    }
+    throw new WingsConnectionError('Invalid download URL response');
   }
 
   async downloadFileStream(serverUuid: string, filePath: string): Promise<Response> {
@@ -390,12 +439,17 @@ export class WingsClient {
         ? `/api/servers/${serverUuid}/files/upload?${params.toString()}`
         : `/api/servers/${serverUuid}/files/upload`;
 
-    const response = await this.request<{ url: string }>(path);
-    return response.url;
+    const response = await this.request(path);
+    if (isRecord(response) && typeof response.url === 'string') {
+      return response.url;
+    }
+    throw new WingsConnectionError('Invalid upload URL response');
   }
 
   async listBackups(serverUuid: string): Promise<WingsBackup[]> {
-    return this.request<WingsBackup[]>(`/api/servers/${serverUuid}/backups`);
+    const data = await this.request(`/api/servers/${serverUuid}/backups`);
+    if (!Array.isArray(data)) return [];
+    return data.filter(isWingsBackup);
   }
 
   async createBackup(
@@ -406,11 +460,7 @@ export class WingsClient {
   ): Promise<void> {
     await this.request(`/api/servers/${serverUuid}/backup`, {
       method: 'POST',
-      body: JSON.stringify({
-        adapter,
-        uuid: backupUuid,
-        ignore: ignored ?? '',
-      }),
+      body: JSON.stringify({ name: backupUuid, ignored, adapter }),
     });
   }
 
@@ -420,18 +470,9 @@ export class WingsClient {
     });
   }
 
-  async restoreBackup(
-    serverUuid: string,
-    backupUuid: string,
-    truncate: boolean = false,
-    adapter: 'wings' | 's3' = 'wings',
-  ): Promise<void> {
+  async restoreBackup(serverUuid: string, backupUuid: string): Promise<void> {
     await this.request(`/api/servers/${serverUuid}/backup/${backupUuid}/restore`, {
       method: 'POST',
-      body: JSON.stringify({
-        adapter,
-        truncate_directory: truncate,
-      }),
     });
   }
 
@@ -508,7 +549,19 @@ export class WingsClient {
   }
 
   async getWebSocketToken(serverUuid: string): Promise<{ token: string; socket: string }> {
-    return this.request<{ token: string; socket: string }>(`/api/servers/${serverUuid}/ws`);
+    const response = await this.request(`/api/servers/${serverUuid}/ws`);
+    if (isRecord(response) && typeof response.token === 'string' && typeof response.socket === 'string') {
+      return { token: response.token, socket: response.socket };
+    }
+    throw new WingsConnectionError('Invalid WebSocket token response');
+  }
+
+  async getSignedDownloadUrl(serverUuid: string, backupUuid: string): Promise<{ token: string; socket: string }> {
+    const response = await this.request(`/api/servers/${serverUuid}/backup/${backupUuid}/download`);
+    if (isRecord(response) && typeof response.token === 'string' && typeof response.socket === 'string') {
+      return { token: response.token, socket: response.socket };
+    }
+    throw new WingsConnectionError('Invalid signed download url response');
   }
 }
 
@@ -555,7 +608,7 @@ export async function getWingsClientForServer(
   const wingsNode: WingsNode = {
     id: node.id,
     fqdn: node.fqdn,
-    scheme: node.scheme as 'http' | 'https',
+    scheme: node.scheme,
     daemonListen: node.daemonListen,
     daemonSftp: node.daemonSftp,
     daemonBase: node.daemonBase,

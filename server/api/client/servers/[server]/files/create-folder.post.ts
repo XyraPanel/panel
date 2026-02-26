@@ -38,13 +38,13 @@ export default defineEventHandler(async (event) => {
   try {
     const { client } = await getWingsClientForServer(server.uuid);
 
-    await client.createDirectory(server.uuid as string, root, name);
+    await client.createDirectory(server.uuid, root, name);
 
     await recordServerActivity({
       event,
       actorId: permissionContext.userId,
       action: 'server.directory.create',
-      server: { id: server.id as string, uuid: server.uuid as string },
+      server: { id: server.id, uuid: server.uuid },
       metadata: { directory: root, name },
     });
 

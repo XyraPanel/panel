@@ -18,7 +18,7 @@ class SimpleQueue {
     this.jobs.set(jobId, job);
 
     if (!this.processing) {
-      this.processQueue();
+      void this.processQueue();
     }
 
     return jobId;
@@ -44,16 +44,16 @@ class SimpleQueue {
       }
 
       job.status = 'processing';
-      job.startedAt = new Date();
+      job.startedAt = new Date().toISOString();
 
       try {
         await this.executeJob(job);
         job.status = 'completed';
-        job.completedAt = new Date();
+        job.completedAt = new Date().toISOString();
       } catch (error) {
         job.status = 'failed';
         job.error = error instanceof Error ? error.message : 'Unknown error';
-        job.completedAt = new Date();
+        job.completedAt = new Date().toISOString();
       }
 
       setTimeout(
@@ -72,18 +72,28 @@ class SimpleQueue {
 
     switch (job.type) {
       case 'server:create':
-        await this.createServer(job.data as { serverId: string; startOnCompletion?: boolean });
+        if (!isCreateServerPayload(job.data)) {
+          throw new Error('Invalid payload for server:create');
+        }
+        await this.createServer(job.data);
         break;
       case 'server:delete':
-        await this.deleteServer(job.data as { serverUuid: string });
+        if (!isServerUuidPayload(job.data)) {
+          throw new Error('Invalid payload for server:delete');
+        }
+        await this.deleteServer(job.data);
         break;
       case 'server:reinstall':
-        await this.reinstallServer(job.data as { serverUuid: string });
+        if (!isServerUuidPayload(job.data)) {
+          throw new Error('Invalid payload for server:reinstall');
+        }
+        await this.reinstallServer(job.data);
         break;
       case 'backup:create':
-        await this.createBackup(
-          job.data as { serverUuid: string; name?: string; ignored?: string },
-        );
+        if (!isBackupCreatePayload(job.data)) {
+          throw new Error('Invalid payload for backup:create');
+        }
+        await this.createBackup(job.data);
         break;
       default:
         throw new Error(`Unknown job type: ${job.type}`);
@@ -147,6 +157,35 @@ class SimpleQueue {
       skipAudit: true,
     });
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isCreateServerPayload(value: unknown): value is { serverId: string; startOnCompletion?: boolean } {
+  return (
+    isRecord(value) &&
+    typeof value.serverId === 'string' &&
+    (value.startOnCompletion === undefined || typeof value.startOnCompletion === 'boolean')
+  );
+}
+
+function isServerUuidPayload(value: unknown): value is { serverUuid: string } {
+  return isRecord(value) && typeof value.serverUuid === 'string';
+}
+
+function isBackupCreatePayload(value: unknown): value is {
+  serverUuid: string;
+  name?: string;
+  ignored?: string;
+} {
+  return (
+    isRecord(value) &&
+    typeof value.serverUuid === 'string' &&
+    (value.name === undefined || typeof value.name === 'string') &&
+    (value.ignored === undefined || typeof value.ignored === 'string')
+  );
 }
 
 const queue = new SimpleQueue();

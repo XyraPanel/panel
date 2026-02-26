@@ -41,7 +41,7 @@ export default defineEventHandler(async (event) => {
 
   const db = useDrizzle();
   const scheduleId = randomUUID();
-  const timestamp = new Date();
+  const timestamp = new Date().toISOString();
 
   try {
     await db.insert(tables.serverSchedules).values({

@@ -1,15 +1,29 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import type { CookieSerializeOptions } from 'cookie-es';
 import { useRuntimeConfig } from '#imports';
-import type { AuthCookieOptions, CookieSameSite, ExtendedRuntimeConfig } from '#shared/types/auth';
+import type { AuthCookieOptions, ExtendedRuntimeConfig } from '#shared/types/auth';
 
 const HASHED_TOKEN_REGEX = /^[a-f0-9]{64}$/i;
 let cachedKey: Buffer | null = null;
 let cachedSecret: string | null = null;
 
-function resolveEncryptionKey(): Buffer {
-  const runtimeConfig = useRuntimeConfig() as ExtendedRuntimeConfig;
+function isExtendedRuntimeConfig(value: unknown): value is ExtendedRuntimeConfig {
+  return typeof value === 'object' && value !== null;
+}
 
+function getExtendedRuntimeConfig(): ExtendedRuntimeConfig {
+  const runtimeConfig = useRuntimeConfig();
+
+  if (isExtendedRuntimeConfig(runtimeConfig)) {
+    return { auth: runtimeConfig.auth ?? {}, public: runtimeConfig.public ?? {} };
+  }
+
+  return { auth: {}, public: {} };
+}
+
+function resolveEncryptionKey(): Buffer {
+  const runtimeConfig = getExtendedRuntimeConfig();
+  
   const secret = runtimeConfig.auth?.tokenSecret || '';
 
   const material = secret.length > 0 ? secret : 'XyraPanel-development-secret';
@@ -70,13 +84,13 @@ export function toStoredToken(token: string): string {
 }
 
 export function resolveAuthCookieOptions(): AuthCookieOptions {
-  const runtimeConfig = useRuntimeConfig() as ExtendedRuntimeConfig;
+  const runtimeConfig = getExtendedRuntimeConfig();
 
   const cookieConfig = runtimeConfig.auth?.cookie;
 
   const secureDefault = process.env.NODE_ENV === 'production';
   const secure = typeof cookieConfig?.secure === 'boolean' ? cookieConfig.secure : secureDefault;
-  const sameSite = (cookieConfig?.sameSite ?? 'lax') as CookieSameSite;
+  const sameSite = cookieConfig?.sameSite ?? 'lax';
   const domain = cookieConfig?.domain || undefined;
 
   return { secure, sameSite, domain };

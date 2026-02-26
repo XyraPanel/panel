@@ -1,4 +1,3 @@
-import { createError } from 'h3';
 import type { ResolvedSessionUser } from '#shared/types/auth';
 import type { getServerSession } from '#server/utils/session';
 import { getSessionUser } from '#server/utils/session';

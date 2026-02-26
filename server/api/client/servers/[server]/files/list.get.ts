@@ -56,8 +56,8 @@ export default defineEventHandler(async (event) => {
   );
 
   try {
-    const { client } = await getWingsClientForServer(server.uuid as string);
-    let files = await client.listFiles(server.uuid as string, directory);
+    const { client } = await getWingsClientForServer(server.uuid);
+    let files = await client.listFiles(server.uuid, directory);
 
     if (
       files.length === 0 &&
@@ -104,7 +104,7 @@ export default defineEventHandler(async (event) => {
       server.identifier !== server.uuid
     ) {
       try {
-        const { client } = await getWingsClientForServer(server.uuid as string);
+        const { client } = await getWingsClientForServer(server.uuid);
         const files = await client.listFiles(server.identifier, directory);
 
         const entries = files.map((file) => ({

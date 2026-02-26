@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
 
   const [existingVar] = existingVarRows;
 
-  const now = new Date();
+  const now = new Date().toISOString();
 
   if (existingVar) {
     await db
