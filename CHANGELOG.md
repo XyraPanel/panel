@@ -1,5 +1,36 @@
 # Changelog
 
+## v0.1.0-alpha.2
+
+[compare changes](https://github.com/XyraPanel/panel/compare/v0.1.0-alpha.1...v0.1.0-alpha.2)
+
+### 🚀 Enhancements
+
+- Command to upload PM2 logs to paste service ([6e15a63](https://github.com/XyraPanel/panel/commit/6e15a63))
+- **config:** Update issue templates ([56eab30](https://github.com/XyraPanel/panel/commit/56eab30))
+- Remove nitro schedules functionality from admin routes ([#85](https://github.com/XyraPanel/panel/pull/85))
+- Enhance SEO metadata ([#87](https://github.com/XyraPanel/panel/pull/87))
+- **api:** Enhance endpoint payloads ([0fc1aa7](https://github.com/XyraPanel/panel/commit/0fc1aa7))
+- More build optimizations ([4cadd8d](https://github.com/XyraPanel/panel/commit/4cadd8d))
+
+### 🩹 Fixes
+
+- Update paste service route ([7a41fb3](https://github.com/XyraPanel/panel/commit/7a41fb3))
+
+### 💅 Refactors
+
+- **ui:** Improve UX for smaller devices ([#88](https://github.com/XyraPanel/panel/pull/88))
+- Enforce strict runtime type safety ([#89](https://github.com/XyraPanel/panel/pull/89))
+
+### 🏡 Chore
+
+- **release:** V0.1.0-alpha.1 ([e1d315e](https://github.com/XyraPanel/panel/commit/e1d315e))
+
+### ❤️ Contributors
+
+- 26bz ([@26bz](https://github.com/26bz))
+- Bz ([@26bz](https://github.com/26bz))
+
 ## v0.1.0-alpha.1
 
 [compare changes](https://github.com/XyraPanel/panel/compare/v0.1.0-alpha.0...v0.1.0-alpha.1)
