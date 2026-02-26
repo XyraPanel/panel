@@ -87,6 +87,7 @@
     "@vite-pwa/assets-generator": "^1.0.2",
     "@vitest/ui": "^4.0.18",
     "drizzle-kit": "^0.31.9",
+    "lightningcss": "^1.31.1",
     "lint-staged": "^16.2.7",
     "oxfmt": "^0.35.0",
     "oxlint": "^1.50.0",
