@@ -62,7 +62,12 @@ function isPermissionKey(value: string): value is PermissionKey {
 const SERVER_USER_PERMISSIONS_CACHE_TTL = 60;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null;
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    !(value instanceof Date) &&
+    !(value instanceof RegExp)
+  );
 }
 
 function isTruthyPermissionValue(value: unknown): boolean {
