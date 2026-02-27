@@ -8,10 +8,12 @@ export default defineEventHandler(async (event) => {
   const { user } = await requireAccountUser(event);
 
   const { page, limit } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
-      page: z.coerce.number().min(1).catch(1).default(1),
-      limit: z.coerce.number().min(1).max(100).catch(10).default(10),
-    }).safeParse(data);
+    const result = z
+      .object({
+        page: z.coerce.number().min(1).catch(1).default(1),
+        limit: z.coerce.number().min(1).max(100).catch(10).default(10),
+      })
+      .safeParse(data);
     return result.success ? result.data : { page: 1, limit: 10 };
   });
   const offset = (page - 1) * limit;

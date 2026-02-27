@@ -25,9 +25,11 @@ export default defineEventHandler(async (event: H3Event) => {
   });
 
   const { directory } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
-      directory: z.string().default('/')
-    }).safeParse(data);
+    const result = z
+      .object({
+        directory: z.string().default('/'),
+      })
+      .safeParse(data);
     return result.success ? result.data : { directory: '/' };
   });
 
@@ -74,7 +76,8 @@ export default defineEventHandler(async (event: H3Event) => {
     if (server.status === 'installing') {
       throw createError({
         status: 400,
-        message: 'Server not ready: The server is currently installing. Please wait for installation to complete.',
+        message:
+          'Server not ready: The server is currently installing. Please wait for installation to complete.',
         data: {
           serverUuid: server.uuid,
           status: server.status,

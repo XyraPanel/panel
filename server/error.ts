@@ -19,10 +19,7 @@ function shouldAuditPrivilegedFailure(path: string, status: number): boolean {
   return PRIVILEGED_FAILURE_PATTERNS.some((pattern) => pattern.test(path));
 }
 
-export default async function errorHandler(
-  error: H3Error | Error,
-  event: H3Event,
-) {
+export default async function errorHandler(error: H3Error | Error, event: H3Event) {
   const path = event.path || '';
   const isApiRoute = path.startsWith('/api/');
 
@@ -44,7 +41,8 @@ export default async function errorHandler(
     try {
       const auth = event.context.auth;
       const user = auth?.user;
-      const actor = user?.email || user?.id || getRequestIP(event, { xForwardedFor: true }) || 'system';
+      const actor =
+        user?.email || user?.id || getRequestIP(event, { xForwardedFor: true }) || 'system';
 
       await recordAuditEventFromRequest(event, {
         actor,

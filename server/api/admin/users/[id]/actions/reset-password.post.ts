@@ -46,7 +46,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, message: 'User not found' });
   }
 
-
   try {
     if (mode === 'link') {
       const { resolvePanelBaseUrl } = await import('#server/utils/email');

@@ -781,10 +781,7 @@ export function useServerWebSocket(serverId: string | ComputedRef<string>) {
         throw new Error(fetchErrObj.message || t('server.websocket.failedToFetchCredentials'));
       }
 
-      if (
-        typeof credentials.socket !== 'string' ||
-        typeof credentials.token !== 'string'
-      ) {
+      if (typeof credentials.socket !== 'string' || typeof credentials.token !== 'string') {
         console.error(`[WebSocket] Invalid credentials structure:`, {
           hasSocket: !!credentials?.socket,
           hasToken: !!credentials?.token,

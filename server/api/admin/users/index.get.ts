@@ -10,11 +10,13 @@ export default defineEventHandler(async (event) => {
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ);
 
   const { page, limit, search } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
-      page: z.coerce.number().min(1).catch(1).default(1),
-      limit: z.coerce.number().min(1).max(100).catch(50).default(50),
-      search: z.string().optional(),
-    }).safeParse(data);
+    const result = z
+      .object({
+        page: z.coerce.number().min(1).catch(1).default(1),
+        limit: z.coerce.number().min(1).max(100).catch(50).default(50),
+        search: z.string().optional(),
+      })
+      .safeParse(data);
     return result.success ? result.data : { page: 1, limit: 50 };
   });
   const offset = (page - 1) * limit;
