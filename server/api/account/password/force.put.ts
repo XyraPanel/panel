@@ -2,7 +2,7 @@ import { APIError } from 'better-auth/api';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { accountForcedPasswordSchema } from '#shared/schema/account';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import {
   requireAccountUser,
   readValidatedBodyWithLimit,
@@ -23,8 +23,7 @@ export default defineEventHandler(async (event) => {
     );
 
     const db = useDrizzle();
-    const auth = getAuth();
-    const headers = normalizeHeadersForAuth(event.node.req.headers);
+    const headers = getAuthHeaders(event);
 
     const existingResult = await db
       .select({

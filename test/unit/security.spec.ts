@@ -13,19 +13,19 @@ vi.mock('../../server/utils/permission-middleware', () => ({
   requireAdminPermission: vi.fn(),
 }));
 
-vi.mock('../../server/utils/auth', () => ({
-  getAuth: () => ({
+vi.mock('../../server/utils/auth', () => {
+  const mockAuth = {
     api: {
       getSession: vi.fn(),
     },
-  }),
-  auth: {
-    api: {
-      getSession: vi.fn(),
-    },
-  },
-  normalizeHeadersForAuth: () => ({}),
-}));
+  };
+  return {
+    auth: mockAuth,
+    getAuth: () => mockAuth,
+    getAuthHeaders: () => ({}),
+    normalizeHeadersForAuth: () => ({}),
+  };
+});
 
 vi.stubGlobal(
   'createError',

@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const user = accountContext.user;
 
-  const { id } = event.context.params ?? {};
+  const { id } = getRouterParams(event);
   if (!id || typeof id !== 'string') {
     throw createError({ status: 400, message: 'Missing SSH key ID' });
   }

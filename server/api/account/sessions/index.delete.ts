@@ -1,4 +1,4 @@
-import { auth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { getAuth, getAuthHeaders } from '#server/utils/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAuth } from '#server/utils/security';
 
@@ -9,16 +9,15 @@ export default defineEventHandler(async (event) => {
   const includeCurrent = query.includeCurrent === 'true';
 
   if (includeCurrent) {
-    await auth.api.revokeOtherSessions({
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+    await getAuth().api.revokeOtherSessions({
+      headers: getAuthHeaders(event),
     });
 
-    const cookies = parseCookies(event);
-    const currentToken = cookies['better-auth.session_token'];
+    const currentToken = getCookie(event, 'better-auth.session_token');
     if (currentToken) {
-      await auth.api.revokeSession({
+      await getAuth().api.revokeSession({
         body: { token: currentToken },
-        headers: normalizeHeadersForAuth(event.node.req.headers),
+        headers: getAuthHeaders(event),
       });
     }
 
@@ -41,8 +40,8 @@ export default defineEventHandler(async (event) => {
     };
   }
 
-  await auth.api.revokeOtherSessions({
-    headers: normalizeHeadersForAuth(event.node.req.headers),
+  await getAuth().api.revokeOtherSessions({
+    headers: getAuthHeaders(event),
   });
 
   await recordAuditEventFromRequest(event, {

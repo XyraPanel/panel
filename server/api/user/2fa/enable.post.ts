@@ -1,5 +1,5 @@
 import { APIError } from 'better-auth/api';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import {
   readValidatedBodyWithLimit,
@@ -10,7 +10,6 @@ import { twoFactorEnableSchema } from '#shared/schema/account';
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAccountUser(event);
-  const auth = getAuth();
 
   const { password, issuer } = await readValidatedBodyWithLimit(
     event,
@@ -24,7 +23,7 @@ export default defineEventHandler(async (event) => {
         password,
         issuer,
       },
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+      headers: getAuthHeaders(event),
     });
 
     const secretFromUri = result.totpURI ? result.totpURI.split('secret=')[1]?.split('&')[0] : null;

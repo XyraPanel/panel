@@ -113,7 +113,9 @@ const mockAuth = {
   api: mockAuthApi,
 };
 vi.mock('#server/utils/auth', () => ({
+  auth: mockAuth,
   getAuth: vi.fn(() => mockAuth),
+  getAuthHeaders: vi.fn(() => ({})),
   normalizeHeadersForAuth: vi.fn((headers) =>
     Object.fromEntries(Object.entries(headers).map(([k, v]) => [k, Array.isArray(v) ? v[0] : v])),
   ),

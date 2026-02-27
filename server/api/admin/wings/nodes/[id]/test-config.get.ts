@@ -9,7 +9,7 @@ export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NODES, ADMIN_ACL_PERMISSIONS.READ);
 
-  const { id } = event.context.params ?? {};
+  const { id } = getRouterParams(event);
   if (!id || typeof id !== 'string') {
     throw createError({ status: 400, message: 'Missing node id' });
   }

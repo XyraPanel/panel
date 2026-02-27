@@ -5,7 +5,7 @@ import { listServerSubusers } from '#server/utils/subusers';
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
 import { recordAuditEvent } from '#server/utils/audit';
 import { APIError } from 'better-auth/api';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { remoteSftpAuthSchema } from '#shared/schema/wings';
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
@@ -40,7 +40,7 @@ export default defineEventHandler(async (event: H3Event) => {
     remoteSftpAuthSchema,
     BODY_SIZE_LIMITS.SMALL,
   );
-  const clientIp = getRequestIP(event) || body.ip || 'unknown';
+  const clientIp = getRequestIP(event, { xForwardedFor: true }) || body.ip || 'unknown';
 
   if (!checkRateLimit(clientIp)) {
     throw createError({
@@ -93,7 +93,6 @@ export default defineEventHandler(async (event: H3Event) => {
   }
 
   if (type === 'password') {
-    const auth = getAuth();
     try {
       const signInResult = await auth.api.signInUsername({
         body: {
@@ -101,7 +100,7 @@ export default defineEventHandler(async (event: H3Event) => {
           password: credential,
           rememberMe: false,
         },
-        headers: normalizeHeadersForAuth(event.node.req.headers),
+        headers: getAuthHeaders(event),
       });
 
       if (

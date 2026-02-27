@@ -11,7 +11,7 @@ const powerActionSchema = z.object({
 });
 
 export default defineEventHandler(async (event) => {
-  const { id: serverId } = event.context.params ?? {};
+  const { id: serverId } = getRouterParams(event);
   if (!serverId || typeof serverId !== 'string') {
     throw createError({ status: 400, message: 'Missing server id' });
   }

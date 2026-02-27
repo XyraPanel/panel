@@ -2,7 +2,7 @@ import { APIError } from 'better-auth/api';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
-import { auth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { z } from 'zod';
@@ -38,7 +38,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const db = useDrizzle();
-    const headers = normalizeHeadersForAuth(event.node.req.headers);
+    const headers = getAuthHeaders(event);
 
     if (body.email !== undefined) {
       const currentUserResult = await db

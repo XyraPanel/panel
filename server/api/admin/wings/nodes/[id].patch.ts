@@ -77,8 +77,8 @@ export default defineEventHandler(async (event): Promise<UpdateWingsNodeResponse
 
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NODES, ADMIN_ACL_PERMISSIONS.WRITE);
 
-  const { id } = event.context.params ?? {};
-  if (!id || typeof id !== 'string') {
+  const { id } = getRouterParams(event);
+  if (!id) {
     throw createError({ status: 400, message: 'Missing node id' });
   }
 
@@ -90,7 +90,7 @@ export default defineEventHandler(async (event): Promise<UpdateWingsNodeResponse
     console.info('[admin][wings:nodes:update]', {
       nodeId: id,
       actor: session?.user?.email,
-      ip: getRequestIP(event),
+      ip: getRequestIP(event, { xForwardedFor: true }),
       host: getRequestHost(event, { xForwardedHost: true }),
       protocol: getRequestProtocol(event, { xForwardedProto: true }),
       url: getRequestURL(event, { xForwardedHost: true, xForwardedProto: true }),

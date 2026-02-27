@@ -11,8 +11,8 @@ function formatCombinedToken(identifier: string, secret: string): string {
 export default defineEventHandler(async (event: H3Event) => {
   const session = await requireAdmin(event);
 
-  const { id } = event.context.params ?? {};
-  if (!id || typeof id !== 'string') {
+  const { id } = getRouterParams(event);
+  if (!id) {
     throw createError({ status: 400, message: 'Missing node id' });
   }
 

@@ -1,6 +1,6 @@
 import type { H3Event } from 'h3';
 import type { ServerSessionUser } from '#shared/types/auth';
-import { normalizeHeadersForAuth, auth } from '#server/utils/auth';
+import { getAuthHeaders, auth } from '#server/utils/auth';
 
 export async function verifySessionToken(
   token: string,
@@ -31,7 +31,7 @@ export async function getServerSession(event: H3Event): Promise<SessionType | nu
   }
 
   return await auth.api.getSession({
-    headers: normalizeHeadersForAuth(event.node.req.headers),
+    headers: getAuthHeaders(event),
   });
 }
 

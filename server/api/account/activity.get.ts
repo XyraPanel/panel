@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import { desc, eq, or, sql } from 'drizzle-orm';
 import { useDrizzle, tables } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
@@ -6,11 +7,13 @@ import { requireAccountUser } from '#server/utils/security';
 export default defineEventHandler(async (event) => {
   const { user } = await requireAccountUser(event);
 
-  const query = getQuery(event);
-
-  const page = Math.max(Number(query.page) || 1, 1);
-  const limitParam = Number.parseInt(typeof query.limit === 'string' ? query.limit : '10', 10);
-  const limit = Number.isNaN(limitParam) ? 10 : Math.min(Math.max(limitParam, 1), 100);
+  const { page, limit } = await getValidatedQuery(event, (data) => {
+    const result = z.object({
+      page: z.coerce.number().min(1).catch(1).default(1),
+      limit: z.coerce.number().min(1).max(100).catch(10).default(10),
+    }).safeParse(data);
+    return result.success ? result.data : { page: 1, limit: 10 };
+  });
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();

@@ -1,5 +1,5 @@
 import { APIError } from 'better-auth/api';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import {
   readValidatedBodyWithLimit,
@@ -15,13 +15,12 @@ export default defineEventHandler(async (event) => {
     twoFactorDisableSchema,
     BODY_SIZE_LIMITS.SMALL,
   );
-  const auth = getAuth();
   const userId = sessionUser.id;
 
   try {
     await auth.api.disableTwoFactor({
       body: { password },
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+      headers: getAuthHeaders(event),
     });
 
     await recordAuditEventFromRequest(event, {

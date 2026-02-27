@@ -3,7 +3,7 @@ import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { APIError } from 'better-auth/api';
 
 export default defineEventHandler(async (event) => {
@@ -24,7 +24,6 @@ export default defineEventHandler(async (event) => {
   }
 
   const db = useDrizzle();
-  const auth = getAuth();
 
   const keyResult = await db
     .select()
@@ -44,7 +43,7 @@ export default defineEventHandler(async (event) => {
   try {
     await auth.api.deleteApiKey({
       body: { keyId },
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+      headers: getAuthHeaders(event),
     });
   } catch (error) {
     if (error instanceof APIError) {

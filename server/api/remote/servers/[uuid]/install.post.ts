@@ -8,7 +8,7 @@ import { remoteServerInstallStatusSchema } from '#shared/schema/wings';
 export default defineEventHandler(async (event: H3Event) => {
   assertMethod(event, 'POST');
   const db = useDrizzle();
-  const { uuid } = event.context.params ?? {};
+  const { uuid } = getRouterParams(event);
 
   if (!uuid || typeof uuid !== 'string') {
     throw createError({ status: 400, message: 'Missing server UUID' });

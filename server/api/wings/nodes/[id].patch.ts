@@ -9,7 +9,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const session = await requireAdmin(event);
   assertMethod(event, 'PATCH');
 
-  const { id } = event.context.params ?? {};
+  const { id } = getRouterParams(event);
   if (!id || typeof id !== 'string') {
     throw createError({ status: 400, message: 'Missing node id' });
   }

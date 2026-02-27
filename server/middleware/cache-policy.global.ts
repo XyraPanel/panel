@@ -42,11 +42,11 @@ export default defineEventHandler((event) => {
     return;
   }
 
-  if (event.node.res.getHeader('Cache-Control')) {
+  if (getResponseHeader(event, 'Cache-Control')) {
     return;
   }
 
-  const path = event.path || event.node.req.url || '';
+  const path = event.path || '';
   const defaultMaxAge = parseSeconds(cacheConfig.defaultMaxAge, 5);
   const defaultSwr = parseSeconds(cacheConfig.defaultSwr, 15);
   const dashboardMaxAge = parseSeconds(cacheConfig.dashboardMaxAge, 10);

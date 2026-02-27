@@ -1,4 +1,5 @@
 import { useDrizzle, tables } from '#server/utils/drizzle';
+import { z } from 'zod';
 import { requireAdmin } from '#server/utils/security';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
@@ -8,12 +9,13 @@ export default defineEventHandler(async (event) => {
   await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ);
 
-  const query = getQuery(event);
-  const rawSearch = typeof query.search === 'string' ? query.search.trim() : '';
-  const limit = Math.min(
-    1000,
-    Math.max(1, Number.parseInt(typeof query.limit === 'string' ? query.limit : '250', 10) || 250),
-  );
+  const { search: rawSearch, limit } = await getValidatedQuery(event, (data) => {
+    const result = z.object({
+      search: z.string().trim().catch('').default(''),
+      limit: z.coerce.number().min(1).max(1000).catch(250).default(250)
+    }).safeParse(data);
+    return result.success ? result.data : { search: '', limit: 250 };
+  });
 
   const db = useDrizzle();
   const whereClause =

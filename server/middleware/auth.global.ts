@@ -1,8 +1,8 @@
-import { type H3Event } from 'h3';
+import type { H3Event } from 'h3';
 import type { AuthContext, ResolvedSessionUser } from '#shared/types/auth';
 import type { ApiKeyPermissions, PermissionAction } from '#shared/types/admin';
 import { getServerSession } from '#server/utils/session';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { requireSessionUser } from '#server/utils/auth/sessionUser';
 
 type EventContextWithAuth = H3Event['context'] & { auth?: AuthContext };
@@ -145,9 +145,8 @@ function redirectToLogin(event: H3Event, requestUrl: string) {
 }
 
 export default defineEventHandler(async (event) => {
-  const requestUrl = event.node.req.url ?? '/';
-  const rawPath = event.path ?? requestUrl;
-  const path = rawPath.split('?')[0] ?? '/';
+  const requestUrl = event.path || '/';
+  const path = getRequestURL(event).pathname;
 
   if (!path || isAssetPath(path)) {
     return;
@@ -174,29 +173,27 @@ export default defineEventHandler(async (event) => {
   }
 
   if (isApiRequest) {
-    const hasAuthHeader = Boolean(event.node.req.headers.authorization);
-    const hasApiKeyHeader = Boolean(event.node.req.headers['x-api-key']);
+    const authorization = getHeader(event, 'authorization');
+    const apiKey = getHeader(event, 'x-api-key');
+
+    const hasAuthHeader = Boolean(authorization);
+    const hasApiKeyHeader = Boolean(apiKey);
 
     if (
       hasApiKeyHeader ||
-      (hasAuthHeader && event.node.req.headers.authorization?.startsWith('Bearer '))
+      (hasAuthHeader && authorization?.startsWith('Bearer '))
     ) {
-      const rawKeyHeader = event.node.req.headers['x-api-key'];
-      const apiKeyValue =
-        typeof rawKeyHeader === 'string'
-          ? rawKeyHeader
-          : Array.isArray(rawKeyHeader)
-            ? rawKeyHeader[0]
-            : event.node.req.headers.authorization?.startsWith('Bearer ')
-              ? event.node.req.headers.authorization.slice(7)
-              : null;
+      const apiKeyValue = apiKey
+        ? apiKey
+        : authorization?.startsWith('Bearer ')
+          ? authorization.slice(7)
+          : null;
 
       if (!apiKeyValue || typeof apiKeyValue !== 'string') {
         return;
       }
 
-      const auth = getAuth();
-      const headers = normalizeHeadersForAuth(event.node.req.headers);
+      const headers = getAuthHeaders(event);
 
       try {
         const verification = parseApiKeyVerification(

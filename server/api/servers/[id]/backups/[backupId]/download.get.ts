@@ -8,20 +8,12 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
-  const identifier = getRouterParam(event, 'id');
-  const backupId = getRouterParam(event, 'backupId');
+  const { id: identifier, backupId } = getRouterParams(event);
 
-  if (!identifier) {
+  if (!identifier || !backupId) {
     throw createError({
       status: 400,
-      message: 'Missing server identifier',
-    });
-  }
-
-  if (!backupId) {
-    throw createError({
-      status: 400,
-      message: 'Missing backup identifier',
+      message: 'Server ID and Backup ID are required',
     });
   }
 

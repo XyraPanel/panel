@@ -34,15 +34,13 @@ type AuthContext = {
 };
 
 export default defineEventHandler(async (event) => {
-  const requestPath = event.path || event.node.req.url || '';
-  const path = requestPath.split('?')[0] || requestPath;
+  const path = getRequestURL(event).pathname;
 
   if (path.startsWith('/api/auth')) return;
 
   if (path.startsWith('/api/wings') || path.startsWith('/api/remote')) return;
 
-  const cookies = parseCookies(event);
-  const cookieToken = cookies['better-auth.session_token'];
+  const cookieToken = getCookie(event, 'better-auth.session_token');
   if (!cookieToken) {
     return;
   }
@@ -65,7 +63,7 @@ export default defineEventHandler(async (event) => {
   pendingSessionWrites.add(cookieToken);
 
   const userAgent = getHeader(event, 'user-agent') || '';
-  const ipAddress = getRequestIP(event) || 'Unknown';
+  const ipAddress = getRequestIP(event, { xForwardedFor: true }) || 'Unknown';
   const now = new Date(nowTs);
   const nowIso = now.toISOString();
   const deviceInfo = parseUserAgent(userAgent);

@@ -1,4 +1,4 @@
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
@@ -9,7 +9,6 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);
-  const auth = getAuth();
 
   const userId = getRouterParam(event, 'id');
   if (!userId) {
@@ -75,7 +74,7 @@ export default defineEventHandler(async (event) => {
               body: {
                 email: user.email,
               },
-              headers: normalizeHeadersForAuth(event.node.req.headers),
+              headers: getAuthHeaders(event),
             });
           } else {
             const { sendEmailVerificationEmail } = await import('#server/utils/email');

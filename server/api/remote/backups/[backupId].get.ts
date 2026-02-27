@@ -4,7 +4,7 @@ import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 
 export default defineEventHandler(async (event: H3Event) => {
   const db = useDrizzle();
-  const { backupId } = event.context.params ?? {};
+  const { backupId } = getRouterParams(event);
 
   if (!backupId || typeof backupId !== 'string') {
     throw createError({ status: 400, message: 'Missing backup ID' });

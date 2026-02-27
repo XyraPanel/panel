@@ -44,7 +44,7 @@ export default async function errorHandler(
     try {
       const auth = event.context.auth;
       const user = auth?.user;
-      const actor = user?.email || user?.id || getRequestIP(event) || 'system';
+      const actor = user?.email || user?.id || getRequestIP(event, { xForwardedFor: true }) || 'system';
 
       await recordAuditEventFromRequest(event, {
         actor,

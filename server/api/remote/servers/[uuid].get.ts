@@ -40,7 +40,7 @@ function safeJsonParse(value: string | null | undefined, defaultValue: unknown =
 }
 
 export default defineEventHandler(async (event: H3Event) => {
-  const { uuid } = event.context.params ?? {};
+  const { uuid } = getRouterParams(event);
   if (!uuid || typeof uuid !== 'string') {
     throw createError({ status: 400, message: 'Missing server UUID' });
   }

@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
     ADMIN_ACL_PERMISSIONS.READ,
   );
 
-  const nodeId = getRouterParam(event, 'id');
+  const { id: nodeId } = getRouterParams(event);
   if (!nodeId) {
     throw createError({
       status: 400,

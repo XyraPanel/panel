@@ -16,21 +16,22 @@ export default defineEventHandler(async (event) => {
       ADMIN_ACL_PERMISSIONS.READ,
     );
 
-    const query = getQuery(event);
-    const parsed = adminServersPaginationSchema.safeParse({
-      page: query.page,
-      perPage: query.per_page ?? query.perPage ?? query.limit,
-    });
-
-    if (!parsed.success) {
-      throw createError({
-        status: 400,
-        message: 'Invalid pagination parameters',
-        data: parsed.error.format(),
+    const { page, perPage } = await getValidatedQuery(event, (data: any) => {
+      const parsed = adminServersPaginationSchema.safeParse({
+        page: data.page,
+        perPage: data.per_page ?? data.perPage ?? data.limit,
       });
-    }
 
-    const { page, perPage } = parsed.data;
+      if (!parsed.success) {
+        throw createError({
+          status: 400,
+          message: 'Invalid pagination parameters',
+          data: parsed.error.format(),
+        });
+      }
+
+      return parsed.data;
+    });
     const offset = (page - 1) * perPage;
 
     const db = useDrizzle();

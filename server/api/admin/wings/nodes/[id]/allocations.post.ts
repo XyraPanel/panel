@@ -15,7 +15,7 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { nodeAllocationsCreateSchema } from '#shared/schema/admin/infrastructure';
 
 export default defineEventHandler(async (event) => {
-  const { id: nodeId } = event.context.params ?? {};
+  const { id: nodeId } = getRouterParams(event);
   if (!nodeId || typeof nodeId !== 'string') {
     throw createError({ status: 400, message: 'Missing node id' });
   }

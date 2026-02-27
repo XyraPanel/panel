@@ -2,7 +2,7 @@ import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAccountUser } from '#server/utils/security';
 import { requireRouteParam } from '#server/utils/http/params';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { APIError } from 'better-auth/api';
 
 export default defineEventHandler(async (event) => {
@@ -14,7 +14,6 @@ export default defineEventHandler(async (event) => {
   const identifier = await requireRouteParam(event, 'identifier', 'Missing API key identifier');
 
   const db = useDrizzle();
-  const auth = getAuth();
 
   const apiKeyResult = await db
     .select()
@@ -34,7 +33,7 @@ export default defineEventHandler(async (event) => {
   try {
     await auth.api.deleteApiKey({
       body: { keyId: apiKey.id },
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+      headers: getAuthHeaders(event),
     });
   } catch (error) {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {

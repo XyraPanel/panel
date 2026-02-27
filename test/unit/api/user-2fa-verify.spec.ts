@@ -19,14 +19,19 @@ vi.mock('~~/server/utils/security', () => ({
   readValidatedBodyWithLimit: mockReadValidatedBodyWithLimit,
 }));
 
-vi.mock('~~/server/utils/auth', () => ({
-  getAuth: () => ({
+vi.mock('~~/server/utils/auth', () => {
+  const mockAuth = {
     api: {
       verifyTOTP: mockVerifyTOTP,
     },
-  }),
-  normalizeHeadersForAuth: vi.fn(() => ({})),
-}));
+  };
+  return {
+    auth: mockAuth,
+    getAuth: () => mockAuth,
+    getAuthHeaders: vi.fn(() => ({})),
+    normalizeHeadersForAuth: vi.fn(() => ({})),
+  };
+});
 
 vi.mock('~~/server/utils/audit', () => ({
   recordAuditEventFromRequest: mockRecordAuditEventFromRequest,

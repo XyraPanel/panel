@@ -1,5 +1,5 @@
 import { APIError } from 'better-auth/api';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
 import { passwordResetPerformSchema } from '#shared/schema/account';
@@ -11,7 +11,6 @@ export default defineEventHandler(async (event) => {
     BODY_SIZE_LIMITS.SMALL,
   );
 
-  const auth = getAuth();
 
   try {
     await auth.api.resetPassword({
@@ -19,7 +18,7 @@ export default defineEventHandler(async (event) => {
         token,
         newPassword: password,
       },
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+      headers: getAuthHeaders(event),
     });
 
     await recordAuditEventFromRequest(event, {

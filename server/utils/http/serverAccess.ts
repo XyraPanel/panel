@@ -49,7 +49,7 @@ export async function resolveServerRequest(
   event: H3Event,
   options: ServerAccessOptions = {},
 ): Promise<ServerRequestContext> {
-  const identifier = options.identifier ?? event.context.params?.id;
+  const identifier = options.identifier ?? getRouterParam(event, 'id');
 
   if (!identifier || typeof identifier !== 'string') {
     throw createError({

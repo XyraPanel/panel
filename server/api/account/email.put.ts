@@ -2,7 +2,7 @@ import { APIError } from 'better-auth/api';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import type { UpdateEmailResponse } from '#shared/types/account';
 import { updateEmailSchema } from '#shared/schema/account';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import {
   requireAccountUser,
   readValidatedBodyWithLimit,
@@ -16,8 +16,7 @@ export default defineEventHandler(async (event): Promise<UpdateEmailResponse> =>
 
   const body = await readValidatedBodyWithLimit(event, updateEmailSchema, BODY_SIZE_LIMITS.SMALL);
 
-  const auth = getAuth();
-  const headers = normalizeHeadersForAuth(event.node.req.headers);
+  const headers = getAuthHeaders(event);
 
   try {
     const verification = await auth.api.verifyPassword({

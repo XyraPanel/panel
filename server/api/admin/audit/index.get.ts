@@ -1,4 +1,5 @@
 import { count, desc, eq, like, or, and, inArray } from 'drizzle-orm';
+import { z } from 'zod';
 import { requireAdmin } from '#server/utils/security';
 import { useDrizzle, tables } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
@@ -10,19 +11,17 @@ export default defineEventHandler(async (event) => {
 
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.AUDIT, ADMIN_ACL_PERMISSIONS.READ);
 
-  const query = getQuery(event);
-  const getQueryString = (value: unknown): string | undefined =>
-    typeof value === 'string' && value.length > 0 ? value : undefined;
-
-  const pageParam = getQueryString(query.page);
-  const limitParam = getQueryString(query.limit);
-  const search = getQueryString(query.search);
-  const actor = getQueryString(query.actor);
-  const action = getQueryString(query.action);
-  const targetType = getQueryString(query.targetType);
-
-  const page = Math.max(1, Number.parseInt(pageParam ?? '1', 10));
-  const limit = Math.min(Math.max(1, Number.parseInt(limitParam ?? '50', 10)), 200);
+  const { page, limit, search, actor, action, targetType } = await getValidatedQuery(event, (data) => {
+    const result = z.object({
+      page: z.coerce.number().min(1).catch(1).default(1),
+      limit: z.coerce.number().min(1).max(100).catch(50).default(50),
+      search: z.string().optional(),
+      actor: z.string().optional(),
+      action: z.string().optional(),
+      targetType: z.string().optional(),
+    }).safeParse(data);
+    return result.success ? result.data : { page: 1, limit: 50 };
+  });
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();

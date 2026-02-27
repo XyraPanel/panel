@@ -11,9 +11,12 @@ export default defineEventHandler(async (event) => {
 
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NODES, ADMIN_ACL_PERMISSIONS.READ);
 
-  const nodeId = getRouterParam(event, 'id');
+  const { id: nodeId } = getRouterParams(event);
   if (!nodeId) {
-    throw createError({ status: 400, message: 'Node ID is required' });
+    throw createError({
+      status: 400,
+      message: 'Node ID is required',
+    });
   }
 
   const db = useDrizzle();

@@ -6,7 +6,7 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
-  const { id: nodeId, allocationId } = event.context.params ?? {};
+  const { id: nodeId, allocationId } = getRouterParams(event);
 
   if (!nodeId || typeof nodeId !== 'string') {
     throw createError({ status: 400, message: 'Missing node id' });

@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
@@ -46,7 +46,6 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, message: 'User not found' });
   }
 
-  const auth = getAuth();
 
   try {
     if (mode === 'link') {
@@ -58,7 +57,7 @@ export default defineEventHandler(async (event) => {
           email: user.email,
           redirectTo: resetBaseUrl,
         },
-        headers: normalizeHeadersForAuth(event.node.req.headers),
+        headers: getAuthHeaders(event),
       });
 
       await recordAuditEventFromRequest(event, {
@@ -83,7 +82,7 @@ export default defineEventHandler(async (event) => {
     }
 
     const temporaryPassword = body.password?.trim() || randomBytes(9).toString('base64url');
-    const headers = normalizeHeadersForAuth(event.node.req.headers);
+    const headers = getAuthHeaders(event);
 
     await auth.api.setUserPassword({
       body: {

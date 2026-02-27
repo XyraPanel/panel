@@ -5,8 +5,8 @@ import { useRuntimeConfig, getRequestURL } from '#imports';
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
-  const { id } = event.context.params ?? {};
-  if (!id || typeof id !== 'string') {
+  const { id } = getRouterParams(event);
+  if (!id) {
     throw createError({ status: 400, message: 'Missing node id' });
   }
 

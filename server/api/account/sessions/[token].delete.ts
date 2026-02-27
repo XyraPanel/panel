@@ -1,4 +1,4 @@
-import { auth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAuth } from '#server/utils/security';
 
@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
 
   const result = await auth.api.revokeSession({
     body: { token: targetToken },
-    headers: normalizeHeadersForAuth(event.node.req.headers),
+    headers: getAuthHeaders(event),
   });
 
   if (!result.status) {

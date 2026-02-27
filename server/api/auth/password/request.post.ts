@@ -1,5 +1,5 @@
 import { APIError } from 'better-auth/api';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { useDrizzle, tables, eq, or } from '#server/utils/drizzle';
 import { resolvePanelBaseUrl } from '#server/utils/email';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
@@ -31,11 +31,10 @@ export default defineEventHandler(async (event) => {
     };
   }
 
-  const auth = getAuth();
   const resetBaseUrl = `${resolvePanelBaseUrl()}/auth/password/reset`;
 
   const captchaToken = getHeader(event, 'x-captcha-response');
-  const authHeaders = normalizeHeadersForAuth(event.node.req.headers);
+  const authHeaders = getAuthHeaders(event);
   if (captchaToken) {
     authHeaders['x-captcha-response'] = captchaToken;
   }

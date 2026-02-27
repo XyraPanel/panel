@@ -1,4 +1,5 @@
 import { useDrizzle, tables, eq, inArray } from '#server/utils/drizzle';
+import { z } from 'zod';
 import { count, desc } from 'drizzle-orm';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAccountUser } from '#server/utils/security';
@@ -8,14 +9,13 @@ export default defineEventHandler(async (event) => {
   const user = accountContext.user;
 
   const db = useDrizzle();
-  const query = getQuery(event);
-  const pageParam = Array.isArray(query.page) ? query.page[0] : query.page;
-  const limitParam = Array.isArray(query.limit) ? query.limit[0] : query.limit;
-  const page = Math.max(1, Number.parseInt(typeof pageParam === 'string' ? pageParam : '1', 10));
-  const limit = Math.min(
-    100,
-    Math.max(1, Number.parseInt(typeof limitParam === 'string' ? limitParam : '25', 10)),
-  );
+  const { page, limit } = await getValidatedQuery(event, (data) => {
+    const result = z.object({
+      page: z.coerce.number().min(1).catch(1).default(1),
+      limit: z.coerce.number().min(1).max(100).catch(50).default(50)
+    }).safeParse(data);
+    return result.success ? result.data : { page: 1, limit: 50 };
+  });
   const offset = (page - 1) * limit;
 
   const totalResult = await db

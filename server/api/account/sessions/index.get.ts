@@ -1,3 +1,4 @@
+import { z } from 'zod';
 import type {
   UserSessionSummary,
   AccountSessionsResponse,
@@ -21,14 +22,12 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
     throw createError({ status: 401, message: 'Unauthorized' });
   }
 
-  const query = getQuery(event);
-  const pageParam = Array.isArray(query.page) ? query.page[0] : query.page;
-  const limitParam = Array.isArray(query.limit) ? query.limit[0] : query.limit;
-  const page = Math.max(1, Number.parseInt(typeof pageParam === 'string' ? pageParam : '1', 10));
-  const limit = Math.min(
-    100,
-    Math.max(1, Number.parseInt(typeof limitParam === 'string' ? limitParam : '25', 10)),
-  );
+  const { page, limit } = await getValidatedQuery(event, (data) => {
+    return z.object({
+      page: z.coerce.number().min(1).default(1),
+      limit: z.coerce.number().min(1).max(100).default(50)
+    }).parse(data);
+  });
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();
@@ -88,7 +87,7 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
   const currentToken =
     middlewareAuth?.session?.session?.token ?? accountContext.session?.session?.token ?? null;
 
-  const currentIp = getRequestIP(event) || null;
+  const currentIp = getRequestIP(event, { xForwardedFor: true }) || null;
   const currentUserAgent = getHeader(event, 'user-agent') || '';
   let currentFingerprint: string | null = null;
   try {

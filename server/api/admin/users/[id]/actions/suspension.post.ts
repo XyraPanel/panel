@@ -1,5 +1,5 @@
 import { APIError } from 'better-auth/api';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
 import { suspensionActionSchema } from '#shared/schema/admin/actions';
@@ -21,8 +21,7 @@ export default defineEventHandler(async (event) => {
     BODY_SIZE_LIMITS.SMALL,
   );
 
-  const auth = getAuth();
-  const headers = normalizeHeadersForAuth(event.node.req.headers);
+  const headers = getAuthHeaders(event);
   const action = body.action === 'suspend' ? 'ban' : 'unban';
   const reason = (body.reason ?? '').trim();
   const banExpiresIn = action === 'ban' && body.banExpiresIn ? body.banExpiresIn : undefined;

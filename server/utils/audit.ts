@@ -23,7 +23,7 @@ export async function buildRequestMetadata(
   }
 
   const base: ActivityMetadata = {
-    ip: getRequestIP(event) ?? undefined,
+    ip: getRequestIP(event, { xForwardedFor: true }),
     host: getRequestHost(event, { xForwardedHost: true }) ?? undefined,
     protocol: getRequestProtocol(event, { xForwardedProto: true }) ?? undefined,
     url: getRequestURL(event, { xForwardedHost: true, xForwardedProto: true })?.toString(),

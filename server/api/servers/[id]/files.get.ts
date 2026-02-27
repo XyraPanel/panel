@@ -5,9 +5,10 @@ import { requireAccountUser } from '#server/utils/security';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
+import { z } from 'zod';
 
 export default defineEventHandler(async (event: H3Event) => {
-  const identifier = getRouterParam(event, 'id');
+  const { id: identifier } = getRouterParams(event);
   if (!identifier) {
     throw createError({
       status: 400,
@@ -23,8 +24,12 @@ export default defineEventHandler(async (event: H3Event) => {
     requiredPermissions: ['server.files.read'],
   });
 
-  const query = getQuery(event);
-  const directory = typeof query.directory === 'string' ? query.directory : '/';
+  const { directory } = await getValidatedQuery(event, (data) => {
+    const result = z.object({
+      directory: z.string().default('/')
+    }).safeParse(data);
+    return result.success ? result.data : { directory: '/' };
+  });
 
   const isRecord = (value: unknown): value is Record<string, unknown> =>
     typeof value === 'object' && value !== null && !Array.isArray(value);

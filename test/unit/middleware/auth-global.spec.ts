@@ -13,6 +13,8 @@ const defineEventHandlerStub = (handler: (event: H3Event) => Promise<unknown>) =
 vi.stubGlobal('defineEventHandler', defineEventHandlerStub);
 vi.stubGlobal('sendRedirect', mockSendRedirect);
 vi.stubGlobal('createError', mockCreateError);
+vi.stubGlobal('getRequestURL', (event: H3Event) => new URL(event.node?.req?.url || event.path || '/', 'http://localhost'));
+vi.stubGlobal('getHeader', (event: H3Event, name: string) => event.node?.req?.headers?.[name.toLowerCase()]);
 
 vi.mock('h3', async (importOriginal) => {
   const actual = await importOriginal<typeof import('h3')>();
@@ -21,6 +23,8 @@ vi.mock('h3', async (importOriginal) => {
     createError: mockCreateError,
     sendRedirect: mockSendRedirect,
     defineEventHandler: (handler: (event: H3Event) => Promise<unknown>) => handler,
+    getRequestURL: (event: H3Event) => new URL(event.node?.req?.url || event.path || '/', 'http://localhost'),
+    getHeader: (event: H3Event, name: string) => event.node?.req?.headers?.[name.toLowerCase()],
   };
 });
 
@@ -43,7 +47,9 @@ const mockAuth = {
 };
 
 vi.mock('~~/server/utils/auth', () => ({
+  auth: mockAuth,
   getAuth: () => mockAuth,
+  getAuthHeaders: vi.fn(() => ({})),
   normalizeHeadersForAuth: () => ({}),
 }));
 

@@ -1,4 +1,5 @@
 import { asc, desc, sql, or, like } from 'drizzle-orm';
+import { z } from 'zod';
 
 import type {
   AdminPaginatedMeta,
@@ -25,22 +26,28 @@ function toNumber(value: unknown, fallback = 0): number {
 }
 
 export default defineEventHandler(async (event): Promise<AdminWingsNodeAllocationsPayload> => {
-  const { id } = event.context.params ?? {};
+  const { id } = getRouterParams(event);
   if (!id || typeof id !== 'string') {
     throw createError({ status: 400, message: 'Missing node id' });
   }
 
   const session = await requireAdmin(event);
 
-  const query = getQuery(event);
-  const pageParam = typeof query.page === 'string' ? Number.parseInt(query.page, 10) : 1;
-  const perPageParam = typeof query.perPage === 'string' ? Number.parseInt(query.perPage, 10) : 25;
-
-  const page = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
-  const perPage = Number.isNaN(perPageParam) ? 25 : Math.min(Math.max(perPageParam, 1), 100);
+  const { page, perPage, search } = await getValidatedQuery(event, (data) => {
+    const result = z.object({
+      page: z.coerce.number().min(1).default(1),
+      perPage: z.coerce.number().min(1).max(100).default(25),
+      search: z.string().trim().default('')
+    }).parse(data);
+    
+    return {
+      page: result.page,
+      perPage: result.perPage,
+      search: result.search || null
+    };
+  });
+  
   const offset = (page - 1) * perPage;
-  const search =
-    typeof query.search === 'string' && query.search.trim() ? query.search.trim() : null;
 
   const db = useDrizzle();
 

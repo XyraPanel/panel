@@ -6,7 +6,7 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 export default defineEventHandler(async (event: H3Event) => {
   assertMethod(event, 'POST');
   const db = useDrizzle();
-  const { uuid, status } = event.context.params ?? {};
+  const { uuid, status } = getRouterParams(event);
 
   if (!uuid || typeof uuid !== 'string') {
     throw createError({ status: 400, message: 'Missing server UUID' });

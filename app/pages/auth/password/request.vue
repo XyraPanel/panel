@@ -75,26 +75,16 @@ async function onSubmit(payload: FormSubmitEvent<PasswordRequestBody>) {
     const identity = String(payload.data.identity).trim();
     const body: PasswordRequestBody = { identity };
 
-    const fetchOptions: { headers?: Record<string, string> } = {};
+    const headers: Record<string, string> = {};
     if (hasTurnstile.value && turnstileToken.value) {
-      fetchOptions.headers = { 'x-captcha-response': turnstileToken.value };
+      headers['x-captcha-response'] = turnstileToken.value;
     }
 
-    const response = await fetch('/api/auth/password/request', {
+    await $fetch('/api/auth/password/request', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...fetchOptions.headers,
-      },
-      body: JSON.stringify(body),
+      headers,
+      body,
     });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({ message: t('auth.requestFailed') }));
-      throw new Error(error.message || t('auth.requestFailed'));
-    }
-
-    (await response.json()) as { success: boolean };
 
     toast.add({
       title: t('auth.checkYourInbox'),

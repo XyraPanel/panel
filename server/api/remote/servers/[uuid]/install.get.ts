@@ -3,7 +3,7 @@ import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 
 export default defineEventHandler(async (event: H3Event) => {
-  const { uuid } = event.context.params ?? {};
+  const { uuid } = getRouterParams(event);
   if (!uuid || typeof uuid !== 'string') {
     throw createError({ status: 400, message: 'Missing server UUID' });
   }

@@ -1,4 +1,5 @@
 import { desc, eq, sql } from 'drizzle-orm';
+import { z } from 'zod';
 import type { PaginatedServerActivityResponse, ServerActivityEvent } from '#shared/types/server';
 import type { ActorType, TargetType } from '#shared/types/audit';
 import { useDrizzle, tables } from '#server/utils/drizzle';
@@ -63,11 +64,13 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
     requiredPermissions: ['server.view'],
   });
 
-  const query = getQuery(event);
-  const pageStr = typeof query.page === 'string' ? query.page : '1';
-  const page = Math.max(Number.parseInt(pageStr, 10) || 1, 1);
-  const limitStr = typeof query.limit === 'string' ? query.limit : '25';
-  const limit = Math.min(Math.max(Number.parseInt(limitStr, 10) || 25, 1), 100);
+  const { page, limit } = await getValidatedQuery(event, (data) => {
+    const result = z.object({
+      page: z.coerce.number().min(1).catch(1).default(1),
+      limit: z.coerce.number().min(1).max(100).catch(50).default(50)
+    }).safeParse(data);
+    return result.success ? result.data : { page: 1, limit: 50 };
+  });
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();

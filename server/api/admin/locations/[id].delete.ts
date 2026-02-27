@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
     ADMIN_ACL_PERMISSIONS.WRITE,
   );
 
-  const locationId = getRouterParam(event, 'id');
+  const { id: locationId } = getRouterParams(event);
   if (!locationId) {
     throw createError({
       status: 400,

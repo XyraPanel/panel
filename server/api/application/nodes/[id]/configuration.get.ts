@@ -6,7 +6,7 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { useRuntimeConfig, getRequestURL } from '#imports';
 
 export default defineEventHandler(async (event) => {
-  const { id } = event.context.params ?? {};
+  const { id } = getRouterParams(event);
   if (!id || typeof id !== 'string') {
     throw createError({ status: 400, message: 'Missing node UUID' });
   }

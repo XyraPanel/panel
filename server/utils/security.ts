@@ -13,8 +13,7 @@ export const BODY_SIZE_LIMITS = {
 } as const;
 
 async function assertBodySize(event: H3Event, limit: number): Promise<void> {
-  const req = event.node.req;
-  const contentLength = req.headers['content-length'];
+  const contentLength = getHeader(event, 'content-length');
 
   if (contentLength) {
     const headerSize = Number.parseInt(
@@ -71,41 +70,27 @@ export async function readValidatedBodyWithLimit<T extends z.ZodType>(
 ): Promise<z.infer<T>> {
   await assertBodySize(event, limit);
 
-  const body = await readBody(event);
+  return await readValidatedBody(event, (data) => {
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      const errors = result.error.issues.map((err) => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
 
-  const bodySize = Buffer.isBuffer(body)
-    ? body.length
-    : typeof body === 'string'
-      ? Buffer.byteLength(body, 'utf8')
-      : Buffer.byteLength(JSON.stringify(body), 'utf8');
-
-  if (bodySize > limit) {
-    throw createError({
-      status: 413,
-      message: `Request body size (${bodySize} bytes) exceeds the limit of ${limit} bytes`,
-    });
-  }
-
-  const result = schema.safeParse(body);
-  if (!result.success) {
-    const errors = result.error.issues.map((err) => ({
-      field: err.path.join('.'),
-      message: err.message,
-    }));
-
-    throw createError({
-      status: 400,
-      message: 'Request body validation failed',
-      data: { errors },
-    });
-  }
-
-  return result.data;
+      throw createError({
+        status: 400,
+        message: 'Request body validation failed',
+        data: { errors },
+      });
+    }
+    return result.data;
+  });
 }
 
 export async function isApiKeyAuthenticated(event: H3Event): Promise<boolean> {
-  const authHeader = event.node.req.headers.authorization;
-  const apiKeyHeader = event.node.req.headers['x-api-key'];
+  const authHeader = getHeader(event, 'authorization');
+  const apiKeyHeader = getHeader(event, 'x-api-key');
 
   if (apiKeyHeader || (authHeader && authHeader.startsWith('Bearer '))) {
     const auth = getAuth();

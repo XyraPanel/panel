@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { useDrizzle, tables } from '#server/utils/drizzle';
-import type { LogActivityOptions } from '#shared/types/audit';
+import type { LogActivityOptions, ActivityMetadata } from '#shared/types/audit';
+import type { H3Event } from 'h3';
 
 export async function logActivity(options: LogActivityOptions): Promise<void> {
   const { actor, actorType, action, targetType, targetId, metadata } = options;
@@ -99,29 +100,9 @@ export function logServerEvent(
   });
 }
 
-export function getRequestMetadata(event: {
-  node?: {
-    req?: {
-      headers?: Record<string, string | string[] | undefined>;
-      socket?: { remoteAddress?: string };
-    };
-  };
-}): ActivityMetadata {
-  const headers = event.node?.req?.headers || {};
-
-  const getHeader = (key: string): string | undefined => {
-    const value = headers[key];
-    if (Array.isArray(value)) {
-      return value[0];
-    }
-    return value;
-  };
-
+export function getRequestMetadata(event: H3Event): ActivityMetadata {
   return {
-    ip:
-      getHeader('x-forwarded-for') ||
-      getHeader('x-real-ip') ||
-      event.node?.req?.socket?.remoteAddress,
-    userAgent: getHeader('user-agent'),
+    ip: getRequestIP(event, { xForwardedFor: true }),
+    userAgent: getHeader(event, 'user-agent'),
   };
 }

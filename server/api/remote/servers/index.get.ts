@@ -19,25 +19,26 @@ function safeJsonParse(value: string | null | undefined, defaultValue: unknown =
 export default defineEventHandler(async (event: H3Event) => {
   try {
     const nodeId = await getNodeIdFromAuth(event);
-    const query = getQuery(event);
-    const parsedQuery = remoteServersPaginationSchema.safeParse({
-      page: query.page,
-      per_page: query.per_page,
-    });
-
-    if (!parsedQuery.success) {
-      const errors = parsedQuery.error.issues.map((issue) => ({
-        field: issue.path.join('.') || undefined,
-        message: issue.message,
-      }));
-      throw createError({
-        status: 400,
-        message: 'Invalid pagination parameters',
-        data: { errors },
+    const { page, per_page: perPage } = await getValidatedQuery(event, (data: any) => {
+      const parsedQuery = remoteServersPaginationSchema.safeParse({
+        page: data.page,
+        per_page: data.per_page,
       });
-    }
 
-    const { page, per_page: perPage } = parsedQuery.data;
+      if (!parsedQuery.success) {
+        const errors = parsedQuery.error.issues.map((issue) => ({
+          field: issue.path.join('.') || undefined,
+          message: issue.message,
+        }));
+        throw createError({
+          status: 400,
+          message: 'Invalid pagination parameters',
+          data: { errors },
+        });
+      }
+
+      return parsedQuery.data;
+    });
 
     const db = useDrizzle();
     const offset = page * perPage;

@@ -549,10 +549,19 @@ export const auth = getAuth();
 
 /**
  * Normalizes H3 event headers to a format compatible with Better Auth API.
+ * Supports standard Headers objects and Record headers.
  */
 export function normalizeHeadersForAuth(
-  headers: Record<string, string | string[] | undefined>,
+  headers: Record<string, string | string[] | undefined> | Headers,
 ): Record<string, string> {
+  if (headers instanceof Headers) {
+    const normalized: Record<string, string> = {};
+    headers.forEach((value, key) => {
+      normalized[key] = value;
+    });
+    return normalized;
+  }
+
   const normalized: Record<string, string> = {};
   for (const [key, value] of Object.entries(headers)) {
     if (value) {
@@ -560,4 +569,12 @@ export function normalizeHeadersForAuth(
     }
   }
   return normalized;
+}
+
+/**
+ * Gets normalized headers from an H3Event for Better Auth.
+ * Prefers using native toWebRequest for standard compliance.
+ */
+export function getAuthHeaders(event: any): Record<string, string> {
+  return normalizeHeadersForAuth(toWebRequest(event).headers);
 }

@@ -1,6 +1,6 @@
 import { APIError } from 'better-auth/api';
 import type { H3EventContext } from 'h3';
-import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 import { resolveSessionUser } from '#server/utils/auth/sessionUser';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { accountPasswordUpdateSchema } from '#shared/schema/account';
@@ -13,7 +13,6 @@ function hasAuthContext(ctx: H3EventContext): ctx is H3EventContext & { auth?: a
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT');
 
-  const auth = getAuth();
   const middlewareAuth = hasAuthContext(event.context) ? event.context.auth : undefined;
   const session = middlewareAuth?.session ?? (await requireAuth(event));
 
@@ -34,11 +33,11 @@ export default defineEventHandler(async (event) => {
         newPassword: body.newPassword,
         revokeOtherSessions: false,
       },
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+      headers: getAuthHeaders(event),
     });
 
     await auth.api.revokeSessions({
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+      headers: getAuthHeaders(event),
     });
 
     const resolvedUser = resolveSessionUser(session);

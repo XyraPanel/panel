@@ -1,4 +1,5 @@
 import { useDrizzle, tables } from '#server/utils/drizzle';
+import { z } from 'zod';
 import { count, desc, inArray } from 'drizzle-orm';
 import { requireAdmin } from '#server/utils/security';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
@@ -11,14 +12,13 @@ export default defineEventHandler(async (event): Promise<AdminUsersPayload> => {
 
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ);
 
-  const query = getQuery(event);
-  const pageParam = Array.isArray(query.page) ? query.page[0] : query.page;
-  const limitParam = Array.isArray(query.limit) ? query.limit[0] : query.limit;
-  const page = Math.max(1, Number.parseInt(typeof pageParam === 'string' ? pageParam : '1', 10));
-  const limit = Math.min(
-    Math.max(1, Number.parseInt(typeof limitParam === 'string' ? limitParam : '50', 10)),
-    100,
-  );
+  const { page, limit } = await getValidatedQuery(event, (data) => {
+    const result = z.object({
+      page: z.coerce.number().min(1).catch(1).default(1),
+      limit: z.coerce.number().min(1).max(100).catch(50).default(50)
+    }).safeParse(data);
+    return result.success ? result.data : { page: 1, limit: 50 };
+  });
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();

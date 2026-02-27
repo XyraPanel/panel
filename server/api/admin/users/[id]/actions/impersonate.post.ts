@@ -4,7 +4,7 @@ import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
-import { auth, normalizeHeadersForAuth } from '#server/utils/auth';
+import { auth, getAuthHeaders } from '#server/utils/auth';
 
 function extractSetCookieStrings(headers?: Headers | null): string[] {
   if (!headers) return [];
@@ -90,9 +90,10 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
+    const headers = getAuthHeaders(event);
     const impersonateResponse = await auth.api.impersonateUser({
       body: { userId },
-      headers: normalizeHeadersForAuth(event.node.req.headers),
+      headers,
       returnHeaders: true,
     });
 
