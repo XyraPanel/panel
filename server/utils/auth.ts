@@ -573,8 +573,7 @@ export function normalizeHeadersForAuth(
 
 /**
  * Gets normalized headers from an H3Event for Better Auth.
- * Prefers using native toWebRequest for standard compliance.
  */
 export function getAuthHeaders(event: any): Record<string, string> {
-  return normalizeHeadersForAuth(toWebRequest(event).headers);
+  return normalizeHeadersForAuth(getHeaders(event));
 }
