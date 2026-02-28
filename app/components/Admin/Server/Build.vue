@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { FormSubmitEvent } from '@nuxt/ui';
 import type { Server, ServerLimits } from '#shared/types/server';
 import { serverBuildFormSchema } from '#shared/schema/admin/server';
+import type { ServerBuildFormInput } from '#shared/schema/admin/server';
 
 const props = defineProps<{
   server: Server;
@@ -48,43 +49,20 @@ const limits = computed<ServerLimits | null>(() => {
   };
 });
 
-const schema = serverBuildFormSchema.extend({
-  cpu: z.coerce.number().min(0, 'CPU limit cannot be negative'),
-  memory: z.coerce.number().min(0, 'Memory limit cannot be negative'),
-  swap: z.coerce.number().min(-1, 'Swap must be -1 or greater'),
-  disk: z.coerce.number().min(0, 'Disk limit cannot be negative'),
-  io: z.coerce
-    .number()
-    .min(10, 'Block I/O must be at least 10')
-    .max(1000, 'Block I/O cannot exceed 1000'),
-  oomDisabled: z.boolean().optional(),
-  databaseLimit: z.coerce
-    .number()
-    .min(0, 'Database limit cannot be negative')
-    .nullable()
-    .optional(),
-  allocationLimit: z.coerce
-    .number()
-    .min(0, 'Allocation limit cannot be negative')
-    .nullable()
-    .optional(),
-  backupLimit: z.coerce.number().min(0, 'Backup limit cannot be negative').nullable().optional(),
-});
-
-type FormSchema = z.infer<typeof schema>;
+type FormSchema = ServerBuildFormInput;
 
 function createFormState(payload: ServerLimits | null): FormSchema {
   return {
     cpu: Number(payload?.cpu ?? 0),
-    threads: payload?.threads ?? null,
+    threads: payload?.threads ?? undefined,
     memory: Number(payload?.memory ?? 0),
     swap: Number(payload?.swap ?? 0),
     disk: Number(payload?.disk ?? 0),
     io: Number(payload?.io ?? 500),
     oomDisabled: payload?.oomDisabled ?? true,
-    databaseLimit: payload?.databaseLimit ?? null,
-    allocationLimit: payload?.allocationLimit ?? null,
-    backupLimit: payload?.backupLimit ?? null,
+    databaseLimit: payload?.databaseLimit ?? undefined,
+    allocationLimit: payload?.allocationLimit ?? undefined,
+    backupLimit: payload?.backupLimit ?? undefined,
   };
 }
 
@@ -128,7 +106,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       backupLimit: event.data.backupLimit ?? null,
     };
 
-    await $fetch(`/api/admin/servers/${props.server.id}/build`, {
+    await $fetch(`/api/admin/servers/${props.server.id}`, {
       method: 'PATCH',
       body: payload,
     });
@@ -157,7 +135,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 
 <template>
   <UForm
-    :schema="schema"
+    :schema="serverBuildFormSchema"
     :state="form"
     class="space-y-6"
     :disabled="isSubmitting"

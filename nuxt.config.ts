@@ -652,11 +652,6 @@ export default defineNuxtConfig({
     },
     handlers: [
       {
-        route: '/api/admin/servers/:id/build',
-        method: 'patch',
-        handler: './server/api/admin/servers/[id]/build.patch.ts',
-      },
-      {
         route: '/api/admin/servers/:id/startup',
         method: 'get',
         handler: './server/api/admin/servers/[id]/startup/index.get.ts',

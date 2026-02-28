@@ -26,15 +26,34 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 404, message: 'Nest not found' });
   }
 
+  const eggs = await db
+    .select()
+    .from(tables.eggs)
+    .where(eq(tables.eggs.nestId, nestId))
+    .orderBy(tables.eggs.name);
+
   return {
     data: {
-      id: nest.id,
-      uuid: nest.uuid,
-      author: nest.author,
-      name: nest.name,
-      description: nest.description,
-      createdAt: new Date(nest.createdAt).toISOString(),
-      updatedAt: new Date(nest.updatedAt).toISOString(),
+      nest: {
+        id: nest.id,
+        uuid: nest.uuid,
+        author: nest.author,
+        name: nest.name,
+        description: nest.description,
+        createdAt: new Date(nest.createdAt).toISOString(),
+        updatedAt: new Date(nest.updatedAt).toISOString(),
+      },
+      eggs: eggs.map((egg) => ({
+        id: egg.id,
+        uuid: egg.uuid,
+        nestId: egg.nestId,
+        author: egg.author,
+        name: egg.name,
+        description: egg.description,
+        dockerImage: egg.dockerImage,
+        createdAt: new Date(egg.createdAt).toISOString(),
+        updatedAt: new Date(egg.updatedAt).toISOString(),
+      })),
     },
   };
 });

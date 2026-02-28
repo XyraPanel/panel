@@ -30,15 +30,29 @@ export const serverBuildSchema = z.object({
   backupLimit: z.number().int().min(0).nullable().optional(),
 });
 
-export const serverBuildFormSchema = serverBuildSchema.required({
-  cpu: true,
-  memory: true,
-  swap: true,
-  disk: true,
-  io: true,
+const emptyToUndefinedNumber = z
+  .union([z.number(), z.string()])
+  .transform((v) => (v === '' ? undefined : Number(v)))
+  .pipe(z.number().min(0).optional());
+
+export const serverBuildFormSchema = z.object({
+  cpu: z.coerce.number().min(0, 'CPU limit cannot be negative'),
+  memory: z.coerce.number().min(0, 'Memory limit cannot be negative'),
+  swap: z.coerce.number().min(-1, 'Swap must be -1 or greater'),
+  disk: z.coerce.number().min(0, 'Disk limit cannot be negative'),
+  io: z.coerce
+    .number()
+    .min(10, 'Block I/O must be at least 10')
+    .max(1000, 'Block I/O cannot exceed 1000'),
+  threads: z.union([z.string(), z.number()]).transform((v) => (v === '' ? undefined : String(v))).optional(),
+  oomDisabled: z.boolean().optional(),
+  databaseLimit: emptyToUndefinedNumber,
+  allocationLimit: emptyToUndefinedNumber,
+  backupLimit: emptyToUndefinedNumber,
 });
 
 export type ServerBuildInput = z.infer<typeof serverBuildSchema>;
+export type ServerBuildFormInput = z.infer<typeof serverBuildFormSchema>;
 
 export const serverStartupSchema = z.object({
   startup: z
