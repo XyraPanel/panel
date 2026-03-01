@@ -3,6 +3,11 @@
 # Called by install.sh — expects PKG_MANAGER, FIREWALL etc to be exported
 
 set -euo pipefail
+:
+: "${INSTALL_DIR:=/opt/xyrapanel}"
+: "${PANEL_USER:=xyrapanel}"
+: "${PKG_MANAGER:=apt}"
+: "${FIREWALL:=ufw}"
 SCRIPTS_BASE="https://raw.githubusercontent.com/XyraPanel/panel/main/scripts"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || echo "")"
 if [[ -f "${SCRIPT_DIR}/common.sh" ]]; then

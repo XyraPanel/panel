@@ -12,7 +12,7 @@
 
 XyraPanel is an open-source game server management panel built on Nuxt, TypeScript, and PostgreSQL. Compatible with Pterodactyl Wings.
 
-[![Dashboard](.github/images/dashboard.png)](.github/images/dashboard.png)
+[![Dashboard](https://xyrapanel.com/images/panel.png)](https://xyrapanel.com/images/panel.png)
 
 ## Install
 

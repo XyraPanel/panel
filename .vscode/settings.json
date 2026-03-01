@@ -31,7 +31,4 @@
     "pages",
     "docker"
   ],
-  "[shellscript]": {
-    "editor.defaultFormatter": "mads-hartmann.bash-ide-vscode"
-  }
 }

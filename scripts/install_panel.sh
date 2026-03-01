@@ -441,17 +441,19 @@ await import('/opt/xyrapanel/.output/server/index.mjs')
 STARTEOF
 
 pm2 delete xyrapanel 2>/dev/null || true
-pm2 start "$INSTALL_DIR/start.mjs" --name xyrapanel -i max
+INSTANCES=${INSTANCES:-1}
+pm2 start "$INSTALL_DIR/start.mjs" --name xyrapanel -i "$INSTANCES"
 pm2 save
 env PATH="$PATH:/usr/bin:/usr/local/bin" pm2 startup systemd -u root --hp /root | grep -E '^sudo|^env ' | bash || true
 log_success "PM2 started and registered for boot"
 
 log_start "Waiting for app to be ready"
+APP_PORT=${PORT:-3000}
 for i in $(seq 1 60); do
-  curl -sf http://127.0.0.1:3000 >/dev/null 2>&1 && break
+  curl -sf "http://127.0.0.1:${APP_PORT}" >/dev/null 2>&1 && break
   printf "${GRAY}.${RESET}"; sleep 2
 done
-echo; log_success "App is responding on port 3000"
+echo; log_success "App is responding on port ${APP_PORT}"
 sleep 10
 
 # step 14 — seed admin

@@ -101,7 +101,7 @@ fi
 chown -R "${PANEL_USER}:${PANEL_USER}" "$INSTALL_DIR"
 
 PM2_APP="xyrapanel"
-PM2_ENV="production"
+PM2_ENV="env"
 ECOSYSTEM_FILE="${INSTALL_DIR}/ecosystem.config.cjs"
 ENV_FILE="${INSTALL_DIR}/.env"
 
@@ -123,20 +123,14 @@ mkdir -p "${INSTALL_DIR}/.pm2/logs"
 log_step "Running database migrations"
 if [[ ! -f "$ENV_FILE" ]]; then
   log_warn "Cannot find ${ENV_FILE}; skipping automatic migrations"
-elif [[ -z "${DATABASE_URL:-}" ]]; then
-  if load_env_file "$ENV_FILE" && [[ -n "${DATABASE_URL:-}" ]]; then
-    log_info "Loaded DATABASE_URL for migrations"
-  else
-    log_warn "DATABASE_URL missing; run migrations manually after fixing .env"
-  fi
-fi
-
-if [[ -n "${DATABASE_URL:-}" ]]; then
+elif [[ -n "${DATABASE_URL:-}" ]]; then
   if "$PNPM_BIN" --dir "$INSTALL_DIR" db:migrate; then
     log_success "Migrations applied"
   else
     log_warn "Migration failed — run manually: cd ${INSTALL_DIR} && pnpm db:migrate"
   fi
+else
+  log_warn "DATABASE_URL missing; run migrations manually after fixing .env"
 fi
 
 log_step "Restarting XyraPanel"
@@ -154,15 +148,16 @@ pm2 save --force 2>/dev/null || true
 
 log_start "Waiting for app to be ready"
 READY=false
+APP_PORT=${PORT:-3000}
 for i in $(seq 1 60); do
-  if curl -sf http://127.0.0.1:3000 >/dev/null 2>&1; then
+  if curl -sf "http://127.0.0.1:${APP_PORT}" >/dev/null 2>&1; then
     READY=true; break
   fi
   printf "${GRAY}.${RESET}"; sleep 2
 done
 echo
 if [[ "$READY" == "true" ]]; then
-  log_success "App is responding on port 3000"
+  log_success "App is responding on port ${APP_PORT}"
 else
   log_warn "App did not respond within 120s — check: pm2 logs ${PM2_APP}"
 fi

@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 import { defineCommand, runMain } from 'citty';
 import { consola } from 'consola';
-import { execa } from 'execa';
 import { access, readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'pathe';
 import { colors } from 'consola/utils';
+import { execa } from 'execa';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(__dirname, '..');
@@ -68,8 +68,8 @@ const renderRootHelp = () =>
 
 const envArg = {
   type: 'string',
-  default: 'production',
-  description: 'PM2 environment block to use (env or env_production)',
+  default: 'env',
+  description: 'PM2 environment block to use (env or env_staging)',
 };
 
 const nameArg = {
@@ -91,9 +91,11 @@ async function ensureFile(path) {
   try {
     await access(path);
   } catch {
-    logger.error(`Cannot find ecosystem config at: ${path}`);
-    process.exit(1);
+    logger.error(`Cannot find ecosystem config at: ${path} (cwd: ${process.cwd()})`);
+    process.exitCode = 1;
+    return false;
   }
+  return true;
 }
 
 async function runBinary(bin, args, options = {}) {
@@ -231,7 +233,7 @@ const deployCommand = defineCommand({
   },
   run: async ({ args }) => {
     const ecosystemPath = resolvePath(args.ecosystem);
-    await ensureFile(ecosystemPath);
+    if (!(await ensureFile(ecosystemPath))) return;
 
     if (!args.skipBuild) {
       await runBinary('pnpm', ['run', 'build']);
@@ -265,8 +267,12 @@ const pm2StartCommand = createPm2Command(
   { env: envArg, name: nameArg, ecosystem: ecosystemArg },
   async (args) => {
     const ecosystemPath = resolvePath(args.ecosystem);
-    await ensureFile(ecosystemPath);
-    return ['start', ecosystemPath, '--env', args.env, '--only', args.name, '--update-env'];
+    if (!(await ensureFile(ecosystemPath))) throw new Error('Ecosystem file not found');
+    const procName = args.name?.trim();
+    const envBlock = args.env?.trim();
+    if (!procName) throw new Error('PM2 process name is required');
+    if (!envBlock) throw new Error('PM2 env must be provided (env or env_production)');
+    return ['start', ecosystemPath, '--env', envBlock, '--only', procName, '--update-env'];
   },
 );
 
@@ -274,28 +280,48 @@ const pm2ReloadCommand = createPm2Command(
   'reload',
   'Reload the running PM2 process',
   { env: envArg, name: nameArg },
-  (args) => ['reload', args.name, '--env', args.env, '--update-env'],
+  (args) => {
+    const procName = args.name?.trim();
+    const envBlock = args.env?.trim();
+    if (!procName) throw new Error('PM2 process name is required');
+    if (!envBlock) throw new Error('PM2 env must be provided (env or env_production)');
+    return ['reload', procName, '--env', envBlock, '--update-env'];
+  },
 );
 
 const pm2RestartCommand = createPm2Command(
   'restart',
   'Restart the PM2 process',
   { env: envArg, name: nameArg },
-  (args) => ['restart', args.name, '--env', args.env, '--update-env'],
+  (args) => {
+    const procName = args.name?.trim();
+    const envBlock = args.env?.trim();
+    if (!procName) throw new Error('PM2 process name is required');
+    if (!envBlock) throw new Error('PM2 env must be provided (env or env_production)');
+    return ['restart', procName, '--env', envBlock, '--update-env'];
+  },
 );
 
 const pm2StopCommand = createPm2Command(
   'stop',
   'Stop the PM2 process',
   { name: nameArg },
-  (args) => ['stop', args.name],
+  (args) => {
+    const procName = args.name?.trim();
+    if (!procName) throw new Error('PM2 process name is required');
+    return ['stop', procName];
+  },
 );
 
 const pm2DeleteCommand = createPm2Command(
   'delete',
   'Delete the PM2 process and its metadata',
   { name: nameArg },
-  (args) => ['delete', args.name],
+  (args) => {
+    const procName = args.name?.trim();
+    if (!procName) throw new Error('PM2 process name is required');
+    return ['delete', procName];
+  },
 );
 
 const pm2StatusCommand = createPm2Command(
@@ -328,7 +354,9 @@ const pm2LogsCommand = createPm2Command(
     },
   },
   (args) => {
-    const logArgs = ['logs', args.name, '--lines', String(args.lines)];
+    const procName = args.name?.trim();
+    if (!procName) throw new Error('PM2 process name is required');
+    const logArgs = ['logs', procName, '--lines', String(args.lines)];
     if (args.timestamp) {
       logArgs.push('--timestamp');
     }
@@ -367,17 +395,17 @@ const pm2PasteLogsCommand = defineCommand({
     },
   },
   run: async ({ args }) => {
-    const pasteUrl = PASTE_SERVICE_URL;
-
-    const processName = String(args.name || defaultPm2App);
+    const processName = String(args.name || defaultPm2App).trim();
+    if (!processName) throw new Error('PM2 process name is required');
     const pm2Args = ['logs', processName, '--lines', String(args.lines), '--nostream'];
     logger.start(`Collecting PM2 logs for ${processName}`);
-    const { stdout } = await execa('pm2', pm2Args, { cwd: projectRoot });
+    const { all } = await execa('pm2', pm2Args, { cwd: projectRoot, all: true });
+    const raw = all ?? '';
 
     const filtered = (() => {
-      if (args.stream === 'out') return stdout.replace(/\n\[.*?\]\s*err.*?(?=\n\[|$)/gms, '');
-      if (args.stream === 'err') return stdout.replace(/\n\[.*?\]\s*out.*?(?=\n\[|$)/gms, '');
-      return stdout;
+      if (args.stream === 'out') return raw.replace(/\n\[.*?\]\s*err.*?(?=\n\[|$)/gms, '');
+      if (args.stream === 'err') return raw.replace(/\n\[.*?\]\s*out.*?(?=\n\[|$)/gms, '');
+      return raw;
     })();
 
     const maxBytes = 256 * 1024;
@@ -399,8 +427,8 @@ const pm2PasteLogsCommand = defineCommand({
       expiresInMinutes,
     };
 
-    logger.start(`Uploading logs to paste service: ${pasteUrl}`);
-    const response = await fetch(pasteUrl, {
+    logger.start(`Uploading logs to paste service: ${PASTE_SERVICE_URL}`);
+    const response = await fetch(PASTE_SERVICE_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -409,7 +437,8 @@ const pm2PasteLogsCommand = defineCommand({
     const resultText = await response.text();
     if (!response.ok) {
       logger.error(`Paste upload failed (${response.status}): ${resultText}`);
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
 
     try {
@@ -468,4 +497,9 @@ if (wantsRootHelp) {
   process.exit(0);
 }
 
-await runMain(rootCommand);
+try {
+  await runMain(rootCommand);
+} catch (error) {
+  logger.error(error instanceof Error ? error.message : String(error));
+  process.exitCode = 1;
+}
