@@ -1823,7 +1823,14 @@
     "forbidden": "Prohibido",
     "serverError": "Error del servidor",
     "networkError": "Error de red",
-    "validationError": "Error de validación"
+    "validationError": "Error de validación",
+    "pageNotFound": "Page not found",
+    "pageNotFoundDescription": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "requestedResource": "Requested resource",
+    "goBack": "Go back",
+    "adminDashboard": "Admin dashboard",
+    "home": "Home",
+    "tryAgain": "Try again"
   },
   "validation": {
     "required": "Este campo es obligatorio",
