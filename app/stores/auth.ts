@@ -15,21 +15,12 @@ export const useAuthStore = defineStore('auth', () => {
     return 'unauthenticated';
   });
 
-  const user = computed<SessionUser | null>(() => {
-    const session = sessionData.value;
-    if (!session) return null;
-    const sessionUser =
-      'user' in session && typeof (session as { user?: unknown }).user !== 'undefined'
-        ? (session as { user?: unknown }).user
-        : null;
-    if (!sessionUser || typeof sessionUser !== 'object') return null;
-    return sessionUser as SessionUser;
-  });
+  const user = computed<SessionUser | null>(() => sessionData.value?.user ?? null);
 
   const permissions = computed(() => user.value?.permissions ?? EMPTY_PERMISSIONS);
   const permissionSet = computed(() => new Set(permissions.value));
   const isAdmin = computed(() => user.value?.role === 'admin');
-  const isSuperUser = computed(() => isAdmin.value || Boolean(user.value?.remember));
+  const isSuperUser = computed(() => isAdmin.value);
   const displayName = computed(() => {
     if (!user.value) return null;
     return user.value.username || user.value.email || user.value.name || null;
@@ -87,13 +78,7 @@ export const useAuthStore = defineStore('auth', () => {
   ) {
     const isEmail = identity.includes('@');
 
-    const fetchOptions = captchaToken
-      ? {
-          headers: {
-            'x-captcha-response': captchaToken,
-          },
-        }
-      : undefined;
+    const fetchOptions = buildSignInOptions(captchaToken);
 
     let result;
     if (isEmail) {
@@ -114,12 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
       return { error: result.error.message };
     }
 
-    const requiresTwoFactor = Boolean(
-      result.data &&
-      typeof result.data === 'object' &&
-      'twoFactorRedirect' in result.data &&
-      (result.data as Record<string, unknown>).twoFactorRedirect === true,
-    );
+    const requiresTwoFactor = isTwoFactorRedirect(result.data);
 
     if (requiresTwoFactor) {
       if (!token) {
@@ -147,6 +127,26 @@ export const useAuthStore = defineStore('auth', () => {
     await syncSession();
 
     return result;
+  }
+
+  function buildSignInOptions(captchaToken?: string) {
+    if (!captchaToken) return undefined;
+    return {
+      headers: {
+        'x-captcha-response': captchaToken,
+      },
+    } satisfies {
+      headers: Record<string, string>;
+    };
+  }
+
+  function isTwoFactorRedirect(data: unknown): data is { twoFactorRedirect: true } {
+    return Boolean(
+      data &&
+        typeof data === 'object' &&
+        'twoFactorRedirect' in data &&
+        (data as Record<string, unknown>).twoFactorRedirect === true,
+    );
   }
 
   return {

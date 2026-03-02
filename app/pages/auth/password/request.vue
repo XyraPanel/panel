@@ -2,10 +2,17 @@
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui';
 import { passwordRequestSchema } from '#shared/schema/account';
 import type { PasswordRequestBody } from '#shared/types/account';
+import { useBrandingSettings } from '~/composables/useBrandingSettings';
 
 definePageMeta({
   auth: false,
 });
+
+const { t } = useI18n();
+const toast = useToast();
+const runtimeConfig = useRuntimeConfig();
+const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel');
+const { data: brandingSettings } = await useBrandingSettings();
 
 useSeoMeta({
   title: () => `${t('auth.resetYourPassword')} | ${appName.value}`,
@@ -14,20 +21,6 @@ useSeoMeta({
   ogDescription: () => t('auth.enterEmailOrUsername'),
   twitterTitle: () => `${t('auth.resetYourPassword')} | ${appName.value}`,
   twitterDescription: () => t('auth.enterEmailOrUsername'),
-});
-
-const { t } = useI18n();
-const toast = useToast();
-const router = useRouter();
-const runtimeConfig = useRuntimeConfig();
-const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel');
-const { data: brandingSettings } = await useFetch('/api/branding', {
-  key: 'branding-settings',
-  default: () =>
-    ({
-      showBrandLogo: true,
-      brandLogoUrl: '/logo.png',
-    }) as { showBrandLogo: boolean; brandLogoUrl: string | null },
 });
 
 const turnstileSiteKey = computed(() => runtimeConfig.public.turnstile?.siteKey || '');
@@ -92,7 +85,7 @@ async function onSubmit(payload: FormSubmitEvent<PasswordRequestBody>) {
       color: 'success',
     });
 
-    router.push('/auth/login');
+    await navigateTo('/auth/login');
   } catch (error) {
     const message = error instanceof Error ? error.message : t('auth.unableToProcessRequest');
     toast.add({
@@ -109,7 +102,7 @@ async function onSubmit(payload: FormSubmitEvent<PasswordRequestBody>) {
 </script>
 
 <template>
-  <UAuthForm :schema="schema" :fields="fields" :submit="submitProps" @submit="onSubmit as any">
+  <UAuthForm :schema="schema" :fields="fields" :submit="submitProps" @submit="onSubmit">
     <template #title>
       <div class="flex flex-col items-center gap-3 text-center">
         <img
@@ -129,16 +122,11 @@ async function onSubmit(payload: FormSubmitEvent<PasswordRequestBody>) {
         <div v-if="hasTurnstile" class="flex flex-col items-center gap-2">
           <NuxtTurnstile
             ref="turnstileRef"
-            :model-value="turnstileToken"
+            v-model="turnstileToken"
             :options="{
               theme: 'dark',
               size: 'normal',
             }"
-            @update:model-value="
-              (value: string | undefined) => {
-                turnstileToken = value;
-              }
-            "
           />
         </div>
         <NuxtLink to="/auth/login" class="text-primary font-medium block text-center">

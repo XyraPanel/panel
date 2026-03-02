@@ -15,13 +15,6 @@ export default defineNuxtRouteMiddleware((to) => {
 
   const redirectPath = to.fullPath;
 
-  if (
-    typeof to.query.redirect === 'string' &&
-    to.query.redirect.startsWith('/auth/password/force')
-  ) {
-    return abortNavigation();
-  }
-
   if (to.path === '/auth/password/force') {
     return;
   }

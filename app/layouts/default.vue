@@ -6,6 +6,8 @@ const { t } = useI18n();
 const route = useRoute();
 const localePath = useLocalePath();
 const runtimeConfig = useRuntimeConfig();
+const maintenance = useMaintenanceStatus();
+const localeSwitcher = useLocaleSwitcher();
 const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel');
 
 const pageTitle = computed(() => {
@@ -38,19 +40,11 @@ const signOutLoading = ref(false);
 const { isImpersonating, impersonatedUserName, stopImpersonating, stopImpersonationLoading } =
   useImpersonationControls({ redirectTo: '/admin' });
 
-const { data: securitySettings } = await useFetch<{
-  maintenanceMode: boolean;
-  maintenanceMessage: string;
-}>('/api/maintenance-status', {
-  key: 'maintenance-status',
-  default: () => ({
-    maintenanceMode: false,
-    maintenanceMessage: '',
-  }),
-});
+const { data: securitySettings } = maintenance;
 
-const { data: brandingSettings } = await useFetch('/api/branding', {
+const { data: brandingSettings } = useFetch('/api/branding', {
   key: 'branding-settings',
+  lazy: true,
   default: () =>
     ({
       showBrandLogo: true,
@@ -64,8 +58,7 @@ const brandLogoUrl = computed(() => brandingSettings.value?.brandLogoUrl || '/lo
 const isMaintenanceMode = computed(() => {
   if (!securitySettings.value?.maintenanceMode) return false;
   if (authStatus.value === 'loading' || authStatus.value === 'unauthenticated') return false;
-  const isAdmin = isAdminRef.value || user.value?.role === 'admin';
-  return !isAdmin;
+  return !isAdminRef.value;
 });
 const maintenanceMessage = computed(
   () => securitySettings.value?.maintenanceMessage?.trim() || t('layout.defaultMaintenanceMessage'),
@@ -104,53 +97,24 @@ async function handleSignOut() {
   }
 }
 
-const navigationItems = computed<NavigationMenuItem[]>(() => {
-  const items: NavigationMenuItem[] = [
-    {
-      label: t('dashboard.title'),
-      to: localePath('index'),
-    },
-    {
-      label: t('server.list.title'),
-      to: localePath('/server'),
-    },
-    {
-      label: t('account.profile.title'),
-      to: localePath('/account/profile'),
-    },
-    {
-      label: t('account.security.title'),
-      to: localePath('/account/security'),
-    },
-    {
-      label: t('account.apiKeys.title'),
-      to: localePath('/account/api-keys'),
-    },
-    {
-      label: t('account.sshKeys.title'),
-      to: localePath('/account/ssh-keys'),
-    },
-    {
-      label: t('account.sessions.title'),
-      to: localePath('/account/sessions'),
-    },
-    {
-      label: t('account.activity.title'),
-      to: localePath('/account/activity'),
-    },
-  ];
+const accountNavItems = computed<NavigationMenuItem[]>(() => [
+  { label: t('account.profile.title'), to: localePath('/account/profile') },
+  { label: t('account.security.title'), to: localePath('/account/security') },
+  { label: t('account.apiKeys.title'), to: localePath('/account/api-keys') },
+  { label: t('account.sshKeys.title'), to: localePath('/account/ssh-keys') },
+  { label: t('account.sessions.title'), to: localePath('/account/sessions') },
+  { label: t('account.activity.title'), to: localePath('/account/activity') },
+]);
 
-  return items;
-});
+const navigationItems = computed<NavigationMenuItem[]>(() => [
+  { label: t('dashboard.title'), to: localePath('index') },
+  { label: t('server.list.title'), to: localePath('/server') },
+  ...accountNavItems.value,
+]);
 
-const isAdminUser = computed(() => {
-  if (isAdminRef.value) return true;
-  if (user.value?.role === 'admin') return true;
-  return false;
-});
+const isAdminUser = computed(() => isAdminRef.value);
 
-const { locale, locales } = useI18n();
-const switchLocalePath = useSwitchLocalePath();
+const { locale, uiLocales, currentFlag, localeDropdownItems, handleLocaleChange } = localeSwitcher;
 
 const sidebarToggleProps = computed(() => ({
   icon: 'i-lucide-menu',
@@ -159,78 +123,7 @@ const sidebarToggleProps = computed(() => ({
   'aria-label': t('common.navigation'),
 }));
 
-const uiLocales = computed(() => {
-  return locales.value.map((loc) => {
-    const dir = typeof loc === 'string' ? 'ltr' : loc.dir || 'ltr';
-    return {
-      code: typeof loc === 'string' ? loc : loc.code,
-      name: typeof loc === 'string' ? loc : loc.name || loc.code,
-      language: typeof loc === 'string' ? loc : loc.language || loc.code,
-      dir: (dir === 'auto' ? 'ltr' : dir) as 'ltr' | 'rtl',
-      messages: {},
-    };
-  });
-});
-
-const localeFlagMap: Record<string, string> = {
-  en: '🇺🇸',
-  'en-US': '🇺🇸',
-  'en-GB': '🇬🇧',
-  es: '🇪🇸',
-  de: '🇩🇪',
-  fr: '🇫🇷',
-  it: '🇮🇹',
-  nl: '🇳🇱',
-  ar: '🇸🇦',
-  el: '🇬🇷',
-  tr: '🇹🇷',
-};
-
-function localeToFlag(code?: string): string {
-  if (!code) return '🌐';
-  if (localeFlagMap[code]) return localeFlagMap[code];
-  const parts = code.split('-');
-  if (parts.length === 0) return '🌐';
-  const region = parts[parts.length - 1]?.toUpperCase();
-  if (region && region.length === 2) {
-    const base = 0x1f1e6;
-    const offsetA = 'A'.charCodeAt(0);
-    return String.fromCodePoint(
-      region.charCodeAt(0) - offsetA + base,
-      region.charCodeAt(1) - offsetA + base,
-    );
-  }
-  return '🌐';
-}
-
-const currentFlag = computed(() => localeToFlag(locale.value));
-const localeDropdownItems = computed(() => [
-  uiLocales.value.map((loc) => ({
-    label: loc.name || loc.language || loc.code,
-    active: loc.code === locale.value,
-    click: () => handleLocaleChange(loc.code),
-  })),
-]);
-
-async function handleLocaleChange(newLocale: string | undefined) {
-  if (!newLocale || newLocale === locale.value) return;
-
-  const validLocale = locales.value.find((l) => {
-    const code = typeof l === 'string' ? l : l.code;
-    return code === newLocale;
-  });
-
-  if (validLocale) {
-    const code = typeof validLocale === 'string' ? validLocale : validLocale.code;
-    const path = switchLocalePath(code);
-    if (path) {
-      // Normalize path - ensure trailing slash for root locale paths
-      // switchLocalePath returns '/es' for root route, but we need '/es/'
-      const normalizedPath = path === '/es' && route.path === '/' ? '/es/' : path;
-      await navigateTo(normalizedPath);
-    }
-  }
-}
+// locale handling is shared via useLocaleSwitcher
 </script>
 
 <template>
@@ -284,17 +177,7 @@ async function handleLocaleChange(newLocale: string | undefined) {
 
         <UDropdownMenu
           class="hidden sm:block"
-          :items="[
-            [
-              { label: t('account.profile.title'), to: localePath('/account/profile') },
-              { label: t('account.security.title'), to: localePath('/account/security') },
-              { label: t('account.apiKeys.title'), to: localePath('/account/api-keys') },
-              { label: t('account.sshKeys.title'), to: localePath('/account/ssh-keys') },
-              { label: t('account.sessions.title'), to: localePath('/account/sessions') },
-              { label: t('account.activity.title'), to: localePath('/account/activity') },
-            ],
-            [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }],
-          ]"
+          :items="[accountNavItems, [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }]]"
         >
           <UButton
             color="neutral"

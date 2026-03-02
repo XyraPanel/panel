@@ -5,7 +5,7 @@ import { getSessionUser } from '#server/utils/session';
 export function resolveSessionUser(
   session: Awaited<ReturnType<typeof getServerSession>> | null,
 ): ResolvedSessionUser | null {
-  return getSessionUser(session) as ResolvedSessionUser | null;
+  return getSessionUser(session);
 }
 
 export function requireSessionUser(

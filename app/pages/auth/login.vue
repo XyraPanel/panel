@@ -23,7 +23,7 @@ const route = useRoute();
 const toast = useToast();
 
 const turnstileSiteKey = computed(() => runtimeConfig.public.turnstile?.siteKey || '');
-const hasTurnstile = computed(() => !!turnstileSiteKey.value && turnstileSiteKey.value.length > 0);
+const hasTurnstile = computed(() => Boolean(turnstileSiteKey.value));
 
 definePageMeta({
   auth: false,
@@ -90,7 +90,7 @@ const fields = computed<AuthFormField[]>(() =>
 
 const schema = accountLoginFormSchema;
 
-type Schema = AccountLoginFormInput;
+type Schema = Omit<AccountLoginFormInput, 'token'> & { token?: string | undefined };
 
 const loading = ref(false);
 const submitProps = computed(() => ({
@@ -114,10 +114,6 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     const { identity, password, token } = payload.data;
     const submittedToken = token ?? '';
 
-    if (requiresToken.value && !token) {
-      throw new Error(t('auth.twoFactorTokenRequired'));
-    }
-
     if (hasTurnstile.value && !turnstileToken.value) {
       toast.add({
         color: 'error',
@@ -140,11 +136,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     }
 
     if (result?.error) {
-      const errorMessage = result.error.toLowerCase();
-      const indicatesTwoFactor =
-        errorMessage.includes('two-factor') ||
-        errorMessage.includes('recovery token') ||
-        errorMessage.includes('2fa');
+      const indicatesTwoFactor = requiresTwoFactor(result.error);
       const missingToken = indicatesTwoFactor && submittedToken.length === 0;
 
       if (indicatesTwoFactor) requiresToken.value = true;
@@ -174,9 +166,7 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     const message = error instanceof Error ? error.message : t('auth.unableToSignIn');
     const submittedToken = payload.data.token ?? '';
     if (typeof message === 'string') {
-      const lowered = message.toLowerCase();
-      const indicatesTwoFactor =
-        lowered.includes('two-factor') || lowered.includes('recovery token');
+      const indicatesTwoFactor = requiresTwoFactor(message);
       const missingToken = indicatesTwoFactor && submittedToken.length === 0;
 
       if (indicatesTwoFactor) requiresToken.value = true;
@@ -201,12 +191,19 @@ async function onSubmit(payload: FormSubmitEvent<Schema>) {
     loading.value = false;
   }
 }
+
+function requiresTwoFactor(message: string) {
+  const lowered = message.toLowerCase();
+  return (
+    lowered.includes('two-factor') || lowered.includes('recovery token') || lowered.includes('2fa')
+  );
+}
 </script>
 
 <template>
   <ClientOnly>
     <div class="space-y-6">
-      <UAuthForm :schema="schema" :fields="fields" :submit="submitProps" @submit="onSubmit as any">
+      <UAuthForm :schema="schema" :fields="fields" :submit="submitProps" @submit="onSubmit">
         <template #title>
           <div class="flex flex-col items-center gap-3 text-center">
             <img

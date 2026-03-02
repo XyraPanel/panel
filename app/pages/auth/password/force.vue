@@ -5,6 +5,7 @@ import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui';
 import type { FetchError } from 'ofetch';
 import { accountForcedPasswordSchema } from '#shared/schema/account';
 import type { PasswordForceBody } from '#shared/types/account';
+import { useBrandingSettings } from '~/composables/useBrandingSettings';
 
 const { t } = useI18n();
 const authStore = useAuthStore();
@@ -13,14 +14,7 @@ const route = useRoute();
 const toast = useToast();
 const runtimeConfig = useRuntimeConfig();
 const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel');
-const { data: brandingSettings } = await useFetch('/api/branding', {
-  key: 'branding-settings',
-  default: () =>
-    ({
-      showBrandLogo: true,
-      brandLogoUrl: '/logo.png',
-    }) as { showBrandLogo: boolean; brandLogoUrl: string | null },
-});
+const { data: brandingSettings } = await useBrandingSettings();
 
 definePageMeta({
   auth: true,
@@ -98,27 +92,16 @@ async function onSubmit(event: FormSubmitEvent<PasswordForceBody>) {
   loading.value = true;
   errorMessage.value = null;
   try {
-    if (!requiresPasswordReset.value) {
-      await redirectAfterReset();
-      return;
-    }
-
     const newPassword = String(event.data.newPassword);
-    const confirmPassword = event.data.confirmPassword
-      ? String(event.data.confirmPassword)
-      : undefined;
+    const confirmPassword = String(event.data.confirmPassword);
     const body: PasswordForceBody = {
       newPassword,
       confirmPassword,
     };
-    // @ts-expect-error - Nuxt typed routes cause deep type instantiation here
-    await $fetch<{ success: boolean }, { method: 'PUT'; body: PasswordForceBody }>(
-      '/api/account/password/force',
-      {
-        method: 'PUT',
-        body,
-      },
-    );
+    await $fetch<{ success: boolean }>('/api/account/password/force', {
+      method: 'PUT',
+      body,
+    });
 
     await authStore.syncSession({ disableCookieCache: true });
 
@@ -148,7 +131,12 @@ async function onSubmit(event: FormSubmitEvent<PasswordForceBody>) {
 </script>
 
 <template>
-  <UAuthForm :schema="schema" :fields="fields" :submit="submitProps" @submit="onSubmit as any">
+  <UAuthForm
+    :schema="schema"
+    :fields="fields"
+    :submit="submitProps"
+    @submit="onSubmit"
+  >
     <template #title>
       <div class="flex flex-col items-center gap-3 text-center">
         <img

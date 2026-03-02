@@ -7,6 +7,7 @@ import type { AdminNavItem } from '#shared/types/admin';
 import { useAuthStore } from '~/stores/auth';
 
 const { t } = useI18n();
+const localeSwitcher = useLocaleSwitcher();
 
 const authStore = useAuthStore();
 
@@ -166,36 +167,19 @@ const route = useRoute();
 const router = useRouter();
 const {
   user: storeUser,
-  permissions: userPermissions,
   isSuperUser: storeIsSuperUser,
   status: authStatus,
+  displayName,
+  avatar,
 } = storeToRefs(authStore);
-
-const { data: dashboardData } = await useAsyncData(
-  'admin-dashboard',
-  async () => {
-    const response = await $fetch('/api/admin/dashboard' as string, {
-      query: { section: 'critical' },
-    });
-    return response;
-  },
-  {
-    server: true,
-    default: () => ({
-      metrics: [],
-      nodes: [],
-      operations: [],
-      generatedAt: new Date().toISOString(),
-    }),
-  },
-);
 
 const sessionUser = computed<SessionUser | null>(() => storeUser.value ?? null);
 
-const { data: securitySettings } = await useFetch<{ enforceTwoFactor: boolean }>(
+const { data: securitySettings } = useFetch<{ enforceTwoFactor: boolean }>(
   '/api/admin/settings/security/summary',
   {
     key: 'admin-layout-security-summary',
+    lazy: true,
     default: () => ({ enforceTwoFactor: false }),
   },
 );
@@ -209,24 +193,7 @@ const showTwoFactorPrompt = computed(() => requiresTwoFactor.value && !hasTwoFac
 const adminTitle = computed(() => {
   const title = route.meta.adminTitle;
   if (typeof title === 'string' && title.length > 0) {
-    const titleMap: Record<string, string> = {
-      Dashboard: t('admin.dashboard.title'),
-      Users: t('admin.users.title'),
-      Servers: t('admin.servers.title'),
-      Settings: t('admin.settings.title'),
-      Nodes: t('admin.nodes.title'),
-      Locations: t('admin.locations.title'),
-      Nests: t('admin.nests.title'),
-      Mounts: t('admin.mounts.title'),
-      'API Keys': t('admin.apiKeys'),
-      'Database Hosts': t('admin.databaseHosts.title'),
-      Activity: t('admin.activity.title'),
-      'Audit log': t('admin.navigation.auditLog'),
-      'Server details': t('admin.servers.title'),
-      'Node details': t('admin.nodes.title'),
-      'User profile': t('admin.users.title'),
-    };
-    return titleMap[title] || title;
+    return t(title);
   }
   return t('admin.title');
 });
@@ -234,77 +201,24 @@ const adminTitle = computed(() => {
 const adminSubtitle = computed(() => {
   const subtitle = route.meta.adminSubtitle;
   if (typeof subtitle === 'string' && subtitle.length > 0) {
-    const subtitleMap: Record<string, string> = {
-      'Infrastructure overview sourced from Wings metrics': t('admin.dashboard.subtitle'),
-      'Audit panel accounts and Wings permissions': t('admin.users.subtitle'),
-      'Configure panel settings and preferences': t('admin.settings.subtitle'),
-      'Manage all servers in the panel.': t('admin.servers.description'),
-      'Manage server nodes.': t('admin.nodes.description'),
-      'Manage server locations.': t('admin.locations.description'),
-      'Manage server nests and eggs.': t('admin.nests.description'),
-      'Manage server mounts.': t('admin.mounts.description'),
-      'Manage database hosts.': t('admin.databaseHosts.description'),
-      'View system-wide activity logs.': t('admin.activity.description'),
-      'Track panel-wide events mirrored from Wings': t('admin.activity.description'),
-      'Manage existing keys or create new ones for API access.': t('account.apiKeys.description'),
-      'Global view of panel servers synchronized with Wings': t('admin.servers.description'),
-      'Manage Wings daemons and monitor node health': t('admin.nodes.description'),
-      'Inspect Wings node metrics and allocations': t('admin.nodes.description'),
-      'Manage server configuration and resources': t('admin.servers.description'),
-      'Inspect panel access, owned servers, and activity': t('admin.users.subtitle'),
-    };
-    return subtitleMap[subtitle] || subtitle;
+    return t(subtitle);
   }
   return t('admin.navigation.infrastructureOverview');
 });
 
 const navItems = computed(() => {
-  const canAccess = (permission?: string | string[]) => {
-    if (!permission) {
-      return true;
-    }
-
-    const values = userPermissions.value;
-
-    if (Array.isArray(permission)) {
-      return permission.some((value) => values.includes(value));
-    }
-
-    return values.includes(permission);
-  };
-
   return ADMIN_NAV_ITEMS.value
-    .filter((item) => storeIsSuperUser.value || canAccess(item.permission))
+    .filter((item) => storeIsSuperUser.value || authStore.hasPermission(item.permission ?? []))
     .sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY));
 });
 
-const navigateToSecuritySettings = () => {
-  router.push('/account/security');
-};
-
-const handleSignOut = async () => {
+const handleSignOut = async (): Promise<void> => {
   await clearNuxtData();
   await authStore.logout();
-  await router.push('/auth/login');
+  router.push('/auth/login').catch(() => {});
 };
 
-const { displayName, avatar } = storeToRefs(authStore);
-
-const userLabel = computed(() => {
-  if (!authStatus.value || authStatus.value !== 'authenticated' || !sessionUser.value) {
-    return null;
-  }
-
-  if (displayName.value && displayName.value.length > 0) {
-    return displayName.value;
-  }
-
-  if (sessionUser.value) {
-    return sessionUser.value.username || sessionUser.value.email || sessionUser.value.name || null;
-  }
-
-  return null;
-});
+const userLabel = computed(() => displayName.value || null);
 
 const userAvatar = computed(() => {
   if (!authStatus.value || authStatus.value !== 'authenticated' || !sessionUser.value) {
@@ -353,8 +267,6 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
   }));
 
   const clientItems: CommandPaletteItem[] = CLIENT_NAV_ITEMS.value
-    .slice()
-    .sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY))
     .map((item) => ({
       id: item.id,
       label: item.label,
@@ -409,6 +321,22 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
     },
   ];
 });
+
+const { locale, uiLocales, currentFlag, localeDropdownItems, handleLocaleChange } = localeSwitcher;
+const currentYear = computed(() => new Date().getFullYear());
+const accountNavItems = computed(() => [
+  { label: t('account.profile.title'), to: '/account/profile' },
+  { label: t('account.security.title'), to: '/account/security' },
+  { label: t('account.apiKeys.title'), to: '/account/api-keys' },
+  { label: t('account.sshKeys.title'), to: '/account/ssh-keys' },
+  { label: t('account.sessions.title'), to: '/account/sessions' },
+  { label: t('account.activity.title'), to: '/account/activity' },
+]);
+
+const navigateToSecuritySettings = async (event?: MouseEvent) => {
+  event?.preventDefault?.();
+  await router.push('/account/security').catch(() => {});
+};
 </script>
 
 <template>
@@ -449,7 +377,7 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
           >
             <p class="flex items-center gap-1">
               <img src="/logo.png" alt="XyraPanel" class="h-4 w-auto" loading="lazy" />
-              {{ t('layout.copyright', { year: new Date().getFullYear() }) }}
+              {{ t('layout.copyright', { year: currentYear }) }}
               <ULink href="https://xyrapanel.com" target="_blank">XyraPanel</ULink>
             </p>
           </div>
@@ -468,17 +396,7 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
 
       <template #footer="{ collapsed }">
         <UDropdownMenu
-          :items="[
-            [
-              { label: t('account.profile.title'), to: '/account/profile' },
-              { label: t('account.security.title'), to: '/account/security' },
-              { label: t('account.apiKeys.title'), to: '/account/api-keys' },
-              { label: t('account.sshKeys.title'), to: '/account/ssh-keys' },
-              { label: t('account.sessions.title'), to: '/account/sessions' },
-              { label: t('account.activity.title'), to: '/account/activity' },
-            ],
-            [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }],
-          ]"
+          :items="[accountNavItems, [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }]]"
         >
           <UButton
             color="neutral"

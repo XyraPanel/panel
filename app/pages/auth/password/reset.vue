@@ -2,11 +2,19 @@
 import type { AuthFormField, FormSubmitEvent } from '@nuxt/ui';
 import { passwordResetSchema, type PasswordResetInput } from '#shared/schema/account';
 import type { PasswordResetBody } from '#shared/types/account';
+import { useBrandingSettings } from '~/composables/useBrandingSettings';
 import { authClient } from '~/utils/auth-client';
 
 definePageMeta({
   auth: false,
 });
+
+const { t } = useI18n();
+const toast = useToast();
+const route = useRoute();
+const runtimeConfig = useRuntimeConfig();
+const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel');
+const { data: brandingSettings } = await useBrandingSettings();
 
 useSeoMeta({
   title: () => `${t('auth.setNewPassword')} | ${appName.value}`,
@@ -15,21 +23,6 @@ useSeoMeta({
   ogDescription: () => t('auth.enterResetTokenAndPassword'),
   twitterTitle: () => `${t('auth.setNewPassword')} | ${appName.value}`,
   twitterDescription: () => t('auth.enterResetTokenAndPassword'),
-});
-
-const { t } = useI18n();
-const toast = useToast();
-const router = useRouter();
-const route = useRoute();
-const runtimeConfig = useRuntimeConfig();
-const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel');
-const { data: brandingSettings } = await useFetch('/api/branding', {
-  key: 'branding-settings',
-  default: () =>
-    ({
-      showBrandLogo: true,
-      brandLogoUrl: '/logo.png',
-    }) as { showBrandLogo: boolean; brandLogoUrl: string | null },
 });
 
 const fields: AuthFormField[] = [
@@ -75,21 +68,19 @@ const submitProps = computed(() => ({
   loading: loading.value,
 }));
 
-const initialToken = computed(() => {
-  return typeof route.query.token === 'string' ? route.query.token : '';
-});
+const initialToken = typeof route.query.token === 'string' ? route.query.token : '';
 
 async function onSubmit(payload: FormSubmitEvent<PasswordResetInput>) {
   loading.value = true;
   try {
     const formData = payload.data;
-    const token = String(formData.token || initialToken.value).trim();
+    const token = String(formData.token || initialToken).trim();
 
     if (!token) {
       throw new Error(t('auth.resetTokenRequired'));
     }
 
-    const newPassword = String(formData.password).trim();
+    const newPassword = String(formData.password);
 
     const requestBody: PasswordResetBody = {
       token,
@@ -113,8 +104,7 @@ async function onSubmit(payload: FormSubmitEvent<PasswordResetInput>) {
       color: 'success',
     });
 
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    router.push('/auth/login');
+    await navigateTo('/auth/login');
   } catch (error) {
     const message = error instanceof Error ? error.message : t('auth.unableToResetPassword');
     toast.add({
@@ -129,7 +119,7 @@ async function onSubmit(payload: FormSubmitEvent<PasswordResetInput>) {
 </script>
 
 <template>
-  <UAuthForm :schema="schema" :fields="fields" :submit="submitProps" @submit="onSubmit as any">
+  <UAuthForm :schema="schema" :fields="fields" :submit="submitProps" @submit="onSubmit">
     <template #title>
       <div class="flex flex-col items-center gap-3 text-center">
         <img
