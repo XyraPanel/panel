@@ -1,5 +1,35 @@
 # Changelog
 
+## v0.1.0-alpha.3
+
+[compare changes](https://github.com/XyraPanel/panel/compare/v0.1.0-alpha.2...v0.1.0-alpha.3)
+
+### 🚀 Enhancements
+
+- Improve scripts, cli, pm2 conf ([7b9f4dd](https://github.com/XyraPanel/panel/commit/7b9f4dd))
+- Improved auth flows, locale switching, & session handling ([ec9da2d](https://github.com/XyraPanel/panel/commit/ec9da2d))
+- **ui:** Styling and layout improvements ([7f59a6d](https://github.com/XyraPanel/panel/commit/7f59a6d))
+- **ui:** Styling improvements & more consistency ([418e8e3](https://github.com/XyraPanel/panel/commit/418e8e3))
+
+### 🩹 Fixes
+
+- Use `getHeaders` instead of `toWebRequest` for retrieving auth headers ([cbaf347](https://github.com/XyraPanel/panel/commit/cbaf347))
+- Server build conf and admin nests rendering ([3433530](https://github.com/XyraPanel/panel/commit/3433530))
+- Nuke custom error controller ([34727f2](https://github.com/XyraPanel/panel/commit/34727f2))
+
+### 💅 Refactors
+
+- Standardize error handling ([0320b63](https://github.com/XyraPanel/panel/commit/0320b63))
+- Standardize api utilities, auth handling, and parameter validation ([59d2a71](https://github.com/XyraPanel/panel/commit/59d2a71))
+
+### 🏡 Chore
+
+- **release:** V0.1.0-alpha.2 ([8affeff](https://github.com/XyraPanel/panel/commit/8affeff))
+
+### ❤️ Contributors
+
+- 26bz ([@26bz](https://github.com/26bz))
+
 ## v0.1.0-alpha.2
 
 [compare changes](https://github.com/XyraPanel/panel/compare/v0.1.0-alpha.1...v0.1.0-alpha.2)
