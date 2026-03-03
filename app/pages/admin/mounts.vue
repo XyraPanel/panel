@@ -4,8 +4,8 @@ import type { AdminMountListItem, CreateMountPayload } from '#shared/types/admin
 
 definePageMeta({
   auth: true,
-  adminTitle: 'Mounts',
-  adminSubtitle: 'Manage server mounts.',
+  adminTitle: 'admin.mounts.title',
+  adminSubtitle: 'admin.mounts.subtitle',
 });
 
 const { t } = useI18n();
@@ -384,7 +384,7 @@ async function handleDelete() {
       :ui="{ footer: 'justify-end gap-2' }"
     >
       <template #body>
-        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+        <UAlert color="error" variant="subtle" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.mounts.deleteMountWarning') }}</template>
         </UAlert>
@@ -401,7 +401,7 @@ async function handleDelete() {
         <UButton variant="ghost" @click="resetDeleteModal">
           {{ t('common.cancel') }}
         </UButton>
-        <UButton color="error" :loading="isDeleting" @click="handleDelete">
+        <UButton color="error" variant="subtle" :loading="isDeleting" @click="handleDelete">
           {{ t('common.delete') }}
         </UButton>
       </template>

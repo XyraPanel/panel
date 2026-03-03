@@ -6,8 +6,8 @@ const route = useRoute();
 
 definePageMeta({
   auth: true,
-  adminTitle: 'Server details',
-  adminSubtitle: 'Manage server configuration and resources',
+  adminTitle: 'admin.servers.details.title',
+  adminSubtitle: 'admin.servers.details.subtitle',
 });
 
 const serverId = computed(() => route.params.id as string);

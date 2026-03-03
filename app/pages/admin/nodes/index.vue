@@ -7,8 +7,8 @@ import type {
 
 definePageMeta({
   auth: true,
-  adminTitle: 'Nodes',
-  adminSubtitle: 'Manage Wings daemons and monitor node health',
+  adminTitle: 'admin.nodes.title',
+  adminSubtitle: 'admin.nodes.subtitle',
 });
 
 const { t } = useI18n();
@@ -345,21 +345,27 @@ watch(
                           {{ node.description }}
                         </p>
                       </div>
-                      <div class="flex flex-col gap-1 text-xs text-muted-foreground sm:col-span-4">
-                        <code class="block break-all sm:truncate">{{ node.baseURL }}</code>
-                        <span
-                          >{ node.allowInsecure ? t('admin.nodes.tlsVerificationDisabled') :
-                          t('admin.nodes.tlsVerificationEnforced') }}</span
-                        >
-                        <span>
-                          {{ t('admin.nodes.updated') }}
-                          <NuxtTime :datetime="node.updatedAt" />
-                        </span>
+                      <div class="flex flex-col gap-1 sm:col-span-4">
+                        <code class="block w-fit break-all rounded bg-muted/50 px-1 py-0.5 text-xs font-mono sm:truncate border border-default">{{ node.baseURL }}</code>
+                        <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
+                          <UBadge
+                            :color="node.allowInsecure ? 'warning' : 'success'"
+                            variant="subtle"
+                            size="xs"
+                            class="font-normal"
+                          >
+                            {{ node.allowInsecure ? t('admin.nodes.tlsVerificationDisabled') : t('admin.nodes.tlsVerificationEnforced') }}
+                          </UBadge>
+                          <span class="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <UIcon name="i-lucide-clock" class="size-3" />
+                            <NuxtTime :datetime="node.updatedAt" />
+                          </span>
+                        </div>
                       </div>
                       <div class="sm:col-span-2">
                         <UBadge
                           :color="node.hasToken ? 'neutral' : 'warning'"
-                          :variant="node.hasToken ? 'outline' : 'soft'"
+                          :variant="node.hasToken ? 'outline' : 'subtle'"
                           size="sm"
                         >
                           {{
@@ -523,12 +529,7 @@ watch(
               </li>
             </ul>
           </div>
-          <div class="rounded-md bg-muted/40 p-3 text-xs text-muted-foreground">
-            <p class="font-semibold text-foreground text-sm mb-1">
-              {{ t('admin.nodes.token') }}
-            </p>
-            <code class="break-all text-foreground">{{ tokenModal.token }}</code>
-          </div>
+
         </div>
       </template>
 
@@ -543,6 +544,7 @@ watch(
           </UButton>
           <UButton
             color="primary"
+            variant="subtle"
             icon="i-lucide-clipboard"
             class="w-full flex-1 justify-center"
             @click="copyInstallCommand"
@@ -608,7 +610,7 @@ watch(
       :ui="{ footer: 'gap-2' }"
     >
       <template #body>
-        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+        <UAlert color="error" variant="subtle" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.nodes.deleteNodeWarning') }}</template>
         </UAlert>

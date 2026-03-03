@@ -11,14 +11,7 @@ const authStore = useAuthStore();
 const { status } = storeToRefs(authStore);
 const runtimeConfig = useRuntimeConfig();
 const appName = computed(() => runtimeConfig.public.appName || 'XyraPanel');
-const { data: brandingSettings } = await useFetch('/api/branding', {
-  key: 'branding-settings',
-  default: () =>
-    ({
-      showBrandLogo: true,
-      brandLogoUrl: '/logo.png',
-    }) as { showBrandLogo: boolean; brandLogoUrl: string | null },
-});
+const { data: brandingSettings } = await useBrandingSettings();
 const route = useRoute();
 const toast = useToast();
 
@@ -213,6 +206,12 @@ function requiresTwoFactor(message: string) {
               class="h-16 w-auto"
             />
             <h1 v-else class="text-3xl font-semibold text-white">
+              {{ appName }}
+            </h1>
+            <h1
+              v-if="brandingSettings?.showBrandLogo && brandingSettings?.brandLogoUrl"
+              class="sr-only"
+            >
               {{ appName }}
             </h1>
             <div class="space-y-1">

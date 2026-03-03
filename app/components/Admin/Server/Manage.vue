@@ -393,7 +393,7 @@ async function handleDelete(force: boolean = false) {
         <UButton
           icon="i-lucide-egg"
           color="primary"
-          variant="soft"
+          variant="subtle"
           @click="showChangeEggModal = true"
         >
           Change Egg
@@ -410,6 +410,7 @@ async function handleDelete(force: boolean = false) {
         <UButton
           icon="i-lucide-refresh-cw"
           color="warning"
+          variant="subtle"
           :loading="reinstallSubmitting"
           :disabled="reinstallSubmitting || server.status === 'install_failed'"
           @click="handleReinstall"
@@ -428,7 +429,7 @@ async function handleDelete(force: boolean = false) {
         <UButton
           icon="i-lucide-truck"
           color="primary"
-          variant="soft"
+          variant="subtle"
           @click="showTransferModal = true"
         >
           {{ t('admin.servers.manage.transfer') }}

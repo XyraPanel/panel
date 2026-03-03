@@ -3,8 +3,8 @@ import type { ApiKey, ApiKeyWithToken, CreateApiKeyPayload } from '#shared/types
 
 definePageMeta({
   auth: true,
-  adminTitle: 'API Keys',
-  adminSubtitle: 'Manage existing keys or create new ones for API access.',
+  adminTitle: 'admin.api.title',
+  adminSubtitle: 'admin.api.subtitle',
 });
 
 const { t } = useI18n();
@@ -220,6 +220,7 @@ async function copyToClipboard(text: string) {
                       :items="sortOptions"
                       value-key="value"
                       class="w-full"
+                      :aria-label="t('admin.api.sortOrder')"
                     />
                   </div>
                 </div>
@@ -246,7 +247,7 @@ async function copyToClipboard(text: string) {
                       v-if="key.expiresAt"
                       :color="isExpired(key.expiresAt) ? 'error' : 'neutral'"
                       size="xs"
-                      variant="soft"
+                      variant="subtle"
                     >
                       {{ isExpired(key.expiresAt) ? t('admin.api.expired') : t('common.active') }}
                     </UBadge>
@@ -310,7 +311,11 @@ async function copyToClipboard(text: string) {
       </UContainer>
     </UPageBody>
 
-    <UModal v-model:open="showCreateModal" :title="t('admin.api.createApiKey')">
+    <UModal
+      v-model:open="showCreateModal"
+      :title="t('admin.api.createApiKey')"
+      :description="t('admin.api.createApiKeyDescription')"
+    >
       <template #body>
         <div class="max-w-4xl mx-auto">
           <form class="space-y-6" @submit.prevent="handleCreate">
@@ -438,7 +443,7 @@ async function copyToClipboard(text: string) {
               <UInput :model-value="createdKey?.apiKey" readonly class="flex-1 font-mono" />
               <UButton
                 icon="i-lucide-copy"
-                variant="soft"
+                variant="subtle"
                 @click="copyToClipboard(createdKey?.apiKey || '')"
               >
                 {{ t('common.copy') }}
@@ -464,7 +469,7 @@ async function copyToClipboard(text: string) {
       :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:gap-3' }"
     >
       <template #body>
-        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+        <UAlert color="error" variant="subtle" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.api.deleteKeyWarning') }}</template>
         </UAlert>
@@ -488,6 +493,7 @@ async function copyToClipboard(text: string) {
         </UButton>
         <UButton
           color="error"
+          variant="subtle"
           icon="i-lucide-trash"
           class="w-full flex-1 justify-center"
           :loading="isDeleting"

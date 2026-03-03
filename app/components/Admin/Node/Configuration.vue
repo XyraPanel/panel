@@ -194,13 +194,13 @@ const configYaml = computed(() => {
           <div class="flex gap-2">
             <UButton
               icon="i-lucide-copy"
-              variant="soft"
+              variant="subtle"
               size="sm"
               @click="copyToClipboard(configYaml)"
             >
               Copy
             </UButton>
-            <UButton icon="i-lucide-download" variant="soft" size="sm" @click="downloadConfigFile">
+            <UButton icon="i-lucide-download" variant="subtle" size="sm" @click="downloadConfigFile">
               Download
             </UButton>
           </div>

@@ -18,41 +18,43 @@ const currentYear = computed(() => new Date().getFullYear());
 
 <template>
   <div class="relative min-h-screen">
-    <UContainer class="min-h-screen flex items-center justify-center py-12">
-      <div class="w-full max-w-md space-y-4">
-        <UAlert
-          v-if="isMaintenanceMode"
-          color="warning"
-          variant="subtle"
-          icon="i-lucide-construction"
-        >
-          <template #title>{{ t('layout.underMaintenance') }}</template>
-          <template #description>
-            <span class="whitespace-pre-wrap">{{ maintenanceMessage }}</span>
-          </template>
-        </UAlert>
+    <main>
+      <UContainer class="min-h-screen flex items-center justify-center py-12">
+        <div class="w-full max-w-md space-y-4">
+          <UAlert
+            v-if="isMaintenanceMode"
+            color="warning"
+            variant="subtle"
+            icon="i-lucide-construction"
+          >
+            <template #title>{{ t('layout.underMaintenance') }}</template>
+            <template #description>
+              <span class="whitespace-pre-wrap">{{ maintenanceMessage }}</span>
+            </template>
+          </UAlert>
 
-        <UCard
-          :ui="{
-            body: 'space-y-6',
-            header: 'text-center space-y-2',
-          }"
-        >
-          <slot />
-          <p class="text-center text-xs text-muted-foreground">
-            {{ t('layout.copyright', { year: currentYear }) }}
-            <ULink to="https://xyrapanel.com/" target="_blank">XyraPanel</ULink>
-          </p>
-        </UCard>
-      </div>
-    </UContainer>
+          <UCard
+            :ui="{
+              body: 'space-y-6',
+              header: 'text-center space-y-2',
+            }"
+          >
+            <slot />
+            <p class="text-center text-xs text-muted-foreground">
+              {{ t('layout.copyright', { year: currentYear }) }}
+              <ULink to="https://xyrapanel.com/" target="_blank" class="underline">XyraPanel</ULink>
+            </p>
+          </UCard>
+        </div>
+      </UContainer>
+    </main>
 
     <div class="fixed bottom-6 right-6 z-30">
       <ULocaleSelect
         :model-value="locale"
         :locales="uiLocales"
         size="sm"
-        variant="soft"
+        variant="subtle"
         class="w-40 shadow-lg"
         @update:model-value="handleLocaleChange($event)"
       />

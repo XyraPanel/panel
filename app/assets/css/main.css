@@ -22,3 +22,10 @@
 *::-webkit-scrollbar {
   display: none;
 }
+.light,
+:root {
+  --ui-text-dimmed: var(--ui-color-neutral-600);
+}
+.dark {
+  --ui-text-dimmed: var(--ui-color-neutral-400);
+}

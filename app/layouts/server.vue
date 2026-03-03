@@ -105,29 +105,31 @@ const currentPageTitle = computed(() => {
     storage-key="server-dashboard"
   >
     <UDashboardSidebar
+      role="complementary"
+      :aria-label="t('layout.serverNavigation')"
       collapsible
       :toggle="sidebarToggleProps"
-      :ui="{
-        body: 'flex flex-col gap-1 px-2 pb-4',
-        header: 'px-4 py-4',
-        footer: 'border-t border-default px-4 py-3',
-      }"
+      :ui="{ footer: 'border-t border-default' }"
     >
       <template #header="{ collapsed }">
         <NuxtLink
+          v-if="!collapsed"
           to="/server"
-          class="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary"
+          class="group inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-primary py-1"
         >
-          <UIcon v-if="collapsed" name="i-lucide-arrow-left" class="mx-auto size-4" />
-          <template v-else>
-            <UIcon name="i-lucide-arrow-left" class="size-3" />
-            {{ t('layout.backToServers') }}
-          </template>
+          <UIcon name="i-lucide-arrow-left" class="size-3" />
+          {{ t('layout.backToServers') }}
         </NuxtLink>
+        <UIcon v-else name="i-lucide-arrow-left" class="mx-auto size-4 text-muted-foreground" />
       </template>
 
       <template #default="{ collapsed }">
-        <UNavigationMenu :collapsed="collapsed" :items="[navItems]" orientation="vertical" />
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="navItems"
+          orientation="vertical"
+          :aria-label="t('layout.serverNavigation')"
+        />
       </template>
     </UDashboardSidebar>
 

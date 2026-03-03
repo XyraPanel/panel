@@ -36,9 +36,9 @@ const serversPagination = computed(() => serversData.value?.pagination);
     <template #header>
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-semibold">Servers</h2>
-        <UBadge color="neutral" variant="soft" size="xs"
-          >{{ serversPagination?.total ?? 0 }} total</UBadge
-        >
+        <UBadge color="neutral" variant="subtle" size="xs">
+          {{ serversPagination?.total ?? 0 }} total
+        </UBadge>
       </div>
     </template>
 
@@ -74,7 +74,7 @@ const serversPagination = computed(() => serversData.value?.pagination);
                 </div>
               </td>
               <td class="px-3 py-2">
-                <UBadge v-if="server.suspended" size="xs" color="error" variant="soft"
+                <UBadge v-if="server.suspended" size="xs" color="error" variant="subtle"
                   >Suspended</UBadge
                 >
                 <span v-else class="text-xs text-muted-foreground">{{

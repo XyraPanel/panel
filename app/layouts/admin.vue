@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
 import { storeToRefs } from 'pinia';
-import type { CommandPaletteGroup, CommandPaletteItem } from '@nuxt/ui';
+import type { CommandPaletteGroup, CommandPaletteItem, NavigationMenuItem } from '@nuxt/ui';
 import type { SessionUser } from '#shared/types/auth';
 import type { AdminNavItem } from '#shared/types/admin';
 import { useAuthStore } from '~/stores/auth';
@@ -211,10 +210,47 @@ const adminSubtitle = computed(() => {
   return t('admin.navigation.infrastructureOverview');
 });
 
-const navItems = computed(() => {
+const filteredNavItems = computed(() => {
   return ADMIN_NAV_ITEMS.value
     .filter((item) => storeIsSuperUser.value || authStore.hasPermission(item.permission ?? []))
     .sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY));
+});
+
+const navAriaLabel = computed(() => t('layout.adminNavigation'));
+const sidebarAriaLabel = computed(() => t('layout.adminNavigation'));
+const adminHeaderLabel = computed(() => t('layout.adminHeader'));
+
+function isLinkActive(item: AdminNavItem): boolean {
+  if (item.active) return true;
+  if (!item.to) return false;
+  if (item.to === '/admin') return route.path === '/admin';
+  if (item.to === '/') return route.path === '/';
+  return route.path === item.to || route.path.startsWith(`${item.to}/`);
+}
+
+const sidebarNavItems = computed<NavigationMenuItem[][]>(() => {
+  const items: NavigationMenuItem[] = filteredNavItems.value.map((item) => {
+    if (item.children?.length) {
+      const hasActiveChild = item.children.some((child) => isLinkActive(child));
+      return {
+        label: item.label,
+        icon: item.icon,
+        defaultOpen: hasActiveChild,
+        children: item.children.map((child) => ({
+          label: child.label,
+          to: child.to,
+          active: isLinkActive(child),
+        })),
+      };
+    }
+    return {
+      label: item.label,
+      icon: item.icon,
+      to: item.to,
+      active: isLinkActive(item),
+    };
+  });
+  return [items];
 });
 
 const handleSignOut = async (): Promise<void> => {
@@ -257,7 +293,7 @@ const sidebarToggleProps = computed(() => ({
 }));
 
 const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]>(() => {
-  const navigationItems: CommandPaletteItem[] = navItems.value.map((item) => ({
+  const navigationItems: CommandPaletteItem[] = filteredNavItems.value.map((item) => ({
     id: item.id,
     label: item.label,
     suffix: item.to,
@@ -351,6 +387,8 @@ const navigateToSecuritySettings = async (event?: MouseEvent) => {
     storage-key="admin-dashboard"
   >
     <UDashboardSidebar
+      role="complementary"
+      :aria-label="navAriaLabel"
       collapsible
       :toggle="sidebarToggleProps"
       :ui="{ footer: 'border-t border-default' }"
@@ -368,45 +406,44 @@ const navigateToSecuritySettings = async (event?: MouseEvent) => {
       </template>
 
       <template #default="{ collapsed }">
-        <div class="flex flex-col gap-1">
-          <UDashboardSearchButton
-            v-model:open="dashboardSearchOpen"
-            class="w-full"
-            :block="collapsed"
-            :shortcut="dashboardSearchShortcut"
-            :label="t('common.search')"
-          />
-          <div
-            v-if="!collapsed"
-            class="text-[10px] uppercase tracking-wide text-muted-foreground/70 px-2 py-2"
-          >
-            <p class="flex items-center gap-1">
-              <img src="/logo.png" alt="XyraPanel" class="h-4 w-auto" loading="lazy" />
-              {{ t('layout.copyright', { year: currentYear }) }}
-              <ULink href="https://xyrapanel.com" target="_blank">XyraPanel</ULink>
-            </p>
-          </div>
-          <ClientOnly>
-            <UNavigationMenu :collapsed="collapsed" :items="[navItems]" orientation="vertical" />
-            <template #fallback>
-              <div class="space-y-1">
-                <USkeleton class="h-8 w-full rounded-md" />
-                <USkeleton class="h-8 w-3/4 rounded-md" />
-                <USkeleton class="h-8 w-2/3 rounded-md" />
-              </div>
-            </template>
-          </ClientOnly>
+        <UDashboardSearchButton
+          v-model:open="dashboardSearchOpen"
+          class="w-full"
+          :block="collapsed"
+          :shortcut="dashboardSearchShortcut"
+          :label="t('common.search')"
+        />
+
+        <UNavigationMenu
+          v-for="(group, index) in sidebarNavItems"
+          :key="index"
+          :collapsed="collapsed"
+          :items="group"
+          orientation="vertical"
+          :aria-label="navAriaLabel"
+        />
+
+        <div
+          v-if="!collapsed"
+          class="mt-auto text-[10px] uppercase tracking-wide text-muted-foreground/70 px-2 py-2"
+        >
+          <p class="flex items-center gap-1">
+            <img src="/logo.png" alt="XyraPanel" class="h-4 w-auto" loading="lazy" />
+            {{ t('layout.copyright', { year: currentYear }) }}
+            <ULink href="https://xyrapanel.com" target="_blank">XyraPanel</ULink>
+          </p>
         </div>
       </template>
 
       <template #footer="{ collapsed }">
         <UDropdownMenu
           :items="[accountNavItems, [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }]]"
+          class="w-full"
         >
           <UButton
             color="neutral"
             variant="ghost"
-            class="w-full"
+            class="w-full justify-start"
             :block="collapsed"
             type="button"
             @click.prevent
@@ -465,7 +502,7 @@ const navigateToSecuritySettings = async (event?: MouseEvent) => {
             <UAlert
               v-if="showTwoFactorPrompt"
               color="warning"
-              variant="soft"
+              variant="subtle"
               icon="i-lucide-shield-check"
             >
               <template #title>{{ t('layout.enableTwoFactorAuthentication') }}</template>

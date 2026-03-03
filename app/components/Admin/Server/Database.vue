@@ -164,7 +164,7 @@ async function rotatePassword(databaseId: string) {
         </div>
 
         <div class="flex items-center gap-2">
-          <UButton icon="i-lucide-key" variant="soft" size="sm" @click="rotatePassword(db.id)">
+          <UButton icon="i-lucide-key" variant="subtle" size="sm" @click="rotatePassword(db.id)">
             Rotate Password
           </UButton>
           <UButton

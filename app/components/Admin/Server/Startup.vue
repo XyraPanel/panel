@@ -218,7 +218,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
         <UButton
           icon="i-lucide-plus"
           color="primary"
-          variant="soft"
+          variant="subtle"
           size="sm"
           :disabled="!canAddEnv || isSubmitting"
           @click="addEnvVar"

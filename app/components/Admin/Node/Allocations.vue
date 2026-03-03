@@ -266,7 +266,7 @@ const columns: TableColumn<Allocation>[] = [
   { accessorKey: 'ipAlias', header: t('admin.nodes.allocations.ipAlias') },
   { accessorKey: 'port', header: t('admin.nodes.port') },
   { accessorKey: 'server', header: t('admin.nodes.allocations.assignedTo') },
-  { id: 'actions', header: '' },
+  { id: 'actions', header: t('admin.nodes.allocations.actions') },
 ];
 
 const assignedCount = computed(() => allocations.value.filter((a) => a.serverId !== null).length);
@@ -279,7 +279,7 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
       <div class="flex flex-wrap gap-2">
         <UButton
           :color="filter === 'all' ? 'primary' : 'neutral'"
-          variant="soft"
+          variant="subtle"
           class="w-full sm:w-auto justify-center"
           @click="filter = 'all'"
         >
@@ -287,7 +287,7 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
         </UButton>
         <UButton
           :color="filter === 'assigned' ? 'primary' : 'neutral'"
-          variant="soft"
+          variant="subtle"
           class="w-full sm:w-auto justify-center"
           @click="filter = 'assigned'"
         >
@@ -295,7 +295,7 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
         </UButton>
         <UButton
           :color="filter === 'unassigned' ? 'primary' : 'neutral'"
-          variant="soft"
+          variant="subtle"
           class="w-full sm:w-auto justify-center"
           @click="filter = 'unassigned'"
         >
@@ -443,6 +443,7 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
               type="submit"
               form="create-allocation-form"
               color="primary"
+              variant="subtle"
               :loading="isCreating"
               :disabled="isCreating"
             >

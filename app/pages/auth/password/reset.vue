@@ -131,6 +131,12 @@ async function onSubmit(payload: FormSubmitEvent<PasswordResetInput>) {
         <h1 v-else class="text-3xl font-semibold text-white">
           {{ appName }}
         </h1>
+        <h1
+          v-if="brandingSettings?.showBrandLogo && brandingSettings?.brandLogoUrl"
+          class="sr-only"
+        >
+          {{ appName }}
+        </h1>
         <div class="space-y-1">
           <h2 class="text-2xl font-semibold text-white">
             {{ t('auth.setNewPassword') }}
@@ -142,7 +148,7 @@ async function onSubmit(payload: FormSubmitEvent<PasswordResetInput>) {
       </div>
     </template>
     <template #footer>
-      <NuxtLink to="/auth/login" class="text-primary font-medium block text-center">
+      <NuxtLink to="/auth/login" class="text-primary font-medium block text-center underline">
         {{ t('auth.backToSignIn') }}
       </NuxtLink>
     </template>

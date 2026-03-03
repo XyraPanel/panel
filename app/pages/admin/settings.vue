@@ -75,14 +75,16 @@ const openSections = ref<Record<string, boolean>>({
         <UCard v-if="availableSections.length > 0" :ui="{ body: 'p-0 divide-y divide-default' }">
           <div v-for="section in availableSections" :key="section.id">
             <UCollapsible v-model:open="openSections[section.id]" :unmount-on-hide="false">
-              <template #default>
-                <div
+              <template #default="{ open }">
+                <button
+                  type="button"
                   class="flex w-full flex-col gap-3 p-4 cursor-pointer text-left sm:flex-row sm:items-center sm:justify-between"
+                  :aria-expanded="open"
                 >
                   <div class="flex min-w-0 items-start gap-3 sm:items-center">
                     <UIcon :name="section.icon" class="size-5 text-primary" />
                     <div class="min-w-0">
-                      <h3 class="text-base font-semibold break-words">{{ section.label }}</h3>
+                      <h2 class="text-base font-semibold break-words">{{ section.label }}</h2>
                       <p class="text-sm text-muted-foreground break-words">
                         {{ section.description }}
                       </p>
@@ -91,9 +93,9 @@ const openSections = ref<Record<string, boolean>>({
                   <UIcon
                     name="i-lucide-chevron-down"
                     class="size-5 text-muted-foreground transition-transform duration-200 self-end sm:self-auto shrink-0"
-                    :class="{ 'rotate-180': openSections[section.id] }"
+                    :class="{ 'rotate-180': open }"
                   />
-                </div>
+                </button>
               </template>
 
               <template #content>
@@ -104,7 +106,7 @@ const openSections = ref<Record<string, boolean>>({
             </UCollapsible>
           </div>
         </UCard>
-        <UAlert v-else color="warning" variant="soft" icon="i-lucide-alert-triangle">
+        <UAlert v-else color="warning" variant="subtle" icon="i-lucide-alert-triangle">
           <template #title>{{ t('admin.settings.noSettingsAvailable') }}</template>
           <template #description>
             {{ t('admin.settings.noSettingsAvailableDescription') }}

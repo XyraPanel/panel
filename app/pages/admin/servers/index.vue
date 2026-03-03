@@ -4,8 +4,8 @@ import type { TableColumn } from '@nuxt/ui';
 
 definePageMeta({
   auth: true,
-  adminTitle: 'Servers',
-  adminSubtitle: 'Global view of panel servers synchronized with Wings',
+  adminTitle: 'admin.servers.title',
+  adminSubtitle: 'admin.servers.subtitle',
 });
 
 interface AdminServerRow {
@@ -252,6 +252,7 @@ const columns = computed<TableColumn<AdminServerRow>[]>(() => [
   },
   {
     id: 'actions',
+    header: t('common.actions'),
     enableHiding: false,
     cell: ({ row }) => {
       const server = row.original;
@@ -319,7 +320,16 @@ const table = useTemplateRef('table');
           <section class="space-y-4 sm:space-y-6">
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                  <UButton
+                    icon="i-lucide-plus"
+                    color="primary"
+                    variant="subtle"
+                    class="w-full sm:w-auto justify-center"
+                    to="/admin/servers/create"
+                  >
+                    {{ t('admin.servers.createServer') }}
+                  </UButton>
                   <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
                     <p v-if="servers.length > 0" class="text-xs text-muted-foreground">
                       {{ t('admin.servers.showingServersCount', { count: servers.length }) }}
@@ -334,15 +344,6 @@ const table = useTemplateRef('table');
                       />
                     </div>
                   </div>
-                  <UButton
-                    icon="i-lucide-plus"
-                    color="primary"
-                    variant="subtle"
-                    class="w-full sm:w-auto justify-center"
-                    to="/admin/servers/create"
-                  >
-                    {{ t('admin.servers.createServer') }}
-                  </UButton>
                 </div>
               </template>
 

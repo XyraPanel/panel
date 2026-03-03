@@ -165,7 +165,7 @@ function handleFileChange(event: Event) {
             >
               <div class="flex-1">
                 <div class="flex items-center gap-2 min-w-0">
-                  <UButton icon="i-lucide-arrow-left" size="xs" variant="ghost" to="/admin/nests" />
+                  <UButton icon="i-lucide-arrow-left" size="xs" variant="ghost" to="/admin/nests" :aria-label="t('common.back')" />
                   <h1 class="text-xl font-semibold break-words">{{ nest.name }}</h1>
                 </div>
                 <p v-if="nest.description" class="mt-1 text-sm text-muted-foreground">
@@ -252,6 +252,7 @@ function handleFileChange(event: Event) {
                       icon="i-lucide-arrow-right"
                       size="xs"
                       variant="ghost"
+                      :aria-label="t('common.view')"
                       @click="viewEgg(egg)"
                     />
                   </div>
@@ -369,7 +370,7 @@ function handleFileChange(event: Event) {
             </template>
           </UFormField>
 
-          <UAlert v-if="importFile" color="primary" variant="soft" icon="i-lucide-file-json">
+          <UAlert v-if="importFile" color="primary" variant="subtle" icon="i-lucide-file-json">
             <template #title>{{ t('admin.nests.createEgg.fileSelected') }}</template>
             <template #description
               >{{ importFile.name }} ({{ (importFile.size / 1024).toFixed(2) }} KB)</template
@@ -390,6 +391,7 @@ function handleFileChange(event: Event) {
           </UButton>
           <UButton
             color="primary"
+            variant="subtle"
             class="w-full flex-1 justify-center"
             :loading="isSubmitting"
             :disabled="!importFile"

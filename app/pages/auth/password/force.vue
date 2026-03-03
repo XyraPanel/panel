@@ -148,6 +148,12 @@ async function onSubmit(event: FormSubmitEvent<PasswordForceBody>) {
         <h1 v-else class="text-3xl font-semibold text-white">
           {{ appName }}
         </h1>
+        <h1
+          v-if="brandingSettings?.showBrandLogo && brandingSettings?.brandLogoUrl"
+          class="sr-only"
+        >
+          {{ appName }}
+        </h1>
         <div class="space-y-1">
           <h2 class="text-2xl font-semibold text-white">
             {{ t('auth.passwordResetRequired') }}

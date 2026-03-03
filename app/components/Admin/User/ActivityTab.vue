@@ -93,7 +93,7 @@ async function copyActivityJson(entry: (typeof activity.value)[0]) {
     <template #header>
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-semibold">{{ t('account.activity.recentActivity') }}</h2>
-        <UBadge color="neutral" variant="soft" size="xs">
+        <UBadge color="neutral" variant="subtle" size="xs">
           {{ activityPagination?.total ?? 0 }} {{ t('account.activity.total') }}
         </UBadge>
       </div>

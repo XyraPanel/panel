@@ -4,8 +4,8 @@ import { authClient } from '~/utils/auth-client';
 
 definePageMeta({
   auth: true,
-  adminTitle: 'User profile',
-  adminSubtitle: 'Inspect panel access, owned servers, and activity',
+  adminTitle: 'admin.users.profile.title',
+  adminSubtitle: 'admin.users.profile.subtitle',
 });
 
 const { t } = useI18n();
@@ -581,7 +581,7 @@ async function impersonateUser() {
 
           <div v-else-if="profile" class="space-y-6">
             <div v-if="isSuspended || requiresPasswordReset" class="space-y-3">
-              <UAlert v-if="isSuspended" color="error" variant="soft" icon="i-lucide-ban">
+              <UAlert v-if="isSuspended" color="error" variant="subtle" icon="i-lucide-ban">
                 <template #title>{{ t('admin.users.accountSuspended') }}</template>
                 <template #description>
                   <p>{{ t('admin.users.accountSuspendedDescription') }}</p>
@@ -597,7 +597,7 @@ async function impersonateUser() {
               <UAlert
                 v-if="requiresPasswordReset"
                 color="warning"
-                variant="soft"
+                variant="subtle"
                 icon="i-lucide-alert-triangle"
               >
                 <template #title>{{ t('admin.users.passwordResetRequired') }}</template>

@@ -172,7 +172,7 @@ const { t } = useI18n();
           <UButton
             icon="i-lucide-copy"
             size="xs"
-            variant="soft"
+            variant="subtle"
             color="neutral"
             :disabled="!props.canCopySelection || props.copyStatusActive || props.directoryDisabled"
             @click="props.handleBulkCopy"
@@ -183,7 +183,7 @@ const { t } = useI18n();
           <UButton
             icon="i-lucide-move"
             size="xs"
-            variant="soft"
+            variant="subtle"
             color="neutral"
             :disabled="!props.canMoveSelection || props.moveStatusActive || props.directoryDisabled"
             @click="props.openBulkMoveModalWithDefaults"
@@ -194,7 +194,7 @@ const { t } = useI18n();
           <UButton
             icon="i-lucide-archive"
             size="xs"
-            variant="soft"
+            variant="subtle"
             color="neutral"
             :disabled="
               !props.canArchiveSelection || props.compressStatusActive || props.directoryDisabled
@@ -207,7 +207,7 @@ const { t } = useI18n();
           <UButton
             icon="i-lucide-box"
             size="xs"
-            variant="soft"
+            variant="subtle"
             color="neutral"
             :disabled="
               !props.canUnarchiveSelection ||
@@ -222,7 +222,7 @@ const { t } = useI18n();
           <UButton
             icon="i-lucide-trash"
             size="xs"
-            variant="soft"
+            variant="subtle"
             color="error"
             :disabled="
               !props.canDeleteSelection || props.deleteStatusActive || props.directoryDisabled

@@ -3,8 +3,8 @@ import type { AdminActivityEntry, AuditEventsPayload } from '#shared/types/admin
 
 definePageMeta({
   auth: true,
-  adminTitle: 'Audit log',
-  adminSubtitle: 'Track panel-wide events mirrored from Wings',
+  adminTitle: 'admin.activity.title',
+  adminSubtitle: 'admin.activity.subtitle',
 });
 
 const currentPage = ref(1);
@@ -310,6 +310,7 @@ function clearFilters() {
                   value-key="value"
                   size="sm"
                   class="w-full sm:w-32"
+                  :aria-label="t('admin.activity.sortOrder')"
                 />
                 <UButton
                   icon="i-lucide-download"

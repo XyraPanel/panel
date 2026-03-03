@@ -133,6 +133,8 @@ const sidebarToggleProps = computed(() => ({
     storage-key="client-dashboard"
   >
     <UDashboardSidebar
+      role="complementary"
+      :aria-label="t('layout.clientNavigation')"
       collapsible
       :toggle="sidebarToggleProps"
       :ui="{ footer: 'border-t border-default' }"
@@ -155,34 +157,18 @@ const sidebarToggleProps = computed(() => ({
       </template>
 
       <template #default="{ collapsed }">
-        <UNavigationMenu :collapsed="collapsed" :items="navigationItems" orientation="vertical" />
+        <UNavigationMenu :collapsed="collapsed" :items="navigationItems" orientation="vertical" :aria-label="t('layout.clientNavigation')" />
       </template>
 
       <template #footer="{ collapsed }">
-        <div class="sm:hidden px-2 pb-2">
-          <UButton
-            color="neutral"
-            variant="ghost"
-            class="w-full justify-start"
-            :block="collapsed"
-            type="button"
-            @click.prevent
-          >
-            <template #leading>
-              <UAvatar v-bind="userAvatar" size="sm" />
-            </template>
-            <span>{{ displayUserLabel }}</span>
-          </UButton>
-        </div>
-
         <UDropdownMenu
-          class="hidden sm:block"
           :items="[accountNavItems, [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }]]"
+          class="w-full"
         >
           <UButton
             color="neutral"
             variant="ghost"
-            class="w-full"
+            class="w-full justify-start"
             :block="collapsed"
             type="button"
             @click.prevent
@@ -285,7 +271,7 @@ const sidebarToggleProps = computed(() => ({
             <UAlert
               v-if="isImpersonating"
               color="error"
-              variant="soft"
+              variant="subtle"
               icon="i-lucide-user-round-minus"
             >
               <template #title>

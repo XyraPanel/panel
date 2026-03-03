@@ -15,8 +15,8 @@ const requestFetch = useRequestFetch();
 
 definePageMeta({
   auth: true,
-  adminTitle: 'Node details',
-  adminSubtitle: 'Inspect Wings node metrics and allocations',
+  adminTitle: 'admin.nodes.details.title',
+  adminSubtitle: 'admin.nodes.details.subtitle',
 });
 
 const nodeId = computed(() => route.params.id as string);
@@ -629,7 +629,7 @@ async function handleCreateAllocations() {
             <USkeleton class="h-40" repeat="3" />
           </div>
         </div>
-        <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
+        <UAlert v-else-if="error" color="error" variant="subtle" icon="i-lucide-alert-triangle">
           <template #title>{{ t('admin.nodes.unableToLoadNodeDetails') }}</template>
           <template #description>{{ (error as Error).message }}</template>
         </UAlert>
@@ -1042,7 +1042,7 @@ async function handleCreateAllocations() {
     >
       <template #body>
         <div class="space-y-4">
-          <UAlert icon="i-lucide-info">
+          <UAlert icon="i-lucide-info" variant="subtle">
             <template #title>{{ t('admin.nodes.serverTransfer') }}</template>
             <template #description>
               {{ t('admin.nodes.serverTransferDescription') }}
@@ -1085,6 +1085,7 @@ async function handleCreateAllocations() {
           }}</UButton>
           <UButton
             color="primary"
+            variant="subtle"
             :disabled="!transferForm.targetNodeId || transferForm.serverIds.length === 0"
             @click="handleTransferServers"
           >

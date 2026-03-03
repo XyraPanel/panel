@@ -178,7 +178,7 @@ async function confirmApiKeyDelete() {
                 <UBadge
                   v-if="key.expiresAt && new Date(key.expiresAt) <= new Date()"
                   color="neutral"
-                  variant="soft"
+                  variant="subtle"
                   size="xs"
                 >
                   {{ t('admin.apiKeys.expired') }}
@@ -276,7 +276,7 @@ async function confirmApiKeyDelete() {
     >
       <template #body>
         <div class="space-y-4">
-          <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle">
+          <UAlert color="error" variant="subtle" icon="i-lucide-alert-triangle">
             <template #title>{{ t('common.warning') }}</template>
             <template #description>
               {{ t('admin.users.apiKeys.confirmDeleteApiKeyDescription') }}
@@ -309,6 +309,7 @@ async function confirmApiKeyDelete() {
         </UButton>
         <UButton
           color="error"
+          variant="subtle"
           icon="i-lucide-trash-2"
           :loading="isDeletingApiKey"
           :disabled="isDeletingApiKey"

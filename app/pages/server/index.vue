@@ -176,9 +176,7 @@ const scopeToggleText = computed(() => {
             v-else-if="filteredServers.length === 0"
             icon="i-lucide-server-off"
             :title="t('server.list.noServersFound')"
-            :description="
-              search ? t('server.list.tryAdjustingSearch') : t('server.list.noServersAvailable')
-            "
+            :description="search ? t('server.list.tryAdjustingSearch') : undefined"
           />
           <div
             v-for="server in filteredServers"

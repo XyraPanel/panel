@@ -385,7 +385,7 @@ function cancelEdit() {
               <UButton
                 :loading="isResetting"
                 color="warning"
-                variant="soft"
+                variant="subtle"
                 class="w-full justify-center"
                 @click="resetTemplate"
               >
@@ -394,7 +394,7 @@ function cancelEdit() {
               <UButton
                 :loading="isPreviewing"
                 color="info"
-                variant="soft"
+                variant="subtle"
                 class="w-full justify-center"
                 @click="previewTemplate"
               >

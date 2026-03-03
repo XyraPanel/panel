@@ -8,8 +8,8 @@ const { t } = useI18n();
 
 definePageMeta({
   auth: true,
-  adminTitle: 'Users',
-  adminSubtitle: 'Audit panel accounts and Wings permissions',
+  adminTitle: 'admin.users.title',
+  adminSubtitle: 'admin.users.subtitle',
 });
 const toast = useToast();
 const router = useRouter();
@@ -305,7 +305,7 @@ async function handleDelete() {
               <UAlert
                 v-if="errorMessage"
                 color="error"
-                variant="soft"
+                variant="subtle"
                 icon="i-lucide-alert-triangle"
                 :description="errorMessage"
                 :title="t('admin.users.failedToLoadUsers')"
@@ -571,7 +571,7 @@ async function handleDelete() {
       :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:gap-3' }"
     >
       <template #body>
-        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+        <UAlert color="error" variant="subtle" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.users.deleteUserWarning') }}</template>
         </UAlert>
@@ -595,6 +595,7 @@ async function handleDelete() {
         </UButton>
         <UButton
           color="error"
+          variant="subtle"
           icon="i-lucide-trash-2"
           class="w-full flex-1 justify-center"
           :loading="isDeleting"

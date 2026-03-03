@@ -12,14 +12,14 @@ const props = defineProps<{
       :key="action.label"
       :icon="action.icon"
       color="neutral"
-      variant="soft"
+      variant="subtle"
       :disabled="action.disabled"
       @click="action.handler()"
     >
       {{ action.label }}
     </UButton>
     <slot />
-    <UBadge v-if="props.showLoadingBadge" color="neutral" variant="soft">
+    <UBadge v-if="props.showLoadingBadge" color="neutral" variant="subtle">
       <slot name="loadingLabel" />
     </UBadge>
   </div>

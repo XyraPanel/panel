@@ -224,7 +224,7 @@ async function handleTestEmail() {
       <UButton
         icon="i-lucide-mail"
         color="primary"
-        variant="soft"
+        variant="subtle"
         class="w-full justify-center"
         :loading="isTesting"
         :disabled="isTesting || isSubmitting"

@@ -129,7 +129,7 @@ async function onSubmit(payload: FormSubmitEvent<PasswordRequestBody>) {
             }"
           />
         </div>
-        <NuxtLink to="/auth/login" class="text-primary font-medium block text-center">
+        <NuxtLink to="/auth/login" class="text-primary font-medium block text-center underline">
           {{ t('auth.backToSignIn') }}
         </NuxtLink>
       </div>

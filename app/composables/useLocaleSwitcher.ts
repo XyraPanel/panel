@@ -1,5 +1,6 @@
 import { computed } from 'vue';
 import * as uiLocaleCatalog from '@nuxt/ui/locale';
+import type { Locale } from '@nuxt/ui';
 
 type UiLocaleOption = {
   code: string;
@@ -24,7 +25,7 @@ export function useLocaleSwitcher() {
     return typeof value === 'string' ? value : undefined;
   };
 
-  const uiLocales = computed<UiLocaleOption[]>(() => {
+  const uiLocales = computed<Locale<any>[]>(() => {
     return locales.value.map((loc) => {
       const isStringLocale = typeof loc === 'string';
       const code = isStringLocale ? loc : loc.code;
@@ -33,21 +34,20 @@ export function useLocaleSwitcher() {
         const normalizedDir = extractLocaleString(match, 'dir') === 'rtl' ? 'rtl' : 'ltr';
         return {
           code: match.code,
-          name: extractLocaleString(match, 'name'),
-          language: extractLocaleString(match, 'language'),
+          name: extractLocaleString(match, 'name') ?? code,
           dir: normalizedDir,
-        } satisfies UiLocaleOption;
+          messages: undefined,
+        } satisfies Locale<any>;
       }
 
       const fallbackName = isStringLocale ? loc : loc.name || code;
-      const fallbackLanguage = !isStringLocale && 'language' in loc && loc.language ? loc.language : undefined;
       const dir = isStringLocale ? 'ltr' : loc.dir || 'ltr';
       return {
         code,
         name: fallbackName,
-        language: fallbackLanguage,
         dir: dir === 'auto' ? 'ltr' : dir,
-      } satisfies UiLocaleOption;
+        messages: undefined,
+      } satisfies Locale<any>;
     });
   });
 
@@ -85,7 +85,7 @@ export function useLocaleSwitcher() {
   const currentFlag = computed(() => localeToFlag(locale.value));
   const localeDropdownItems = computed(() => [
     uiLocales.value.map((loc) => ({
-      label: loc.name || loc.language || loc.code,
+      label: loc.name || loc.code,
       active: loc.code === locale.value,
       click: () => handleLocaleChange(loc.code),
     })),

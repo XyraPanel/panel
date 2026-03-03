@@ -3,8 +3,8 @@ import type { DatabaseHostListItem, CreateDatabaseHostPayload } from '#shared/ty
 
 definePageMeta({
   auth: true,
-  adminTitle: 'Database Hosts',
-  adminSubtitle: 'Manage database hosts.',
+  adminTitle: 'admin.databaseHosts.title',
+  adminSubtitle: 'admin.databaseHosts.subtitle',
 });
 
 const { t } = useI18n();
@@ -325,7 +325,7 @@ async function handleDelete() {
       :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:gap-3' }"
     >
       <template #body>
-        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+        <UAlert color="error" variant="subtle" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.databaseHosts.deleteHostWarning') }}</template>
         </UAlert>
@@ -350,6 +350,7 @@ async function handleDelete() {
         </UButton>
         <UButton
           color="error"
+          variant="subtle"
           icon="i-lucide-trash-2"
           class="w-full flex-1 justify-center"
           :loading="isDeleting"

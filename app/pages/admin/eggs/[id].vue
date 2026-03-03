@@ -259,6 +259,7 @@ async function handleExportEgg() {
                     size="xs"
                     variant="ghost"
                     :to="`/admin/nests/${egg.nestId}`"
+                    :aria-label="t('common.back')"
                   />
                   <h1 class="text-xl font-semibold break-words">{{ egg.name }}</h1>
                 </div>
@@ -372,7 +373,11 @@ async function handleExportEgg() {
                 :title="t('admin.eggs.noVariablesDefined')"
                 :description="t('admin.eggs.noVariablesDefinedDescription')"
               >
-                <UButton class="mt-4" size="sm" @click="openCreateVariableModal"
+                <UButton
+                  class="mt-4"
+                  size="sm"
+                  variant="subtle"
+                  @click="openCreateVariableModal"
                   >{{ t('admin.eggs.addFirstVariable') }}
                 </UButton>
               </UEmpty>
@@ -433,6 +438,7 @@ async function handleExportEgg() {
                         size="xs"
                         variant="ghost"
                         color="info"
+                        :aria-label="t('admin.eggs.editVariable')"
                         @click="openEditVariableModal(variable)"
                       />
                       <UButton
@@ -440,6 +446,7 @@ async function handleExportEgg() {
                         size="xs"
                         variant="ghost"
                         color="error"
+                        :aria-label="t('admin.eggs.deleteVariable')"
                         @click="
                           variableToDelete = variable;
                           showDeleteVariableModal = true;
@@ -600,6 +607,7 @@ async function handleExportEgg() {
           </UButton>
           <UButton
             color="primary"
+            variant="subtle"
             class="w-full flex-1 justify-center"
             :loading="isSubmitting"
             @click="handleVariableSubmit"
@@ -617,7 +625,7 @@ async function handleExportEgg() {
       :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:gap-3' }"
     >
       <template #body>
-        <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
+        <UAlert color="error" variant="subtle" icon="i-lucide-alert-triangle" class="mb-4">
           <template #title>{{ t('common.warning') }}</template>
           <template #description>{{ t('admin.eggs.deleteVariableWarning') }}</template>
         </UAlert>

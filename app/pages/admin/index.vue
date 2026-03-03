@@ -3,8 +3,8 @@ import { computed, defineAsyncComponent, onMounted } from 'vue';
 import type { DashboardResponse } from '#shared/types/admin';
 
 definePageMeta({
-  adminTitle: 'Dashboard',
-  adminSubtitle: 'Infrastructure overview',
+  adminTitle: 'admin.dashboard.title',
+  adminSubtitle: 'admin.dashboard.subtitle',
 });
 
 const { t } = useI18n();
@@ -116,10 +116,12 @@ onMounted(() => {
     <UPageBody>
       <UContainer class="pt-2 sm:pt-4">
         <section class="space-y-4 sm:space-y-6">
-          <PanelInfoCard />
-          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div
+            class="grid gap-4"
+            :class="metrics.length === 4 ? 'sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4' : 'sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3'"
+          >
             <template v-if="showCriticalSkeleton">
-              <UCard v-for="i in 4" :key="`metric-skeleton-${i}`" :ui="{ body: 'space-y-3' }">
+              <UCard v-for="i in 3" :key="`metric-skeleton-${i}`" :ui="{ body: 'space-y-3' }">
                 <USkeleton class="h-4 w-24" />
                 <USkeleton class="h-8 w-20" />
                 <USkeleton class="h-3 w-16" />
@@ -152,6 +154,8 @@ onMounted(() => {
               </UCard>
             </template>
           </div>
+
+          <PanelInfoCard />
 
           <div class="grid gap-4 xl:grid-cols-2 items-start">
             <UCard :ui="{ body: 'space-y-3' }">

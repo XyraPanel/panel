@@ -320,7 +320,7 @@ async function copyToken() {
           : t('account.apiKeys.generatePersonalAPIKey')
       "
       :dismissible="!newKeyToken"
-      :ui="{ body: 'space-y-4', footer: 'flex justify-end gap-2' }"
+      :ui="{ body: 'space-y-4', footer: 'gap-2' }"
     >
       <template #body>
         <div v-if="newKeyToken" class="space-y-4">
@@ -389,50 +389,55 @@ async function copyToken() {
       </template>
 
       <template #footer="{ close }">
-        <template v-if="!newKeyToken">
-          <UButton
-            variant="ghost"
-            color="neutral"
-            :disabled="isCreating"
-            @click="
-              () => {
-                showCreateModal = false;
-                close();
-              }
-            "
-          >
-            {{ t('common.cancel') }}
-          </UButton>
-          <UButton
-            type="submit"
-            form=""
-            icon="i-lucide-plus"
-            color="primary"
-            variant="subtle"
-            :loading="isCreating"
-            :disabled="isCreating"
-            @click="
-              () => createApiKey({ data: createForm } as unknown as FormSubmitEvent<KeyFormSchema>)
-            "
-          >
-            {{ t('common.create') }}
-          </UButton>
-        </template>
-        <template v-else>
-          <UButton
-            color="primary"
-            icon="i-lucide-check"
-            @click="
-              () => {
-                newKeyToken = null;
-                showCreateModal = false;
-                close();
-              }
-            "
-          >
-            {{ t('common.done') }}
-          </UButton>
-        </template>
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
+          <template v-if="!newKeyToken">
+            <UButton
+              variant="ghost"
+              color="neutral"
+              class="w-full flex-1 justify-center"
+              :disabled="isCreating"
+              @click="
+                () => {
+                  showCreateModal = false;
+                  close();
+                }
+              "
+            >
+              {{ t('common.cancel') }}
+            </UButton>
+            <UButton
+              type="submit"
+              form=""
+              icon="i-lucide-plus"
+              color="primary"
+              variant="subtle"
+              class="w-full flex-1 justify-center"
+              :loading="isCreating"
+              :disabled="isCreating"
+              @click="
+                () => createApiKey({ data: createForm } as unknown as FormSubmitEvent<KeyFormSchema>)
+              "
+            >
+              {{ t('common.create') }}
+            </UButton>
+          </template>
+          <template v-else>
+            <UButton
+              color="primary"
+              icon="i-lucide-check"
+              class="w-full flex-1 justify-center"
+              @click="
+                () => {
+                  newKeyToken = null;
+                  showCreateModal = false;
+                  close();
+                }
+              "
+            >
+              {{ t('common.done') }}
+            </UButton>
+          </template>
+        </div>
       </template>
     </UModal>
 
@@ -440,7 +445,7 @@ async function copyToken() {
       v-model:open="showDeleteModal"
       :title="t('account.apiKeys.deleteAPIKey')"
       :description="t('common.irreversibleAction')"
-      :ui="{ footer: 'flex justify-end gap-2' }"
+      :ui="{ footer: 'gap-2' }"
     >
       <template #body>
         <div class="space-y-4">
@@ -458,29 +463,33 @@ async function copyToken() {
       </template>
 
       <template #footer="{ close }">
-        <UButton
-          variant="ghost"
-          color="neutral"
-          :disabled="isDeleting"
-          @click="
-            () => {
-              showDeleteModal = false;
-              keyToDelete = null;
-              close();
-            }
-          "
-        >
-          {{ t('common.cancel') }}
-        </UButton>
-        <UButton
-          color="error"
-          icon="i-lucide-trash-2"
-          :loading="isDeleting"
-          :disabled="isDeleting"
-          @click="confirmDelete"
-        >
-          {{ t('common.delete') }}
-        </UButton>
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
+          <UButton
+            variant="ghost"
+            color="neutral"
+            class="w-full flex-1 justify-center"
+            :disabled="isDeleting"
+            @click="
+              () => {
+                showDeleteModal = false;
+                keyToDelete = null;
+                close();
+              }
+            "
+          >
+            {{ t('common.cancel') }}
+          </UButton>
+          <UButton
+            color="error"
+            icon="i-lucide-trash-2"
+            class="w-full flex-1 justify-center"
+            :loading="isDeleting"
+            :disabled="isDeleting"
+            @click="confirmDelete"
+          >
+            {{ t('common.delete') }}
+          </UButton>
+        </div>
       </template>
     </UModal>
 
@@ -494,6 +503,7 @@ async function copyToken() {
                 :items="sortOptions"
                 value-key="value"
                 class="w-full sm:w-48"
+                :aria-label="t('account.apiKeys.sortOrder')"
               />
             </div>
             <UButton

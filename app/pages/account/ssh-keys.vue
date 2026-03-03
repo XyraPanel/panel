@@ -205,6 +205,7 @@ async function confirmDelete() {
       v-model:open="showCreateModal"
       :title="t('account.sshKeys.addSSHKey')"
       :description="t('account.sshKeys.addNewSSHKey')"
+      :ui="{ footer: 'gap-2' }"
     >
       <template #body>
         <form class="space-y-4" @submit.prevent="createSshKey">
@@ -235,14 +236,21 @@ async function confirmDelete() {
       </template>
 
       <template #footer="{ close }">
-        <div class="flex justify-end gap-2">
-          <UButton variant="ghost" color="error" :disabled="isCreating" @click="close">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
+          <UButton
+            variant="ghost"
+            color="neutral"
+            class="w-full flex-1 justify-center"
+            :disabled="isCreating"
+            @click="close"
+          >
             {{ t('common.cancel') }}
           </UButton>
           <UButton
             icon="i-lucide-plus"
             color="primary"
             variant="subtle"
+            class="w-full flex-1 justify-center"
             :loading="isCreating"
             :disabled="isCreating"
             @click="createSshKey"
@@ -257,6 +265,7 @@ async function confirmDelete() {
       v-model:open="showDeleteModal"
       :title="t('account.sshKeys.deleteSSHKey')"
       :description="t('account.sshKeys.confirmDeleteSSHKey')"
+      :ui="{ footer: 'gap-2' }"
     >
       <template #body>
         <UAlert
@@ -269,14 +278,21 @@ async function confirmDelete() {
       </template>
 
       <template #footer="{ close }">
-        <div class="flex justify-end gap-2">
-          <UButton variant="ghost" color="neutral" :disabled="isDeleting" @click="close">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
+          <UButton
+            variant="ghost"
+            color="neutral"
+            class="w-full flex-1 justify-center"
+            :disabled="isDeleting"
+            @click="close"
+          >
             {{ t('common.cancel') }}
           </UButton>
           <UButton
             variant="solid"
             color="error"
             icon="i-lucide-trash"
+            class="w-full flex-1 justify-center"
             :loading="isDeleting"
             :disabled="isDeleting"
             @click="confirmDelete"
