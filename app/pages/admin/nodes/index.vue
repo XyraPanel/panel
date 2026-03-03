@@ -283,12 +283,7 @@ watch(
           <section class="space-y-4 sm:space-y-6">
             <UCard :ui="{ body: 'space-y-3' }">
               <template #header>
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                    <p v-if="nodes.length > 0">
-                      {{ t('admin.nodes.showingNodes', { count: nodes.length }) }}
-                    </p>
-                  </div>
+                <div class="flex flex-wrap items-center gap-3">
                   <UButton
                     icon="i-lucide-plus"
                     color="primary"
@@ -528,25 +523,32 @@ watch(
               </li>
             </ul>
           </div>
+          <div class="rounded-md bg-muted/40 p-3 text-xs text-muted-foreground">
+            <p class="font-semibold text-foreground text-sm mb-1">
+              {{ t('admin.nodes.token') }}
+            </p>
+            <code class="break-all text-foreground">{{ tokenModal.token }}</code>
+          </div>
         </div>
       </template>
 
       <template #footer>
-        <div
-          class="flex flex-col gap-2 text-xs text-muted-foreground sm:flex-row sm:items-center sm:gap-4"
-        >
-          <span
-            >{{ t('admin.nodes.token') }}:
-            <code class="break-all">{{ tokenModal.token }}</code></span
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
+          <UButton
+            variant="ghost"
+            class="w-full flex-1 justify-center"
+            @click="tokenModal.visible = false"
           >
-        </div>
-        <div class="flex gap-2">
-          <UButton variant="ghost" @click="tokenModal.visible = false">{{
-            t('common.close')
-          }}</UButton>
-          <UButton color="primary" icon="i-lucide-clipboard" @click="copyInstallCommand">{{
-            t('admin.nodes.copyCommand')
-          }}</UButton>
+            {{ t('common.close') }}
+          </UButton>
+          <UButton
+            color="primary"
+            icon="i-lucide-clipboard"
+            class="w-full flex-1 justify-center"
+            @click="copyInstallCommand"
+          >
+            {{ t('admin.nodes.copyCommand') }}
+          </UButton>
         </div>
       </template>
     </UModal>
@@ -566,7 +568,12 @@ watch(
           <div v-if="systemModal.loading" class="space-y-2">
             <USkeleton class="h-4" repeat="4" />
           </div>
-          <UAlert v-else-if="systemModal.error" color="error" icon="i-lucide-alert-triangle">
+          <UAlert
+            v-else-if="systemModal.error"
+            color="error"
+            variant="subtle"
+            icon="i-lucide-alert-triangle"
+          >
             <template #title>{{ t('admin.nodes.unableToRetrieveSystemInfo') }}</template>
             <template #description>{{ systemModal.error }}</template>
           </UAlert>
@@ -598,7 +605,7 @@ watch(
       v-model:open="showDeleteModal"
       :title="t('admin.nodes.deleteNode')"
       :description="t('admin.nodes.confirmDeleteNodeDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
+      :ui="{ footer: 'gap-2' }"
     >
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
@@ -619,17 +626,26 @@ watch(
       </template>
 
       <template #footer>
-        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
-          {{ t('common.cancel') }}
-        </UButton>
-        <UButton
-          color="error"
-          icon="i-lucide-trash-2"
-          :loading="isDeleting"
-          @click="handleDeleteNode"
-        >
-          {{ t('admin.nodes.deleteNode') }}
-        </UButton>
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
+          <UButton
+            variant="ghost"
+            class="w-full flex-1 justify-center"
+            :disabled="isDeleting"
+            @click="resetDeleteModal"
+          >
+            {{ t('common.cancel') }}
+          </UButton>
+          <UButton
+            color="error"
+            variant="subtle"
+            icon="i-lucide-trash-2"
+            class="w-full flex-1 justify-center"
+            :loading="isDeleting"
+            @click="handleDeleteNode"
+          >
+            {{ t('admin.nodes.deleteNode') }}
+          </UButton>
+        </div>
       </template>
     </UModal>
   </div>

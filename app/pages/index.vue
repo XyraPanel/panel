@@ -140,11 +140,6 @@ const dashboardData = computed<DashboardData | null>(() => {
 
   const activeSessions = Math.max(0, sessionCountResponse.value.count ?? 0);
 
-  const description =
-    activeSessions === 0
-      ? t('dashboard.noActiveSessions')
-      : `${activeSessions} ${activeSessions === 1 ? t('dashboard.device') : t('dashboard.devices')} ${t('dashboard.signedIn')}`;
-
   const metrics = [...dashboardResponse.value.metrics].map(translateMetric);
   const replacementIndex = metrics.findIndex((metric) =>
     ['automationSchedules', 'automation_schedules', 'schedules-active'].includes(metric.key),
@@ -153,7 +148,7 @@ const dashboardData = computed<DashboardData | null>(() => {
     key: 'activeSessions',
     label: t('dashboard.activeSessions'),
     value: activeSessions,
-    delta: description,
+    delta: '',
     icon: 'i-lucide-users',
   };
 

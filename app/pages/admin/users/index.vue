@@ -72,18 +72,16 @@ const commandPaletteGroups = computed(() => [
     id: 'users',
     label: t('admin.users.title'),
     items: allUsers.value.map((user): CommandPaletteItem => {
-      const displayName = user.username || user.email;
-      const fullName = user.name || undefined;
+      const label = user.name || user.username || user.email;
+      const secondary = user.email && user.email !== label ? user.email : undefined;
       return {
         id: user.id,
-        label: displayName,
-        suffix: user.email !== displayName ? user.email : undefined,
-        prefix: fullName,
+        label,
+        suffix: secondary,
         chip:
           user.role === 'admin'
-            ? { color: 'primary' as const, text: t('admin.users.admin') }
+            ? { color: 'error' as const, text: t('admin.users.admin') }
             : undefined,
-        description: fullName ? `${t('admin.users.name')}: ${fullName}` : undefined,
         to: `/admin/users/${user.id}`,
         onSelect: (e) => {
           e.preventDefault();
@@ -281,30 +279,25 @@ async function handleDelete() {
         <section class="space-y-4 sm:space-y-6">
           <UCard :ui="{ body: 'space-y-3' }">
             <template #header>
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p class="text-xs text-muted-foreground" v-if="pagination">
-                  {{ t('admin.users.showingUsers', { count: users.length }) }}
-                </p>
-                <div class="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full sm:w-auto">
-                  <UButton
-                    icon="i-lucide-search"
-                    color="neutral"
-                    variant="subtle"
-                    class="w-full sm:w-auto justify-center"
-                    @click="openSearchModal"
-                  >
-                    {{ t('common.search') }}
-                  </UButton>
-                  <UButton
-                    icon="i-lucide-user-plus"
-                    color="primary"
-                    variant="subtle"
-                    class="w-full sm:w-auto justify-center"
-                    @click="openCreateModal"
-                  >
-                    {{ t('admin.users.createUser') }}
-                  </UButton>
-                </div>
+              <div class="flex flex-col gap-2 sm:flex-row sm:gap-2 w-full sm:w-auto">
+                <UButton
+                  icon="i-lucide-search"
+                  color="neutral"
+                  variant="subtle"
+                  class="w-full sm:w-auto justify-center"
+                  @click="openSearchModal"
+                >
+                  {{ t('common.search') }}
+                </UButton>
+                <UButton
+                  icon="i-lucide-user-plus"
+                  color="primary"
+                  variant="subtle"
+                  class="w-full sm:w-auto justify-center"
+                  @click="openCreateModal"
+                >
+                  {{ t('admin.users.createUser') }}
+                </UButton>
               </div>
             </template>
 
@@ -523,16 +516,23 @@ async function handleDelete() {
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
           <UButton
             variant="ghost"
             color="error"
+            class="w-full flex-1 justify-center"
             :disabled="isSubmitting"
             @click="showUserModal = false"
           >
             {{ t('common.cancel') }}
           </UButton>
-          <UButton color="primary" variant="subtle" :loading="isSubmitting" @click="handleSubmit">
+          <UButton
+            color="primary"
+            variant="subtle"
+            class="w-full flex-1 justify-center"
+            :loading="isSubmitting"
+            @click="handleSubmit"
+          >
             {{ editingUser ? t('common.update') : t('common.create') }}
           </UButton>
         </div>
@@ -568,7 +568,7 @@ async function handleDelete() {
       v-model:open="showDeleteModal"
       :title="t('admin.users.deleteUser')"
       :description="t('admin.users.confirmDeleteDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
+      :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:gap-3' }"
     >
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
@@ -585,10 +585,21 @@ async function handleDelete() {
       </template>
 
       <template #footer>
-        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+        <UButton
+          variant="ghost"
+          class="w-full flex-1 justify-center"
+          :disabled="isDeleting"
+          @click="resetDeleteModal"
+        >
           {{ t('common.cancel') }}
         </UButton>
-        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
+        <UButton
+          color="error"
+          icon="i-lucide-trash-2"
+          class="w-full flex-1 justify-center"
+          :loading="isDeleting"
+          @click="handleDelete"
+        >
           {{ t('admin.users.deleteUser') }}
         </UButton>
       </template>

@@ -1,20 +1,53 @@
 import { computed } from 'vue';
+import * as uiLocaleCatalog from '@nuxt/ui/locale';
+
+type UiLocaleOption = {
+  code: string;
+  name?: string;
+  language?: string;
+  dir?: 'ltr' | 'rtl';
+};
 
 export function useLocaleSwitcher() {
   const { locale, locales } = useI18n();
   const route = useRoute();
   const switchLocalePath = useSwitchLocalePath();
 
-  const uiLocales = computed(() => {
+  const catalogLocales = computed(() => Object.values(uiLocaleCatalog));
+
+  const isLocaleRecord = (value: unknown): value is Record<string, unknown> =>
+    Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+  const extractLocaleString = (source: unknown, key: keyof UiLocaleOption): string | undefined => {
+    if (!isLocaleRecord(source)) return undefined;
+    const value = source[key as string];
+    return typeof value === 'string' ? value : undefined;
+  };
+
+  const uiLocales = computed<UiLocaleOption[]>(() => {
     return locales.value.map((loc) => {
-      const dir = typeof loc === 'string' ? 'ltr' : loc.dir || 'ltr';
+      const isStringLocale = typeof loc === 'string';
+      const code = isStringLocale ? loc : loc.code;
+      const match = catalogLocales.value.find((uiLocale) => uiLocale.code === code);
+      if (match) {
+        const normalizedDir = extractLocaleString(match, 'dir') === 'rtl' ? 'rtl' : 'ltr';
+        return {
+          code: match.code,
+          name: extractLocaleString(match, 'name'),
+          language: extractLocaleString(match, 'language'),
+          dir: normalizedDir,
+        } satisfies UiLocaleOption;
+      }
+
+      const fallbackName = isStringLocale ? loc : loc.name || code;
+      const fallbackLanguage = !isStringLocale && 'language' in loc && loc.language ? loc.language : undefined;
+      const dir = isStringLocale ? 'ltr' : loc.dir || 'ltr';
       return {
-        code: typeof loc === 'string' ? loc : loc.code,
-        name: typeof loc === 'string' ? loc : loc.name || loc.code,
-        language: typeof loc === 'string' ? loc : loc.language || loc.code,
-        dir: (dir === 'auto' ? 'ltr' : dir),
-        messages: {},
-      };
+        code,
+        name: fallbackName,
+        language: fallbackLanguage,
+        dir: dir === 'auto' ? 'ltr' : dir,
+      } satisfies UiLocaleOption;
     });
   });
 

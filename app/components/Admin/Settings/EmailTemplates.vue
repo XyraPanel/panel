@@ -325,8 +325,10 @@ function cancelEdit() {
               />
             </div>
 
-            <div class="flex justify-end gap-2">
-              <UButton color="error" variant="ghost" @click="cancelEdit"> Back to Editor </UButton>
+            <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <UButton color="error" variant="ghost" class="w-full justify-center" @click="cancelEdit">
+                Back to Editor
+              </UButton>
             </div>
           </div>
 
@@ -376,15 +378,35 @@ function cancelEdit() {
               </p>
             </div>
 
-            <div class="flex justify-end gap-2">
-              <UButton color="error" variant="ghost" @click="cancelEdit"> Cancel </UButton>
-              <UButton :loading="isResetting" color="warning" variant="soft" @click="resetTemplate">
+            <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+              <UButton color="error" variant="ghost" class="w-full justify-center" @click="cancelEdit">
+                Cancel
+              </UButton>
+              <UButton
+                :loading="isResetting"
+                color="warning"
+                variant="soft"
+                class="w-full justify-center"
+                @click="resetTemplate"
+              >
                 Reset to Default
               </UButton>
-              <UButton :loading="isPreviewing" color="info" variant="soft" @click="previewTemplate">
+              <UButton
+                :loading="isPreviewing"
+                color="info"
+                variant="soft"
+                class="w-full justify-center"
+                @click="previewTemplate"
+              >
                 Preview
               </UButton>
-              <UButton :loading="isSaving" color="primary" variant="subtle" @click="saveTemplate">
+              <UButton
+                :loading="isSaving"
+                color="primary"
+                variant="subtle"
+                class="w-full justify-center"
+                @click="saveTemplate"
+              >
                 Save Changes
               </UButton>
             </div>

@@ -200,20 +200,7 @@ async function copyToClipboard(text: string) {
         <section class="space-y-4 sm:space-y-6">
           <UCard>
             <template #header>
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
-                  <p v-if="apiKeys.length > 0" class="text-xs text-muted-foreground">
-                    {{ t('admin.api.showingApiKeys', { count: apiKeys.length }) }}
-                  </p>
-                  <div v-if="apiKeys.length > 0" class="w-full sm:w-48">
-                    <USelect
-                      v-model="sortOrder"
-                      :items="sortOptions"
-                      value-key="value"
-                      class="w-full"
-                    />
-                  </div>
-                </div>
+              <div class="flex flex-wrap items-center gap-3">
                 <UButton
                   icon="i-lucide-plus"
                   color="primary"
@@ -223,6 +210,19 @@ async function copyToClipboard(text: string) {
                 >
                   {{ t('admin.api.createApiKey') }}
                 </UButton>
+                <div v-if="apiKeys.length > 0" class="flex items-center gap-3">
+                  <p class="text-xs text-muted-foreground">
+                    {{ t('admin.api.showingApiKeys', { count: apiKeys.length }) }}
+                  </p>
+                  <div class="w-40">
+                    <USelect
+                      v-model="sortOrder"
+                      :items="sortOptions"
+                      value-key="value"
+                      class="w-full"
+                    />
+                  </div>
+                </div>
               </div>
             </template>
 
@@ -399,17 +399,24 @@ async function copyToClipboard(text: string) {
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
           <UButton
-            color="error"
             variant="ghost"
+            color="error"
+            class="w-full flex-1 justify-center"
             :disabled="isSubmitting"
             @click="showCreateModal = false"
           >
             {{ t('common.cancel') }}
           </UButton>
-          <UButton color="primary" variant="subtle" :loading="isSubmitting" @click="handleCreate">
-            {{ t('admin.api.createKey') }}
+          <UButton
+            color="primary"
+            variant="subtle"
+            class="w-full flex-1 justify-center"
+            :loading="isSubmitting"
+            @click="handleCreate"
+          >
+            {{ t('admin.api.createApiKey') }}
           </UButton>
         </div>
       </template>
@@ -454,7 +461,7 @@ async function copyToClipboard(text: string) {
       v-model:open="showDeleteModal"
       :title="t('admin.api.deleteApiKey')"
       :description="t('admin.api.confirmDeleteDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
+      :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:gap-3' }"
     >
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
@@ -471,10 +478,21 @@ async function copyToClipboard(text: string) {
       </template>
 
       <template #footer>
-        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+        <UButton
+          variant="ghost"
+          class="w-full flex-1 justify-center"
+          :disabled="isDeleting"
+          @click="resetDeleteModal"
+        >
           {{ t('common.cancel') }}
         </UButton>
-        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
+        <UButton
+          color="error"
+          icon="i-lucide-trash"
+          class="w-full flex-1 justify-center"
+          :loading="isDeleting"
+          @click="handleDelete"
+        >
           {{ t('admin.api.deleteApiKey') }}
         </UButton>
       </template>

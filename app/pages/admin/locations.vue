@@ -130,12 +130,7 @@ async function handleDelete() {
         <section class="space-y-4 sm:space-y-6">
           <UCard>
             <template #header>
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                  <p v-if="locations.length > 0">
-                    {{ t('admin.locations.showingLocations', { count: locations.length }) }}
-                  </p>
-                </div>
+              <div class="flex flex-wrap items-center gap-3">
                 <UButton
                   icon="i-lucide-plus"
                   color="primary"
@@ -263,16 +258,23 @@ async function handleDelete() {
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
           <UButton
             variant="ghost"
             color="error"
+            class="w-full flex-1 justify-center"
             :disabled="isSubmitting"
             @click="showCreateModal = false"
           >
             {{ t('common.cancel') }}
           </UButton>
-          <UButton color="primary" variant="subtle" :loading="isSubmitting" @click="handleSubmit">
+          <UButton
+            color="primary"
+            variant="subtle"
+            class="w-full flex-1 justify-center"
+            :loading="isSubmitting"
+            @click="handleSubmit"
+          >
             {{ editingLocation ? t('common.update') : t('common.create') }}
           </UButton>
         </div>
@@ -283,7 +285,7 @@ async function handleDelete() {
       v-model:open="showDeleteModal"
       :title="t('admin.locations.deleteLocation')"
       :description="t('admin.locations.confirmDeleteDescription')"
-      :ui="{ footer: 'justify-end gap-2' }"
+      :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:gap-3' }"
     >
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
@@ -302,10 +304,21 @@ async function handleDelete() {
       </template>
 
       <template #footer>
-        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+        <UButton
+          variant="ghost"
+          class="w-full flex-1 justify-center"
+          :disabled="isDeleting"
+          @click="resetDeleteModal"
+        >
           {{ t('common.cancel') }}
         </UButton>
-        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
+        <UButton
+          color="error"
+          icon="i-lucide-trash-2"
+          class="w-full flex-1 justify-center"
+          :loading="isDeleting"
+          @click="handleDelete"
+        >
           {{ t('admin.locations.deleteLocation') }}
         </UButton>
       </template>

@@ -328,10 +328,10 @@ function handleFileChange(event: Event) {
       </template>
 
       <template #footer>
-        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
           <UButton
             variant="ghost"
-            class="w-full sm:w-auto justify-center"
+            class="w-full flex-1 justify-center"
             :disabled="isSubmitting"
             @click="showCreateEggModal = false"
           >
@@ -339,7 +339,8 @@ function handleFileChange(event: Event) {
           </UButton>
           <UButton
             color="primary"
-            class="w-full sm:w-auto justify-center"
+            variant="subtle"
+            class="w-full flex-1 justify-center"
             :loading="isSubmitting"
             @click="handleCreateEgg"
           >
@@ -378,10 +379,10 @@ function handleFileChange(event: Event) {
       </template>
 
       <template #footer>
-        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
           <UButton
             variant="ghost"
-            class="w-full sm:w-auto justify-center"
+            class="w-full flex-1 justify-center"
             :disabled="isSubmitting"
             @click="showImportEggModal = false"
           >
@@ -389,7 +390,7 @@ function handleFileChange(event: Event) {
           </UButton>
           <UButton
             color="primary"
-            class="w-full sm:w-auto justify-center"
+            class="w-full flex-1 justify-center"
             :loading="isSubmitting"
             :disabled="!importFile"
             @click="handleImportEgg"

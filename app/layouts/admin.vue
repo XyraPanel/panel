@@ -10,6 +10,8 @@ const { t } = useI18n();
 const localeSwitcher = useLocaleSwitcher();
 
 const authStore = useAuthStore();
+const route = useRoute();
+const router = useRouter();
 
 const ADMIN_NAV_ITEMS = computed<AdminNavItem[]>(() => [
   {
@@ -29,12 +31,14 @@ const ADMIN_NAV_ITEMS = computed<AdminNavItem[]>(() => [
         label: t('admin.users.title'),
         to: '/admin/users',
         permission: 'admin.users.read',
+        active: route.path.startsWith('/admin/users'),
       },
       {
         id: 'admin-servers',
         label: t('admin.servers.title'),
         to: '/admin/servers',
         permission: 'admin.servers.read',
+        active: route.path.startsWith('/admin/servers'),
       },
       {
         id: 'admin-api-keys',
@@ -55,6 +59,7 @@ const ADMIN_NAV_ITEMS = computed<AdminNavItem[]>(() => [
         label: t('admin.nodes.title'),
         to: '/admin/nodes',
         permission: 'admin.nodes.read',
+        active: route.path.startsWith('/admin/nodes'),
       },
       {
         id: 'admin-locations',
@@ -81,6 +86,8 @@ const ADMIN_NAV_ITEMS = computed<AdminNavItem[]>(() => [
         label: t('admin.navigation.servicePacks'),
         to: '/admin/nests',
         permission: ['admin.nests.read', 'admin.eggs.read'],
+        active:
+          route.path.startsWith('/admin/nests') || route.path.startsWith('/admin/eggs'),
       },
       {
         id: 'admin-mounts',
@@ -163,8 +170,6 @@ const CLIENT_NAV_ITEMS = computed(() => [
   },
 ]);
 
-const route = useRoute();
-const router = useRouter();
 const {
   user: storeUser,
   isSuperUser: storeIsSuperUser,

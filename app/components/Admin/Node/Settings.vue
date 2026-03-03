@@ -244,11 +244,12 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
       </div>
     </div>
 
-    <div class="flex justify-end">
+    <div class="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
       <UButton
         type="submit"
         color="primary"
         variant="subtle"
+        class="w-full flex-1 justify-center"
         :loading="isSubmitting"
         :disabled="isSubmitting"
       >

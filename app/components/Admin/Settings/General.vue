@@ -342,6 +342,7 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
         type="submit"
         color="primary"
         variant="subtle"
+        class="w-full justify-center"
         :loading="isSubmitting"
         :disabled="isSubmitting"
       >

@@ -159,32 +159,28 @@ const configYaml = computed(() => {
 
 <template>
   <div class="space-y-6">
-    <UAlert icon="i-lucide-info" variant="subtle">
+    <UAlert icon="i-lucide-info" color="neutral" variant="subtle">
       <template #title>Auto-Deploy Configuration</template>
       <template #description>
-        Generate a configuration file for Wings to automatically connect to this panel. This token
-        is valid for one-time use and will be invalidated after the node connects.
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p class="text-sm">
+            Generate a configuration file for Wings to automatically connect to this panel. This
+            token is valid for one-time use and will be invalidated after the node connects.
+          </p>
+          <UButton
+            icon="i-lucide-key"
+            color="primary"
+            variant="subtle"
+            class="w-full sm:w-auto justify-center"
+            :loading="isGenerating"
+            :disabled="configPending"
+            @click="generateToken"
+          >
+            Generate Token
+          </UButton>
+        </div>
       </template>
     </UAlert>
-
-    <div class="flex items-center justify-between rounded-lg border border-default p-4">
-      <div class="space-y-1">
-        <div class="text-sm font-medium">Generate Deployment Token</div>
-        <div class="text-xs text-muted-foreground">
-          Create a new auto-deploy configuration for Wings
-        </div>
-      </div>
-      <UButton
-        icon="i-lucide-key"
-        color="primary"
-        variant="subtle"
-        :loading="isGenerating"
-        :disabled="configPending"
-        @click="generateToken"
-      >
-        Generate Token
-      </UButton>
-    </div>
 
     <div v-if="configPending" class="space-y-4">
       <USkeleton class="h-16 w-full" />

@@ -395,7 +395,7 @@ const unassignedCount = computed(() => allocations.value.filter((a) => a.serverI
           :validate-on="['input']"
           @submit="createAllocations"
         >
-          <UAlert icon="i-lucide-info">
+          <UAlert icon="i-lucide-info" variant="subtle" color="info">
             <template #title>{{ t('admin.nodes.bulkCreation') }}</template>
             <template #description>
               <ul class="list-disc list-inside space-y-1 text-sm">

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, defineAsyncComponent, onMounted } from 'vue';
 import type { DashboardResponse } from '#shared/types/admin';
 
 definePageMeta({
@@ -9,6 +9,10 @@ definePageMeta({
 
 const { t } = useI18n();
 const requestFetch = useRequestFetch();
+
+const PanelInfoCard = defineAsyncComponent(
+  () => import('~/components/Admin/Settings/PanelInfoCard.vue'),
+);
 
 function getDefaultDashboard(): DashboardResponse {
   return {
@@ -112,6 +116,7 @@ onMounted(() => {
     <UPageBody>
       <UContainer class="pt-2 sm:pt-4">
         <section class="space-y-4 sm:space-y-6">
+          <PanelInfoCard />
           <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <template v-if="showCriticalSkeleton">
               <UCard v-for="i in 4" :key="`metric-skeleton-${i}`" :ui="{ body: 'space-y-3' }">

@@ -327,11 +327,11 @@ async function handleExportEgg() {
                   />
                 </UFormField>
 
-                <div class="flex justify-end">
+                <div class="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
                   <UButton
                     color="primary"
                     variant="subtle"
-                    class="w-full sm:w-auto justify-center"
+                    class="w-full flex-1 justify-center"
                     :loading="isSavingConfig"
                     :disabled="isSavingConfig"
                     @click="handleSaveConfig"
@@ -484,11 +484,11 @@ async function handleExportEgg() {
                   />
                 </UFormField>
 
-                <div class="flex justify-end">
+                <div class="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
                   <UButton
                     color="primary"
                     variant="subtle"
-                    class="w-full sm:w-auto justify-center"
+                    class="w-full flex-1 justify-center"
                     :loading="isSavingConfig"
                     :disabled="isSavingConfig"
                     @click="handleSaveConfig"
@@ -589,10 +589,10 @@ async function handleExportEgg() {
       </template>
 
       <template #footer>
-        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
           <UButton
             variant="ghost"
-            class="w-full sm:w-auto justify-center"
+            class="w-full flex-1 justify-center"
             :disabled="isSubmitting"
             @click="showVariableModal = false"
           >
@@ -600,7 +600,7 @@ async function handleExportEgg() {
           </UButton>
           <UButton
             color="primary"
-            class="w-full sm:w-auto justify-center"
+            class="w-full flex-1 justify-center"
             :loading="isSubmitting"
             @click="handleVariableSubmit"
           >
@@ -614,7 +614,7 @@ async function handleExportEgg() {
       v-model:open="showDeleteVariableModal"
       :title="t('admin.eggs.deleteVariable')"
       :description="t('admin.eggs.confirmDeleteVariableDescription')"
-      :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:justify-end' }"
+      :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:gap-3' }"
     >
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
@@ -635,7 +635,7 @@ async function handleExportEgg() {
       <template #footer>
         <UButton
           variant="ghost"
-          class="w-full sm:w-auto justify-center"
+          class="w-full flex-1 justify-center"
           :disabled="isDeletingVariable"
           @click="resetDeleteVariableModal"
         >
@@ -645,7 +645,7 @@ async function handleExportEgg() {
           color="error"
           variant="subtle"
           icon="i-lucide-trash-2"
-          class="w-full sm:w-auto justify-center"
+          class="w-full flex-1 justify-center"
           :loading="isDeletingVariable"
           @click="handleDeleteVariable"
         >

@@ -804,43 +804,30 @@ const stepTitles = [
                   class="w-full sm:w-auto justify-center"
                   @click="prevStep"
                 >
-                  <UIcon name="i-lucide-chevron-left" class="mr-1 size-4" />
-                  Previous
+                  {{ t('common.back') }}
                 </UButton>
               </div>
 
-              <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:justify-end">
-                <UButton
-                  variant="ghost"
-                  color="error"
-                  class="w-full sm:w-auto justify-center"
-                  @click="router.push('/admin/servers')"
-                >
-                  Cancel
-                </UButton>
-
+              <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
                 <UButton
                   v-if="currentStep < totalSteps"
                   color="primary"
                   variant="subtle"
-                  class="w-full sm:w-auto justify-center"
-                  :disabled="!canProceed(currentStep)"
+                  class="w-full flex-1 justify-center"
+                  :disabled="!canProceed(currentStep) || isSubmitting"
                   @click="nextStep"
                 >
-                  Next
-                  <UIcon name="i-lucide-chevron-right" class="ml-1 size-4" />
+                  {{ t('common.next') }}
                 </UButton>
-
                 <UButton
                   v-else
                   color="primary"
-                  variant="subtle"
-                  class="w-full sm:w-auto justify-center"
+                  class="w-full flex-1 justify-center"
                   :loading="isSubmitting"
+                  :disabled="isSubmitting"
                   @click="createServer"
                 >
-                  <UIcon name="i-lucide-rocket" class="mr-1 size-4" />
-                  Create Server
+                  {{ t('admin.servers.create.createServer') }}
                 </UButton>
               </div>
             </div>

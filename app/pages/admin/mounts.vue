@@ -147,12 +147,7 @@ async function handleDelete() {
         <section class="space-y-4 sm:space-y-6">
           <UCard>
             <template #header>
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                  <p v-if="mounts.length > 0">
-                    {{ t('admin.mounts.showingMounts', { count: mounts.length }) }}
-                  </p>
-                </div>
+              <div class="flex flex-wrap items-center gap-3">
                 <UButton
                   icon="i-lucide-plus"
                   color="primary"
@@ -162,6 +157,9 @@ async function handleDelete() {
                 >
                   {{ t('admin.mounts.createMount') }}
                 </UButton>
+                <p v-if="mounts.length > 0" class="text-xs text-muted-foreground">
+                  {{ t('admin.mounts.showingMounts', { count: mounts.length }) }}
+                </p>
               </div>
             </template>
 
@@ -328,41 +326,51 @@ async function handleDelete() {
             </UFormField>
           </div>
 
-          <UFormField :label="t('admin.mounts.nodes')" name="nodes">
-            <USelect
-              v-model="form.nodes"
-              :items="nodeOptions"
-              multiple
-              value-key="value"
-              :placeholder="t('admin.mounts.selectNodes')"
-              :disabled="isSubmitting"
-            />
-          </UFormField>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <UFormField :label="t('admin.mounts.nodes')" name="nodes">
+              <USelect
+                v-model="form.nodes"
+                :items="nodeOptions"
+                multiple
+                value-key="value"
+                :placeholder="t('admin.mounts.selectNodes')"
+                :disabled="isSubmitting"
+              />
+            </UFormField>
 
-          <UFormField :label="t('admin.mounts.eggs')" name="eggs">
-            <USelect
-              v-model="form.eggs"
-              :items="eggOptions"
-              multiple
-              value-key="value"
-              :placeholder="t('admin.mounts.selectEggs')"
-              :disabled="isSubmitting"
-            />
-          </UFormField>
+            <UFormField :label="t('admin.mounts.eggs')" name="eggs">
+              <USelect
+                v-model="form.eggs"
+                :items="eggOptions"
+                multiple
+                value-key="value"
+                :placeholder="t('admin.mounts.selectEggs')"
+                :disabled="isSubmitting"
+              />
+            </UFormField>
+          </div>
         </form>
       </template>
 
       <template #footer>
-        <div class="flex justify-end gap-2">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
           <UButton
             variant="ghost"
-            color="error"
+            class="w-full flex-1 justify-center"
             :disabled="isSubmitting"
             @click="showCreateModal = false"
           >
             {{ t('common.cancel') }}
           </UButton>
-          <UButton color="primary" variant="subtle" :loading="isSubmitting" @click="handleSubmit">
+          <UButton
+            type="submit"
+            form="create-mount-form"
+            color="primary"
+            variant="subtle"
+            class="w-full flex-1 justify-center"
+            :loading="isSubmitting"
+            :disabled="isSubmitting"
+          >
             {{ t('admin.mounts.createMount') }}
           </UButton>
         </div>
@@ -389,13 +397,12 @@ async function handleDelete() {
           </p>
         </div>
       </template>
-
       <template #footer>
-        <UButton variant="ghost" :disabled="isDeleting" @click="resetDeleteModal">
+        <UButton variant="ghost" @click="resetDeleteModal">
           {{ t('common.cancel') }}
         </UButton>
-        <UButton color="error" icon="i-lucide-trash-2" :loading="isDeleting" @click="handleDelete">
-          {{ t('admin.mounts.deleteMount') }}
+        <UButton color="error" :loading="isDeleting" @click="handleDelete">
+          {{ t('common.delete') }}
         </UButton>
       </template>
     </UModal>

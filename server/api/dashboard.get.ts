@@ -79,14 +79,14 @@ async function fetchMetrics(): Promise<ClientDashboardMetric[]> {
       label: 'Active servers',
       value: totalServers,
       icon: 'i-lucide-server',
-      delta: totalServers > 0 ? `${totalServers} registered` : 'No servers deployed',
+      delta: '',
     },
     {
       key: 'schedules-active',
       label: 'Automation schedules',
       value: scheduleCount,
       icon: 'i-lucide-calendar-clock',
-      delta: scheduleCount > 0 ? `${scheduleCount} tracking` : 'None configured',
+      delta: '',
     },
   ];
 }

@@ -358,6 +358,7 @@ async function disableTotp() {
                 color="primary"
                 variant="subtle"
                 icon="i-lucide-save"
+                class="w-full justify-center"
                 :loading="isSavingPassword"
                 :disabled="isSavingPassword || !passwordIsValid"
               >
@@ -447,6 +448,7 @@ async function disableTotp() {
                 color="primary"
                 variant="subtle"
                 icon="i-lucide-shield"
+                class="w-full justify-center"
                 :loading="enableSubmitting"
                 :disabled="!enableForm.password || enableSubmitting"
               >
@@ -498,6 +500,7 @@ async function disableTotp() {
                   color="primary"
                   variant="subtle"
                   icon="i-lucide-check-circle"
+                  class="w-full justify-center"
                   :loading="verifyingToken"
                   :disabled="verifyingToken || verificationCode.length < 6"
                   @click="verifyTotp"
@@ -566,6 +569,7 @@ async function disableTotp() {
                 color="error"
                 variant="subtle"
                 icon="i-lucide-shield-off"
+                class="w-full justify-center"
                 :loading="disableSubmitting"
                 :disabled="!disableForm.password"
               >

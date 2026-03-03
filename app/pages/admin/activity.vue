@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
 import type { AdminActivityEntry, AuditEventsPayload } from '#shared/types/admin';
 
 definePageMeta({
@@ -9,17 +8,43 @@ definePageMeta({
 });
 
 const currentPage = ref(1);
+const searchTerm = ref('');
+const filterState = reactive<{ actor?: string; action?: string; targetType?: string }>({});
 
 const itemsPerPage = usePaginationSettings();
+
+function extractTargetType(target: string | undefined | null) {
+  if (!target) return undefined;
+  const [type] = target.split('#');
+  return type || undefined;
+}
+
+const parsedFilters = computed(() => {
+  const search = searchTerm.value.trim();
+
+  return {
+    search: search.length > 0 ? search : undefined,
+    actor: filterState.actor?.trim() || undefined,
+    action: filterState.action?.trim() || undefined,
+    targetType: filterState.targetType?.trim() || undefined,
+  } as const;
+});
 
 const {
   data,
   pending,
   error: fetchError,
 } = await useLazyFetch<AuditEventsPayload>('/api/admin/audit', {
-  query: computed(() => ({ limit: itemsPerPage.value, page: currentPage.value })),
+  query: computed(() => ({
+    limit: itemsPerPage.value,
+    page: currentPage.value,
+    search: parsedFilters.value.search,
+    actor: parsedFilters.value.actor,
+    action: parsedFilters.value.action,
+    targetType: parsedFilters.value.targetType,
+  })),
   key: 'admin-activity',
-  watch: [currentPage, itemsPerPage],
+  watch: [currentPage, itemsPerPage, parsedFilters],
   pick: ['data', 'pagination'] satisfies (keyof AuditEventsPayload)[],
   server: false,
 });
@@ -41,6 +66,13 @@ const expandedEntries = ref<Set<string>>(new Set());
 const sortOrder = ref<'newest' | 'oldest'>('newest');
 const toast = useToast();
 
+watch(
+  () => [searchTerm.value, filterState.actor, filterState.action, filterState.targetType],
+  () => {
+    currentPage.value = 1;
+  },
+);
+
 const sortOptions = [
   { label: t('common.newest'), value: 'newest' },
   { label: t('common.oldest'), value: 'oldest' },
@@ -55,6 +87,42 @@ const sortedActivities = computed(() => {
   }
   return sorted;
 });
+
+function buildOptionList(values: Set<string>) {
+  return Array.from(values)
+    .sort((a, b) => a.localeCompare(b))
+    .map((value) => ({ label: value, value }));
+}
+
+const actorOptions = computed(() => {
+  const values = new Set<string>();
+  activities.value.forEach((entry) => {
+    if (entry.actorDisplay) values.add(entry.actorDisplay);
+    else if (entry.actor) values.add(entry.actor);
+  });
+  return buildOptionList(values);
+});
+
+const actionOptions = computed(() => {
+  const values = new Set<string>();
+  activities.value.forEach((entry) => {
+    if (entry.action) values.add(entry.action);
+  });
+  return buildOptionList(values);
+});
+
+const targetOptions = computed(() => {
+  const values = new Set<string>();
+  activities.value.forEach((entry) => {
+    const targetType = extractTargetType(entry.target);
+    if (targetType) values.add(targetType);
+  });
+  return buildOptionList(values);
+});
+
+const hasFilters = computed(
+  () => Boolean(searchTerm.value.trim() || filterState.actor || filterState.action || filterState.targetType),
+);
 
 function toggleEntry(id: string) {
   if (expandedEntries.value.has(id)) {
@@ -170,6 +238,13 @@ function exportCsv() {
     });
   }
 }
+
+function clearFilters() {
+  searchTerm.value = '';
+  filterState.actor = undefined;
+  filterState.action = undefined;
+  filterState.targetType = undefined;
+}
 </script>
 
 <template>
@@ -179,30 +254,73 @@ function exportCsv() {
         <section class="space-y-4 sm:space-y-6">
           <UCard :ui="{ body: 'space-y-3' }">
             <template #header>
-              <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex flex-wrap items-center gap-2">
-                  <UBadge :color="pending ? 'neutral' : 'primary'" variant="subtle" size="xs">
-                    {{ t('admin.activity.auditLog') }}
-                  </UBadge>
-                </div>
-                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
-                  <USelect
-                    v-model="sortOrder"
-                    :items="sortOptions"
-                    value-key="value"
-                    class="w-full sm:w-40"
-                  />
-                  <UButton
-                    icon="i-lucide-download"
-                    color="neutral"
-                    variant="outline"
-                    :disabled="pending || activities.length === 0"
-                    class="w-full sm:w-auto justify-center"
-                    @click="exportCsv"
-                  >
-                    {{ t('admin.activity.exportCsv') }}
-                  </UButton>
-                </div>
+              <div class="flex flex-wrap items-stretch gap-2">
+                <UInput
+                  v-model="searchTerm"
+                  icon="i-lucide-search"
+                  :placeholder="t('admin.activity.searchPlaceholder')"
+                  class="flex-1 min-w-[200px]"
+                />
+                <USelectMenu
+                  v-model="filterState.actor"
+                  :items="actorOptions"
+                  value-key="value"
+                  label-key="label"
+                  size="sm"
+                  clear
+                  icon="i-lucide-user"
+                  class="min-w-[180px] flex-1 sm:flex-none"
+                  :placeholder="t('admin.activity.actorFilterPlaceholder')"
+                />
+                <USelectMenu
+                  v-model="filterState.action"
+                  :items="actionOptions"
+                  value-key="value"
+                  label-key="label"
+                  size="sm"
+                  clear
+                  icon="i-lucide-bolt"
+                  class="min-w-[180px] flex-1 sm:flex-none"
+                  :placeholder="t('admin.activity.actionFilterPlaceholder')"
+                />
+                <USelectMenu
+                  v-model="filterState.targetType"
+                  :items="targetOptions"
+                  value-key="value"
+                  label-key="label"
+                  size="sm"
+                  clear
+                  icon="i-lucide-crosshair"
+                  class="min-w-[180px] flex-1 sm:flex-none"
+                  :placeholder="t('admin.activity.targetFilterPlaceholder')"
+                />
+                <UButton
+                  variant="ghost"
+                  size="sm"
+                  color="neutral"
+                  :disabled="!hasFilters"
+                  class="shrink-0"
+                  @click="clearFilters"
+                >
+                  {{ t('admin.activity.clearFilters') }}
+                </UButton>
+                <USelect
+                  v-model="sortOrder"
+                  :items="sortOptions"
+                  value-key="value"
+                  size="sm"
+                  class="w-full sm:w-32"
+                />
+                <UButton
+                  icon="i-lucide-download"
+                  color="neutral"
+                  variant="outline"
+                  :disabled="pending || activities.length === 0"
+                  class="w-full sm:w-auto justify-center"
+                  @click="exportCsv"
+                >
+                  {{ t('admin.activity.exportCsv') }}
+                </UButton>
               </div>
             </template>
 

@@ -120,7 +120,7 @@ const systemMetrics = computed(() => {
       </UCard>
     </div>
 
-    <UAlert v-else-if="error" color="error" icon="i-lucide-alert-triangle">
+    <UAlert v-else-if="error" color="error" variant="subtle" icon="i-lucide-alert-triangle">
       <template #title>Unable to fetch system information</template>
       <template #description>
         {{ (error as Error).message }}

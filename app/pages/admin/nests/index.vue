@@ -115,7 +115,7 @@ function viewNest(nest: NestWithEggCount) {
         <section class="space-y-6">
           <UCard>
             <template #header>
-              <div class="flex justify-end">
+              <div class="flex flex-wrap items-center gap-3">
                 <UButton
                   icon="i-lucide-plus"
                   color="primary"
@@ -125,6 +125,9 @@ function viewNest(nest: NestWithEggCount) {
                 >
                   {{ t('admin.nests.createNest') }}
                 </UButton>
+                <p v-if="nests.length" class="text-xs text-muted-foreground">
+                  {{ t('admin.nests.showingNests', { count: nests.length }) }}
+                </p>
               </div>
             </template>
 
@@ -246,11 +249,11 @@ function viewNest(nest: NestWithEggCount) {
       </template>
 
       <template #footer>
-        <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
           <UButton
             variant="ghost"
             color="error"
-            class="w-full sm:w-auto justify-center"
+            class="w-full flex-1 justify-center"
             :disabled="isSubmitting"
             @click="showCreateModal = false"
           >
@@ -259,7 +262,7 @@ function viewNest(nest: NestWithEggCount) {
           <UButton
             color="primary"
             variant="subtle"
-            class="w-full sm:w-auto justify-center"
+            class="w-full flex-1 justify-center"
             :loading="isSubmitting"
             @click="handleSubmit"
           >
@@ -273,7 +276,7 @@ function viewNest(nest: NestWithEggCount) {
       v-model:open="showDeleteModal"
       :title="t('admin.nests.deleteNest')"
       :description="t('admin.nests.confirmDeleteDescription')"
-      :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:justify-end' }"
+      :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:gap-3' }"
     >
       <template #body>
         <UAlert color="error" variant="soft" icon="i-lucide-alert-triangle" class="mb-4">
@@ -293,7 +296,7 @@ function viewNest(nest: NestWithEggCount) {
       <template #footer>
         <UButton
           variant="ghost"
-          class="w-full sm:w-auto justify-center"
+          class="w-full flex-1 justify-center"
           :disabled="isDeleting"
           @click="resetDeleteModal"
         >
@@ -302,7 +305,7 @@ function viewNest(nest: NestWithEggCount) {
         <UButton
           color="error"
           icon="i-lucide-trash-2"
-          class="w-full sm:w-auto justify-center"
+          class="w-full flex-1 justify-center"
           :loading="isDeleting"
           @click="handleDelete"
         >

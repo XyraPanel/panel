@@ -225,6 +225,7 @@ async function handleTestEmail() {
         icon="i-lucide-mail"
         color="primary"
         variant="soft"
+        class="w-full justify-center"
         :loading="isTesting"
         :disabled="isTesting || isSubmitting"
         @click="handleTestEmail"
@@ -356,6 +357,7 @@ async function handleTestEmail() {
           type="submit"
           color="primary"
           variant="subtle"
+          class="w-full justify-center"
           :loading="isSubmitting"
           :disabled="isSubmitting || isTesting"
         >

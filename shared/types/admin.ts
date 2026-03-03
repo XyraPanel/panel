@@ -748,6 +748,7 @@ export interface AdminNavItem {
   order?: number;
   permission?: string | string[];
   icon?: string;
+  active?: boolean;
   children?: AdminNavItem[];
 }
 

@@ -739,7 +739,13 @@ async function handleCreateAllocations() {
                 <h2 class="text-lg font-semibold">{{ t('admin.nodes.systemSnapshot') }}</h2>
               </template>
               <div class="space-y-3">
-                <UAlert v-if="systemError" color="warning" icon="i-lucide-alert-triangle" size="sm">
+                <UAlert
+                  v-if="systemError"
+                  color="error"
+                  variant="subtle"
+                  icon="i-lucide-alert-triangle"
+                  size="sm"
+                >
                   <template #title>{{ t('admin.nodes.unableToContactWingsNode') }}</template>
                   <template #description>{{ systemError }}</template>
                 </UAlert>
@@ -1092,10 +1098,11 @@ async function handleCreateAllocations() {
       v-model:open="showCreateAllocationModal"
       :title="t('admin.nodes.createAllocations')"
       :description="t('admin.nodes.createAllocationsDescription')"
+      :ui="{ footer: 'gap-2' }"
     >
       <template #body>
         <div class="space-y-4">
-          <UAlert icon="i-lucide-info">
+          <UAlert icon="i-lucide-info" variant="subtle" color="neutral">
             <template #title>{{ t('admin.nodes.bulkCreation') }}</template>
             <template #description>
               <ul class="list-disc list-inside space-y-1 text-sm">
@@ -1112,6 +1119,7 @@ async function handleCreateAllocations() {
               v-model="createAllocationForm.ip"
               :placeholder="t('admin.nodes.ipAddressOrCidrPlaceholder')"
               :disabled="isCreatingAllocations"
+              class="w-full"
             />
             <template #help>
               {{ t('admin.nodes.ipAddressOrCidrHelp') }}
@@ -1126,6 +1134,7 @@ async function handleCreateAllocations() {
               icon="i-lucide-network"
               :add-on-paste="true"
               :add-on-blur="true"
+              class="w-full"
             />
             <template #help>
               {{ t('admin.nodes.portsHelp') }}
@@ -1137,6 +1146,7 @@ async function handleCreateAllocations() {
               v-model="createAllocationForm.ipAlias"
               :placeholder="t('admin.nodes.ipAliasPlaceholder')"
               :disabled="isCreatingAllocations"
+              class="w-full"
             />
             <template #help>
               {{ t('admin.nodes.ipAliasHelp') }}
@@ -1145,9 +1155,10 @@ async function handleCreateAllocations() {
         </div>
       </template>
       <template #footer>
-        <div class="flex justify-end gap-2">
+        <div class="flex w-full flex-col gap-2 sm:flex-row sm:gap-3">
           <UButton
             variant="ghost"
+            class="w-full flex-1 justify-center"
             :disabled="isCreatingAllocations"
             @click="showCreateAllocationModal = false"
           >
@@ -1155,6 +1166,8 @@ async function handleCreateAllocations() {
           </UButton>
           <UButton
             color="primary"
+            variant="subtle"
+            class="w-full flex-1 justify-center"
             :loading="isCreatingAllocations"
             :disabled="
               isCreatingAllocations || !createAllocationForm.ip || !createAllocationForm.ports

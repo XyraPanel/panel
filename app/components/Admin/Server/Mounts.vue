@@ -106,11 +106,13 @@ async function handleDetach(mountId: string, mountName: string) {
 
 <template>
   <div class="space-y-6">
-    <div class="flex items-center justify-between">
-      <p class="text-sm text-muted-foreground">Manage shared directory mounts for this server</p>
+    <div class="flex flex-wrap items-center gap-3">
       <UButton icon="i-lucide-plus" color="primary" @click="showAttachModal = true">
         Attach Mount
       </UButton>
+      <p class="text-sm text-muted-foreground">
+        Manage shared directory mounts for this server
+      </p>
     </div>
 
     <div v-if="mountsPending" class="space-y-3">

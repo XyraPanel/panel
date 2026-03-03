@@ -175,15 +175,6 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
 <template>
   <div>
     <UCard :ui="{ body: 'space-y-4' }">
-      <template #header>
-        <div class="space-y-1">
-          <h2 class="text-lg font-semibold">{{ t('account.profile.profileDetails') }}</h2>
-          <p class="text-sm text-muted-foreground">
-            {{ t('account.profile.keepAccountUpdated') }}
-          </p>
-        </div>
-      </template>
-
       <div v-if="showSkeleton" class="space-y-3">
         <USkeleton class="h-10 w-full" />
         <USkeleton class="h-10 w-full" />

@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { desc, eq, or, sql } from 'drizzle-orm';
+import { and, desc, eq, like, or, sql } from 'drizzle-orm';
+import type { SQL } from 'drizzle-orm';
 import { useDrizzle, tables } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAccountUser } from '#server/utils/security';
@@ -7,10 +8,13 @@ import { requireAccountUser } from '#server/utils/security';
 export default defineEventHandler(async (event) => {
   const { user } = await requireAccountUser(event);
 
-  const { page, limit } = await getValidatedQuery(event, (data) => {
+  const { page, limit, search, action, targetType } = await getValidatedQuery(event, (data) => {
     const result = z.object({
       page: z.coerce.number().min(1).catch(1).default(1),
       limit: z.coerce.number().min(1).max(100).catch(10).default(10),
+      search: z.string().optional(),
+      action: z.string().optional(),
+      targetType: z.string().optional(),
     }).safeParse(data);
     return result.success ? result.data : { page: 1, limit: 10 };
   });
@@ -28,14 +32,38 @@ export default defineEventHandler(async (event) => {
     actorIdentifiers.add(userEmail.trim().toLowerCase());
   }
 
-  const conditions = Array.from(actorIdentifiers).map((identifier) =>
+  const actorConditions = Array.from(actorIdentifiers).map((identifier) =>
     eq(tables.auditEvents.actor, identifier),
   );
+ 
+  const initialFilter = or(...actorConditions);
+  const filters: SQL[] = initialFilter ? [initialFilter] : [];
+
+  if (search && search.trim()) {
+    const searchFilter = or(
+      like(tables.auditEvents.action, `%${search}%`),
+      like(tables.auditEvents.targetId, `%${search}%`),
+      like(tables.auditEvents.targetType, `%${search}%`),
+    );
+    if (searchFilter) {
+      filters.push(searchFilter);
+    }
+  }
+
+  if (action) {
+    filters.push(eq(tables.auditEvents.action, action));
+  }
+
+  if (targetType) {
+    filters.push(eq(tables.auditEvents.targetType, targetType));
+  }
+
+  const whereClause = filters.length > 1 ? and(...filters) : filters[0];
 
   const totalResult = await db
     .select({ count: sql<number>`count(*)` })
     .from(tables.auditEvents)
-    .where(or(...conditions));
+    .where(whereClause);
 
   const total = Number(totalResult[0]?.count ?? 0);
 
@@ -50,7 +78,7 @@ export default defineEventHandler(async (event) => {
       metadata: tables.auditEvents.metadata,
     })
     .from(tables.auditEvents)
-    .where(or(...conditions))
+    .where(whereClause)
     .orderBy(desc(tables.auditEvents.occurredAt))
     .limit(limit)
     .offset(offset);
@@ -70,7 +98,7 @@ export default defineEventHandler(async (event) => {
     action: 'account.activity.viewed',
     targetType: 'user',
     targetId: user.id,
-    metadata: { page, limit, total },
+    metadata: { page, limit, total, search: search ?? null, action: action ?? null, targetType: targetType ?? null },
   });
 
   return {

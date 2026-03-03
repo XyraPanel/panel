@@ -65,14 +65,60 @@ const sortOptions = [
   { label: t('common.oldest'), value: 'oldest' },
 ];
 
+const revokedTokens = ref<Set<string>>(new Set());
+const revokedHistory = ref<UserSessionSummary[]>([]);
+
+function markSessionRevoked(token: string) {
+  revokedTokens.value = new Set(revokedTokens.value).add(token);
+  const snapshot =
+    sessions.value.find((session) => session.token === token) ||
+    revokedHistory.value.find((session) => session.token === token);
+
+  if (snapshot && !revokedHistory.value.some((session) => session.token === token)) {
+    revokedHistory.value.push({ ...snapshot });
+  }
+}
+
+function markSessionsRevoked(tokens: string[]) {
+  tokens.forEach((token) => markSessionRevoked(token));
+}
+
+function isSessionExpiredAt(session: UserSessionSummary, timestamp: number) {
+  return session.expiresAtTimestamp <= timestamp;
+}
+
+function isSessionExplicitlyRevoked(session: UserSessionSummary) {
+  return revokedTokens.value.has(session.token);
+}
+
+function isSessionInactive(session: UserSessionSummary) {
+  return isSessionExplicitlyRevoked(session) || isSessionExpiredAt(session, Date.now());
+}
+
 const sortedSessions = computed(() => {
   const sorted = [...sessions.value];
-  if (sortOrder.value === 'newest') {
-    sorted.sort((a, b) => new Date(b.issuedAt).getTime() - new Date(a.issuedAt).getTime());
-  } else {
-    sorted.sort((a, b) => new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime());
-  }
+  const nowTs = Date.now();
+
+  sorted.sort((a, b) => {
+    const aInactive = isSessionExplicitlyRevoked(a) || isSessionExpiredAt(a, nowTs);
+    const bInactive = isSessionExplicitlyRevoked(b) || isSessionExpiredAt(b, nowTs);
+
+    if (aInactive !== bInactive) {
+      return aInactive ? 1 : -1;
+    }
+
+    const orderMultiplier = sortOrder.value === 'newest' ? -1 : 1;
+    const issuedDiff = new Date(a.issuedAt).getTime() - new Date(b.issuedAt).getTime();
+    return issuedDiff * orderMultiplier;
+  });
+
   return sorted;
+});
+
+const displayedSessions = computed(() => {
+  const activeTokens = new Set(sortedSessions.value.map((session) => session.token));
+  const historical = revokedHistory.value.filter((session) => !activeTokens.has(session.token));
+  return [...sortedSessions.value, ...historical];
 });
 
 const expandedSessions = ref<Set<string>>(new Set());
@@ -195,6 +241,7 @@ async function handleSignOut(token: string) {
       return;
     }
 
+    markSessionRevoked(token);
     await refreshNuxtData('account-sessions');
     toast.add({
       title: t('account.sessions.sessionRevokedTitle'),
@@ -247,6 +294,11 @@ async function handleSignOutAll(includeCurrent = false) {
       },
     );
 
+    const tokensToMark = sessions.value
+      .filter((session) => session.token !== currentSessionToken.value)
+      .map((session) => session.token);
+    markSessionsRevoked(tokensToMark);
+
     await refreshNuxtData('account-sessions');
     toast.add({
       title: t('account.sessions.sessionsRevokedTitle'),
@@ -287,17 +339,16 @@ async function handleSignOutAll(includeCurrent = false) {
 
     <div>
       <UCard :ui="{ body: 'space-y-4' }">
-        <div
-          v-if="hasSessions && !sessionsPending"
-          class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-        >
-          <USelect
-            v-model="sortOrder"
-            :items="sortOptions"
-            value-key="value"
-            class="w-full sm:w-48"
-            :aria-label="t('common.filter')"
-          />
+        <div v-if="hasSessions && !sessionsPending" class="flex w-full justify-end">
+          <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap justify-end">
+            <USelect
+              v-model="sortOrder"
+              :items="sortOptions"
+              value-key="value"
+              class="w-full sm:w-48"
+              :aria-label="t('common.filter')"
+            />
+          </div>
         </div>
 
         <div v-if="sessionsPending" class="space-y-3">
@@ -318,9 +369,12 @@ async function handleSignOutAll(includeCurrent = false) {
         />
         <div v-else class="space-y-3">
           <div
-            v-for="session in sortedSessions"
+            v-for="session in displayedSessions"
             :key="session.token"
-            class="rounded-lg border border-default overflow-hidden"
+            :class="[
+              'rounded-lg border border-default overflow-hidden',
+              isSessionInactive(session) ? 'opacity-60 bg-muted/20' : ''
+            ]"
           >
             <div
               class="w-full flex flex-col gap-3 p-3 hover:bg-elevated/50 transition-colors sm:flex-row sm:items-center"
@@ -373,6 +427,15 @@ async function handleSignOutAll(includeCurrent = false) {
                     >
                       {{ t('account.sessions.current') }}
                     </UBadge>
+                    <UBadge
+                      v-else-if="isSessionInactive(session)"
+                      variant="soft"
+                      color="neutral"
+                      size="xs"
+                      class="shrink-0"
+                    >
+                      {{ t('account.sessions.revoked') }}
+                    </UBadge>
                   </div>
 
                   <div
@@ -416,15 +479,22 @@ async function handleSignOutAll(includeCurrent = false) {
               </UButton>
 
               <div class="flex items-center gap-2 shrink-0 justify-end sm:justify-start">
-                <UButton
-                  variant="ghost"
-                  color="error"
-                  size="xs"
-                  :loading="updatingSessions"
-                  @click="handleSignOut(session.token)"
-                >
-                  {{ t('account.sessions.revoke') }}
-                </UButton>
+                <template v-if="!isSessionInactive(session)">
+                  <UButton
+                    variant="ghost"
+                    color="error"
+                    size="xs"
+                    :loading="updatingSessions"
+                    @click="handleSignOut(session.token)"
+                  >
+                    {{ t('account.sessions.revoke') }}
+                  </UButton>
+                </template>
+                <template v-else>
+                  <UBadge variant="subtle" color="neutral" size="xs">
+                    {{ t('account.sessions.revoked') }}
+                  </UBadge>
+                </template>
               </div>
             </div>
 

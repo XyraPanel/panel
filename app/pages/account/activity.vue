@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
 import type { AccountActivityItem, PaginatedAccountActivityResponse } from '#shared/types/account';
 
 definePageMeta({
@@ -12,6 +11,8 @@ const { t } = useI18n();
 
 const currentPage = ref(1);
 const itemsPerPage = usePaginationSettings();
+const searchTerm = ref('');
+const filterState = reactive<{ action?: string; targetType?: string }>({});
 
 const defaultActivityResponse = (): PaginatedAccountActivityResponse => ({
   data: [],
@@ -24,6 +25,15 @@ const defaultActivityResponse = (): PaginatedAccountActivityResponse => ({
   generatedAt: new Date().toISOString(),
 });
 
+const parsedFilters = computed(() => {
+  const search = searchTerm.value.trim();
+  return {
+    search: search.length > 0 ? search : undefined,
+    action: filterState.action?.trim() || undefined,
+    targetType: filterState.targetType?.trim() || undefined,
+  } as const;
+});
+
 const {
   data: activityResponse,
   error,
@@ -33,9 +43,12 @@ const {
   query: computed(() => ({
     page: currentPage.value,
     limit: itemsPerPage.value,
+    search: parsedFilters.value.search,
+    action: parsedFilters.value.action,
+    targetType: parsedFilters.value.targetType,
   })),
   default: defaultActivityResponse,
-  watch: [currentPage, itemsPerPage],
+  watch: [currentPage, itemsPerPage, parsedFilters],
 });
 
 const entries = computed<AccountActivityItem[]>(
@@ -53,6 +66,13 @@ const expandedEntries = ref<Set<string>>(new Set());
 const sortOrder = ref<'newest' | 'oldest'>('newest');
 const toast = useToast();
 
+watch(
+  () => [searchTerm.value, filterState.action, filterState.targetType],
+  () => {
+    currentPage.value = 1;
+  },
+);
+
 const sortOptions = [
   { label: t('common.newest'), value: 'newest' },
   { label: t('common.oldest'), value: 'oldest' },
@@ -67,6 +87,45 @@ const sortedEntries = computed(() => {
   }
   return sorted;
 });
+
+function extractTargetType(target: string | null | undefined) {
+  if (!target) return undefined;
+  const [type] = target.split('#');
+  return type || undefined;
+}
+
+function buildOptionList(values: Set<string>) {
+  return Array.from(values)
+    .sort((a, b) => a.localeCompare(b))
+    .map((value) => ({ label: value, value }));
+}
+
+const actionOptions = computed(() => {
+  const values = new Set<string>();
+  entries.value.forEach((entry) => {
+    if (entry.action) values.add(entry.action);
+  });
+  return buildOptionList(values);
+});
+
+const targetOptions = computed(() => {
+  const values = new Set<string>();
+  entries.value.forEach((entry) => {
+    const type = extractTargetType(entry.target ?? undefined);
+    if (type) values.add(type);
+  });
+  return buildOptionList(values);
+});
+
+const hasFilters = computed(() =>
+  Boolean(searchTerm.value.trim() || filterState.action || filterState.targetType),
+);
+
+function clearFilters() {
+  searchTerm.value = '';
+  filterState.action = undefined;
+  filterState.targetType = undefined;
+}
 
 function toggleEntry(id: string) {
   if (expandedEntries.value.has(id)) expandedEntries.value.delete(id);
@@ -116,26 +175,129 @@ async function copyJson(entry: (typeof entries.value)[0]) {
     });
   }
 }
+
+function convertEntriesToCsv(data: AccountActivityItem[]) {
+  if (!data.length) return '';
+
+  const rows = data.map((entry) => ({
+    id: entry.id,
+    occurredAt: entry.occurredAt,
+    actor: entry.actor,
+    action: entry.action,
+    target: entry.target ?? '',
+    metadata: JSON.stringify(entry.metadata ?? {}),
+  }));
+
+  const headers = Object.keys(rows[0] ?? {}).join(',');
+  const values = rows
+    .map((row) =>
+      Object.values(row)
+        .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+        .join(','),
+    )
+    .join('\n');
+
+  return `${headers}\n${values}`;
+}
+
+function exportCsv() {
+  if (!entries.value.length) {
+    toast.add({
+      title: t('common.warning'),
+      description: t('account.activity.noActivity'),
+      color: 'warning',
+    });
+    return;
+  }
+
+  try {
+    const csv = convertEntriesToCsv(entries.value);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const timestamp = new Date().toISOString().split('T')[0];
+    link.href = url;
+    link.setAttribute('download', `account-activity-${timestamp}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.add({
+      title: t('common.success'),
+      description: t('common.exportCompleted') ?? 'Export completed.',
+    });
+  } catch (exportError) {
+    toast.add({
+      title: t('common.error'),
+      description: exportError instanceof Error ? exportError.message : t('common.failedToCopy'),
+      color: 'error',
+    });
+  }
+}
 </script>
 
 <template>
   <div>
     <UCard :ui="{ body: 'space-y-4' }">
-      <div
-        v-if="pagination"
-        class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-      >
-        <UBadge color="neutral" variant="soft" size="xs" class="w-fit">
-          {{ pagination.total }} {{ t('account.activity.total') }}
-        </UBadge>
+      <div class="flex flex-wrap items-stretch gap-2">
+        <UInput
+          v-model="searchTerm"
+          icon="i-lucide-search"
+          :placeholder="t('account.activity.searchPlaceholder')"
+          class="flex-1 min-w-[200px]"
+        />
+        <USelectMenu
+          v-model="filterState.action"
+          :items="actionOptions"
+          value-key="value"
+          label-key="label"
+          size="sm"
+          clear
+          icon="i-lucide-bolt"
+          class="min-w-[180px] flex-1 sm:flex-none"
+          :placeholder="t('account.activity.actionFilterPlaceholder')"
+        />
+        <USelectMenu
+          v-model="filterState.targetType"
+          :items="targetOptions"
+          value-key="value"
+          label-key="label"
+          size="sm"
+          clear
+          icon="i-lucide-crosshair"
+          class="min-w-[180px] flex-1 sm:flex-none"
+          :placeholder="t('account.activity.targetFilterPlaceholder')"
+        />
+        <UButton
+          variant="ghost"
+          size="sm"
+          color="neutral"
+          :disabled="!hasFilters"
+          class="shrink-0"
+          @click="clearFilters"
+        >
+          {{ t('account.activity.clearFilters') }}
+        </UButton>
         <USelect
-          v-if="entries.length > 0"
+          v-if="pagination && entries.length > 0"
           v-model="sortOrder"
           :items="sortOptions"
           value-key="value"
-          class="w-full sm:w-48"
+          size="sm"
+          class="w-full sm:w-36"
           :aria-label="t('common.filter')"
         />
+        <UButton
+          icon="i-lucide-download"
+          color="neutral"
+          variant="outline"
+          :disabled="entries.length === 0"
+          class="w-full sm:w-auto justify-center"
+          @click="exportCsv"
+        >
+          {{ t('admin.activity.exportCsv') }}
+        </UButton>
       </div>
 
       <template v-if="pending">
