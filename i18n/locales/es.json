@@ -1,5 +1,7 @@
 {
   "welcome": "Bienvenido",
+  "Node details": "Node details",
+  "Inspect Wings node metrics and allocations": "Inspect Wings node metrics and allocations",
   "common": {
     "save": "Guardar",
     "cancel": "Cancelar",
@@ -48,6 +50,7 @@
     "enabled": "Enabled",
     "disabled": "Disabled",
     "active": "Active",
+    "language": "Language",
     "inactive": "Inactive",
     "running": "Running",
     "offline": "Offline",
@@ -58,6 +61,7 @@
     "suspended": "Suspended",
     "transferring": "Transferring",
     "navigation": "Navigation",
+    "now": "now",
     "user": "User",
     "server": "Server",
     "warning": "Warning",
@@ -180,8 +184,6 @@
     "profile": {
       "title": "Profile",
       "description": "Manage your account information.",
-      "profileDetails": "Profile details",
-      "keepAccountUpdated": "Keep your account information up to date.",
       "profileUnavailable": "Profile unavailable",
       "noChangesDetected": "No changes detected",
       "updateBeforeSaving": "Update your profile details before saving.",
@@ -314,7 +316,10 @@
       "deleteAPIKey": "Delete API Key",
       "keyIdentifier": "Key Identifier:",
       "ipRestricted": "IP Restricted",
-      "apiKeyData": "API Key Data"
+      "apiKeyData": "API Key Data",
+      "sortOrder": "Sort order",
+      "showingKeys": "{count} API key(s) total",
+      "tokenNotReturned": "API key was created but the token was not returned. Please contact support."
     },
     "sessions": {
       "title": "Sessions",
@@ -356,18 +361,17 @@
       "current": "Current",
       "active": "Active:",
       "expires": "Expires:",
-      "sessionData": "Session Data",
-      "sessionRevokedTitle": "Session revoked",
-      "sessionRevokedDescription": "The selected session has been signed out.",
+      "sessionData": "Session data",
       "sessionsRevokedTitle": "Sessions revoked",
-      "sessionsRevokedDescription": "All other sessions have been revoked.",
+      "sessionsRevokedDescription": "Selected sessions have been revoked.",
+      "revoked": "Revoked",
+      "revokedSessionsSingular": "Revoked {count} session.",
+      "revokedSessionsPlural": "Revoked {count} sessions.",
       "failedToRevokeSession": "Failed to revoke session",
       "unableToRevokeSelectedSession": "Unable to revoke selected session.",
       "failedToRevokeSessions": "Failed to revoke sessions",
       "unableToRevokeSessions": "Unable to revoke sessions.",
-      "revokedSessionsSingular": "Revoked {count} session.",
       "neverUsed": "Never used",
-      "revokedSessionsPlural": "Revoked {count} sessions.",
       "noSessionsRevoked": "No sessions were revoked."
     },
     "sshKeys": {
@@ -415,7 +419,11 @@
       "copyJSON": "Copy JSON",
       "failedToLoad": "Failed to load account activity.",
       "showingEvents": "Showing {count} events",
-      "total": "Total"
+      "total": "Total",
+      "searchPlaceholder": "Search your activity",
+      "actionFilterPlaceholder": "Filter by action",
+      "targetFilterPlaceholder": "Filter by target type",
+      "clearFilters": "Clear filters"
     }
   },
   "server": {
@@ -466,7 +474,6 @@
       "scopeAllDescription": "Display every server in the panel (admin only).",
       "noServersFound": "No servers found",
       "tryAdjustingSearch": "Try adjusting your search terms",
-      "noServersAvailable": "No servers are available",
       "myAccess": "My access",
       "sharedAccess": "Shared access",
       "cpuLimit": "CPU limit",
@@ -982,6 +989,10 @@
     "users": {
       "title": "Users",
       "subtitle": "Audit panel accounts and Wings permissions",
+      "profile": {
+        "title": "User profile",
+        "subtitle": "Inspect panel access, owned servers, and activity"
+      },
       "user": "User",
       "email": "Email",
       "twoFactor": "2FA",
@@ -1051,6 +1062,8 @@
       "impersonationFailed": "Unable to impersonate this user. Please try again."
     },
     "api": {
+      "title": "API Keys",
+      "subtitle": "Manage existing keys or create new ones for API access.",
       "activeKeys": "Active API Keys",
       "activeKeysDescription": "Manage existing keys or create new ones for API access.",
       "createApiKey": "Create API Key",
@@ -1107,10 +1120,17 @@
       "deleteApiKey": "Delete API key",
       "confirmDeleteDescription": "Revoking an API key immediately blocks further API access.",
       "deleteKeyWarning": "This action cannot be undone.",
-      "identifier": "Identifier"
+      "identifier": "Identifier",
+      "createApiKeyDescription": "Configure permissions and restrictions for the new API key.",
+      "sortOrder": "Sort order"
     },
     "servers": {
       "title": "Servers",
+      "subtitle": "Global view of panel servers synchronized with Wings",
+      "details": {
+        "title": "Server details",
+        "subtitle": "Manage server configuration and resources"
+      },
       "description": "Manage all servers in the panel.",
       "serverInventory": "Server Inventory",
       "createServer": "Create Server",
@@ -1165,6 +1185,7 @@
         "installationInitiated": "We are provisioning this server on Wings.",
         "failedToCreateOnWings": "Unable to create the server on Wings.",
         "targetNodeIdRequired": "Target node ID is required.",
+        "targetNodeLabel": "Target node",
         "transferInitiated": "Transfer initiated",
         "transferStarted": "Server transfer has started.",
         "failedToInitiateTransfer": "Unable to start server transfer.",
@@ -1289,10 +1310,19 @@
     },
     "nodes": {
       "title": "Nodes",
+      "subtitle": "Manage Wings daemons and monitor node health",
+      "details": {
+        "title": "Node details",
+        "subtitle": "Inspect Wings node metrics and allocations"
+      },
       "description": "Manage Wings nodes connected to the panel.",
       "nodeInventory": "Node inventory",
       "addNode": "Add node",
       "online": "Online",
+      "offline": "Offline",
+      "maintenance": "Maintenance",
+      "unknownNode": "Unknown Node",
+      "tls": "TLS",
       "http": "HTTP",
       "unableToLoadNodes": "Unable to load nodes",
       "noNodesLinked": "No nodes linked yet. Register a Wings node to begin managing infrastructure.",
@@ -1355,7 +1385,12 @@
       },
       "nodeSynced": "Node synchronized",
       "nodeSyncedDescription": "Wings daemon successfully synced with the panel.",
-      "nodeSyncFailed": "Failed to sync node",
+      "syncFailed": "Failed to sync node",
+      "failedToConnectToWings": "Could not connect to Wings daemon.",
+      "confirmRotateTokens": "Are you sure you want to rotate tokens for this node? Any current Wings session will be invalidated.",
+      "tokensRotated": "Tokens rotated",
+      "tokensRotatedDescription": "The API tokens for this node have been successfully rotated.",
+      "failedToActionNode": "Failed to perform action {action} on node",
       "ip": "IP",
       "port": "Port",
       "primary": "Primary",
@@ -1404,6 +1439,9 @@
       },
       "autoDeployConfiguration": "Auto-deploy configuration",
       "systemInformation": "System information",
+      "unableToLoadNodeDetails": "Unable to load node details",
+      "unableToContactWingsNode": "Unable to contact Wings node",
+      "noSystemDataReturned": "No system information was returned from Wings.",
       "allocations": {
         "filterByIpOrPort": "Filter by IP or port",
         "createAllocations": "Create allocations",
@@ -1456,6 +1494,7 @@
       "lastSeen": "Last seen",
       "systemSnapshot": "System snapshot",
       "recentServers": "Recent servers",
+      "noServersFound": "No servers found on this node.",
       "noServersForNodeYet": "No servers on this node yet.",
       "showingNodes": "Showing {count} nodes",
       "downloadConfiguration": "Download configuration",
@@ -1463,6 +1502,7 @@
     },
     "locations": {
       "title": "Locations",
+      "subtitle": "Manage server locations.",
       "description": "Group nodes by physical or logical locations.",
       "allLocations": "All locations",
       "createLocation": "Create location",
@@ -1481,6 +1521,7 @@
       "createFailed": "Failed to create location",
       "confirmDelete": "Delete location {short}? Nodes assigned here will not be affected.",
       "deleteLocation": "Delete location",
+      "deleteLocationWarning": "This will permanently delete the location metadata. Nodes currently assigned to this location will need to be re-assigned or will remain associated with the deleted ID.",
       "confirmDeleteDescription": "Deleting a location only removes its grouping metadata. Nodes linked to it remain available.",
       "locationDeleted": "Location deleted",
       "deleteFailed": "Failed to delete location",
@@ -1494,6 +1535,7 @@
     },
     "nests": {
       "title": "Nests",
+      "subtitle": "Manage server nests and eggs.",
       "description": "Group eggs for similar server types.",
       "allNests": "All nests",
       "createNest": "Create nest",
@@ -1683,19 +1725,28 @@
     },
     "activity": {
       "title": "Activity",
+      "subtitle": "Track panel-wide events mirrored from Wings",
       "description": "Review panel-wide audit events.",
       "target": "Target",
       "actor": "Actor",
+      "auditLog": "Audit log",
       "auditLogEntry": "Audit Log Entry",
       "copyJson": "Copy JSON",
-      "showingEvents": "Showing {current} of {total} events",
+      "showingEvents": "Showing {count} of {total} events",
       "exportCsv": "Export CSV",
+      "searchPlaceholder": "Search audit events",
+      "actorFilterPlaceholder": "Filter by actor",
+      "actionFilterPlaceholder": "Filter by action",
+      "targetFilterPlaceholder": "Filter by target type",
+      "clearFilters": "Clear filters",
+      "sortOrder": "Sort order",
       "noActivityYet": "No activity yet",
       "noActivityYetDescription": "Activity logs will appear here as actions are performed."
     },
     "apiKeys": "Claves API",
     "databaseHosts": {
       "title": "Database Hosts",
+      "subtitle": "Manage database hosts.",
       "description": "Manage database hosts.",
       "allDatabaseHosts": "All Database Hosts",
       "addDatabaseHost": "Add Database Host",
@@ -1748,6 +1799,19 @@
       "addFirstVariable": "Add first variable",
       "noVariablesDefined": "No variables defined",
       "noVariablesDefinedDescription": "Add environment variables to customize server behavior.",
+      "createVariable": "Create Variable",
+      "addNewEnvironmentVariable": "Add a new environment variable",
+      "variableNamePlaceholder": "My Variable",
+      "variableNameHelp": "Display name shown throughout the panel.",
+      "variableDescriptionPlaceholder": "Optional description for this variable",
+      "envVariablePlaceholder": "SERVER_JARFILE",
+      "envVariableHelp": "Environment variable name used inside containers.",
+      "defaultValuePlaceholder": "server.jar",
+      "validationRules": "Validation rules",
+      "validationRulesPlaceholder": "required|string",
+      "validationRulesHelp": "Provide validation rules (e.g. regex or pipe-delimited list).",
+      "userViewable": "User viewable",
+      "userViewableHelp": "Allow end users to view this variable in the client.",
       "userEditable": "User editable",
       "hidden": "Hidden",
       "environmentVariable": "Environment variable",
@@ -1766,10 +1830,15 @@
       "createFailed": "Create failed",
       "confirmDeleteVariable": "Delete variable \"{name}\"?",
       "variableDeleted": "Variable deleted",
-      "deleteFailed": "Delete failed"
+      "deleteFailed": "Delete failed",
+      "deleteVariable": "Delete variable",
+      "confirmDeleteVariableDescription": "This action cannot be undone. The variable will be permanently removed.",
+      "updateEnvironmentVariable": "Update the environment variable settings below.",
+      "deleteVariableWarning": "Deleting this variable may break servers that depend on it."
     },
     "mounts": {
       "title": "Mounts",
+      "subtitle": "Manage server mounts.",
       "description": "Manage server mounts.",
       "allMounts": "All Mounts",
       "createMount": "Create Mount",
@@ -1823,7 +1892,14 @@
     "forbidden": "Prohibido",
     "serverError": "Error del servidor",
     "networkError": "Error de red",
-    "validationError": "Error de validación"
+    "validationError": "Error de validación",
+    "pageNotFound": "Page not found",
+    "pageNotFoundDescription": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "requestedResource": "Requested resource",
+    "goBack": "Go back",
+    "adminDashboard": "Admin dashboard",
+    "home": "Home",
+    "tryAgain": "Try again"
   },
   "validation": {
     "required": "Este campo es obligatorio",
@@ -1855,6 +1931,9 @@
     "infrastructureOverview": "Infrastructure overview and controls",
     "copyright": "Copyright © {year}",
     "servicePacks": "Service Packs",
-    "auditLog": "Audit Log"
+    "auditLog": "Audit Log",
+    "adminNavigation": "Admin navigation",
+    "adminHeader": "Admin header",
+    "clientNavigation": "Main navigation"
   }
 }
