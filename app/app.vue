@@ -2,8 +2,6 @@
 import { authClient } from '~/utils/auth-client';
 import * as locales from '@nuxt/ui/locale';
 
-authClient.useSession(useFetch);
-
 const { locale } = useI18n();
 
 const currentLocale = computed(() => {

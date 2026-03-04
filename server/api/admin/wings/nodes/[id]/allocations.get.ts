@@ -36,7 +36,7 @@ export default defineEventHandler(async (event): Promise<AdminWingsNodeAllocatio
   const { page, perPage, search } = await getValidatedQuery(event, (data) => {
     const result = z.object({
       page: z.coerce.number().min(1).default(1),
-      perPage: z.coerce.number().min(1).max(100).default(25),
+      perPage: z.coerce.number().min(1).max(1000).default(25),
       search: z.string().trim().default('')
     }).parse(data);
     

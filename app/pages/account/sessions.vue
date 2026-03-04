@@ -212,7 +212,9 @@ async function handleSignOut(token: string) {
           const currentSessionRevoked = !currentSession?.data;
 
           if (currentSessionRevoked) {
-            await navigateTo('/auth/login');
+            const authStore = useAuthStore();
+            await authStore.logout();
+            await navigateTo('/auth/login', { external: true });
             return;
           }
 
@@ -228,16 +230,18 @@ async function handleSignOut(token: string) {
       }
     }
 
-    const result = await $fetch<{ revoked: boolean; currentSessionRevoked: boolean }>(
+    const result = await $fetch<{ data: { revoked: boolean; currentSessionRevoked: boolean } }>(
       `/api/account/sessions/${encodeURIComponent(token)}`,
       {
         method: 'DELETE',
       },
     );
-    const currentSessionRevoked = result.currentSessionRevoked;
+    const currentSessionRevoked = result.data?.currentSessionRevoked;
 
     if (currentSessionRevoked) {
-      await navigateTo('/auth/login');
+      const authStore = useAuthStore();
+      await authStore.logout();
+      await navigateTo('/auth/login', { external: true });
       return;
     }
 
@@ -286,7 +290,7 @@ async function handleSignOutAll(includeCurrent = false) {
       }
     }
 
-    const result = await $fetch<{ revoked: number; currentSessionRevoked: boolean }>(
+    const result = await $fetch<{ data: { revoked: number; currentSessionRevoked: boolean } }>(
       '/api/account/sessions',
       {
         method: 'DELETE',
@@ -303,10 +307,10 @@ async function handleSignOutAll(includeCurrent = false) {
     toast.add({
       title: t('account.sessions.sessionsRevokedTitle'),
       description:
-        result.revoked > 0
-          ? result.revoked === 1
-            ? t('account.sessions.revokedSessionsSingular', { count: result.revoked })
-            : t('account.sessions.revokedSessionsPlural', { count: result.revoked })
+        result.data?.revoked > 0
+          ? result.data.revoked === 1
+            ? t('account.sessions.revokedSessionsSingular', { count: result.data.revoked })
+            : t('account.sessions.revokedSessionsPlural', { count: result.data.revoked })
           : t('account.sessions.noSessionsRevoked'),
     });
   } catch (error) {

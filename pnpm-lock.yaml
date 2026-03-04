@@ -71,6 +71,9 @@ importers:
       jose:
         specifier: ^6.1.3
         version: 6.1.3
+      marked:
+        specifier: ^17.0.3
+        version: 17.0.3
       monaco-editor:
         specifier: ^0.55.1
         version: 0.55.1
