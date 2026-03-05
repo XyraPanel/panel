@@ -60,6 +60,7 @@ function calculateNextRun(cronExpression: string): string {
 }
 
 export default defineEventHandler(async (event) => {
+  try {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');
 
@@ -136,4 +137,16 @@ export default defineEventHandler(async (event) => {
       tasks: [],
     },
   };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    const { logger } = await import('#server/utils/logger');
+    logger.error('Unhandled API exception', error);
+    throw createError({
+      status: 500,
+      message: 'Internal Server Error',
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
+  }
 });

@@ -1,7 +1,9 @@
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { requireServerPermission } from '#server/utils/permission-middleware';
-import { requireAccountUser } from '#server/utils/security';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
+import { z } from 'zod';
 
 function isMissingWingsServer(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
@@ -50,10 +52,13 @@ export default defineEventHandler(async (event) => {
     requiredPermissions: ['server.files.read'],
   });
 
-  const query = getQuery(event);
-  const directory = sanitizeDirectoryPath(
-    typeof query.directory === 'string' ? query.directory : '/',
+  const query = await getValidatedQuery(
+    event,
+    z.object({
+      directory: z.string().optional(),
+    }),
   );
+  const directory = sanitizeDirectoryPath(query.directory ?? '/');
 
   try {
     const { client } = await getWingsClientForServer(server.uuid);
@@ -95,7 +100,7 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     if (!isMissingWingsServer(error)) {
-      console.error('Failed to list files via Wings:', error);
+      logger.error('Failed to list files via Wings:', error);
     }
 
     if (
@@ -129,7 +134,7 @@ export default defineEventHandler(async (event) => {
         };
       } catch (fallbackError) {
         if (!isMissingWingsServer(fallbackError)) {
-          console.error(
+          logger.error(
             'Failed to list files via Wings using server identifier fallback:',
             fallbackError,
           );

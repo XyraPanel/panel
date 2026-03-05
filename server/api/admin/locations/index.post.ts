@@ -32,27 +32,35 @@ export default defineEventHandler(async (event) => {
     updatedAt: now,
   };
 
-  await db.insert(tables.locations).values(newLocation);
+  try {
+    await db.insert(tables.locations).values(newLocation);
 
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.location.created',
-    targetType: 'settings',
-    targetId: newLocation.id,
-    metadata: {
-      short: newLocation.short,
-      long: newLocation.long,
-    },
-  });
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.location.created',
+      targetType: 'settings',
+      targetId: newLocation.id,
+      metadata: {
+        short: newLocation.short,
+        long: newLocation.long,
+      },
+    });
 
-  return {
-    data: {
-      id: newLocation.id,
-      short: newLocation.short,
-      long: newLocation.long,
-      createdAt: newLocation.createdAt,
-      updatedAt: newLocation.updatedAt,
-    },
-  };
+    return {
+      data: {
+        id: newLocation.id,
+        short: newLocation.short,
+        long: newLocation.long,
+        createdAt: newLocation.createdAt,
+        updatedAt: newLocation.updatedAt,
+      },
+    };
+  } catch (error) {
+    throw createError({
+      status: 500,
+      message: 'Failed to create location',
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
+  }
 });

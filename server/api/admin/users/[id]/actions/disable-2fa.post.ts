@@ -5,6 +5,8 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { disableTwoFactorActionSchema } from '#shared/schema/admin/actions';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);
@@ -75,10 +77,11 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Failed to disable 2FA';
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Disable 2FA] Failed for user:', userId, error);
     throw createError({
       status: 500,
-      message,
+      message: 'Failed to disable 2FA for the user',
     });
   }
 });

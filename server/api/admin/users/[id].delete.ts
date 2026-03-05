@@ -5,6 +5,8 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);
@@ -21,53 +23,62 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-  const userResult = await db
-    .select({
-      id: tables.users.id,
-      username: tables.users.username,
-      email: tables.users.email,
-    })
-    .from(tables.users)
-    .where(eq(tables.users.id, userId))
-    .limit(1);
+    const userResult = await db
+      .select({
+        id: tables.users.id,
+        username: tables.users.username,
+        email: tables.users.email,
+      })
+      .from(tables.users)
+      .where(eq(tables.users.id, userId))
+      .limit(1);
 
-  const user = userResult[0];
+    const user = userResult[0];
 
-  if (!user) {
-    throw createError({ status: 404, message: 'User not found' });
-  }
+    if (!user) {
+      throw createError({ status: 404, message: 'User not found' });
+    }
 
-  const serverCountResult = await db
-    .select({ serversOwned: count() })
-    .from(tables.servers)
-    .where(eq(tables.servers.ownerId, userId));
+    const serverCountResult = await db
+      .select({ serversOwned: count() })
+      .from(tables.servers)
+      .where(eq(tables.servers.ownerId, userId));
 
-  const serversOwned = serverCountResult[0]?.serversOwned ?? 0;
+    const serversOwned = serverCountResult[0]?.serversOwned ?? 0;
 
-  if (serversOwned > 0) {
+    if (serversOwned > 0) {
+      throw createError({
+        status: 400,
+        message: `Cannot delete user: owns ${serversOwned} server(s). Transfer or delete servers first.`,
+      });
+    }
+
+    await db.delete(tables.users).where(eq(tables.users.id, userId));
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.user.deleted',
+      targetType: 'user',
+      targetId: userId,
+    });
+
+    return {
+      data: {
+        success: true,
+        message: 'User deleted successfully',
+        userId,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('Fatal error during admin user deletion:', error);
     throw createError({
-      status: 400,
-      message: `Cannot delete user: owns ${serversOwned} server(s). Transfer or delete servers first.`,
+      status: 500,
+      message: 'Failed to delete user',
     });
   }
-
-  await db.delete(tables.users).where(eq(tables.users.id, userId));
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.user.deleted',
-    targetType: 'user',
-    targetId: userId,
-  });
-
-  return {
-    data: {
-      success: true,
-      message: 'User deleted successfully',
-      userId,
-    },
-  };
 });

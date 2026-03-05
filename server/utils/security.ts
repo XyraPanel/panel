@@ -1,4 +1,4 @@
-import { type H3Event } from 'h3';
+import { type H3Event, getValidatedQuery as getValidatedQueryH3 } from 'h3';
 import { getServerSession } from '#server/utils/session';
 import { requireAdminPermission } from '#server/utils/permission-middleware';
 import { getAuth, normalizeHeadersForAuth } from '#server/utils/auth';
@@ -81,6 +81,28 @@ export async function readValidatedBodyWithLimit<T extends z.ZodType>(
       throw createError({
         status: 400,
         message: 'Request body validation failed',
+        data: { errors },
+      });
+    }
+    return result.data;
+  });
+}
+
+export async function getValidatedQuery<T extends z.ZodType>(
+  event: H3Event,
+  schema: T,
+): Promise<z.infer<T>> {
+  return await getValidatedQueryH3(event, (data) => {
+    const result = schema.safeParse(data);
+    if (!result.success) {
+      const errors = result.error.issues.map((err) => ({
+        field: err.path.join('.'),
+        message: err.message,
+      }));
+
+      throw createError({
+        status: 400,
+        message: 'Query validation failed',
         data: { errors },
       });
     }

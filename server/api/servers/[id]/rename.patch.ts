@@ -11,6 +11,7 @@ import { recordServerActivity } from '#server/utils/server-activity';
 import { serverRenameSchema } from '#shared/schema/server/operations';
 
 export default defineEventHandler(async (event) => {
+  try {
   const identifier = getRouterParam(event, 'id');
   if (!identifier) {
     throw createError({ status: 400, message: 'Server ID required' });
@@ -59,4 +60,16 @@ export default defineEventHandler(async (event) => {
       description: body.description ?? server.description ?? null,
     },
   };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    const { logger } = await import('#server/utils/logger');
+    logger.error('Unhandled API exception', error);
+    throw createError({
+      status: 500,
+      message: 'Internal Server Error',
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
+  }
 });

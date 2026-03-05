@@ -60,64 +60,74 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'Invalid SSH public key format' });
   }
 
-  const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-  const existingResult = await db
-    .select()
-    .from(tables.sshKeys)
-    .where(eq(tables.sshKeys.fingerprint, fingerprint))
-    .limit(1);
+    const existingResult = await db
+      .select()
+      .from(tables.sshKeys)
+      .where(eq(tables.sshKeys.fingerprint, fingerprint))
+      .limit(1);
 
-  if (existingResult[0]) {
-    throw createError({ status: 409, message: 'This SSH key already exists' });
+    if (existingResult[0]) {
+      throw createError({ status: 409, message: 'This SSH key already exists' });
+    }
+
+    const userKeys = await db.select().from(tables.sshKeys).where(eq(tables.sshKeys.userId, user.id));
+
+    if (userKeys.length >= 25) {
+      throw createError({ status: 400, message: 'Maximum of 25 SSH keys allowed per account' });
+    }
+
+    const now = Date.now();
+    const keyId = randomUUID();
+
+    await db.insert(tables.sshKeys).values({
+      id: keyId as string,
+      userId: user.id,
+      name: body.name.trim(),
+      fingerprint,
+      publicKey: body.publicKey.trim(),
+      createdAt: new Date(now).toISOString(),
+      updatedAt: new Date(now).toISOString(),
+    });
+
+    const keyResult = await db
+      .select()
+      .from(tables.sshKeys)
+      .where(eq(tables.sshKeys.id, keyId))
+      .limit(1);
+
+    const key = keyResult[0]!;
+
+    await recordAuditEventFromRequest(event, {
+      actor: user.id,
+      actorType: 'user',
+      action: 'account.ssh_key.create',
+      targetType: 'user',
+      targetId: keyId,
+      metadata: {
+        name: key.name,
+        fingerprint: key.fingerprint,
+      },
+    });
+
+    return {
+      data: {
+        id: key.id,
+        name: key.name,
+        fingerprint: key.fingerprint,
+        public_key: key.publicKey,
+        created_at: key.createdAt,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    throw createError({
+      status: 500,
+      message: `Internal Server Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    });
   }
-
-  const userKeys = await db.select().from(tables.sshKeys).where(eq(tables.sshKeys.userId, user.id));
-
-  if (userKeys.length >= 25) {
-    throw createError({ status: 400, message: 'Maximum of 25 SSH keys allowed per account' });
-  }
-
-  const now = Date.now();
-  const keyId = randomUUID();
-
-  await db.insert(tables.sshKeys).values({
-    id: keyId as string,
-    userId: user.id,
-    name: body.name.trim(),
-    fingerprint,
-    publicKey: body.publicKey.trim(),
-    createdAt: new Date(now).toISOString(),
-    updatedAt: new Date(now).toISOString(),
-  });
-
-  const keyResult = await db
-    .select()
-    .from(tables.sshKeys)
-    .where(eq(tables.sshKeys.id, keyId))
-    .limit(1);
-
-  const key = keyResult[0]!;
-
-  await recordAuditEventFromRequest(event, {
-    actor: user.id,
-    actorType: 'user',
-    action: 'account.ssh_key.create',
-    targetType: 'user',
-    targetId: keyId,
-    metadata: {
-      name: key.name,
-      fingerprint: key.fingerprint,
-    },
-  });
-
-  return {
-    data: {
-      id: key.id,
-      name: key.name,
-      fingerprint: key.fingerprint,
-      public_key: key.publicKey,
-      created_at: key.createdAt,
-    },
-  };
 });

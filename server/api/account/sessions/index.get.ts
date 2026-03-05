@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { logger } from '#server/utils/logger';
 import type {
   UserSessionSummary,
   AccountSessionsResponse,
   AccountSessionRow,
 } from '#shared/types/auth';
-import { requireAccountUser } from '#server/utils/security';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 import { parseUserAgent } from '#server/utils/user-agent';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
@@ -22,12 +23,13 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
     throw createError({ status: 401, message: 'Unauthorized' });
   }
 
-  const { page, limit } = await getValidatedQuery(event, (data) => {
-    return z.object({
+  const { page, limit } = await getValidatedQuery(
+    event,
+    z.object({
       page: z.coerce.number().min(1).default(1),
-      limit: z.coerce.number().min(1).max(100).default(50)
-    }).parse(data);
-  });
+      limit: z.coerce.number().min(1).max(100).default(50),
+    }),
+  );
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();
@@ -167,7 +169,7 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
 
     const year = expiresDate.getFullYear();
     if (isNaN(year) || year < 2000 || year > 2100) {
-      console.warn(
+      logger.warn(
         `Invalid expires date year: ${year} for token ${row.sessionToken.substring(0, 8)}..., using default`,
       );
       expiresDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);

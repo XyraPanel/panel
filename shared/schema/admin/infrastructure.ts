@@ -97,6 +97,7 @@ export const updateAllocationSchema = z.object({
   ip: ipValidator.optional(),
   port: z.number().int().min(1).max(65535).optional(),
   alias: z.string().max(255).optional(),
+  ipAlias: z.string().trim().max(255).optional().nullable(),
   notes: z.string().optional(),
 });
 

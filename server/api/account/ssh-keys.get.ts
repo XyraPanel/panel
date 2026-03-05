@@ -2,20 +2,20 @@ import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { z } from 'zod';
 import { count, desc } from 'drizzle-orm';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
-import { requireAccountUser } from '#server/utils/security';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const user = accountContext.user;
 
   const db = useDrizzle();
-  const { page, limit } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
+  const { page, limit } = await getValidatedQuery(
+    event,
+    z.object({
       page: z.coerce.number().min(1).catch(1).default(1),
-      limit: z.coerce.number().min(1).max(100).catch(50).default(50)
-    }).safeParse(data);
-    return result.success ? result.data : { page: 1, limit: 50 };
-  });
+      limit: z.coerce.number().min(1).max(100).catch(50).default(50),
+    }),
+  );
   const offset = (page - 1) * limit;
 
   const totalResult = await db

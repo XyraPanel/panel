@@ -1,6 +1,7 @@
 import { type H3Event } from 'h3';
+import { z } from 'zod';
 import { remoteGetFileDownloadUrl } from '#server/utils/wings/registry';
-import { requireAccountUser } from '#server/utils/security';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
@@ -24,8 +25,13 @@ export default defineEventHandler(async (event: H3Event) => {
     allowAdmin: true,
   });
 
-  const query = getQuery(event);
-  const file = typeof query.file === 'string' ? query.file : '';
+  const query = await getValidatedQuery(
+    event,
+    z.object({
+      file: z.string().optional(),
+    }),
+  );
+  const file = query.file ?? '';
 
   if (!file) {
     throw createError({

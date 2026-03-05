@@ -1,4 +1,5 @@
 import { requireServerPermission } from '#server/utils/permission-middleware';
+import { logger } from '#server/utils/logger';
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { recordServerActivity } from '#server/utils/server-activity';
 import { getServerWithAccess } from '#server/utils/server-helpers';
@@ -55,7 +56,7 @@ export default defineEventHandler(async (event) => {
       data: result,
     };
   } catch (error) {
-    console.error('Failed to compress files on Wings:', error);
+    logger.error('Failed to compress files on Wings:', error);
     throw createError({
       status: 500,
       message: 'Failed to compress files',

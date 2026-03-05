@@ -10,6 +10,8 @@ const powerActionSchema = z.object({
   action: z.enum(['start', 'stop', 'restart', 'kill']),
 });
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const { id: serverId } = getRouterParams(event);
   if (!serverId || typeof serverId !== 'string') {
@@ -65,7 +67,7 @@ export default defineEventHandler(async (event) => {
     const { provisionServerOnWings } = await import('#server/utils/server-provisioning');
 
     const allocations = await db
-      .select()
+      .select({ id: tables.serverAllocations.id, isPrimary: tables.serverAllocations.isPrimary })
       .from(tables.serverAllocations)
       .where(eq(tables.serverAllocations.serverId, server.id));
 
@@ -81,8 +83,8 @@ export default defineEventHandler(async (event) => {
     setImmediate(async () => {
       try {
         if (!server.eggId || !server.nodeId) {
-          console.error(
-            `[Power Action] Server ${server.uuid} missing eggId or nodeId for provisioning`,
+          debugError(
+            `[Power Action: Background] Server ${server.uuid} missing eggId or nodeId for provisioning`,
           );
           return;
         }
@@ -95,9 +97,8 @@ export default defineEventHandler(async (event) => {
           environment: {},
           startOnCompletion: true,
         });
-        console.log(`[Power Action] Successfully installed and started server: ${server.uuid}`);
       } catch (error) {
-        console.error(`[Power Action] Failed to install server ${server.uuid}:`, error);
+        debugError(`[Power Action: Background] Failed to install server ${server.uuid}:`, error);
       }
     });
 
@@ -113,7 +114,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const [node] = await db
-    .select()
+    .select({ id: tables.wingsNodes.id })
     .from(tables.wingsNodes)
     .where(eq(tables.wingsNodes.id, server.nodeId))
     .limit(1);
@@ -151,9 +152,11 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError(`[Admin Server Power Action] Failed to send ${action} to ${server.uuid}:`, error);
     throw createError({
       status: 500,
-      message: `Failed to send power command: ${error instanceof Error ? error.message : String(error)}`,
+      message: 'Failed to send power command',
     });
   }
 });

@@ -13,6 +13,8 @@ import {
 import { provisionDatabase } from '#server/utils/database-provisioner';
 import { createServerDatabaseSchema } from '#shared/schema/server/operations';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');
@@ -36,83 +38,92 @@ export default defineEventHandler(async (event) => {
     BODY_SIZE_LIMITS.SMALL,
   );
 
-  const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-  const serverDbRows = await db
-    .select({ serverDbCount: sql<number>`count(*)` })
-    .from(tables.serverDatabases)
-    .where(eq(tables.serverDatabases.serverId, server.id));
-
-  if (server.databaseLimit && Number(serverDbRows[0]?.serverDbCount ?? 0) >= server.databaseLimit) {
-    throw createError({ status: 403, message: 'Server database limit reached' });
-  }
-
-  const [databaseHost] = await db.select().from(tables.databaseHosts).limit(1);
-
-  if (!databaseHost) {
-    throw createError({ status: 500, message: 'No database host configured' });
-  }
-
-  if (databaseHost.maxDatabases && databaseHost.maxDatabases > 0) {
-    const hostDbRows = await db
-      .select({ hostDbCount: sql<number>`count(*)` })
+    const serverDbRows = await db
+      .select({ serverDbCount: sql<number>`count(*)` })
       .from(tables.serverDatabases)
-      .where(eq(tables.serverDatabases.databaseHostId, databaseHost.id));
-    if (Number(hostDbRows[0]?.hostDbCount ?? 0) >= databaseHost.maxDatabases) {
-      throw createError({
-        status: 503,
-        message: 'Database host has reached its maximum database limit',
-      });
+      .where(eq(tables.serverDatabases.serverId, server.id));
+
+    if (server.databaseLimit && Number(serverDbRows[0]?.serverDbCount ?? 0) >= server.databaseLimit) {
+      throw createError({ status: 403, message: 'Server database limit reached' });
     }
-  }
 
-  const databaseId = randomUUID();
-  const safeName = body.name.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 48);
-  const dbName = `s${server.id.substring(0, 8)}_${safeName}`;
-  const username = `u${server.id.substring(0, 8)}_${safeName}`.substring(0, 32);
-  const password = randomBytes(24).toString('hex');
-  const remote = body.remote || '%';
-  const now = new Date().toISOString();
+    const [databaseHost] = await db.select().from(tables.databaseHosts).limit(1);
 
-  await provisionDatabase(databaseHost, dbName, username, password, remote);
+    if (!databaseHost) {
+      throw createError({ status: 500, message: 'No database host configured' });
+    }
 
-  await db.insert(tables.serverDatabases).values({
-    id: databaseId,
-    serverId: server.id,
-    databaseHostId: databaseHost.id,
-    name: dbName,
-    username,
-    password,
-    remote,
-    maxConnections: null,
-    status: 'ready',
-    createdAt: now,
-    updatedAt: now,
-  });
+    if (databaseHost.maxDatabases && databaseHost.maxDatabases > 0) {
+      const hostDbRows = await db
+        .select({ hostDbCount: sql<number>`count(*)` })
+        .from(tables.serverDatabases)
+        .where(eq(tables.serverDatabases.databaseHostId, databaseHost.id));
+      if (Number(hostDbRows[0]?.hostDbCount ?? 0) >= databaseHost.maxDatabases) {
+        throw createError({
+          status: 503,
+          message: 'Database host has reached its maximum database limit',
+        });
+      }
+    }
 
-  await invalidateServerCaches({ id: server.id, uuid: server.uuid, identifier: server.identifier });
+    const databaseId = randomUUID();
+    const safeName = body.name.replace(/[^a-zA-Z0-9_]/g, '_').substring(0, 48);
+    const dbName = `s${server.id.substring(0, 8)}_${safeName}`;
+    const username = `u${server.id.substring(0, 8)}_${safeName}`.substring(0, 32);
+    const password = randomBytes(24).toString('hex');
+    const remote = body.remote || '%';
+    const now = new Date().toISOString();
 
-  await recordAuditEventFromRequest(event, {
-    actor: accountContext.user.id,
-    actorType: 'user',
-    action: 'server.database.created',
-    targetType: 'server',
-    targetId: server.id,
-    metadata: { databaseId, databaseName: dbName, username, remote },
-  });
+    await provisionDatabase(databaseHost, dbName, username, password, remote);
 
-  return {
-    object: 'server_database',
-    attributes: {
+    await db.insert(tables.serverDatabases).values({
       id: databaseId,
-      host_id: databaseHost.id,
+      serverId: server.id,
+      databaseHostId: databaseHost.id,
       name: dbName,
       username,
+      password,
       remote,
-      max_connections: null,
-      created_at: now,
-      updated_at: now,
-    },
-    meta: { password },
-  };
+      maxConnections: null,
+      status: 'ready',
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    await invalidateServerCaches({ id: server.id, uuid: server.uuid, identifier: server.identifier });
+
+    await recordAuditEventFromRequest(event, {
+      actor: accountContext.user.id,
+      actorType: 'user',
+      action: 'server.database.created',
+      targetType: 'server',
+      targetId: server.id,
+      metadata: { databaseId, databaseName: dbName, username, remote },
+    });
+
+    return {
+      object: 'server_database',
+      attributes: {
+        id: databaseId,
+        host_id: databaseHost.id,
+        name: dbName,
+        username,
+        remote,
+        max_connections: null,
+        created_at: now,
+        updated_at: now,
+      },
+      meta: { password },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Server Database] Failed to create:', error);
+    throw createError({
+      status: 500,
+      message: 'Failed to create server database',
+    });
+  }
 });

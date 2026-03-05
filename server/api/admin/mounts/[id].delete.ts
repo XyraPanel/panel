@@ -5,6 +5,8 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -19,37 +21,46 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'Mount ID is required' });
   }
 
-  const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-  const [existing] = await db
-    .select()
-    .from(tables.mounts)
-    .where(eq(tables.mounts.id, mountId))
-    .limit(1);
+    const [existing] = await db
+      .select()
+      .from(tables.mounts)
+      .where(eq(tables.mounts.id, mountId))
+      .limit(1);
 
-  if (!existing) {
-    throw createError({ status: 404, message: 'Mount not found' });
+    if (!existing) {
+      throw createError({ status: 404, message: 'Mount not found' });
+    }
+
+    await db.delete(tables.mounts).where(eq(tables.mounts.id, mountId));
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.mount.deleted',
+      targetType: 'settings',
+      targetId: mountId,
+      metadata: {
+        mountName: existing.name,
+        source: existing.source,
+        target: existing.target,
+      },
+    });
+
+    return {
+      data: {
+        success: true,
+        deletedId: mountId,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Mount Delete] Failed:', error);
+    throw createError({
+      status: 500,
+      message: 'Failed to delete mount',
+    });
   }
-
-  await db.delete(tables.mounts).where(eq(tables.mounts.id, mountId));
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.mount.deleted',
-    targetType: 'settings',
-    targetId: mountId,
-    metadata: {
-      mountName: existing.name,
-      source: existing.source,
-      target: existing.target,
-    },
-  });
-
-  return {
-    data: {
-      success: true,
-      deletedId: mountId,
-    },
-  };
 });

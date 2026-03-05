@@ -48,6 +48,8 @@ function extractResponsePayload(value: unknown): unknown {
   return 'response' in value ? value.response : value;
 }
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);
@@ -124,6 +126,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
     if (error instanceof APIError) {
       const statusCode =
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
@@ -132,11 +135,10 @@ export default defineEventHandler(async (event) => {
         message: error.message || 'Failed to impersonate user',
       });
     }
-
-    const message = error instanceof Error ? error.message : 'Failed to impersonate user';
+    debugError('[Admin User Impersonate Action] Failed for user:', userId, error);
     throw createError({
       statusCode: 500,
-      message: message,
+      message: 'Failed to impersonate user',
     });
   }
 });

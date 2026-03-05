@@ -26,51 +26,60 @@ export default defineEventHandler(async (event) => {
     requiredPermissions: ['server.settings.update'],
   });
 
-  const body = await readValidatedBodyWithLimit(
-    event,
-    z.object({
-      successful: z.boolean(),
-    }),
-    BODY_SIZE_LIMITS.SMALL,
-  );
+  try {
+    const body = await readValidatedBodyWithLimit(
+      event,
+      z.object({
+        successful: z.boolean(),
+      }),
+      BODY_SIZE_LIMITS.SMALL,
+    );
 
-  const db = useDrizzle();
+    const db = useDrizzle();
+    const now = new Date().toISOString();
 
-  const now = new Date().toISOString();
+    if (body.successful) {
+      await db
+        .update(tables.servers)
+        .set({
+          status: null,
+          installedAt: now,
+          updatedAt: now,
+        })
+        .where(eq(tables.servers.id, server.id));
+    } else {
+      await db
+        .update(tables.servers)
+        .set({
+          status: 'install_failed',
+          updatedAt: now,
+        })
+        .where(eq(tables.servers.id, server.id));
+    }
 
-  if (body.successful) {
-    await db
-      .update(tables.servers)
-      .set({
-        status: null,
-        installedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(tables.servers.id, server.id));
-  } else {
-    await db
-      .update(tables.servers)
-      .set({
-        status: 'install_failed',
-        updatedAt: now,
-      })
-      .where(eq(tables.servers.id, server.id));
+    await recordAuditEventFromRequest(event, {
+      actor: user.id,
+      actorType: 'user',
+      action: body.successful ? 'server.install.success' : 'server.install.failed',
+      targetType: 'server',
+      targetId: server.id,
+    });
+
+    return {
+      data: {
+        success: true,
+        message: body.successful
+          ? 'Installation marked as complete'
+          : 'Installation marked as failed',
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    throw createError({
+      status: 500,
+      message: `Internal Server Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    });
   }
-
-  await recordAuditEventFromRequest(event, {
-    actor: user.id,
-    actorType: 'user',
-    action: body.successful ? 'server.install.success' : 'server.install.failed',
-    targetType: 'server',
-    targetId: server.id,
-  });
-
-  return {
-    data: {
-      success: true,
-      message: body.successful
-        ? 'Installation marked as complete'
-        : 'Installation marked as failed',
-    },
-  };
 });

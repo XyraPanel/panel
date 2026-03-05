@@ -5,6 +5,8 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 import { requireAccountUser } from '#server/utils/security';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server');
   const subuserId = getRouterParam(event, 'user');
@@ -26,40 +28,49 @@ export default defineEventHandler(async (event) => {
     allowAdmin: true,
   });
 
-  const db = useDrizzle();
-  const [subuser] = await db
-    .select()
-    .from(tables.serverSubusers)
-    .where(
-      and(eq(tables.serverSubusers.id, subuserId), eq(tables.serverSubusers.serverId, server.id)),
-    )
-    .limit(1);
+  try {
+    const db = useDrizzle();
+    const [subuser] = await db
+      .select()
+      .from(tables.serverSubusers)
+      .where(
+        and(eq(tables.serverSubusers.id, subuserId), eq(tables.serverSubusers.serverId, server.id)),
+      )
+      .limit(1);
 
-  if (!subuser) {
+    if (!subuser) {
+      throw createError({
+        status: 404,
+        message: 'Subuser not found',
+      });
+    }
+
+    await db.delete(tables.serverSubusers).where(eq(tables.serverSubusers.id, subuserId));
+
+    await recordServerActivity({
+      event,
+      actorId: user.id,
+      action: 'server.users.deleted',
+      server: { id: server.id, uuid: server.uuid },
+      metadata: {
+        subuserId,
+        targetUserId: subuser.userId,
+      },
+    });
+
+    await invalidateServerSubusersCache(server.id, [subuser.userId]);
+
+    return {
+      data: {
+        success: true,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Server Subuser Delete] Failed for server:', serverId, 'subuser:', subuserId, error);
     throw createError({
-      status: 404,
-      message: 'Subuser not found',
+      status: 500,
+      message: 'Failed to delete subuser from server',
     });
   }
-
-  await db.delete(tables.serverSubusers).where(eq(tables.serverSubusers.id, subuserId));
-
-  await recordServerActivity({
-    event,
-    actorId: user.id,
-    action: 'server.users.deleted',
-    server: { id: server.id, uuid: server.uuid },
-    metadata: {
-      subuserId,
-      targetUserId: subuser.userId,
-    },
-  });
-
-  await invalidateServerSubusersCache(server.id, [subuser.userId]);
-
-  return {
-    data: {
-      success: true,
-    },
-  };
 });

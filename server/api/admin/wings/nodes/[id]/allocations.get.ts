@@ -7,7 +7,7 @@ import type {
   AdminWingsNodeAllocationsPayload,
 } from '#shared/types/admin';
 
-import { requireAdmin } from '#server/utils/security';
+import { getValidatedQuery, requireAdmin } from '#server/utils/security';
 import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
@@ -33,19 +33,11 @@ export default defineEventHandler(async (event): Promise<AdminWingsNodeAllocatio
 
   const session = await requireAdmin(event);
 
-  const { page, perPage, search } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
-      page: z.coerce.number().min(1).default(1),
-      perPage: z.coerce.number().min(1).max(1000).default(25),
-      search: z.string().trim().default('')
-    }).parse(data);
-    
-    return {
-      page: result.page,
-      perPage: result.perPage,
-      search: result.search || null
-    };
-  });
+  const { page, perPage, search } = await getValidatedQuery(event, z.object({
+    page: z.coerce.number().min(1).default(1),
+    perPage: z.coerce.number().min(1).max(1000).default(25),
+    search: z.string().trim().default('').transform((value) => value || null),
+  }));
   
   const offset = (page - 1) * perPage;
 

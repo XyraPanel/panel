@@ -1,13 +1,17 @@
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { requireServerPermission } from '#server/utils/permission-middleware';
-import { requireAccountUser } from '#server/utils/security';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
+import { z } from 'zod';
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');
-  const query = getQuery(event);
-  const file = typeof query.file === 'string' ? query.file : '';
+  const { file: rawFile } = await getValidatedQuery(event, z.object({
+    file: z.string().optional(),
+  }));
+  const file = rawFile ?? '';
 
   if (!serverId) {
     throw createError({
@@ -40,7 +44,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Failed to get download URL from Wings:', error);
+    logger.error('Failed to get download URL from Wings:', error);
     throw createError({
       status: 500,
       message: 'Failed to get download URL',

@@ -1,4 +1,5 @@
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { logger } from '#server/utils/logger';
 import { requireAccountUser } from '#server/utils/security';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
@@ -27,7 +28,7 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  console.log('[Reinstall] Starting server reinstall:', {
+  logger.info('[Reinstall] Starting server reinstall:', {
     serverId: server.id,
     serverUuid: server.uuid,
     serverName: server.name,
@@ -42,10 +43,10 @@ export default defineEventHandler(async (event) => {
     const { getWingsClientForServer } = await import('#server/utils/wings-client');
     const { client } = await getWingsClientForServer(server.uuid);
 
-    console.log('[Reinstall] Calling Wings reinstall endpoint...');
+    logger.info('[Reinstall] Calling Wings reinstall endpoint...');
     await client.reinstallServer(server.uuid);
 
-    console.log('[Reinstall] Wings accepted reinstall request, updating status to installing');
+    logger.info('[Reinstall] Wings accepted reinstall request, updating status to installing');
 
     await db
       .update(tables.servers)
@@ -55,9 +56,9 @@ export default defineEventHandler(async (event) => {
       })
       .where(eq(tables.servers.id, server.id));
 
-    console.log('[Reinstall] Server status updated to installing');
+    logger.info('[Reinstall] Server status updated to installing');
   } catch (error) {
-    console.error('[Reinstall] Wings reinstall failed:', {
+    logger.error('[Reinstall] Wings reinstall failed:', {
       error: error instanceof Error ? error.message : String(error),
       serverId: server.id,
       serverUuid: server.uuid,

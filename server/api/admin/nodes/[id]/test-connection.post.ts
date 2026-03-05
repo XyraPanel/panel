@@ -6,6 +6,8 @@ import { getWingsClient } from '#server/utils/wings-client';
 import type { WingsNode } from '#shared/types/wings-client';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -99,7 +101,8 @@ export default defineEventHandler(async (event) => {
       };
     }
   } catch (error) {
-    console.error('Wings connection test failed:', error);
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Node Connection Test] Failed for node:', nodeId, error);
 
     let errorMessage = 'Unknown connection error';
     let errorType = 'unknown';

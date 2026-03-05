@@ -4,6 +4,8 @@ import { refreshEmailService } from '#server/utils/email';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { mailSettingsSchema } from '#shared/schema/admin/settings';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -55,22 +57,31 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await setSettings(updates as Record<(typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS], string>);
+  try {
+    await setSettings(updates as Record<(typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS], string>);
 
-  void refreshEmailService();
+    void refreshEmailService();
 
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.settings.mail.updated',
-    targetType: 'settings',
-    metadata: { updatedKeys },
-  });
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.settings.mail.updated',
+      targetType: 'settings',
+      metadata: { updatedKeys },
+    });
 
-  return {
-    data: {
-      success: true,
-      updatedKeys,
-    },
-  };
+    return {
+      data: {
+        success: true,
+        updatedKeys,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Mail Settings] Update failed:', error);
+    throw createError({
+      status: 500,
+      message: 'Failed to update mail settings',
+    });
+  }
 });

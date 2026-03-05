@@ -1,42 +1,49 @@
+import { createConsola } from 'consola';
+
 /**
- * Logger utility for conditional debug logging
- * Only logs when debug mode is enabled in runtime config
+ * Standardized Logger
+ * Provides structured, environment-aware logging using Consola.
  */
 
-let debugEnabled: boolean | null = null;
+const logger = createConsola({
+  level: 3, // Default to info
+  formatOptions: {
+    colors: true,
+    date: true,
+  },
+}).withTag('panel');
 
-function getDebugEnabled(): boolean {
-  if (debugEnabled !== null) {
-    return debugEnabled;
-  }
+let logLevelCached: number | null = null;
+
+function getLogLevel(): number {
+  if (logLevelCached !== null) return logLevelCached;
 
   try {
     const config = useRuntimeConfig();
-    debugEnabled = config.debug || config.public?.debug;
+    const isDebug = config.debug || config.public?.debug || process.env.DEBUG === 'true';
+    // level: 4 = debug, 3 = info/log, 1 = warn, 0 = error
+    logLevelCached = isDebug ? 4 : 3;
   } catch {
-    debugEnabled =
-      process.env.DEBUG === 'true' ||
-      process.env.NUXT_DEBUG === 'true' ||
-      process.env.NODE_ENV === 'development';
+    logLevelCached = process.env.NODE_ENV === 'development' ? 4 : 3;
   }
 
-  return debugEnabled;
+  return logLevelCached;
 }
 
-export function debugLog(...args: unknown[]): void {
-  if (getDebugEnabled()) {
-    console.log(...args);
-  }
+export function debugLog(message: string, ...args: unknown[]): void {
+  logger.level = getLogLevel();
+  logger.info(message, ...args);
 }
 
-export function debugError(...args: unknown[]): void {
-  if (getDebugEnabled()) {
-    console.error(...args);
-  }
+export function debugError(message: string, ...args: unknown[]): void {
+  logger.level = getLogLevel();
+  logger.error(message, ...args);
 }
 
-export function debugWarn(...args: unknown[]): void {
-  if (getDebugEnabled()) {
-    console.warn(...args);
-  }
+export function debugWarn(message: string, ...args: unknown[]): void {
+  logger.level = getLogLevel();
+  logger.warn(message, ...args);
 }
+
+export { logger };
+

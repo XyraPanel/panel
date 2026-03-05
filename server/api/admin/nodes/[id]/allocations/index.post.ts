@@ -12,6 +12,8 @@ import {
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { createAllocationSchema } from '#shared/schema/admin/infrastructure';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -48,13 +50,7 @@ export default defineEventHandler(async (event) => {
   try {
     ipAddresses = parseCidr(ip);
   } catch (error) {
-    if (error instanceof CidrOutOfRangeError) {
-      throw createError({
-        status: 400,
-        message: error.message,
-      });
-    }
-    if (error instanceof InvalidIpAddressError) {
+    if (error instanceof CidrOutOfRangeError || error instanceof InvalidIpAddressError) {
       throw createError({
         status: 400,
         message: error.message,
@@ -77,75 +73,85 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const db = useDrizzle();
-  const nowIso = new Date().toISOString();
-  const created: Array<{ id: string; ip: string; port: number }> = [];
-  const skipped: Array<{ ip: string; port: number }> = [];
+  try {
+    const db = useDrizzle();
+    const nowIso = new Date().toISOString();
+    const created: Array<{ id: string; ip: string; port: number }> = [];
+    const skipped: Array<{ ip: string; port: number }> = [];
 
-  for (const ipAddr of ipAddresses) {
-    for (const port of portNumbers) {
-      const [existing] = await db
-        .select()
-        .from(tables.serverAllocations)
-        .where(
-          and(
-            eq(tables.serverAllocations.nodeId, nodeId),
-            eq(tables.serverAllocations.ip, ipAddr),
-            eq(tables.serverAllocations.port, port),
-          ),
-        );
+    for (const ipAddr of ipAddresses) {
+      for (const port of portNumbers) {
+        const [existing] = await db
+          .select({ id: tables.serverAllocations.id })
+          .from(tables.serverAllocations)
+          .where(
+            and(
+              eq(tables.serverAllocations.nodeId, nodeId),
+              eq(tables.serverAllocations.ip, ipAddr),
+              eq(tables.serverAllocations.port, port),
+            ),
+          )
+          .limit(1);
 
-      if (existing) {
-        skipped.push({ ip: ipAddr, port });
-        continue;
-      }
+        if (existing) {
+          skipped.push({ ip: ipAddr, port });
+          continue;
+        }
 
-      const id = randomUUID();
-      try {
-        await db.insert(tables.serverAllocations).values({
-          id,
-          nodeId,
-          serverId: null,
-          ip: ipAddr,
-          port,
-          ipAlias,
-          notes: null,
-          createdAt: nowIso,
-          updatedAt: nowIso,
-        });
+        const id = randomUUID();
+        try {
+          await db.insert(tables.serverAllocations).values({
+            id,
+            nodeId,
+            serverId: null,
+            ip: ipAddr,
+            port,
+            ipAlias,
+            notes: null,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          });
 
-        created.push({ id, ip: ipAddr, port });
-      } catch (error) {
-        console.error(`Failed to create allocation ${ipAddr}:${port}`, error);
+          created.push({ id, ip: ipAddr, port });
+        } catch (error) {
+          debugError(`[Admin Allocation Create] Failed to insert ${ipAddr}:${port}`, error);
+        }
       }
     }
-  }
 
-  if (created.length === 0 && skipped.length > 0) {
+    if (created.length === 0 && skipped.length > 0) {
+      throw createError({
+        status: 409,
+        message: 'All specified allocations already exist',
+      });
+    }
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.node.allocations.created',
+      targetType: 'node',
+      targetId: nodeId,
+      metadata: {
+        createdCount: created.length,
+        skippedCount: skipped.length,
+      },
+    });
+
+    return {
+      data: {
+        success: true,
+        message: `Created ${created.length} allocation${created.length === 1 ? '' : 's'}${skipped.length > 0 ? `, skipped ${skipped.length} existing` : ''}`,
+        created,
+        skipped: skipped.length > 0 ? skipped : undefined,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Allocation Create] Bulk operation failed for node:', nodeId, error);
     throw createError({
-      status: 409,
-      message: 'All specified allocations already exist',
+      status: 500,
+      message: 'Failed to create allocations',
     });
   }
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.node.allocations.created',
-    targetType: 'node',
-    targetId: nodeId,
-    metadata: {
-      createdCount: created.length,
-      skippedCount: skipped.length,
-    },
-  });
-
-  return {
-    data: {
-      success: true,
-      message: `Created ${created.length} allocation${created.length === 1 ? '' : 's'}${skipped.length > 0 ? `, skipped ${skipped.length} existing` : ''}`,
-      created,
-      skipped: skipped.length > 0 ? skipped : undefined,
-    },
-  };
 });

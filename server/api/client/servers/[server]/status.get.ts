@@ -1,4 +1,5 @@
 import { getServerStatus } from '#server/utils/server-status';
+import { logger } from '#server/utils/logger';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { requireAccountUser } from '#server/utils/security';
@@ -32,7 +33,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Failed to get server status:', error);
+    logger.error('Failed to get server status:', error);
     throw createError({
       status: 500,
       message: 'Failed to get server status',

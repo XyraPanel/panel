@@ -27,6 +27,7 @@
     "postinstall": "nuxt prepare",
     "xyra": "node ./cli/index.mjs",
     "lint": "oxlint",
+    "lint:api": "oxlint ./server/api",
     "lint:fix": "oxlint --fix",
     "lint:type-aware": "oxlint --type-aware",
     "lint:type-check": "oxlint --type-aware --type-check",
@@ -82,6 +83,7 @@
   },
   "devDependencies": {
     "@iconify-json/lucide": "^1.2.94",
+    "@oxlint/plugins": "^1.51.0",
     "@types/node": "^25.3.1",
     "@types/nodemailer": "^7.0.11",
     "@types/pg": "^8.16.0",

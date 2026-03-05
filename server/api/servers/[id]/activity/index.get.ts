@@ -2,7 +2,7 @@ import { desc, eq, sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { useDrizzle, tables } from '#server/utils/drizzle';
 import { getServerWithAccess } from '#server/utils/server-helpers';
-import { requireAccountUser } from '#server/utils/security';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
@@ -63,13 +63,13 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
     requiredPermissions: ['server.settings.read'],
   });
 
-  const { page, limit } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
+  const { page, limit } = await getValidatedQuery(
+    event,
+    z.object({
       page: z.coerce.number().min(1).catch(1).default(1),
-      limit: z.coerce.number().min(1).max(100).catch(50).default(50)
-    }).safeParse(data);
-    return result.success ? result.data : { page: 1, limit: 50 };
-  });
+      limit: z.coerce.number().min(1).max(100).catch(50).default(50),
+    }),
+  );
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();

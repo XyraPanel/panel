@@ -10,6 +10,8 @@ import {
 } from '#server/utils/security';
 import { serverSubuserPermissionsSchema } from '#shared/schema/server/operations';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server');
   const subuserId = getRouterParam(event, 'user');
@@ -37,66 +39,75 @@ export default defineEventHandler(async (event) => {
     BODY_SIZE_LIMITS.SMALL,
   );
 
-  const db = useDrizzle();
-  const [subuser] = await db
-    .select()
-    .from(tables.serverSubusers)
-    .where(
-      and(eq(tables.serverSubusers.id, subuserId), eq(tables.serverSubusers.serverId, server.id)),
-    )
-    .limit(1);
+  try {
+    const db = useDrizzle();
+    const [subuser] = await db
+      .select()
+      .from(tables.serverSubusers)
+      .where(
+        and(eq(tables.serverSubusers.id, subuserId), eq(tables.serverSubusers.serverId, server.id)),
+      )
+      .limit(1);
 
-  if (!subuser) {
+    if (!subuser) {
+      throw createError({
+        status: 404,
+        message: 'Subuser not found',
+      });
+    }
+
+    const now = new Date().toISOString();
+    await db
+      .update(tables.serverSubusers)
+      .set({
+        permissions: JSON.stringify(body.permissions),
+        updatedAt: now,
+      })
+      .where(eq(tables.serverSubusers.id, subuserId));
+
+    await recordServerActivity({
+      event,
+      actorId: user.id,
+      action: 'server.users.updated',
+      server: { id: server.id, uuid: server.uuid },
+      metadata: {
+        subuserId,
+        permissions: body.permissions,
+      },
+    });
+
+    const [result] = await db
+      .select({
+        subuser: tables.serverSubusers,
+        user: tables.users,
+      })
+      .from(tables.serverSubusers)
+      .leftJoin(tables.users, eq(tables.serverSubusers.userId, tables.users.id))
+      .where(eq(tables.serverSubusers.id, subuserId))
+      .limit(1);
+
+    await invalidateServerSubusersCache(server.id, [subuser.userId]);
+
+    return {
+      data: {
+        id: result!.subuser.id,
+        user: {
+          id: result!.user!.id,
+          username: result!.user!.username,
+          email: result!.user!.email,
+          image: result!.user!.image,
+        },
+        permissions: JSON.parse(result!.subuser.permissions),
+        created_at: result!.subuser.createdAt,
+        updated_at: result!.subuser.updatedAt,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Server Subuser Update] Failed for server:', serverId, 'subuser:', subuserId, error);
     throw createError({
-      status: 404,
-      message: 'Subuser not found',
+      status: 500,
+      message: 'Failed to update subuser permissions',
     });
   }
-
-  const now = new Date().toISOString();
-  await db
-    .update(tables.serverSubusers)
-    .set({
-      permissions: JSON.stringify(body.permissions),
-      updatedAt: now,
-    })
-    .where(eq(tables.serverSubusers.id, subuserId));
-
-  await recordServerActivity({
-    event,
-    actorId: user.id,
-    action: 'server.users.updated',
-    server: { id: server.id, uuid: server.uuid },
-    metadata: {
-      subuserId,
-      permissions: body.permissions,
-    },
-  });
-
-  const [result] = await db
-    .select({
-      subuser: tables.serverSubusers,
-      user: tables.users,
-    })
-    .from(tables.serverSubusers)
-    .leftJoin(tables.users, eq(tables.serverSubusers.userId, tables.users.id))
-    .where(eq(tables.serverSubusers.id, subuserId))
-    .limit(1);
-
-  await invalidateServerSubusersCache(server.id, [subuser.userId]);
-
-  return {
-    data: {
-      id: result!.subuser.id,
-      user: {
-        id: result!.user!.id,
-        username: result!.user!.username,
-        email: result!.user!.email,
-        image: result!.user!.image,
-      },
-      permissions: JSON.parse(result!.subuser.permissions),
-      created_at: result!.subuser.createdAt,
-      updated_at: result!.subuser.updatedAt,
-    },
-  };
 });

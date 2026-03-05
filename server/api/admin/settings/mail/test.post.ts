@@ -1,4 +1,5 @@
 import { requireAdmin } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
@@ -42,7 +43,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Failed to send test email:', error);
+    logger.error('Failed to send test email:', error);
     throw createError({
       status: 500,
       message: error instanceof Error ? error.message : 'Failed to send test email',

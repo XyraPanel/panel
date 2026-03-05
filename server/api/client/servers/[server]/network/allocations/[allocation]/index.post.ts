@@ -10,6 +10,8 @@ import {
 import { updateAllocationSchema } from '#shared/schema/server/subusers';
 import { recordServerActivity } from '#server/utils/server-activity';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server');
   const allocationId = getRouterParam(event, 'allocation');
@@ -38,54 +40,67 @@ export default defineEventHandler(async (event) => {
   );
   const { notes } = body;
 
-  const db = useDrizzle();
-  const [allocation] = await db
-    .select()
-    .from(tables.serverAllocations)
-    .where(
-      and(
-        eq(tables.serverAllocations.id, allocationId),
-        eq(tables.serverAllocations.serverId, server.id),
-      ),
-    )
-    .limit(1);
+  try {
+    const db = useDrizzle();
+    const [allocation] = await db
+      .select()
+      .from(tables.serverAllocations)
+      .where(
+        and(
+          eq(tables.serverAllocations.id, allocationId),
+          eq(tables.serverAllocations.serverId, server.id),
+        ),
+      )
+      .limit(1);
 
-  if (!allocation) {
+    if (!allocation) {
+      throw createError({
+        status: 404,
+        message: 'Allocation not found',
+      });
+    }
+
+    await db
+      .update(tables.serverAllocations)
+      .set({
+        notes: notes || null,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(tables.serverAllocations.id, allocationId));
+
+    await recordServerActivity({
+      event,
+      actorId: user.id,
+      action: 'server.allocation.updated',
+      server: { id: server.id, uuid: server.uuid },
+      metadata: {
+        allocationId,
+        notes,
+      },
+    });
+
+    await invalidateServerCaches({
+      id: server.id,
+      uuid: server.uuid,
+      identifier: server.identifier,
+    });
+
+    return {
+      data: {
+        id: allocation.id,
+        ip: allocation.ip,
+        port: allocation.port,
+        ipAlias: allocation.ipAlias ?? null,
+        notes: notes || null,
+        isPrimary: Boolean(allocation.id === server.allocationId),
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Server Allocation Patch] Failed for server:', serverIdentifier, 'allocation:', allocationId, error);
     throw createError({
-      status: 404,
-      message: 'Allocation not found',
+      status: 500,
+      message: 'Failed to update allocation details',
     });
   }
-
-  await db
-    .update(tables.serverAllocations)
-    .set({
-      notes: notes || null,
-      updatedAt: new Date().toISOString(),
-    })
-    .where(eq(tables.serverAllocations.id, allocationId));
-
-  await recordServerActivity({
-    event,
-    actorId: user.id,
-    action: 'server.allocation.updated',
-    server: { id: server.id, uuid: server.uuid },
-    metadata: {
-      allocationId,
-      notes,
-    },
-  });
-
-  await invalidateServerCaches({ id: server.id, uuid: server.uuid, identifier: server.identifier });
-
-  return {
-    data: {
-      id: allocation.id,
-      ip: allocation.ip,
-      port: allocation.port,
-      ipAlias: allocation.ipAlias ?? null,
-      notes: notes || null,
-      isPrimary: Boolean(allocation.id === server.allocationId),
-    },
-  };
 });

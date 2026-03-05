@@ -8,6 +8,7 @@ import { remoteBackupStatusSchema } from '#shared/schema/wings';
 import { sendBackupCompletedEmail } from '#server/utils/email';
 
 export default defineEventHandler(async (event: H3Event) => {
+  try {
   const db = useDrizzle();
   const { backupId } = getRouterParams(event);
 
@@ -98,4 +99,16 @@ export default defineEventHandler(async (event: H3Event) => {
       success: true,
     },
   };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    const { logger } = await import('#server/utils/logger');
+    logger.error('Unhandled API exception', error);
+    throw createError({
+      status: 500,
+      message: 'Internal Server Error',
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
+  }
 });

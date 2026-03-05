@@ -1,4 +1,5 @@
 import { serverManager } from '#server/utils/server-manager';
+import { logger } from '#server/utils/logger';
 import { WingsConnectionError, WingsAuthError } from '#server/utils/wings-client';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
@@ -53,7 +54,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Wings power action failed:', error);
+    logger.error('Wings power action failed:', error);
 
     if (error instanceof WingsAuthError) {
       throw createError({

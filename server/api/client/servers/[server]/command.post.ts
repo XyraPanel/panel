@@ -1,4 +1,5 @@
 import { getServerWithAccess } from '#server/utils/server-helpers';
+import { logger } from '#server/utils/logger';
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { recordServerActivity } from '#server/utils/server-activity';
 import { requireServerPermission } from '#server/utils/permission-middleware';
@@ -46,7 +47,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Wings command failed:', error);
+    logger.error('Wings command failed:', error);
     throw createError({
       status: 500,
       message: 'Failed to send command to Wings',

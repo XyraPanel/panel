@@ -3,6 +3,8 @@ import { SETTINGS_KEYS, setSettings } from '#server/utils/settings';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { securitySettingsSchema } from '#shared/schema/admin/settings';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -53,22 +55,31 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await setSettings(updates as Record<(typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS], string>);
+  try {
+    await setSettings(updates as Record<(typeof SETTINGS_KEYS)[keyof typeof SETTINGS_KEYS], string>);
 
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.settings.security.updated',
-    targetType: 'settings',
-    metadata: {
-      updatedKeys: Object.keys(updates),
-    },
-  });
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.settings.security.updated',
+      targetType: 'settings',
+      metadata: {
+        updatedKeys: Object.keys(updates),
+      },
+    });
 
-  return {
-    data: {
-      success: true,
-      updatedKeys: Object.keys(updates),
-    },
-  };
+    return {
+      data: {
+        success: true,
+        updatedKeys: Object.keys(updates),
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Security Settings Patch] Failed:', error);
+    throw createError({
+      status: 500,
+      message: 'Failed to update security settings',
+    });
+  }
 });

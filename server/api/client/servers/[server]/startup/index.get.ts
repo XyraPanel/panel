@@ -1,4 +1,5 @@
 import { getServerWithAccess } from '#server/utils/server-helpers';
+import { logger } from '#server/utils/logger';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import type { ServerStartupVariable } from '#shared/types/server';
 import { requireServerPermission } from '#server/utils/permission-middleware';
@@ -105,7 +106,7 @@ export default defineEventHandler(async (event) => {
       dockerImages =
         typeof egg.dockerImages === 'string' ? JSON.parse(egg.dockerImages) : egg.dockerImages;
     } catch (error) {
-      console.warn('[client/startup] Failed to parse egg dockerImages:', error);
+      logger.warn('[client/startup] Failed to parse egg dockerImages:', error);
     }
   }
 

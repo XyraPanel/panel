@@ -1,4 +1,5 @@
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS, requireAdmin } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
 import { initiateServerTransfer } from '#server/utils/transfers/initiate';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
@@ -66,7 +67,7 @@ export default defineEventHandler(async (event) => {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
     }
-    console.error('Failed to initiate server transfer:', error);
+    logger.error('Failed to initiate server transfer:', error);
 
     throw createError({
       status: 500,

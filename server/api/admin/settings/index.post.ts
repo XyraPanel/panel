@@ -4,6 +4,7 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { adminSettingsPayloadSchema } from '#shared/schema/admin/settings';
 
 export default defineEventHandler(async (event) => {
+  try {
   const session = await requireAdmin(event);
 
   const body = await readValidatedBodyWithLimit(
@@ -61,4 +62,16 @@ export default defineEventHandler(async (event) => {
       deletedKeys,
     },
   };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    const { logger } = await import('#server/utils/logger');
+    logger.error('Unhandled API exception', error);
+    throw createError({
+      status: 500,
+      message: 'Internal Server Error',
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
+  }
 });

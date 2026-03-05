@@ -5,6 +5,8 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -22,79 +24,82 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const db = useDrizzle();
-  const serverRows = await db
-    .select()
-    .from(tables.servers)
-    .where(eq(tables.servers.id, serverId))
-    .limit(1);
+  try {
+    const db = useDrizzle();
+    const [server] = await db
+      .select()
+      .from(tables.servers)
+      .where(eq(tables.servers.id, serverId))
+      .limit(1);
 
-  const server = serverRows[0];
+    if (!server) {
+      throw createError({
+        status: 404,
+        message: 'Server not found',
+      });
+    }
 
-  if (!server) {
-    throw createError({
-      status: 404,
-      message: 'Server not found',
+    if (server.suspended) {
+      return {
+        data: {
+          success: true,
+          message: 'Server is already suspended',
+        },
+      };
+    }
+
+    await db.update(tables.servers).set({ suspended: true }).where(eq(tables.servers.id, serverId));
+
+    if (server.nodeId) {
+      const [node] = await db
+        .select({ id: tables.wingsNodes.id })
+        .from(tables.wingsNodes)
+        .where(eq(tables.wingsNodes.id, server.nodeId))
+        .limit(1);
+
+      if (node) {
+        try {
+          const { client } = await getWingsClientForServer(server.uuid);
+          await client.sendPowerAction(server.uuid, 'kill');
+        } catch (error) {
+          await db
+            .update(tables.servers)
+            .set({ suspended: false })
+            .where(eq(tables.servers.id, serverId));
+
+          debugError(`[Admin Server Suspend] Failed to terminate on Wings for server: ${server.uuid}`, error);
+          throw createError({
+            status: 500,
+            message: 'Failed to suspend server: could not connect to node',
+          });
+        }
+      }
+    }
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.server.suspended',
+      targetType: 'server',
+      targetId: serverId,
+      metadata: {
+        serverName: server.name,
+        serverUuid: server.uuid,
+      },
     });
-  }
 
-  if (server.suspended) {
     return {
       data: {
         success: true,
-        message: 'Server is already suspended',
+        message: 'Server suspended successfully',
       },
     };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Server Suspend] Fatal failure for server:', serverId, error);
+    throw createError({
+      status: 500,
+      message: 'Failed to suspend server',
+    });
   }
-
-  await db.update(tables.servers).set({ suspended: true }).where(eq(tables.servers.id, serverId));
-
-  if (server.nodeId) {
-    const nodeRows = await db
-      .select()
-      .from(tables.wingsNodes)
-      .where(eq(tables.wingsNodes.id, server.nodeId))
-      .limit(1);
-
-    const node = nodeRows[0];
-
-    if (node) {
-      try {
-        const { client } = await getWingsClientForServer(server.uuid);
-
-        await client.sendPowerAction(server.uuid, 'kill');
-      } catch (error) {
-        const err = error instanceof Error ? error : new Error(String(error));
-
-        await db
-          .update(tables.servers)
-          .set({ suspended: false })
-          .where(eq(tables.servers.id, serverId));
-
-        throw createError({
-          status: 500,
-          message: `Failed to suspend server: ${err.message}`,
-        });
-      }
-    }
-  }
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.server.suspended',
-    targetType: 'server',
-    targetId: serverId,
-    metadata: {
-      serverName: server.name,
-      serverUuid: server.uuid,
-    },
-  });
-
-  return {
-    data: {
-      success: true,
-      message: 'Server suspended successfully',
-    },
-  };
 });

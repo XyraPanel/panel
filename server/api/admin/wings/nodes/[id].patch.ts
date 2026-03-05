@@ -70,6 +70,8 @@ async function readUpdatePayload(event: H3Event): Promise<UpdateWingsNodePayload
   return parsed;
 }
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event): Promise<UpdateWingsNodeResponse> => {
   assertMethod(event, 'PATCH');
 
@@ -87,15 +89,6 @@ export default defineEventHandler(async (event): Promise<UpdateWingsNodeResponse
   try {
     const updatedNode = await updateWingsNode(id, body);
 
-    console.info('[admin][wings:nodes:update]', {
-      nodeId: id,
-      actor: session?.user?.email,
-      ip: getRequestIP(event, { xForwardedFor: true }),
-      host: getRequestHost(event, { xForwardedHost: true }),
-      protocol: getRequestProtocol(event, { xForwardedProto: true }),
-      url: getRequestURL(event, { xForwardedHost: true, xForwardedProto: true }),
-    });
-
     await recordAuditEventFromRequest(event, {
       actor: session?.user?.email ?? 'admin',
       actorType: 'user',
@@ -106,7 +99,8 @@ export default defineEventHandler(async (event): Promise<UpdateWingsNodeResponse
 
     return { data: updatedNode };
   } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Failed to update node';
-    throw createError({ status: 400, message });
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Wings Node Update] Failed for node:', id, error);
+    throw createError({ status: 500, message: 'Failed to update node' });
   }
 });

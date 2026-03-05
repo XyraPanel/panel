@@ -1,4 +1,5 @@
 import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
+import { logger } from '#server/utils/logger';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireAccountUser } from '#server/utils/security';
@@ -79,7 +80,7 @@ export default defineEventHandler(async (event) => {
       await executeScheduledTask(scheduleId, task.id);
     }
   } catch (error) {
-    console.error('Failed to execute schedule:', error);
+    logger.error('Failed to execute schedule:', error);
     throw createError({
       status: 500,
       message: 'Failed to execute schedule tasks',

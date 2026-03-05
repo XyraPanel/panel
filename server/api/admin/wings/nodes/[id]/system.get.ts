@@ -1,4 +1,4 @@
-import { requireAdmin } from '#server/utils/security';
+import { getValidatedQuery, requireAdmin } from '#server/utils/security';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
@@ -13,11 +13,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'Missing node id' });
   }
 
-  const { version } = await getValidatedQuery(event, (data) => {
-    return z.object({
-      v: z.coerce.number().min(1).default(2)
-    }).transform((d: { v: number }) => ({ version: d.v })).parse(data);
-  });
+  const { version } = await getValidatedQuery(event, z.object({
+    version: z.coerce.number().min(1).default(2),
+  }).or(z.object({
+    v: z.coerce.number().min(1).default(2),
+  }).transform((data) => ({ version: data.v }))));
 
   const systemInfo = await remoteGetSystemInformation(id, version);
 

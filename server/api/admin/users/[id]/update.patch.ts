@@ -1,5 +1,4 @@
 import { APIError } from 'better-auth/api';
-import { z } from 'zod';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
@@ -7,16 +6,9 @@ import { auth, getAuthHeaders } from '#server/utils/auth';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 
-const adminUpdateUserSchema = z.object({
-  username: z.string().min(1).max(255).optional(),
-  email: z.string().email().optional(),
-  password: z.string().min(8).optional(),
-  nameFirst: z.string().max(255).nullable().optional(),
-  nameLast: z.string().max(255).nullable().optional(),
-  language: z.string().max(10).optional(),
-  rootAdmin: z.union([z.boolean(), z.string()]).optional(),
-  role: z.enum(['admin', 'user']).optional(),
-});
+import { adminUpdateUserSchema } from '#shared/schema/admin/users';
+
+import { debugError } from '#server/utils/logger';
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
@@ -124,7 +116,7 @@ export default defineEventHandler(async (event) => {
     }
 
     if (rootAdmin !== undefined) {
-      updates.rootAdmin = rootAdmin === true || rootAdmin === 'true';
+      updates.rootAdmin = Boolean(rootAdmin);
       changedFields.add('rootAdmin');
     }
 
@@ -193,9 +185,10 @@ export default defineEventHandler(async (event) => {
         message: error.message || 'Failed to update user',
       });
     }
+    debugError('[Admin User Update] Fatal failure for user:', id, error);
     throw createError({
       status: 500,
-      message: `Internal Server Error: ${error instanceof Error ? error.message : 'Failed to update user'}`,
+      message: 'Failed to update user',
     });
   }
 });

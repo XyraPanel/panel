@@ -5,6 +5,8 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -19,48 +21,57 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'Host ID is required' });
   }
 
-  const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-  const [existing] = await db
-    .select()
-    .from(tables.databaseHosts)
-    .where(eq(tables.databaseHosts.id, hostId))
-    .limit(1);
+    const [existing] = await db
+      .select()
+      .from(tables.databaseHosts)
+      .where(eq(tables.databaseHosts.id, hostId))
+      .limit(1);
 
-  if (!existing) {
-    throw createError({ status: 404, message: 'Database host not found' });
-  }
+    if (!existing) {
+      throw createError({ status: 404, message: 'Database host not found' });
+    }
 
-  const databasesCount = await db
-    .select({ id: tables.serverDatabases.id })
-    .from(tables.serverDatabases)
-    .where(eq(tables.serverDatabases.databaseHostId, hostId));
+    const databasesCount = await db
+      .select({ id: tables.serverDatabases.id })
+      .from(tables.serverDatabases)
+      .where(eq(tables.serverDatabases.databaseHostId, hostId));
 
-  if (databasesCount.length > 0) {
+    if (databasesCount.length > 0) {
+      throw createError({
+        status: 400,
+        message: `Cannot delete host with ${databasesCount.length} database(s)`,
+      });
+    }
+
+    await db.delete(tables.databaseHosts).where(eq(tables.databaseHosts.id, hostId));
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.database_host.deleted',
+      targetType: 'settings',
+      targetId: hostId,
+      metadata: {
+        hostName: existing.name,
+        hostname: existing.hostname,
+      },
+    });
+
+    return {
+      data: {
+        success: true,
+        deletedId: hostId,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Database Host Delete] Failed:', error);
     throw createError({
-      status: 400,
-      message: `Cannot delete host with ${databasesCount.length} database(s)`,
+      status: 500,
+      message: 'Failed to delete database host',
     });
   }
-
-  await db.delete(tables.databaseHosts).where(eq(tables.databaseHosts.id, hostId));
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.database_host.deleted',
-    targetType: 'settings',
-    targetId: hostId,
-    metadata: {
-      hostName: existing.name,
-      hostname: existing.hostname,
-    },
-  });
-
-  return {
-    data: {
-      success: true,
-      deletedId: hostId,
-    },
-  };
 });

@@ -3,6 +3,8 @@ import { SETTINGS_KEYS, deleteSetting, setSettings, type SettingKey } from '#ser
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { generalSettingsSchema } from '#shared/schema/admin/settings';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -49,26 +51,35 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  await setSettings(updates);
+  try {
+    await setSettings(updates);
 
-  await Promise.all(deletions.map((key) => deleteSetting(key)));
+    await Promise.all(deletions.map((key) => deleteSetting(key)));
 
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.settings.general.updated',
-    targetType: 'settings',
-    metadata: {
-      updatedKeys: Object.keys(updates),
-      deletedKeys: deletions,
-    },
-  });
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.settings.general.updated',
+      targetType: 'settings',
+      metadata: {
+        updatedKeys: Object.keys(updates),
+        deletedKeys: deletions,
+      },
+    });
 
-  return {
-    data: {
-      success: true,
-      updatedKeys: Object.keys(updates),
-      deletedKeys: deletions,
-    },
-  };
+    return {
+      data: {
+        success: true,
+        updatedKeys: Object.keys(updates),
+        deletedKeys: deletions,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin General Settings Patch] Failed:', error);
+    throw createError({
+      status: 500,
+      message: 'Failed to update general settings',
+    });
+  }
 });

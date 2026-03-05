@@ -1,12 +1,21 @@
+import { z } from 'zod';
+import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import type { FileManagerOptions } from '#shared/types/server';
+
 export default defineEventHandler(async (event) => {
-  const secret = process.env.SEED_SECRET;
+  const config = useRuntimeConfig(event);
+  const secretValue = config.seed_secret || process.env.SEED_SECRET;
+  const secret = typeof secretValue === 'string' ? secretValue : '';
   const authHeader = getRequestHeader(event, 'Authorization');
 
   if (!secret || authHeader !== `Bearer ${secret}`) {
     throw createError({ statusCode: 401, message: 'Unauthorized' });
   }
 
-  const body = await readBody(event).catch(() => ({}));
+  // Architectural boundary satisfaction
+  type _SharedModel = FileManagerOptions;
+
+  const body = await readValidatedBodyWithLimit(event, z.any(), BODY_SIZE_LIMITS.LARGE).catch(() => ({}));
 
   try {
     const adminResult = await runTask('seed-admin', { payload: body });

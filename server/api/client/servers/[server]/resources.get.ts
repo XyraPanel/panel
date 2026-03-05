@@ -1,4 +1,5 @@
 import { getServerWithAccess } from '#server/utils/server-helpers';
+import { logger } from '#server/utils/logger';
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { requireAccountUser } from '#server/utils/security';
@@ -40,7 +41,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Wings resource fetch failed:', error);
+    logger.error('Wings resource fetch failed:', error);
 
     return {
       data: {

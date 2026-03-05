@@ -1,7 +1,9 @@
-import { requireAccountUser } from '#server/utils/security';
+import { z } from 'zod';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { useDrizzle, tables, eq, isNotNull, and, desc } from '#server/utils/drizzle';
 import { getMultipleServerStatuses } from '#server/utils/server-status';
+import { debugError } from '#server/utils/logger';
 
 import type { ServerListEntry, ServersResponse } from '#shared/types/server';
 
@@ -9,8 +11,11 @@ export default defineEventHandler(async (event): Promise<ServersResponse> => {
   try {
     const { user } = await requireAccountUser(event);
 
-    const query = getQuery(event);
-    const scopeParam = typeof query.scope === 'string' ? query.scope : 'own';
+    const { scope: rawScope } = await getValidatedQuery(
+      event,
+      z.object({ scope: z.string().optional() }),
+    );
+    const scopeParam = typeof rawScope === 'string' ? rawScope : 'own';
     const scope = scopeParam === 'all' ? 'all' : 'own';
     const includeAll = scope === 'all';
 
@@ -103,7 +108,7 @@ export default defineEventHandler(async (event): Promise<ServersResponse> => {
       generatedAt: new Date().toISOString(),
     };
   } catch (error) {
-    console.error('[GET] /api/servers: Error fetching servers:', error);
+    debugError('[GET] /api/servers: Error fetching servers:', error);
     if (error && typeof error === 'object' && 'status' in error) {
       throw error;
     }

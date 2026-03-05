@@ -7,6 +7,8 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { createEggVariableSchema } from '#shared/schema/admin/infrastructure';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -23,57 +25,66 @@ export default defineEventHandler(async (event) => {
     BODY_SIZE_LIMITS.SMALL,
   );
 
-  const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-  const [egg] = await db.select().from(tables.eggs).where(eq(tables.eggs.id, eggId)).limit(1);
-  if (!egg) {
-    throw createError({ status: 404, message: 'Egg not found' });
+    const [egg] = await db.select().from(tables.eggs).where(eq(tables.eggs.id, eggId)).limit(1);
+    if (!egg) {
+      throw createError({ status: 404, message: 'Egg not found' });
+    }
+
+    const now = new Date().toISOString();
+
+    const newVariable = {
+      id: randomUUID(),
+      eggId,
+      name: body.name.trim(),
+      description: body.description?.trim() || null,
+      envVariable: body.envVariable.trim(),
+      defaultValue: body.defaultValue?.trim() || null,
+      userViewable: body.userViewable ?? true,
+      userEditable: body.userEditable ?? true,
+      rules: body.rules?.trim() || null,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    await db.insert(tables.eggVariables).values(newVariable);
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.egg.variable.created',
+      targetType: 'settings',
+      targetId: eggId,
+      metadata: {
+        variableId: newVariable.id,
+        variableName: newVariable.name,
+        envVariable: newVariable.envVariable,
+      },
+    });
+
+    return {
+      data: {
+        id: newVariable.id,
+        eggId: newVariable.eggId,
+        name: newVariable.name,
+        description: newVariable.description,
+        envVariable: newVariable.envVariable,
+        defaultValue: newVariable.defaultValue,
+        userViewable: newVariable.userViewable,
+        userEditable: newVariable.userEditable,
+        rules: newVariable.rules,
+        createdAt: newVariable.createdAt,
+        updatedAt: newVariable.updatedAt,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Egg Variable Create] Failed:', error);
+    throw createError({
+      status: 500,
+      message: 'Failed to create egg variable',
+    });
   }
-
-  const now = new Date().toISOString();
-
-  const newVariable = {
-    id: randomUUID(),
-    eggId,
-    name: body.name.trim(),
-    description: body.description?.trim() || null,
-    envVariable: body.envVariable.trim(),
-    defaultValue: body.defaultValue?.trim() || null,
-    userViewable: body.userViewable ?? true,
-    userEditable: body.userEditable ?? true,
-    rules: body.rules?.trim() || null,
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  await db.insert(tables.eggVariables).values(newVariable);
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.egg.variable.created',
-    targetType: 'settings',
-    targetId: eggId,
-    metadata: {
-      variableId: newVariable.id,
-      variableName: newVariable.name,
-      envVariable: newVariable.envVariable,
-    },
-  });
-
-  return {
-    data: {
-      id: newVariable.id,
-      eggId: newVariable.eggId,
-      name: newVariable.name,
-      description: newVariable.description,
-      envVariable: newVariable.envVariable,
-      defaultValue: newVariable.defaultValue,
-      userViewable: newVariable.userViewable,
-      userEditable: newVariable.userEditable,
-      rules: newVariable.rules,
-      createdAt: newVariable.createdAt,
-      updatedAt: newVariable.updatedAt,
-    },
-  };
 });

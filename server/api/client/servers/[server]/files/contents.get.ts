@@ -5,7 +5,9 @@ import {
 } from '#server/utils/wings-client';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
-import { requireAccountUser } from '#server/utils/security';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
+import { z } from 'zod';
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const BINARY_EXTENSIONS = new Set([
@@ -51,8 +53,13 @@ export default defineEventHandler(async (event) => {
     requiredPermissions: ['server.files.read'],
   });
 
-  const query = getQuery(event);
-  const fileParam = typeof query.file === 'string' ? query.file : '';
+  const query = await getValidatedQuery(
+    event,
+    z.object({
+      file: z.string().optional(),
+    }),
+  );
+  const fileParam = query.file ?? '';
   const file = sanitizeFilePath(fileParam);
 
   if (!file) {
@@ -91,7 +98,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Failed to read file from Wings:', error);
+    logger.error('Failed to read file from Wings:', error);
 
     if (error instanceof WingsAuthError) {
       throw createError({

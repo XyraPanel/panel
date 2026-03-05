@@ -1,4 +1,5 @@
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
@@ -88,7 +89,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Failed to provision server on Wings:', error);
+    logger.error('Failed to provision server on Wings:', error);
     throw createError({
       status: 500,
       message: error instanceof Error ? error.message : 'Failed to provision server on Wings',

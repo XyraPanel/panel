@@ -6,6 +6,8 @@ import { emailVerificationActionSchema } from '~~/shared/schema/admin/users';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);
@@ -124,20 +126,11 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to perform email verification action';
-    let status = 500;
-
-    if (error && typeof error === 'object' && 'status' in error) {
-      const code = error.status;
-      if (typeof code === 'number') {
-        status = code;
-      }
-    }
-
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Email Verification Action] Failed for user:', userId, error);
     throw createError({
-      status,
-      message,
+      status: 500,
+      message: 'Failed to perform email verification action',
     });
   }
 });

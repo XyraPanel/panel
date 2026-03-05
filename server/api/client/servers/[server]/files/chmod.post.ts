@@ -1,3 +1,4 @@
+import { logger } from '#server/utils/logger';
 import {
   readValidatedBodyWithLimit,
   BODY_SIZE_LIMITS,
@@ -60,7 +61,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Failed to change permissions on Wings:', error);
+    logger.error('Failed to change permissions on Wings:', error);
     throw createError({
       status: 500,
       message: 'Failed to change permissions',

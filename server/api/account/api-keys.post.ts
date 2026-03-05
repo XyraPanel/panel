@@ -10,6 +10,7 @@ import { useDrizzle, tables } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { APIError } from 'better-auth/api';
 import { getAuth } from '#server/utils/auth';
+import { debugError } from '#server/utils/logger';
 
 export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
   const accountContext = await requireAccountUser(event);
@@ -100,7 +101,7 @@ export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
         message: error.message || 'Failed to create API key',
       });
     }
-    console.error('Error creating API key:', error);
+    debugError('Error creating API key:', error);
 
     throw createError({
       status: 500,

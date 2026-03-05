@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "jsPlugins": ["./tools/lint/api-security-plugin.js"],
   "plugins": ["typescript", "unicorn", "import", "vitest", "promise", "vue"],
   "env": {
     "browser": true,
@@ -24,6 +25,7 @@
     "restriction": "off"
   },
   "rules": {
+    "xyra-api-ruleset/require-security-calls": "error",
     "no-console": "off",
     "no-debugger": "error",
     "no-alert": "off",

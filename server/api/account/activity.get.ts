@@ -3,21 +3,21 @@ import { and, desc, eq, like, or, sql } from 'drizzle-orm';
 import type { SQL } from 'drizzle-orm';
 import { useDrizzle, tables } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
-import { requireAccountUser } from '#server/utils/security';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
   const { user } = await requireAccountUser(event);
 
-  const { page, limit, search, action, targetType } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
+  const { page, limit, search, action, targetType } = await getValidatedQuery(
+    event,
+    z.object({
       page: z.coerce.number().min(1).catch(1).default(1),
       limit: z.coerce.number().min(1).max(100).catch(10).default(10),
       search: z.string().optional(),
       action: z.string().optional(),
       targetType: z.string().optional(),
-    }).safeParse(data);
-    return result.success ? result.data : { page: 1, limit: 10 };
-  });
+    }),
+  );
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();

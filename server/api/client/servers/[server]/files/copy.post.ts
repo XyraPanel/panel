@@ -1,4 +1,5 @@
 import { getServerWithAccess } from '#server/utils/server-helpers';
+import { logger } from '#server/utils/logger';
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
@@ -51,7 +52,7 @@ export default defineEventHandler(async (event) => {
       message: 'File copied successfully',
     };
   } catch (error) {
-    console.error('Failed to copy file on Wings:', error);
+    logger.error('Failed to copy file on Wings:', error);
     throw createError({
       status: 500,
       message: 'Failed to copy file',

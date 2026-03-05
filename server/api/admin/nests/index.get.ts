@@ -1,5 +1,6 @@
+import { z } from 'zod';
 import { eq, sql } from 'drizzle-orm';
-import { requireAdmin } from '#server/utils/security';
+import { getValidatedQuery, requireAdmin } from '#server/utils/security';
 import { useDrizzle, tables } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
@@ -11,11 +12,13 @@ export default defineEventHandler(async (event) => {
 
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NESTS, ADMIN_ACL_PERMISSIONS.READ);
 
-  const query = getQuery(event);
-  const view = Array.isArray(query.view) ? query.view[0] : query.view;
+  const { view } = await getValidatedQuery(event, z.object({
+    view: z.union([z.string(), z.array(z.string())]).optional(),
+  }));
+  const normalizedView = Array.isArray(view) ? view[0] : view;
   const db = useDrizzle();
 
-  if (view === 'options') {
+  if (normalizedView === 'options') {
     const options = await db
       .select({
         id: tables.nests.id,

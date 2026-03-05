@@ -1,4 +1,5 @@
 import { requireAdmin } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
@@ -71,7 +72,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Failed to check installation status:', error);
+    logger.error('Failed to check installation status:', error);
     throw createError({
       status: 500,
       message: 'Failed to check installation status',

@@ -13,6 +13,7 @@ import { recordServerActivity } from '#server/utils/server-activity';
 type ScheduleTaskUpdate = typeof tables.serverScheduleTasks.$inferInsert;
 
 export default defineEventHandler(async (event) => {
+  try {
   const serverIdentifier = getRouterParam(event, 'server');
   const scheduleId = getRouterParam(event, 'schedule');
   const taskId = getRouterParam(event, 'task');
@@ -120,4 +121,16 @@ export default defineEventHandler(async (event) => {
       updatedAt: updated!.updatedAt,
     },
   };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    const { logger } = await import('#server/utils/logger');
+    logger.error('Unhandled API exception', error);
+    throw createError({
+      status: 500,
+      message: 'Internal Server Error',
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
+  }
 });

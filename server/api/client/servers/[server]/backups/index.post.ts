@@ -1,4 +1,5 @@
 import { backupManager } from '#server/utils/backup-manager';
+import { logger } from '#server/utils/logger';
 import { WingsConnectionError, WingsAuthError } from '#server/utils/wings-client';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { getServerWithAccess } from '#server/utils/server-helpers';
@@ -67,7 +68,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Failed to create backup:', error);
+    logger.error('Failed to create backup:', error);
 
     if (error instanceof WingsAuthError) {
       throw createError({

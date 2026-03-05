@@ -4,6 +4,7 @@ import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event: H3Event) => {
+  try {
   assertMethod(event, 'POST');
   const db = useDrizzle();
   const { uuid, status } = getRouterParams(event);
@@ -136,6 +137,18 @@ export default defineEventHandler(async (event: H3Event) => {
       status: successful ? null : 'transfer_failed',
     },
   };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    const { logger } = await import('#server/utils/logger');
+    logger.error('Unhandled API exception', error);
+    throw createError({
+      status: 500,
+      message: 'Internal Server Error',
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
+  }
 });
 
 function parseAllocationList(value: unknown): string[] {

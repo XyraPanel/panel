@@ -5,7 +5,7 @@ import type { ActorType, TargetType } from '#shared/types/audit';
 import { useDrizzle, tables } from '#server/utils/drizzle';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
-import { requireAccountUser } from '#server/utils/security';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -64,13 +64,13 @@ export default defineEventHandler(async (event): Promise<PaginatedServerActivity
     requiredPermissions: ['server.view'],
   });
 
-  const { page, limit } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
+  const { page, limit } = await getValidatedQuery(
+    event,
+    z.object({
       page: z.coerce.number().min(1).catch(1).default(1),
-      limit: z.coerce.number().min(1).max(100).catch(50).default(50)
-    }).safeParse(data);
-    return result.success ? result.data : { page: 1, limit: 50 };
-  });
+      limit: z.coerce.number().min(1).max(100).catch(50).default(50),
+    }),
+  );
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();

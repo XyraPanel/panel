@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm';
+import { logger } from '#server/utils/logger';
 import type { PanelServerDetails, ServerAllocationSummary } from '#shared/types/server';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { useDrizzle, tables } from '#server/utils/drizzle';
@@ -79,7 +80,7 @@ export default defineEventHandler(async (event) => {
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (!message.includes('404') && !message.includes('not found')) {
-        console.warn(`Failed to resolve cached status for server ${server.uuid}:`, message);
+        logger.warn(`Failed to resolve cached status for server ${server.uuid}:`, message);
       }
     }
   }

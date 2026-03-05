@@ -1,4 +1,5 @@
 import { requireAccountUser } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { requireServerPermission } from '#server/utils/permission-middleware';
@@ -72,7 +73,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('Failed to trigger reinstall on Wings:', error);
+    logger.error('Failed to trigger reinstall on Wings:', error);
     throw createError({
       status: 500,
       message: 'Failed to trigger reinstall',

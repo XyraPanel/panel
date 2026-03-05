@@ -5,19 +5,8 @@ import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#ser
 import { auth, getAuthHeaders } from '#server/utils/auth';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
-import { z } from 'zod';
-
-const patchUserSchema = z.object({
-  username: z.string().trim().min(1).max(255).optional(),
-  email: z.string().trim().email().optional(),
-  password: z.string().min(8).optional(),
-  name: z.string().trim().max(511).optional(),
-  nameFirst: z.string().trim().max(255).optional(),
-  nameLast: z.string().trim().max(255).optional(),
-  language: z.string().trim().max(10).optional(),
-  rootAdmin: z.boolean().optional(),
-  role: z.enum(['admin', 'user']).optional(),
-});
+import { adminUpdateUserSchema } from '#shared/schema/admin/users';
+import { debugError } from '#server/utils/logger';
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
@@ -28,7 +17,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'User ID is required' });
   }
 
-  const rawBody = await readValidatedBodyWithLimit(event, patchUserSchema, BODY_SIZE_LIMITS.SMALL);
+  const rawBody = await readValidatedBodyWithLimit(event, adminUpdateUserSchema, BODY_SIZE_LIMITS.SMALL);
 
   try {
     let body = rawBody;
@@ -156,14 +145,17 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
     if (error instanceof APIError) {
       const statusCode =
         typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
+      debugError('Auth API Error during user update:', error);
       throw createError({
         statusCode,
         message: error.message || 'Failed to update user',
       });
     }
+    debugError('Fatal error during user update:', error);
     throw createError({
       status: 500,
       message: 'Failed to update user',

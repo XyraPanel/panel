@@ -6,6 +6,7 @@ import {
   BODY_SIZE_LIMITS,
   requireAccountUser,
 } from '#server/utils/security';
+import { debugError } from '#server/utils/logger';
 import { twoFactorRecoverySchema } from '#shared/schema/account';
 
 export default defineEventHandler(async (event) => {
@@ -16,60 +17,69 @@ export default defineEventHandler(async (event) => {
     BODY_SIZE_LIMITS.SMALL,
   );
 
-  const userId = user.id;
-  const db = useDrizzle();
+  try {
+    const userId = user.id;
+    const db = useDrizzle();
 
-  const recoveryTokens = await db
-    .select()
-    .from(tables.recoveryTokens)
-    .where(eq(tables.recoveryTokens.userId, userId));
+    const recoveryTokens = await db
+      .select()
+      .from(tables.recoveryTokens)
+      .where(eq(tables.recoveryTokens.userId, userId));
 
-  let matchedTokenId: string | null = null;
+    let matchedTokenId: string | null = null;
 
-  for (const rt of recoveryTokens) {
-    if (rt.usedAt) continue;
+    for (const rt of recoveryTokens) {
+      if (rt.usedAt) continue;
 
-    const isValid = await verifyRecoveryToken(token, rt.token);
-    if (isValid) {
-      matchedTokenId = rt.id;
-      break;
+      const isValid = await verifyRecoveryToken(token, rt.token);
+      if (isValid) {
+        matchedTokenId = rt.id;
+        break;
+      }
     }
-  }
 
-  if (!matchedTokenId) {
+    if (!matchedTokenId) {
+      throw createError({
+        status: 400,
+        message: 'Invalid recovery token',
+      });
+    }
+
+    const now = new Date().toISOString();
+    await db
+      .update(tables.recoveryTokens)
+      .set({ usedAt: now })
+      .where(eq(tables.recoveryTokens.id, matchedTokenId));
+
+    await db
+      .update(tables.users)
+      .set({
+        totpAuthenticatedAt: now,
+        updatedAt: now,
+      })
+      .where(eq(tables.users.id, userId));
+
+    await recordAuditEventFromRequest(event, {
+      actor: user.email || user.id,
+      actorType: 'user',
+      action: 'auth.2fa.recovery.used',
+      targetType: 'user',
+      targetId: userId,
+      metadata: { tokenId: matchedTokenId },
+    });
+
+    return {
+      data: {
+        success: true,
+        message: 'Recovery token validated successfully',
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('Failed to process 2FA recovery:', error);
     throw createError({
-      status: 400,
-      message: 'Invalid recovery token',
+      status: 500,
+      message: 'Failed to process recovery token',
     });
   }
-
-  const now = new Date().toISOString();
-  await db
-    .update(tables.recoveryTokens)
-    .set({ usedAt: now })
-    .where(eq(tables.recoveryTokens.id, matchedTokenId));
-
-  await db
-    .update(tables.users)
-    .set({
-      totpAuthenticatedAt: now,
-      updatedAt: now,
-    })
-    .where(eq(tables.users.id, userId));
-
-  await recordAuditEventFromRequest(event, {
-    actor: user.email || user.id,
-    actorType: 'user',
-    action: 'auth.2fa.recovery.used',
-    targetType: 'user',
-    targetId: userId,
-    metadata: { tokenId: matchedTokenId },
-  });
-
-  return {
-    data: {
-      success: true,
-      message: 'Recovery token validated successfully',
-    },
-  };
 });

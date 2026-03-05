@@ -1,9 +1,11 @@
 import { type H3Event } from 'h3';
+import { logger } from '#server/utils/logger';
 import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { toWingsHttpError } from '#server/utils/wings/http';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { sql } from 'drizzle-orm';
 import { remoteServersPaginationSchema } from '#shared/schema/wings';
+import { getValidatedQuery } from '#server/utils/security';
 
 function safeJsonParse(value: string | null | undefined, defaultValue: unknown = {}): unknown {
   if (!value || typeof value !== 'string' || value.trim().length === 0) {
@@ -19,26 +21,10 @@ function safeJsonParse(value: string | null | undefined, defaultValue: unknown =
 export default defineEventHandler(async (event: H3Event) => {
   try {
     const nodeId = await getNodeIdFromAuth(event);
-    const { page, per_page: perPage } = await getValidatedQuery(event, (data: any) => {
-      const parsedQuery = remoteServersPaginationSchema.safeParse({
-        page: data.page,
-        per_page: data.per_page,
-      });
-
-      if (!parsedQuery.success) {
-        const errors = parsedQuery.error.issues.map((issue) => ({
-          field: issue.path.join('.') || undefined,
-          message: issue.message,
-        }));
-        throw createError({
-          status: 400,
-          message: 'Invalid pagination parameters',
-          data: { errors },
-        });
-      }
-
-      return parsedQuery.data;
-    });
+    const { page, per_page: perPage } = await getValidatedQuery(
+      event,
+      remoteServersPaginationSchema,
+    );
 
     const db = useDrizzle();
     const offset = page * perPage;
@@ -213,7 +199,7 @@ export default defineEventHandler(async (event: H3Event) => {
             process_configuration: processConfiguration,
           };
         } catch (serverError) {
-          console.error(`[Remote Servers] Error processing server ${server.uuid}:`, serverError);
+          logger.error(`[Remote Servers] Error processing server ${server.uuid}:`, serverError);
           throw serverError;
         }
       }),

@@ -11,6 +11,8 @@ import { invalidateServerSubusersCache } from '#server/utils/subusers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server');
 
@@ -34,83 +36,92 @@ export default defineEventHandler(async (event) => {
 
   const body = await readValidatedBodyWithLimit(event, createSubuserSchema, BODY_SIZE_LIMITS.SMALL);
 
-  const db = useDrizzle();
-  const [targetUser] = await db
-    .select()
-    .from(tables.users)
-    .where(eq(tables.users.email, body.email))
-    .limit(1);
+  try {
+    const db = useDrizzle();
+    const [targetUser] = await db
+      .select()
+      .from(tables.users)
+      .where(eq(tables.users.email, body.email))
+      .limit(1);
 
-  if (!targetUser) {
-    throw createError({
-      status: 404,
-      message: 'User not found with that email address',
+    if (!targetUser) {
+      throw createError({
+        status: 404,
+        message: 'User not found with that email address',
+      });
+    }
+
+    const [existing] = await db
+      .select()
+      .from(tables.serverSubusers)
+      .where(
+        and(
+          eq(tables.serverSubusers.serverId, server.id),
+          eq(tables.serverSubusers.userId, targetUser.id),
+        ),
+      )
+      .limit(1);
+
+    if (existing) {
+      throw createError({
+        status: 400,
+        message: 'User is already a subuser on this server',
+      });
+    }
+
+    const subuserId = randomUUID();
+    const now = new Date().toISOString();
+
+    await db.insert(tables.serverSubusers).values({
+      id: subuserId,
+      serverId: server.id,
+      userId: targetUser.id,
+      permissions: JSON.stringify(body.permissions),
+      createdAt: now,
+      updatedAt: now,
     });
-  }
 
-  const [existing] = await db
-    .select()
-    .from(tables.serverSubusers)
-    .where(
-      and(
-        eq(tables.serverSubusers.serverId, server.id),
-        eq(tables.serverSubusers.userId, targetUser.id),
-      ),
-    )
-    .limit(1);
+    const [subuser] = await db
+      .select()
+      .from(tables.serverSubusers)
+      .where(eq(tables.serverSubusers.id, subuserId))
+      .limit(1);
 
-  if (existing) {
-    throw createError({
-      status: 400,
-      message: 'User is already a subuser on this server',
-    });
-  }
+    await invalidateServerSubusersCache(server.id, [targetUser.id]);
 
-  const subuserId = randomUUID();
-  const now = new Date().toISOString();
-
-  await db.insert(tables.serverSubusers).values({
-    id: subuserId,
-    serverId: server.id,
-    userId: targetUser.id,
-    permissions: JSON.stringify(body.permissions),
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  const [subuser] = await db
-    .select()
-    .from(tables.serverSubusers)
-    .where(eq(tables.serverSubusers.id, subuserId))
-    .limit(1);
-
-  await invalidateServerSubusersCache(server.id, [targetUser.id]);
-
-  await recordServerActivity({
-    event,
-    actorId: user.id,
-    action: 'server.users.added',
-    server: { id: server.id, uuid: server.uuid },
-    metadata: {
-      subuserId,
-      targetUserId: targetUser.id,
-      targetUserEmail: targetUser.email,
-      permissions: body.permissions,
-    },
-  });
-
-  return {
-    data: {
-      id: subuser!.id,
-      user: {
-        id: targetUser.id,
-        username: targetUser.username,
-        email: targetUser.email,
-        image: targetUser.image,
+    await recordServerActivity({
+      event,
+      actorId: user.id,
+      action: 'server.users.added',
+      server: { id: server.id, uuid: server.uuid },
+      metadata: {
+        subuserId,
+        targetUserId: targetUser.id,
+        targetUserEmail: targetUser.email,
+        permissions: body.permissions,
       },
-      permissions: JSON.parse(subuser!.permissions),
-      created_at: subuser!.createdAt,
-      updated_at: subuser!.updatedAt,
-    },
-  };
+    });
+
+    return {
+      data: {
+        id: subuser!.id,
+        user: {
+          id: targetUser.id,
+          username: targetUser.username,
+          email: targetUser.email,
+          image: targetUser.image,
+        },
+        permissions: JSON.parse(subuser!.permissions),
+        created_at: subuser!.createdAt,
+        updated_at: subuser!.updatedAt,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Server Subuser Add] Failed for server:', serverId, error);
+    throw createError({
+      status: 500,
+      message: 'Failed to add subuser to server',
+    });
+  }
 });

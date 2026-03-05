@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm';
+import { logger } from '#server/utils/logger';
 import { useDrizzle, tables } from '#server/utils/drizzle';
 import { getServerLimits, listServerAllocations } from '#server/utils/serversStore';
 import { permissionManager } from '#server/utils/permission-manager';
@@ -107,7 +108,7 @@ export default defineEventHandler(async (event) => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       if (!errorMessage.includes('404') && !errorMessage.includes('not found')) {
-        console.warn(`Failed to resolve cached status for server ${server.uuid}:`, errorMessage);
+        logger.warn(`Failed to resolve cached status for server ${server.uuid}:`, errorMessage);
       }
     }
   }

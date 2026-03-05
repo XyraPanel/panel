@@ -38,10 +38,11 @@ export const adminUpdateUserSchema = z.object({
   username: z.string().trim().min(1).max(255).optional(),
   email: z.string().trim().email().optional(),
   password: z.string().min(8).optional(),
+  name: z.string().trim().max(511).optional(),
   nameFirst: z.string().max(255).nullable().optional(),
   nameLast: z.string().max(255).nullable().optional(),
   language: z.string().max(10).optional(),
-  rootAdmin: z.union([z.boolean(), z.string()]).optional(),
+  rootAdmin: z.coerce.boolean().optional(),
   role: z.enum(['admin', 'user']).optional(),
 });
 

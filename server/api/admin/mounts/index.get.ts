@@ -1,10 +1,13 @@
+import { z } from 'zod';
 import { inArray, count } from 'drizzle-orm';
-import { requireAdmin } from '#server/utils/security';
+import { requireAdmin, getValidatedQuery } from '#server/utils/security';
 import { useDrizzle, tables } from '#server/utils/drizzle';
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
-import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import type { AdminMountListItem } from '#shared/types/admin';
+
+const querySchema = z.object({
+  view: z.string().optional(),
+});
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
@@ -12,8 +15,7 @@ export default defineEventHandler(async (event) => {
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.MOUNTS, ADMIN_ACL_PERMISSIONS.READ);
 
   const db = useDrizzle();
-  const query = getQuery(event);
-  const view = Array.isArray(query.view) ? query.view[0] : query.view;
+  const { view } = await getValidatedQuery(event, querySchema);
 
   if (view === 'options') {
     const options = await db

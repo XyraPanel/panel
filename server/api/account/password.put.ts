@@ -1,20 +1,15 @@
 import { APIError } from 'better-auth/api';
-import type { H3EventContext } from 'h3';
 import { auth, getAuthHeaders } from '#server/utils/auth';
 import { resolveSessionUser } from '#server/utils/auth/sessionUser';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { accountPasswordUpdateSchema } from '#shared/schema/account';
-import { requireAuth, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
 
-function hasAuthContext(ctx: H3EventContext): ctx is H3EventContext & { auth?: any } {
-  return 'auth' in ctx;
-}
 
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT');
 
-  const middlewareAuth = hasAuthContext(event.context) ? event.context.auth : undefined;
-  const session = middlewareAuth?.session ?? (await requireAuth(event));
+  const { session } = await requireAccountUser(event);
 
   if (!session?.user?.id) {
     throw createError({ status: 401, message: 'Unauthorized' });

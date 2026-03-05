@@ -5,6 +5,8 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -17,37 +19,46 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'IDs are required' });
   }
 
-  const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-  const [existing] = await db
-    .select()
-    .from(tables.eggVariables)
-    .where(eq(tables.eggVariables.id, varId))
-    .limit(1);
+    const [existing] = await db
+      .select()
+      .from(tables.eggVariables)
+      .where(eq(tables.eggVariables.id, varId))
+      .limit(1);
 
-  if (!existing || existing.eggId !== eggId) {
-    throw createError({ status: 404, message: 'Variable not found' });
+    if (!existing || existing.eggId !== eggId) {
+      throw createError({ status: 404, message: 'Variable not found' });
+    }
+
+    await db.delete(tables.eggVariables).where(eq(tables.eggVariables.id, varId));
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.egg.variable.deleted',
+      targetType: 'settings',
+      targetId: eggId,
+      metadata: {
+        variableId: varId,
+        variableName: existing.name,
+        envVariable: existing.envVariable,
+      },
+    });
+
+    return {
+      data: {
+        success: true,
+        deletedId: varId,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Egg Variable Delete] Failed:', error);
+    throw createError({
+      status: 500,
+      message: 'Failed to delete egg variable',
+    });
   }
-
-  await db.delete(tables.eggVariables).where(eq(tables.eggVariables.id, varId));
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.egg.variable.deleted',
-    targetType: 'settings',
-    targetId: eggId,
-    metadata: {
-      variableId: varId,
-      variableName: existing.name,
-      envVariable: existing.envVariable,
-    },
-  });
-
-  return {
-    data: {
-      success: true,
-      deletedId: varId,
-    },
-  };
 });

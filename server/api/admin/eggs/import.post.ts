@@ -7,6 +7,8 @@ import type { EggImportResponse } from '#shared/types/admin';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { eggImportSchema } from '#shared/schema/admin/eggs';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event): Promise<EggImportResponse> => {
   const session = await requireAdmin(event);
 
@@ -17,111 +19,121 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
     eggImportSchema,
     BODY_SIZE_LIMITS.LARGE,
   );
-  const typedEggData = eggData;
 
-  if (!nestId || !typedEggData) {
-    throw createError({
-      status: 400,
-      message: 'Nest ID and egg data are required: Missing nestId or eggData in request body',
-    });
-  }
+  try {
+    const typedEggData = eggData;
 
-  const metaVersion = typedEggData.meta?.version;
-  const ACCEPTED_VERSIONS = ['PTDL_v1', 'PTDL_v2', 'v1', 'v2'];
-  if (metaVersion && !ACCEPTED_VERSIONS.includes(metaVersion)) {
-    throw createError({
-      status: 400,
-      message: `Invalid egg format version: "${metaVersion}". Expected one of: ${ACCEPTED_VERSIONS.join(', ')}`,
-    });
-  }
+    if (!nestId || !typedEggData) {
+      throw createError({
+        status: 400,
+        message: 'Nest ID and egg data are required: Missing nestId or eggData in request body',
+      });
+    }
 
-  if (!typedEggData.name || !typedEggData.author) {
-    throw createError({
-      status: 400,
-      message: `Egg file is missing required fields: ${[!typedEggData.name && 'name', !typedEggData.author && 'author'].filter(Boolean).join(', ')}`,
-    });
-  }
+    const metaVersion = typedEggData.meta?.version;
+    const ACCEPTED_VERSIONS = ['PTDL_v1', 'PTDL_v2', 'v1', 'v2'];
+    if (metaVersion && !ACCEPTED_VERSIONS.includes(metaVersion)) {
+      throw createError({
+        status: 400,
+        message: `Invalid egg format version: "${metaVersion}". Expected one of: ${ACCEPTED_VERSIONS.join(', ')}`,
+      });
+    }
 
-  const db = useDrizzle();
+    if (!typedEggData.name || !typedEggData.author) {
+      throw createError({
+        status: 400,
+        message: `Egg file is missing required fields: ${[!typedEggData.name && 'name', !typedEggData.author && 'author'].filter(Boolean).join(', ')}`,
+      });
+    }
 
-  const [nest] = await db.select().from(tables.nests).where(eq(tables.nests.id, nestId)).limit(1);
+    const db = useDrizzle();
 
-  if (!nest) {
-    throw createError({ status: 404, message: 'Nest not found' });
-  }
+    const [nest] = await db.select().from(tables.nests).where(eq(tables.nests.id, nestId)).limit(1);
 
-  const now = new Date().toISOString();
-  const eggId = randomUUID();
+    if (!nest) {
+      throw createError({ status: 404, message: 'Nest not found' });
+    }
 
-  const dockerImages = typedEggData.docker_images || {};
-  const firstImage = Object.values(dockerImages)[0] || 'ghcr.io/pterodactyl/yolks:latest';
+    const now = new Date().toISOString();
+    const eggId = randomUUID();
 
-  const normalizeConfigField = (field: string | Record<string, unknown> | undefined): string => {
-    if (!field) return '{}';
-    if (typeof field === 'string') return field;
-    return JSON.stringify(field);
-  };
+    const dockerImages = typedEggData.docker_images || {};
+    const firstImage = Object.values(dockerImages)[0] || 'ghcr.io/pterodactyl/yolks:latest';
 
-  await db.insert(tables.eggs).values({
-    id: eggId,
-    uuid: randomUUID(),
-    nestId,
-    author: typedEggData.author || 'unknown@unknown.com',
-    name: typedEggData.name,
-    description: typedEggData.description || null,
-    features: typedEggData.features ? JSON.stringify(typedEggData.features) : null,
-    fileDenylist: typedEggData.file_denylist ? JSON.stringify(typedEggData.file_denylist) : null,
-    updateUrl: typedEggData.meta?.update_url || null,
-    dockerImage: firstImage,
-    dockerImages: JSON.stringify(dockerImages),
-    startup: typedEggData.startup || '',
-    configFiles: normalizeConfigField(typedEggData.config?.files),
-    configStartup: normalizeConfigField(typedEggData.config?.startup),
-    configLogs: normalizeConfigField(typedEggData.config?.logs),
-    configStop: typedEggData.config?.stop || 'stop',
-    scriptInstall: typedEggData.scripts?.installation?.script || '',
-    scriptContainer: typedEggData.scripts?.installation?.container || 'alpine:3.4',
-    scriptEntry: typedEggData.scripts?.installation?.entrypoint || 'ash',
-    copyScriptFrom: null,
-    createdAt: now,
-    updatedAt: now,
-  });
+    const normalizeConfigField = (field: string | Record<string, unknown> | undefined): string => {
+      if (!field) return '{}';
+      if (typeof field === 'string') return field;
+      return JSON.stringify(field);
+    };
 
-  if (typedEggData.variables && typedEggData.variables.length > 0) {
-    const variableValues = typedEggData.variables.map((variable) => ({
-      id: randomUUID(),
-      eggId,
-      name: variable.name,
-      description: variable.description || null,
-      envVariable: variable.env_variable,
-      defaultValue: variable.default_value || null,
-      userViewable: variable.user_viewable !== false,
-      userEditable: variable.user_editable !== false,
-      rules: variable.rules || 'required|string',
+    await db.insert(tables.eggs).values({
+      id: eggId,
+      uuid: randomUUID(),
+      nestId,
+      author: typedEggData.author || 'unknown@unknown.com',
+      name: typedEggData.name,
+      description: typedEggData.description || null,
+      features: typedEggData.features ? JSON.stringify(typedEggData.features) : null,
+      fileDenylist: typedEggData.file_denylist ? JSON.stringify(typedEggData.file_denylist) : null,
+      updateUrl: typedEggData.meta?.update_url || null,
+      dockerImage: firstImage,
+      dockerImages: JSON.stringify(dockerImages),
+      startup: typedEggData.startup || '',
+      configFiles: normalizeConfigField(typedEggData.config?.files),
+      configStartup: normalizeConfigField(typedEggData.config?.startup),
+      configLogs: normalizeConfigField(typedEggData.config?.logs),
+      configStop: typedEggData.config?.stop || 'stop',
+      scriptInstall: typedEggData.scripts?.installation?.script || '',
+      scriptContainer: typedEggData.scripts?.installation?.container || 'alpine:3.4',
+      scriptEntry: typedEggData.scripts?.installation?.entrypoint || 'ash',
+      copyScriptFrom: null,
       createdAt: now,
       updatedAt: now,
-    }));
+    });
 
-    if (variableValues.length > 0) {
-      await db.insert(tables.eggVariables).values(variableValues);
+    if (typedEggData.variables && typedEggData.variables.length > 0) {
+      const variableValues = typedEggData.variables.map((variable) => ({
+        id: randomUUID(),
+        eggId,
+        name: variable.name,
+        description: variable.description || null,
+        envVariable: variable.env_variable,
+        defaultValue: variable.default_value || null,
+        userViewable: variable.user_viewable !== false,
+        userEditable: variable.user_editable !== false,
+        rules: variable.rules || 'required|string',
+        createdAt: now,
+        updatedAt: now,
+      }));
+
+      if (variableValues.length > 0) {
+        await db.insert(tables.eggVariables).values(variableValues);
+      }
     }
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.egg.imported',
+      targetType: 'settings',
+      targetId: eggId,
+      metadata: {
+        eggName: typedEggData.name,
+        nestId,
+        variableCount: typedEggData.variables?.length || 0,
+      },
+    });
+
+    return {
+      success: true,
+      data: { id: eggId },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('Fatal error during egg import:', error);
+    throw createError({
+      status: 500,
+      message: 'Failed to import egg',
+    });
   }
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.egg.imported',
-    targetType: 'settings',
-    targetId: eggId,
-    metadata: {
-      eggName: typedEggData.name,
-      nestId,
-      variableCount: typedEggData.variables?.length || 0,
-    },
-  });
-
-  return {
-    success: true,
-    data: { id: eggId },
-  };
 });

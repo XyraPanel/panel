@@ -3,7 +3,8 @@ import { getWingsClientForServer } from '#server/utils/wings-client';
 import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
-import { requireAccountUser } from '#server/utils/security';
+import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
 import { z } from 'zod';
 
 const restoreBackupSchema = z.object({
@@ -29,8 +30,11 @@ export default defineEventHandler(async (event) => {
     requiredPermissions: ['server.backup.restore'],
   });
 
-  const rawBody = await readBody(event);
-  const { truncate } = restoreBackupSchema.parse(rawBody ?? {});
+  const { truncate } = await readValidatedBodyWithLimit(
+    event,
+    restoreBackupSchema,
+    BODY_SIZE_LIMITS.SMALL
+  );
 
   const db = useDrizzle();
   const [backup] = await db
@@ -56,7 +60,7 @@ export default defineEventHandler(async (event) => {
     wasRunning = serverDetails.state === 'running';
 
     if (wasRunning) {
-      console.log(`[Backup Restore] Stopping server ${server.uuid} before restore`);
+      logger.info(`[Backup Restore] Stopping server ${server.uuid} before restore`);
       await client.sendPowerAction(server.uuid, 'stop');
 
       const maxWaitTime = 30000; // 30 seconds
@@ -72,7 +76,7 @@ export default defineEventHandler(async (event) => {
       }
 
       if (!stopped) {
-        console.warn(
+        logger.warn(
           `[Backup Restore] Server ${server.uuid} did not stop within timeout, proceeding with restore anyway`,
         );
       }
@@ -100,7 +104,7 @@ export default defineEventHandler(async (event) => {
       wasRunning,
     };
   } catch (error) {
-    console.error('Failed to restore backup on Wings:', error);
+    logger.error('Failed to restore backup on Wings:', error);
     throw createError({
       status: 500,
       message: 'Failed to restore backup',

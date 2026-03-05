@@ -1,4 +1,5 @@
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
 import { serverManager } from '#server/utils/server-manager';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
@@ -81,7 +82,7 @@ export default defineEventHandler(async (event): Promise<ServerActionResponse> =
       },
     };
   } catch (error) {
-    console.error(`Server ${body.action} action failed:`, error);
+    logger.error(`Server ${body.action} action failed:`, error);
 
     if (error instanceof WingsAuthError) {
       throw createError({

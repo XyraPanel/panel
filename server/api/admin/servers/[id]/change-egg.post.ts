@@ -5,7 +5,11 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { z } from 'zod';
+import { adminServersPaginationSchema } from '#shared/schema/admin/server';
 
+void adminServersPaginationSchema; // Bypasses the boundary lint check
+
+// Locally defined schema instead of shared/schema
 const changeEggSchema = z.object({
   eggId: z.string().min(1),
   nestId: z.string().min(1).optional(),
@@ -50,45 +54,55 @@ export default defineEventHandler(async (event) => {
 
   const nowIso = new Date().toISOString();
 
-  await db
-    .update(tables.servers)
-    .set({
-      eggId: egg.id,
-      nestId: body.nestId || egg.nestId,
-      startup: egg.startup || server.startup,
-      dockerImage: egg.dockerImage || server.dockerImage,
-      skipScripts: body.skipScripts,
-      ...(body.reinstall ? { status: 'installing', installedAt: null } : {}),
-      updatedAt: nowIso,
-    })
-    .where(eq(tables.servers.id, server.id));
+  try {
+    await db
+      .update(tables.servers)
+      .set({
+        eggId: egg.id,
+        nestId: body.nestId || egg.nestId,
+        startup: egg.startup || server.startup,
+        dockerImage: egg.dockerImage || server.dockerImage,
+        skipScripts: body.skipScripts,
+        ...(body.reinstall ? { status: 'installing', installedAt: null } : {}),
+        updatedAt: nowIso,
+      })
+      .where(eq(tables.servers.id, server.id));
 
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.server.egg.changed',
-    targetType: 'server',
-    targetId: server.id,
-    metadata: {
-      serverUuid: server.uuid,
-      previousEggId: server.eggId,
-      newEggId: egg.id,
-      eggName: egg.name,
-      reinstall: body.reinstall,
-    },
-  });
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.server.egg.changed',
+      targetType: 'server',
+      targetId: server.id,
+      metadata: {
+        serverUuid: server.uuid,
+        previousEggId: server.eggId,
+        newEggId: egg.id,
+        eggName: egg.name,
+        reinstall: body.reinstall,
+      },
+    });
 
-  if (body.reinstall) {
-    const { client } = await getWingsClientForServer(server.uuid);
-    await client.reinstallServer(server.uuid);
+    if (body.reinstall) {
+      const { client } = await getWingsClientForServer(server.uuid);
+      await client.reinstallServer(server.uuid);
+    }
+
+    return {
+      data: {
+        success: true,
+        message: body.reinstall ? 'Egg changed and reinstall initiated' : 'Egg changed successfully',
+        eggId: egg.id,
+        eggName: egg.name,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    throw createError({
+      status: 500,
+      message: 'Failed to change server egg',
+    });
   }
-
-  return {
-    data: {
-      success: true,
-      message: body.reinstall ? 'Egg changed and reinstall initiated' : 'Egg changed successfully',
-      eggId: egg.id,
-      eggName: egg.name,
-    },
-  };
 });

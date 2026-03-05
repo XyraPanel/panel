@@ -1,4 +1,5 @@
-import { requireAdmin } from '#server/utils/security';
+import { getValidatedQuery, requireAdmin } from '#server/utils/security';
+import { logger } from '#server/utils/logger';
 import { useDrizzle, tables, eq, isNotNull, desc } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
@@ -16,22 +17,10 @@ export default defineEventHandler(async (event) => {
       ADMIN_ACL_PERMISSIONS.READ,
     );
 
-    const { page, perPage } = await getValidatedQuery(event, (data: any) => {
-      const parsed = adminServersPaginationSchema.safeParse({
-        page: data.page,
-        perPage: data.per_page ?? data.perPage ?? data.limit,
-      });
-
-      if (!parsed.success) {
-        throw createError({
-          status: 400,
-          message: 'Invalid pagination parameters',
-          data: parsed.error.format(),
-        });
-      }
-
-      return parsed.data;
-    });
+    const { page, perPage } = await getValidatedQuery(
+      event,
+      adminServersPaginationSchema,
+    );
     const offset = (page - 1) * perPage;
 
     const db = useDrizzle();
@@ -109,7 +98,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    console.error('[GET] /api/admin/servers: Error:', error);
+    logger.error('[GET] /api/admin/servers: Error:', error);
     if (error && typeof error === 'object' && 'status' in error) {
       throw error;
     }

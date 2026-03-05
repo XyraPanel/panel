@@ -7,6 +7,7 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { updateLocationSchema } from '#shared/schema/admin/infrastructure';
 
 export default defineEventHandler(async (event) => {
+  try {
   const session = await requireAdmin(event);
 
   await requireAdminApiKeyPermission(
@@ -79,4 +80,16 @@ export default defineEventHandler(async (event) => {
       updatedAt: new Date(updated!.updatedAt).toISOString(),
     },
   };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    const { logger } = await import('#server/utils/logger');
+    logger.error('Unhandled API exception', error);
+    throw createError({
+      status: 500,
+      message: 'Internal Server Error',
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
+  }
 });

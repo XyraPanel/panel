@@ -1,11 +1,17 @@
+import { z } from 'zod';
 import { getAuth, getAuthHeaders } from '#server/utils/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
-import { requireAuth } from '#server/utils/security';
+import { getValidatedQuery, requireAuth } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
   const session = await requireAuth(event);
 
-  const query = getQuery(event);
+  const query = await getValidatedQuery(
+    event,
+    z.object({
+      includeCurrent: z.string().optional(),
+    }),
+  );
   const includeCurrent = query.includeCurrent === 'true';
 
   if (includeCurrent) {

@@ -1,4 +1,5 @@
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { logger } from '#server/utils/logger';
 import { updateDockerImageSchema } from '#shared/schema/server/operations';
 import {
   requireAccountUser,
@@ -11,6 +12,7 @@ import { recordServerActivity } from '#server/utils/server-activity';
 import { invalidateServerCaches } from '#server/utils/serversStore';
 
 export default defineEventHandler(async (event) => {
+  try {
   const identifier = getRouterParam(event, 'id');
   if (!identifier) {
     throw createError({
@@ -45,7 +47,7 @@ export default defineEventHandler(async (event) => {
       dockerImages =
         typeof egg.dockerImages === 'string' ? JSON.parse(egg.dockerImages) : egg.dockerImages;
     } catch (e) {
-      console.warn('[Docker Image PUT] Failed to parse egg dockerImages:', e);
+      logger.warn('[Docker Image PUT] Failed to parse egg dockerImages:', e);
     }
 
     const validImages = Object.values(dockerImages);
@@ -93,4 +95,16 @@ export default defineEventHandler(async (event) => {
       message: 'Docker image updated successfully. Restart your server for changes to take effect.',
     },
   };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    const { logger: _logger } = await import('#server/utils/logger');
+    _logger.error('Unhandled API exception', error);
+    throw createError({
+      status: 500,
+      message: 'Internal Server Error',
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
+  }
 });

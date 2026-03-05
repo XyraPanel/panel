@@ -1,9 +1,11 @@
 import { type H3Event } from 'h3';
 import { remoteGetFileContents } from '#server/utils/wings/registry';
-import { requireAccountUser } from '#server/utils/security';
+import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
+import { debugError } from '#server/utils/logger';
+import { z } from 'zod';
 
 export default defineEventHandler(async (event: H3Event) => {
   setHeader(event, 'Content-Type', 'application/json');
@@ -28,15 +30,12 @@ export default defineEventHandler(async (event: H3Event) => {
   // Users need to access files even when the server is stopped
   // Only Wings connectivity issues will prevent access
 
-  const query = getQuery(event);
-  const file = typeof query.file === 'string' ? query.file : null;
-
-  if (!file) {
-    throw createError({
-      status: 400,
-      message: 'Missing file path',
-    });
-  }
+  const { file } = await getValidatedQuery(
+    event,
+    z.object({
+      file: z.string().min(1, 'File path is required'),
+    }),
+  );
 
   try {
     const result = await remoteGetFileContents(server.uuid, file, server.nodeId ?? undefined);
@@ -53,7 +52,7 @@ export default defineEventHandler(async (event: H3Event) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unable to read file contents.';
 
-    console.error('[Files Content] Error fetching file:', {
+    debugError('[Files Content] Error fetching file:', {
       serverUuid: server.uuid,
       filePath: file,
       error: errorMessage,

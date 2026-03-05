@@ -1,4 +1,5 @@
 import { APIError } from 'better-auth/api';
+import { logger } from '#server/utils/logger';
 import { auth, getAuthHeaders } from '#server/utils/auth';
 import { useDrizzle, tables, eq, or } from '#server/utils/drizzle';
 import { resolvePanelBaseUrl } from '#server/utils/email';
@@ -58,12 +59,12 @@ export default defineEventHandler(async (event) => {
     });
   } catch (error) {
     if (error instanceof APIError) {
-      console.error('Failed to send password reset email', {
+      logger.error('Failed to send password reset email', {
         status: error.status,
         message: error.message,
       });
     } else {
-      console.error('Failed to send password reset email', error);
+      logger.error('Failed to send password reset email', error);
     }
   }
 

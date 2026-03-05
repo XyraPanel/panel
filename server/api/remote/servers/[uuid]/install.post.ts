@@ -6,6 +6,7 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { remoteServerInstallStatusSchema } from '#shared/schema/wings';
 
 export default defineEventHandler(async (event: H3Event) => {
+  try {
   assertMethod(event, 'POST');
   const db = useDrizzle();
   const { uuid } = getRouterParams(event);
@@ -71,4 +72,16 @@ export default defineEventHandler(async (event: H3Event) => {
       status: newStatus,
     },
   };
+  } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+    const { logger } = await import('#server/utils/logger');
+    logger.error('Unhandled API exception', error);
+    throw createError({
+      status: 500,
+      message: 'Internal Server Error',
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
+    });
+  }
 });

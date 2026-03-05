@@ -4,6 +4,8 @@ import { requireAdmin } from '#server/utils/security';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'DELETE');
   const session = await requireAdmin(event);
@@ -19,54 +21,63 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'Missing API key identifier' });
   }
 
-  const db = useDrizzle();
+  try {
+    const db = useDrizzle();
 
-  const [targetUser] = await db
-    .select({ id: tables.users.id, username: tables.users.username })
-    .from(tables.users)
-    .where(eq(tables.users.id, userId))
-    .limit(1);
+    const [targetUser] = await db
+      .select({ id: tables.users.id, username: tables.users.username })
+      .from(tables.users)
+      .where(eq(tables.users.id, userId))
+      .limit(1);
 
-  if (!targetUser) {
-    throw createError({ status: 404, message: 'User not found' });
+    if (!targetUser) {
+      throw createError({ status: 404, message: 'User not found' });
+    }
+
+    const [apiKey] = await db
+      .select({
+        id: tables.apiKeys.id,
+        identifier: tables.apiKeys.identifier,
+        memo: tables.apiKeys.memo,
+      })
+      .from(tables.apiKeys)
+      .where(and(eq(tables.apiKeys.identifier, identifier), eq(tables.apiKeys.userId, userId)))
+      .limit(1);
+
+    if (!apiKey) {
+      throw createError({ status: 404, message: 'API key not found' });
+    }
+
+    await db.delete(tables.apiKeys).where(eq(tables.apiKeys.id, apiKey.id));
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.user.api_key.delete',
+      targetType: 'user',
+      targetId: userId,
+      metadata: {
+        targetUserId: userId,
+        targetUsername: targetUser.username,
+        apiKeyIdentifier: identifier,
+        apiKeyMemo: apiKey.memo,
+        apiKeyId: apiKey.id,
+      },
+    });
+
+    return {
+      data: {
+        success: true,
+        userId,
+        apiKeyIdentifier: identifier,
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin User API Key Delete] Failed:', error);
+    throw createError({
+      status: 500,
+      message: 'Failed to delete user API key',
+    });
   }
-
-  const [apiKey] = await db
-    .select({
-      id: tables.apiKeys.id,
-      identifier: tables.apiKeys.identifier,
-      memo: tables.apiKeys.memo,
-    })
-    .from(tables.apiKeys)
-    .where(and(eq(tables.apiKeys.identifier, identifier), eq(tables.apiKeys.userId, userId)))
-    .limit(1);
-
-  if (!apiKey) {
-    throw createError({ status: 404, message: 'API key not found' });
-  }
-
-  await db.delete(tables.apiKeys).where(eq(tables.apiKeys.id, apiKey.id));
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.user.api_key.delete',
-    targetType: 'user',
-    targetId: userId,
-    metadata: {
-      targetUserId: userId,
-      targetUsername: targetUser.username,
-      apiKeyIdentifier: identifier,
-      apiKeyMemo: apiKey.memo,
-      apiKeyId: apiKey.id,
-    },
-  });
-
-  return {
-    data: {
-      success: true,
-      userId,
-      apiKeyIdentifier: identifier,
-    },
-  };
 });

@@ -6,6 +6,8 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { updateEggVariableSchema } from '#shared/schema/admin/infrastructure';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+import { debugError } from '#server/utils/logger';
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -23,71 +25,81 @@ export default defineEventHandler(async (event) => {
     updateEggVariableSchema,
     BODY_SIZE_LIMITS.SMALL,
   );
-  const db = useDrizzle();
 
-  const [existing] = await db
-    .select()
-    .from(tables.eggVariables)
-    .where(eq(tables.eggVariables.id, varId))
-    .limit(1);
+  try {
+    const db = useDrizzle();
 
-  if (!existing || existing.eggId !== eggId) {
-    throw createError({ status: 404, message: 'Variable not found' });
-  }
+    const [existing] = await db
+      .select()
+      .from(tables.eggVariables)
+      .where(eq(tables.eggVariables.id, varId))
+      .limit(1);
 
-  const updates: Record<string, string | boolean | Date | null> = {
-    updatedAt: new Date().toISOString(),
-  };
+    if (!existing || existing.eggId !== eggId) {
+      throw createError({ status: 404, message: 'Variable not found' });
+    }
 
-  if (body.name !== undefined) updates.name = body.name;
-  if (body.description !== undefined) updates.description = body.description;
-  if (body.envVariable !== undefined) updates.envVariable = body.envVariable;
-  if (body.defaultValue !== undefined) updates.defaultValue = body.defaultValue;
-  if (body.userViewable !== undefined) updates.userViewable = body.userViewable;
-  if (body.userEditable !== undefined) updates.userEditable = body.userEditable;
-  if (body.rules !== undefined) updates.rules = body.rules;
+    const updates: Record<string, string | boolean | Date | null> = {
+      updatedAt: new Date().toISOString(),
+    };
 
-  await db.update(tables.eggVariables).set(updates).where(eq(tables.eggVariables.id, varId));
+    if (body.name !== undefined) updates.name = body.name;
+    if (body.description !== undefined) updates.description = body.description;
+    if (body.envVariable !== undefined) updates.envVariable = body.envVariable;
+    if (body.defaultValue !== undefined) updates.defaultValue = body.defaultValue;
+    if (body.userViewable !== undefined) updates.userViewable = body.userViewable;
+    if (body.userEditable !== undefined) updates.userEditable = body.userEditable;
+    if (body.rules !== undefined) updates.rules = body.rules;
 
-  const [updated] = await db
-    .select()
-    .from(tables.eggVariables)
-    .where(eq(tables.eggVariables.id, varId))
-    .limit(1);
+    await db.update(tables.eggVariables).set(updates).where(eq(tables.eggVariables.id, varId));
 
-  if (!updated) {
+    const [updated] = await db
+      .select()
+      .from(tables.eggVariables)
+      .where(eq(tables.eggVariables.id, varId))
+      .limit(1);
+
+    if (!updated) {
+      throw createError({
+        status: 404,
+        message: 'Variable not found after update',
+      });
+    }
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.egg.variable.updated',
+      targetType: 'settings',
+      targetId: eggId,
+      metadata: {
+        variableId: varId,
+        variableName: updated.name,
+        updatedFields: Object.keys(body),
+      },
+    });
+
+    return {
+      data: {
+        id: updated.id,
+        eggId: updated.eggId,
+        name: updated.name,
+        description: updated.description,
+        envVariable: updated.envVariable,
+        defaultValue: updated.defaultValue,
+        userViewable: Boolean(updated.userViewable),
+        userEditable: Boolean(updated.userEditable),
+        rules: updated.rules,
+        createdAt: new Date(updated.createdAt).toISOString(),
+        updatedAt: new Date(updated.updatedAt).toISOString(),
+      },
+    };
+  } catch (error) {
+    if (error && typeof error === 'object' && 'statusCode' in error) throw error;
+    debugError('[Admin Egg Variable Patch] Failed:', error);
     throw createError({
-      status: 404,
-      message: 'Variable not found after update',
+      status: 500,
+      message: 'Failed to update egg variable',
     });
   }
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.egg.variable.updated',
-    targetType: 'settings',
-    targetId: eggId,
-    metadata: {
-      variableId: varId,
-      variableName: updated.name,
-      updatedFields: Object.keys(body),
-    },
-  });
-
-  return {
-    data: {
-      id: updated.id,
-      eggId: updated.eggId,
-      name: updated.name,
-      description: updated.description,
-      envVariable: updated.envVariable,
-      defaultValue: updated.defaultValue,
-      userViewable: Boolean(updated.userViewable),
-      userEditable: Boolean(updated.userEditable),
-      rules: updated.rules,
-      createdAt: new Date(updated.createdAt).toISOString(),
-      updatedAt: new Date(updated.updatedAt).toISOString(),
-    },
-  };
 });

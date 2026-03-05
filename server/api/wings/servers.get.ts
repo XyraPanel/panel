@@ -1,5 +1,5 @@
 import { type H3Event } from 'h3';
-import { requireAdmin } from '#server/utils/security';
+import { getValidatedQuery, requireAdmin } from '#server/utils/security';
 import { z } from 'zod';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { listServers, paginateServers } from '#server/utils/wings/registry';
@@ -10,24 +10,13 @@ export default defineEventHandler(async (event: H3Event) => {
   const query = getQuery(event);
   const nodeId = getNodeIdFromQuery(query);
 
-  const { page, per_page: perPage } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
+  const { page, per_page: perPage } = await getValidatedQuery(
+    event,
+    z.object({
       page: z.coerce.number().min(1).default(1),
-      per_page: z.coerce.number().min(1).max(500).default(50)
-    }).safeParse(data);
-
-    if (!result.success) {
-      throw createError({
-        status: 400,
-        message: 'Invalid pagination parameters: Use positive numeric values for page and per_page.',
-        data: {
-          errors: [{ detail: 'Use positive numeric values for page and per_page.' }],
-        },
-      });
-    }
-
-    return result.data;
-  });
+      per_page: z.coerce.number().min(1).max(500).default(50),
+    }),
+  );
 
   try {
     if ('page' in query || 'per_page' in query) {
