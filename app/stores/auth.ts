@@ -143,9 +143,9 @@ export const useAuthStore = defineStore('auth', () => {
   function isTwoFactorRedirect(data: unknown): data is { twoFactorRedirect: true } {
     return Boolean(
       data &&
-        typeof data === 'object' &&
-        'twoFactorRedirect' in data &&
-        (data as Record<string, unknown>).twoFactorRedirect === true,
+      typeof data === 'object' &&
+      'twoFactorRedirect' in data &&
+      (data as Record<string, unknown>).twoFactorRedirect === true,
     );
   }
 

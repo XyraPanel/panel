@@ -23,10 +23,12 @@ export default defineEventHandler(async (event): Promise<AccountSessionsResponse
   }
 
   const { page, limit } = await getValidatedQuery(event, (data) => {
-    return z.object({
-      page: z.coerce.number().min(1).default(1),
-      limit: z.coerce.number().min(1).max(100).default(50)
-    }).parse(data);
+    return z
+      .object({
+        page: z.coerce.number().min(1).default(1),
+        limit: z.coerce.number().min(1).max(100).default(50),
+      })
+      .parse(data);
   });
   const offset = (page - 1) * limit;
 

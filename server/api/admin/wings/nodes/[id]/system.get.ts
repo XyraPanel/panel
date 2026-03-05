@@ -14,9 +14,12 @@ export default defineEventHandler(async (event) => {
   }
 
   const { version } = await getValidatedQuery(event, (data) => {
-    return z.object({
-      v: z.coerce.number().min(1).default(2)
-    }).transform((d: { v: number }) => ({ version: d.v })).parse(data);
+    return z
+      .object({
+        v: z.coerce.number().min(1).default(2),
+      })
+      .transform((d: { v: number }) => ({ version: d.v }))
+      .parse(data);
   });
 
   const systemInfo = await remoteGetSystemInformation(id, version);
