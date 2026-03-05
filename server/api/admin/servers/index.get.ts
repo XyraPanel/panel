@@ -17,10 +17,7 @@ export default defineEventHandler(async (event) => {
       ADMIN_ACL_PERMISSIONS.READ,
     );
 
-    const { page, perPage } = await getValidatedQuery(
-      event,
-      adminServersPaginationSchema,
-    );
+    const { page, perPage } = await getValidatedQuery(event, adminServersPaginationSchema);
     const offset = (page - 1) * perPage;
 
     const db = useDrizzle();

@@ -46,7 +46,10 @@ export default defineEventHandler(async (event) => {
       .from(tables.serverDatabases)
       .where(eq(tables.serverDatabases.serverId, server.id));
 
-    if (server.databaseLimit && Number(serverDbRows[0]?.serverDbCount ?? 0) >= server.databaseLimit) {
+    if (
+      server.databaseLimit &&
+      Number(serverDbRows[0]?.serverDbCount ?? 0) >= server.databaseLimit
+    ) {
       throw createError({ status: 403, message: 'Server database limit reached' });
     }
 
@@ -93,7 +96,11 @@ export default defineEventHandler(async (event) => {
       updatedAt: now,
     });
 
-    await invalidateServerCaches({ id: server.id, uuid: server.uuid, identifier: server.identifier });
+    await invalidateServerCaches({
+      id: server.id,
+      uuid: server.uuid,
+      identifier: server.identifier,
+    });
 
     await recordAuditEventFromRequest(event, {
       actor: accountContext.user.id,

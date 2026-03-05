@@ -11,7 +11,6 @@ export default defineEventHandler(async (event) => {
     BODY_SIZE_LIMITS.SMALL,
   );
 
-
   try {
     await auth.api.resetPassword({
       body: {
