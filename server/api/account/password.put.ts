@@ -3,8 +3,11 @@ import { auth, getAuthHeaders } from '#server/utils/auth';
 import { resolveSessionUser } from '#server/utils/auth/sessionUser';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { accountPasswordUpdateSchema } from '#shared/schema/account';
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
-
+import {
+  requireAccountUser,
+  readValidatedBodyWithLimit,
+  BODY_SIZE_LIMITS,
+} from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT');

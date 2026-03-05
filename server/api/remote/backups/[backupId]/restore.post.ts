@@ -7,70 +7,70 @@ import { remoteBackupRestoreStatusSchema } from '#shared/schema/wings';
 
 export default defineEventHandler(async (event: H3Event) => {
   try {
-  const db = useDrizzle();
-  const { backupId } = getRouterParams(event);
+    const db = useDrizzle();
+    const { backupId } = getRouterParams(event);
 
-  if (!backupId || typeof backupId !== 'string') {
-    throw createError({ status: 400, message: 'Missing backup ID' });
-  }
+    if (!backupId || typeof backupId !== 'string') {
+      throw createError({ status: 400, message: 'Missing backup ID' });
+    }
 
-  const nodeId = await getNodeIdFromAuth(event);
+    const nodeId = await getNodeIdFromAuth(event);
 
-  const body = await readValidatedBodyWithLimit(
-    event,
-    remoteBackupRestoreStatusSchema,
-    BODY_SIZE_LIMITS.SMALL,
-  );
-  const { successful } = body;
+    const body = await readValidatedBodyWithLimit(
+      event,
+      remoteBackupRestoreStatusSchema,
+      BODY_SIZE_LIMITS.SMALL,
+    );
+    const { successful } = body;
 
-  const backupRows = await db
-    .select()
-    .from(tables.serverBackups)
-    .where(eq(tables.serverBackups.uuid, backupId))
-    .limit(1);
+    const backupRows = await db
+      .select()
+      .from(tables.serverBackups)
+      .where(eq(tables.serverBackups.uuid, backupId))
+      .limit(1);
 
-  const backup = backupRows[0];
+    const backup = backupRows[0];
 
-  if (!backup) {
-    throw createError({ status: 404, message: 'Backup not found' });
-  }
+    if (!backup) {
+      throw createError({ status: 404, message: 'Backup not found' });
+    }
 
-  const serverRows = await db
-    .select()
-    .from(tables.servers)
-    .where(eq(tables.servers.id, backup.serverId))
-    .limit(1);
+    const serverRows = await db
+      .select()
+      .from(tables.servers)
+      .where(eq(tables.servers.id, backup.serverId))
+      .limit(1);
 
-  const server = serverRows[0];
+    const server = serverRows[0];
 
-  if (server) {
-    await db
-      .update(tables.servers)
-      .set({
-        status: successful ? null : 'restore_failed',
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(tables.servers.id, server.id));
-  }
+    if (server) {
+      await db
+        .update(tables.servers)
+        .set({
+          status: successful ? null : 'restore_failed',
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(tables.servers.id, server.id));
+    }
 
-  await recordAuditEventFromRequest(event, {
-    actor: 'wings',
-    actorType: 'system',
-    action: successful ? 'server:backup.restore-complete' : 'server:backup.restore-failed',
-    targetType: 'backup',
-    targetId: backupId,
-    metadata: {
-      node_id: nodeId,
-      server_uuid: server?.uuid,
-      successful,
-    },
-  });
+    await recordAuditEventFromRequest(event, {
+      actor: 'wings',
+      actorType: 'system',
+      action: successful ? 'server:backup.restore-complete' : 'server:backup.restore-failed',
+      targetType: 'backup',
+      targetId: backupId,
+      metadata: {
+        node_id: nodeId,
+        server_uuid: server?.uuid,
+        successful,
+      },
+    });
 
-  return {
-    data: {
-      success: true,
-    },
-  };
+    return {
+      data: {
+        success: true,
+      },
+    };
   } catch (error) {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
