@@ -1,0 +1,17 @@
+{
+  "name": "@xyra/cli",
+  "version": "0.1.0-alpha.3",
+  "type": "module",
+  "bin": {
+    "xyra": "./bin/xyra.mjs"
+  },
+  "exports": {
+    ".": "./src/index.mjs"
+  },
+  "dependencies": {
+    "citty": "^0.2.1",
+    "consola": "^3.4.2",
+    "execa": "^9.6.1",
+    "pathe": "^2.0.3"
+  }
+}

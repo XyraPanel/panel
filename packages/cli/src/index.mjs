@@ -8,8 +8,26 @@ import { colors } from 'consola/utils';
 import { execa } from 'execa';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const projectRoot = resolve(__dirname, '..');
-const pkg = JSON.parse(await readFile(new URL('../package.json', import.meta.url), 'utf8'));
+const packageJsonCandidates = [
+  resolve(process.cwd(), 'package.json'),
+  resolve(__dirname, '../../../package.json'),
+];
+
+let projectRoot;
+let pkg;
+
+for (const candidate of packageJsonCandidates) {
+  try {
+    pkg = JSON.parse(await readFile(candidate, 'utf8'));
+    projectRoot = dirname(candidate);
+    break;
+  } catch {}
+}
+
+if (!pkg || !projectRoot) {
+  consola.error('Unable to locate repository package.json for xyra CLI.');
+  process.exit(1);
+}
 const logger = consola.withDefaults({
   tag: 'xyra',
   fancy: process.stdout.isTTY,

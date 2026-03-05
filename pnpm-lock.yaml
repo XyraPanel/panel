@@ -50,24 +50,21 @@ importers:
       '@xterm/xterm':
         specifier: ^6.0.0
         version: 6.0.0
+      '@xyra/cli':
+        specifier: workspace:*
+        version: link:packages/cli
       bcryptjs:
         specifier: ^3.0.3
         version: 3.0.3
       better-auth:
         specifier: ^1.4.19
         version: 1.4.19(better-sqlite3@12.6.2)(drizzle-kit@0.31.9)(drizzle-orm@0.45.1(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.11)(mysql2@3.18.2(@types/node@25.3.1))(pg@8.19.0))(mysql2@3.18.2(@types/node@25.3.1))(pg@8.19.0)(vitest@4.0.18)(vue@3.5.29(typescript@5.9.3))
-      citty:
-        specifier: ^0.2.1
-        version: 0.2.1
       consola:
         specifier: ^3.4.2
         version: 3.4.2
       drizzle-orm:
         specifier: ^0.45.1
         version: 0.45.1(@types/better-sqlite3@7.6.13)(@types/pg@8.16.0)(better-sqlite3@12.6.2)(kysely@0.28.11)(mysql2@3.18.2(@types/node@25.3.1))(pg@8.19.0)
-      execa:
-        specifier: ^9.6.1
-        version: 9.6.1
       jose:
         specifier: ^6.1.3
         version: 6.1.3
@@ -165,6 +162,21 @@ importers:
       vue-tsc:
         specifier: ^3.2.5
         version: 3.2.5(typescript@5.9.3)
+
+  packages/cli:
+    dependencies:
+      citty:
+        specifier: ^0.2.1
+        version: 0.2.1
+      consola:
+        specifier: ^3.4.2
+        version: 3.4.2
+      execa:
+        specifier: ^9.6.1
+        version: 9.6.1
+      pathe:
+        specifier: ^2.0.3
+        version: 2.0.3
 
 packages:
 
