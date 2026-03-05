@@ -1,3 +1,4 @@
+import type { H3Event } from 'h3';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { admin } from 'better-auth/plugins/admin';
@@ -574,6 +575,6 @@ export function normalizeHeadersForAuth(
 /**
  * Gets normalized headers from an H3Event for Better Auth.
  */
-export function getAuthHeaders(event: any): Record<string, string> {
+export function getAuthHeaders(event: H3Event): Record<string, string> {
   return normalizeHeadersForAuth(getHeaders(event));
 }

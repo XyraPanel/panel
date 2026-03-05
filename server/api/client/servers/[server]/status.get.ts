@@ -20,7 +20,7 @@ export default defineEventHandler(async (event) => {
   });
 
   try {
-    const status = await getServerStatus(serverIdentifier);
+    const status = await getServerStatus(server.uuid);
 
     return {
       data: {
