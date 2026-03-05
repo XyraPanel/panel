@@ -13,7 +13,7 @@ export const useServerData = (serverId: string) => {
     data: serverStats,
     pending: statsPending,
     refresh: refreshStats,
-  } = useLazyFetch<any>(`/api/client/servers/${serverId}/stats`, {
+  } = useLazyFetch<any>(`/api/client/servers/${serverId}/status`, {
     key: `server-${serverId}-stats`,
     server: false,
   });

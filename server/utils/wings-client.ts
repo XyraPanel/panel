@@ -14,7 +14,7 @@ function isServerDetails(value: unknown): value is WingsServerDetails {
   return (
     isRecord(value) &&
     typeof value.state === 'string' &&
-    typeof value.isSuspended === 'boolean' &&
+    ('is_suspended' in value || 'isSuspended' in value) &&
     isRecord(value.utilization)
   );
 }

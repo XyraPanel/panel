@@ -11,7 +11,7 @@ export interface WingsNode {
 
 export interface WingsServerDetails {
   state: string;
-  isSuspended: boolean;
+  is_suspended: boolean;
   utilization: {
     memory_bytes: number;
     memory_limit_bytes: number;

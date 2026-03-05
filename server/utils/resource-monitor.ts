@@ -26,7 +26,7 @@ export class ResourceMonitor {
         serverId: String(server.id),
         serverUuid: String(server.uuid),
         state: details.state || 'offline',
-        isSuspended: details.isSuspended,
+        isSuspended: details.is_suspended,
         memoryBytes: details.utilization.memory_bytes,
         memoryLimitBytes: details.utilization.memory_limit_bytes,
         cpuAbsolute: details.utilization.cpu_absolute,

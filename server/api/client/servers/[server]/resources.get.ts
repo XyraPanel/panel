@@ -27,7 +27,7 @@ export default defineEventHandler(async (event) => {
     return {
       data: {
         current_state: details.state || 'offline',
-        is_suspended: details.isSuspended,
+        is_suspended: details.is_suspended,
         resources: {
           memory_bytes: details.utilization.memory_bytes,
           memory_limit_bytes: details.utilization.memory_limit_bytes,

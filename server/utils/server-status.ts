@@ -53,7 +53,7 @@ async function fetchServerStatus(serverUuid: string): Promise<ServerStatus> {
       ...baseStatus,
       state: details.state,
       isOnline: details.state === 'running',
-      isSuspended: details.isSuspended,
+      isSuspended: details.is_suspended,
       utilization: details.utilization,
     };
   } catch (error) {
