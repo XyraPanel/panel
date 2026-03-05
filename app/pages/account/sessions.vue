@@ -373,7 +373,7 @@ async function handleSignOutAll(includeCurrent = false) {
             :key="session.token"
             :class="[
               'rounded-lg border border-default overflow-hidden',
-              isSessionInactive(session) ? 'opacity-60 bg-muted/20' : ''
+              isSessionInactive(session) ? 'opacity-60 bg-muted/20' : '',
             ]"
           >
             <div

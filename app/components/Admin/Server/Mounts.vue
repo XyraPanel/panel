@@ -110,9 +110,7 @@ async function handleDetach(mountId: string, mountName: string) {
       <UButton icon="i-lucide-plus" color="primary" @click="showAttachModal = true">
         Attach Mount
       </UButton>
-      <p class="text-sm text-muted-foreground">
-        Manage shared directory mounts for this server
-      </p>
+      <p class="text-sm text-muted-foreground">Manage shared directory mounts for this server</p>
     </div>
 
     <div v-if="mountsPending" class="space-y-3">

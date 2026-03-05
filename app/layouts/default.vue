@@ -157,12 +157,20 @@ const sidebarToggleProps = computed(() => ({
       </template>
 
       <template #default="{ collapsed }">
-        <UNavigationMenu :collapsed="collapsed" :items="navigationItems" orientation="vertical" :aria-label="t('layout.clientNavigation')" />
+        <UNavigationMenu
+          :collapsed="collapsed"
+          :items="navigationItems"
+          orientation="vertical"
+          :aria-label="t('layout.clientNavigation')"
+        />
       </template>
 
       <template #footer="{ collapsed }">
         <UDropdownMenu
-          :items="[accountNavItems, [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }]]"
+          :items="[
+            accountNavItems,
+            [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }],
+          ]"
           class="w-full"
         >
           <UButton

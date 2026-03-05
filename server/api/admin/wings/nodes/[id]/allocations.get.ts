@@ -34,19 +34,21 @@ export default defineEventHandler(async (event): Promise<AdminWingsNodeAllocatio
   const session = await requireAdmin(event);
 
   const { page, perPage, search } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
-      page: z.coerce.number().min(1).default(1),
-      perPage: z.coerce.number().min(1).max(100).default(25),
-      search: z.string().trim().default('')
-    }).parse(data);
-    
+    const result = z
+      .object({
+        page: z.coerce.number().min(1).default(1),
+        perPage: z.coerce.number().min(1).max(100).default(25),
+        search: z.string().trim().default(''),
+      })
+      .parse(data);
+
     return {
       page: result.page,
       perPage: result.perPage,
-      search: result.search || null
+      search: result.search || null,
     };
   });
-  
+
   const offset = (page - 1) * perPage;
 
   const db = useDrizzle();

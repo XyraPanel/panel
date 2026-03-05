@@ -11,15 +11,18 @@ export default defineEventHandler(async (event: H3Event) => {
   const nodeId = getNodeIdFromQuery(query);
 
   const { page, per_page: perPage } = await getValidatedQuery(event, (data) => {
-    const result = z.object({
-      page: z.coerce.number().min(1).default(1),
-      per_page: z.coerce.number().min(1).max(500).default(50)
-    }).safeParse(data);
+    const result = z
+      .object({
+        page: z.coerce.number().min(1).default(1),
+        per_page: z.coerce.number().min(1).max(500).default(50),
+      })
+      .safeParse(data);
 
     if (!result.success) {
       throw createError({
         status: 400,
-        message: 'Invalid pagination parameters: Use positive numeric values for page and per_page.',
+        message:
+          'Invalid pagination parameters: Use positive numeric values for page and per_page.',
         data: {
           errors: [{ detail: 'Use positive numeric values for page and per_page.' }],
         },

@@ -27,21 +27,14 @@ vi.mock('../../server/utils/auth', () => {
   };
 });
 
-vi.stubGlobal(
-  'createError',
-  (opts: {
-    status?: number;
-    statusCode?: number;
-    message?: string;
-  }) => {
-    const err = new Error(opts.message);
-    Object.assign(err, {
-      statusCode: opts.statusCode ?? opts.status,
-      ...opts,
-    });
-    return err;
-  },
-);
+vi.stubGlobal('createError', (opts: { status?: number; statusCode?: number; message?: string }) => {
+  const err = new Error(opts.message);
+  Object.assign(err, {
+    statusCode: opts.statusCode ?? opts.status,
+    ...opts,
+  });
+  return err;
+});
 
 const { requireAuth, requireAdmin } = await import('../../server/utils/security');
 
