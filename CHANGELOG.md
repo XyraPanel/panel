@@ -1,5 +1,29 @@
 # Changelog
 
+## v0.1.0-alpha.4
+
+[compare changes](https://github.com/XyraPanel/panel/compare/v0.1.0-alpha.3...v0.1.0-alpha.4)
+
+### 🚀 Enhancements
+
+- **ui:** Enhance release notes ([307d9bb](https://github.com/XyraPanel/panel/commit/307d9bb))
+- Custom API linting rules & applied corrections ([6e49ddd](https://github.com/XyraPanel/panel/commit/6e49ddd))
+
+### 🩹 Fixes
+
+- **server:** Resolve websocket ([8844615](https://github.com/XyraPanel/panel/commit/8844615))
+- **server:** Use server UUID for status ([ea2a4ab](https://github.com/XyraPanel/panel/commit/ea2a4ab))
+
+### 🏡 Chore
+
+- **release:** V0.1.0-alpha.3 ([2552950](https://github.com/XyraPanel/panel/commit/2552950))
+- **config:** Clean up scopes ([d4bcc32](https://github.com/XyraPanel/panel/commit/d4bcc32))
+- **cli:** Move cli into workspace package ([829d159](https://github.com/XyraPanel/panel/commit/829d159))
+
+### ❤️ Contributors
+
+- 26bz ([@26bz](https://github.com/26bz))
+
 ## v0.1.0-alpha.3
 
 [compare changes](https://github.com/XyraPanel/panel/compare/v0.1.0-alpha.2...v0.1.0-alpha.3)
