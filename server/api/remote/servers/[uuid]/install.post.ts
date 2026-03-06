@@ -5,6 +5,62 @@ import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { remoteServerInstallStatusSchema } from '#shared/schema/wings';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Internal'],
+    summary: 'Remote complete server install',
+    description: 'Callback for Wings nodes to report the final status of a server installation or reinstallation process.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'uuid',
+        required: true,
+        schema: { type: 'string', format: 'uuid' },
+        description: 'The UUID of the server',
+      },
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              successful: { type: 'boolean' },
+              reinstall: { type: 'boolean', default: false },
+            },
+            required: ['successful'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Status successfully processed',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    status: { type: 'string', nullable: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Missing server UUID' },
+      401: { description: 'Unauthorized Wings node' },
+      403: { description: 'Server not assigned to this node' },
+      404: { description: 'Server not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
   assertMethod(event, 'POST');

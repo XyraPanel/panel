@@ -648,6 +648,14 @@ export default defineNuxtConfig({
     experimental: {
       tasks: true, // NOTE: The panel will remain in a BETA STATE until Nitro tasks are stable. See https://github.com/nuxt/nitro/issues/1105
       websocket: true,
+      openAPI: true,
+    },
+    openAPI: {
+      ui: {
+        scalar: {
+          route: "/_docs/scalar"
+        },
+      },
     },
     handlers: [
       {

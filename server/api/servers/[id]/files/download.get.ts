@@ -6,6 +6,54 @@ import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['File Manager'],
+    summary: 'Get file download URL',
+    description: 'Generates a secure, short-lived download URL for a specific file, served directly by the Wings node.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Server internal ID, UUID, or identifier',
+      },
+      {
+        in: 'query',
+        name: 'file',
+        required: true,
+        schema: { type: 'string' },
+        description: 'The relative path of the file to download',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Download URL successfully generated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    url: { type: 'string', description: 'The timed download URL from Wings' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Missing server identifier or file path' },
+      401: { description: 'Authentication required' },
+      403: { description: 'Missing server.files.download permission' },
+      500: { description: 'Wings daemon error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   const identifier = getRouterParam(event, 'id');
   if (!identifier) {

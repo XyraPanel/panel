@@ -48,6 +48,56 @@ function parseSSHPublicKey(publicKey: string): { fingerprint: string; valid: boo
   }
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Create SSH key',
+    description: 'Registers a new SSH public key for the authenticated user\'s account. Validates the key format and fingerprint.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', description: 'A label for the SSH key' },
+              publicKey: { type: 'string', description: 'The raw SSH public key string' },
+            },
+            required: ['name', 'publicKey'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'SSH key successfully created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    fingerprint: { type: 'string' },
+                    public_key: { type: 'string' },
+                    created_at: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid key format or too many keys' },
+      401: { description: 'Authentication required' },
+      409: { description: 'SSH key already exists' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const user = accountContext.user;

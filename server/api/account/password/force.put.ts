@@ -9,6 +9,47 @@ import {
   BODY_SIZE_LIMITS,
 } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Force update password',
+    description: 'Sets a new account password when a reset is required by the system. Only accessible if `passwordResetRequired` is true.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              newPassword: { type: 'string', format: 'password', description: 'The new password to set' },
+            },
+            required: ['newPassword'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Password successfully forced updated and sessions revoked',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean' },
+                revokedSessions: { type: 'integer' },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Password reset not required or invalid password' },
+      401: { description: 'Authentication required' },
+      404: { description: 'User not found' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT');
 

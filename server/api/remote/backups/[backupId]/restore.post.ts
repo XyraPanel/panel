@@ -5,6 +5,57 @@ import { BODY_SIZE_LIMITS, readValidatedBodyWithLimit } from '#server/utils/secu
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { remoteBackupRestoreStatusSchema } from '#shared/schema/wings';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Internal'],
+    summary: 'Remote complete restore',
+    description: 'Callback for Wings nodes to report the completion status of a server restoration from a backup.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'backupId',
+        required: true,
+        schema: { type: 'string' },
+        description: 'The UUID of the backup being restored',
+      },
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              successful: { type: 'boolean' },
+            },
+            required: ['successful'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Status successfully processed',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: { success: { type: 'boolean' } },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Missing backup ID' },
+      401: { description: 'Unauthorized Wings node' },
+      404: { description: 'Backup not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
   const db = useDrizzle();

@@ -7,6 +7,65 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 import { z } from 'zod';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['File Manager'],
+    summary: 'List directory contents',
+    description: 'Retrieves a list of files and folders within a specified directory on the server\'s disk via Wings.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Server internal ID, UUID, or identifier',
+      },
+      {
+        in: 'query',
+        name: 'directory',
+        schema: { type: 'string', default: '/' },
+        description: 'The path of the directory to list',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Directory listing retrieved successfully',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      name: { type: 'string' },
+                      mode: { type: 'string' },
+                      size: { type: 'integer' },
+                      is_directory: { type: 'boolean' },
+                      is_file: { type: 'boolean' },
+                      is_symlink: { type: 'boolean' },
+                      mimetype: { type: 'string' },
+                      created_at: { type: 'string', format: 'date-time' },
+                      modified_at: { type: 'string', format: 'date-time' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Server not ready or missing identifier' },
+      401: { description: 'Authentication required' },
+      403: { description: 'Missing server.files.read permission' },
+      404: { description: 'Directory not found' },
+      502: { description: 'Wings daemon communication error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   const { id: identifier } = getRouterParams(event);
   if (!identifier) {

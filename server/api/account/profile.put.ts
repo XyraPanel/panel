@@ -10,6 +10,53 @@ import { APIError } from 'better-auth/api';
 import { auth, getAuthHeaders } from '#server/utils/auth';
 import { isEmailConfigured } from '#server/utils/email';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Update account profile',
+    description: 'Updates the authenticated user\'s profile information, such as their username or email address.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              username: { type: 'string' },
+              email: { type: 'string', format: 'email' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Profile updated successfully',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    username: { type: 'string' },
+                    email: { type: 'string' },
+                    role: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid request body' },
+      401: { description: 'Authentication required' },
+      409: { description: 'Username or email already in use' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT');
 

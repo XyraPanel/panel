@@ -9,6 +9,51 @@ import {
 import { debugError } from '#server/utils/logger';
 import { twoFactorRecoverySchema } from '#shared/schema/account';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Verify 2FA recovery token',
+    description: 'Validates a 2FA recovery token to allow account access when the primary TOTP device is unavailable.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              token: { type: 'string', description: 'The recovery/backup token' },
+            },
+            required: ['token'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Recovery token successfully validated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid recovery token' },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireAccountUser(event);
   const { token } = await readValidatedBodyWithLimit(

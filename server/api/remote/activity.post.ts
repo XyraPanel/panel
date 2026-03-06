@@ -7,6 +7,65 @@ import type { ActivityAction } from '#shared/types/audit';
 import { remoteActivityBatchSchema } from '#shared/schema/wings';
 import { debugWarn, debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Internal'],
+    summary: 'Remote activity batch',
+    description: 'Receives and processes a batch of activity/audit logs from a remote Wings node. Used for centralized logging.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  properties: {
+                    event: { type: 'string', description: 'The action/event name' },
+                    user: { type: 'string', nullable: true, description: 'The user identifier or system' },
+                    server: { type: 'string', nullable: true, description: 'The server UUID or identifier' },
+                    ip: { type: 'string', nullable: true, description: 'The client IP associated with the event' },
+                    timestamp: { type: 'string', format: 'date-time' },
+                    metadata: { type: 'object', nullable: true },
+                  },
+                },
+              },
+            },
+            required: ['data'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Batch processed successfully',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    received: { type: 'integer' },
+                    processed: { type: 'integer' },
+                    failed: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Missing or invalid authentication' },
+      500: { description: 'Fatal processing error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   await getNodeIdFromAuth(event);
   const { data: activities } = await readValidatedBodyWithLimit(

@@ -4,6 +4,50 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
 import { passwordResetPerformSchema } from '#shared/schema/account';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Reset password with token',
+    description: 'Completes the password reset process using a valid secret token and sets a new account password.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              token: { type: 'string', description: 'The password reset token from the recovery email' },
+              password: { type: 'string', format: 'password', description: 'The new account password to set' },
+            },
+            required: ['token', 'password'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Password successfully reset',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid or expired reset token' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { token, password } = await readValidatedBodyWithLimit(
     event,

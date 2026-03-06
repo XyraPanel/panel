@@ -7,6 +7,60 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { sql } from 'drizzle-orm';
 import { adminServersPaginationSchema } from '#shared/schema/admin/server';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin'],
+    summary: 'List all servers',
+    description: 'Retrieves a paginated list of all servers across all Wings nodes for administrative oversight. Includes owner and node relationship data.',
+    parameters: [
+      {
+        in: 'query',
+        name: 'page',
+        schema: { type: 'integer', minimum: 1, default: 1 },
+        description: 'Page number',
+      },
+      {
+        in: 'query',
+        name: 'perPage',
+        schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
+        description: 'Items per page',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Administrative server list retrieved successfully',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: { type: 'array', items: { type: 'object' } },
+                meta: {
+                  type: 'object',
+                  properties: {
+                    pagination: {
+                      type: 'object',
+                      properties: {
+                        total: { type: 'integer' },
+                        count: { type: 'integer' },
+                        per_page: { type: 'integer' },
+                        current_page: { type: 'integer' },
+                        total_pages: { type: 'integer' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Administrator privileges required' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
     const session = await requireAdmin(event);

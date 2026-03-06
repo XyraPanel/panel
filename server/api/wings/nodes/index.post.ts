@@ -5,6 +5,55 @@ import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#ser
 
 import { createWingsNodeSchema } from '#shared/schema/wings';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin'],
+    summary: 'Create Wings node',
+    description: 'Registers a new physical server as a Wings node in the panel, allowing it to host game servers.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              description: { type: 'string' },
+              fqdn: { type: 'string', format: 'hostname' },
+              scheme: { type: 'string', enum: ['http', 'https'] },
+              public: { type: 'boolean' },
+              maintenanceMode: { type: 'boolean' },
+              behindProxy: { type: 'boolean' },
+              memory: { type: 'integer' },
+              disk: { type: 'integer' },
+              daemonListen: { type: 'integer' },
+              daemonSftp: { type: 'integer' },
+            },
+            required: ['name', 'fqdn', 'scheme', 'daemonListen', 'daemonSftp'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Node successfully created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid request body or configuration error' },
+      401: { description: 'Authentication required' },
+      403: { description: 'Administrator privileges required' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   const session = await requireAdmin(event);
   const body = await readValidatedBodyWithLimit(

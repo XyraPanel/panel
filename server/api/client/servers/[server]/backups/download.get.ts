@@ -6,6 +6,44 @@ import { generateBackupDownloadToken } from '#server/utils/wings-tokens';
 import { requireAccountUser, getValidatedQuery } from '#server/utils/security';
 import { z } from 'zod';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Server Backups'],
+    summary: 'Download a server backup',
+    description: 'Streams a server backup file directly from the node to the client.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'server',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Server internal ID or UUID',
+      },
+      {
+        in: 'query',
+        name: 'backup',
+        required: true,
+        schema: { type: 'string' },
+        description: 'The UUID of the backup to download',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Streaming backup file content',
+        content: {
+          'application/octet-stream': {
+            schema: { type: 'string', format: 'binary' },
+          },
+        },
+      },
+      400: { description: 'Missing server or backup identifiers' },
+      401: { description: 'Authentication required' },
+      403: { description: 'Missing server.backup.download permission' },
+      404: { description: 'Backup not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');

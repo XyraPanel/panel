@@ -3,6 +3,55 @@ import { useDrizzle, tables, eq, and, inArray } from '#server/utils/drizzle';
 import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Internal'],
+    summary: 'Remote complete server transfer',
+    description: 'Callback for Wings nodes to report the final status of a server transfer operation between nodes.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'uuid',
+        required: true,
+        schema: { type: 'string', format: 'uuid' },
+        description: 'The UUID of the server being transferred',
+      },
+      {
+        in: 'path',
+        name: 'status',
+        required: true,
+        schema: { type: 'string', enum: ['success', 'failure'] },
+        description: 'The outcome of the transfer operation',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Status successfully processed',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    status: { type: 'string', nullable: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid transfer status' },
+      401: { description: 'Unauthorized Wings node' },
+      404: { description: 'Server not found' },
+      409: { description: 'No active transfer' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
   assertMethod(event, 'POST');

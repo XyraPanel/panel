@@ -5,6 +5,41 @@ import { requireRouteParam } from '#server/utils/http/params';
 import { auth, getAuthHeaders } from '#server/utils/auth';
 import { APIError } from 'better-auth/api';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Delete API key',
+    description: 'Revokes and deletes a specific API key belonging to the authenticated user.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'identifier',
+        required: true,
+        schema: { type: 'string' },
+        description: 'The unique identifier of the API key to delete',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'API key successfully deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean' },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      404: { description: 'API key not found' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'DELETE');
 

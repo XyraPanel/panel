@@ -4,6 +4,44 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin'],
+    summary: 'List node allocations',
+    description: 'Retrieves all network allocations (IP/Port pairs) associated with a specific Wings node.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Node internal ID',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Successfully retrieved list of allocations',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: { type: 'object' },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Administrator privileges required' },
+      404: { description: 'Node not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

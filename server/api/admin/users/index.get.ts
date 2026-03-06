@@ -5,6 +5,60 @@ import { count, desc, sql, like } from 'drizzle-orm';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin'],
+    summary: 'List users',
+    description: 'Retrieves a paginated list of all users in the panel. Supports searching by email or username.',
+    parameters: [
+      {
+        in: 'query',
+        name: 'page',
+        schema: { type: 'integer', minimum: 1, default: 1 },
+        description: 'Page number',
+      },
+      {
+        in: 'query',
+        name: 'limit',
+        schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
+        description: 'Items per page',
+      },
+      {
+        in: 'query',
+        name: 'search',
+        schema: { type: 'string' },
+        description: 'Search by email or username',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Paginated user list retrieved successfully',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: { type: 'array', items: { type: 'object' } },
+                pagination: {
+                  type: 'object',
+                  properties: {
+                    page: { type: 'integer' },
+                    perPage: { type: 'integer' },
+                    total: { type: 'integer' },
+                    totalPages: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Administrator privileges required' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ);

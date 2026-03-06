@@ -7,6 +7,49 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
 import { passwordRequestSchema } from '#shared/schema/account';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Auth'],
+    summary: 'Request password reset',
+    description: 'Initiates a password reset flow by sending a reset email to the associated account. Returns a generic success message to prevent user enumeration.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              identity: { type: 'string', description: 'The email or username of the account to reset' },
+            },
+            required: ['identity'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Success message returned',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { identity: rawIdentity } = await readValidatedBodyWithLimit(
     event,

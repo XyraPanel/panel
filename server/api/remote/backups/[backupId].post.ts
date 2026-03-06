@@ -7,6 +7,61 @@ import { invalidateServerBackupsCache } from '#server/utils/backups';
 import { remoteBackupStatusSchema } from '#shared/schema/wings';
 import { sendBackupCompletedEmail } from '#server/utils/email';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Internal'],
+    summary: 'Remote complete backup',
+    description: 'Callback for Wings nodes to report the final status of a server backup process, providing checksums and file sizes upon success.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'backupId',
+        required: true,
+        schema: { type: 'string' },
+        description: 'The UUID of the backup',
+      },
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              successful: { type: 'boolean' },
+              checksum: { type: 'string', description: 'The file checksum if successful' },
+              checksum_type: { type: 'string', enum: ['sha1', 'sha256', 'md5'] },
+              size: { type: 'integer', description: 'The final backup size in bytes' },
+              parts: { type: 'array', items: { type: 'object' }, description: 'S3 upload part details if applicable' },
+            },
+            required: ['successful'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Status successfully processed',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: { success: { type: 'boolean' } },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Missing backup ID' },
+      401: { description: 'Unauthorized Wings node' },
+      404: { description: 'Backup not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
   const db = useDrizzle();

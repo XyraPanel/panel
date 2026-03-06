@@ -5,6 +5,85 @@ import { useDrizzle, tables } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Get account activity',
+    description: 'Retrieves a paginated list of audit events associated with the authenticated user\'s account.',
+    parameters: [
+      {
+        in: 'query',
+        name: 'page',
+        schema: { type: 'integer', default: 1 },
+        description: 'Page number for pagination',
+      },
+      {
+        in: 'query',
+        name: 'limit',
+        schema: { type: 'integer', default: 10, maximum: 100 },
+        description: 'Number of items per page',
+      },
+      {
+        in: 'query',
+        name: 'search',
+        schema: { type: 'string' },
+        description: 'Search filter for actions or targets',
+      },
+      {
+        in: 'query',
+        name: 'action',
+        schema: { type: 'string' },
+        description: 'Filter by specific audit action (e.g., account.profile.updated)',
+      },
+      {
+        in: 'query',
+        name: 'targetType',
+        schema: { type: 'string' },
+        description: 'Filter by specific target type (e.g., user, server)',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Activity logs successfully retrieved',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      occurredAt: { type: 'string', format: 'date-time' },
+                      action: { type: 'string' },
+                      target: { type: 'string' },
+                      actor: { type: 'string' },
+                      metadata: { type: 'object', nullable: true },
+                    },
+                  },
+                },
+                pagination: {
+                  type: 'object',
+                  properties: {
+                    page: { type: 'integer' },
+                    perPage: { type: 'integer' },
+                    total: { type: 'integer' },
+                    totalPages: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireAccountUser(event);
 

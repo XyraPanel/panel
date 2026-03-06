@@ -9,6 +9,61 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 import { createDirectorySchema } from '#shared/schema/server/operations';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['File Manager'],
+    summary: 'Create directory',
+    description: 'Creates a new directory at the specified location within the server\'s disk using Wings.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Server internal ID, UUID, or identifier',
+      },
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              root: { type: 'string', description: 'The parent directory path' },
+              name: { type: 'string', description: 'The name of the new directory' },
+            },
+            required: ['root', 'name'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Directory successfully created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    name: { type: 'string' },
+                    root: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Missing server.files.write permission' },
+      500: { description: 'Wings daemon error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id');
   if (!identifier) {

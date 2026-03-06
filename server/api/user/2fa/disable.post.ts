@@ -8,6 +8,51 @@ import {
 } from '#server/utils/security';
 import { twoFactorDisableSchema } from '#shared/schema/account';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Disable 2FA',
+    description: 'Disables two-factor authentication for the authenticated user. Requires current password verification for security.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              password: { type: 'string', format: 'password', description: 'Current account password for verification' },
+            },
+            required: ['password'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: '2FA successfully disabled',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid password or request' },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user: sessionUser } = await requireAccountUser(event);
   const { password } = await readValidatedBodyWithLimit(

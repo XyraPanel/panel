@@ -11,6 +11,75 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { count, desc } from 'drizzle-orm';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'List active sessions',
+    description: 'Retrieves a paginated list of all active login sessions for the authenticated user, including device and location metadata.',
+    parameters: [
+      {
+        in: 'query',
+        name: 'page',
+        schema: { type: 'integer', default: 1 },
+        description: 'Page number for pagination',
+      },
+      {
+        in: 'query',
+        name: 'limit',
+        schema: { type: 'integer', default: 50, maximum: 100 },
+        description: 'Number of items per page',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Active sessions successfully retrieved',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      token: { type: 'string' },
+                      issuedAt: { type: 'string', format: 'date-time' },
+                      expiresAt: { type: 'string', format: 'date-time' },
+                      expiresAtTimestamp: { type: 'integer' },
+                      isCurrent: { type: 'boolean' },
+                      ipAddress: { type: 'string' },
+                      userAgent: { type: 'string' },
+                      browser: { type: 'string' },
+                      os: { type: 'string' },
+                      device: { type: 'string' },
+                      lastSeenAt: { type: 'string', format: 'date-time', nullable: true },
+                      firstSeenAt: { type: 'string', format: 'date-time', nullable: true },
+                      fingerprint: { type: 'string', nullable: true },
+                    },
+                  },
+                },
+                currentToken: { type: 'string', nullable: true },
+                pagination: {
+                  type: 'object',
+                  properties: {
+                    page: { type: 'integer' },
+                    perPage: { type: 'integer' },
+                    total: { type: 'integer' },
+                    totalPages: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<AccountSessionsResponse> => {
   const middlewareAuth = event.context.auth;
   const accountContext = middlewareAuth

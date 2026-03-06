@@ -14,6 +14,60 @@ import { createAllocationSchema } from '#shared/schema/admin/infrastructure';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin'],
+    summary: 'Create node allocations',
+    description: 'Bulk creates network allocations (IP/Port pairs) for a specific Wings node. Supports CIDR notation for IP addresses and ranges for ports.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Node internal ID',
+      },
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              ip: { type: 'string', description: 'IP address or CIDR notation' },
+              ports: { 
+                type: 'string',
+                description: 'Port numbers, ranges (e.g., "25565-25575"), or comma-separated list. Can also be a single integer or an array of integers.'
+              },
+              alias: { type: 'string', description: 'Optional alias for the IP address' },
+            },
+            required: ['ip', 'ports'],
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Allocations successfully created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid IP/CIDR or port format' },
+      401: { description: 'Authentication required' },
+      403: { description: 'Administrator privileges required' },
+      409: { description: 'All specified allocations already exist' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

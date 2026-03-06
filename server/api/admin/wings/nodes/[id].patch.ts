@@ -72,6 +72,62 @@ async function readUpdatePayload(event: H3Event): Promise<UpdateWingsNodePayload
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin'],
+    summary: 'Update Wings node',
+    description: 'Modifies an existing Wings node\'s configuration, including networking, security, and resource allocation.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Node internal ID',
+      },
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              description: { type: 'string' },
+              fqdn: { type: 'string' },
+              scheme: { type: 'string', enum: ['http', 'https'] },
+              public: { type: 'boolean' },
+              maintenanceMode: { type: 'boolean' },
+              behindProxy: { type: 'boolean' },
+              memory: { type: 'integer' },
+              disk: { type: 'integer' },
+              daemonListen: { type: 'integer' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Node successfully updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Missing nodes.write permission' },
+      404: { description: 'Node not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<UpdateWingsNodeResponse> => {
   assertMethod(event, 'PATCH');
 

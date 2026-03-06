@@ -33,6 +33,51 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Internal'],
+    summary: 'Remote SFTP authentication',
+    description: 'Authenticates a user for SFTP access to a specific server. Used internally by Wings nodes.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              type: { type: 'string', enum: ['password', 'public_key'], description: 'The type of authentication' },
+              username: { type: 'string', description: 'The SFTP username (format: username.server_uuid)' },
+              password: { type: 'string', description: 'The password or raw public key' },
+              ip: { type: 'string', description: 'The remote client IP address' },
+            },
+            required: ['type', 'username', 'password'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Authentication successful',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                server: { type: 'string', format: 'uuid' },
+                user: { type: 'string' },
+                permissions: { type: 'array', items: { type: 'string' } },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Invalid credentials' },
+      403: { description: 'Access denied' },
+      429: { description: 'Rate limit exceeded' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
   const db = useDrizzle();
