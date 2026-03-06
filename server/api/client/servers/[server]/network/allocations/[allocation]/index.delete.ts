@@ -88,7 +88,13 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error;
-    debugError('[Server Allocation Remove] Failed for server:', serverIdentifier, 'allocation:', allocationId, error);
+    debugError(
+      '[Server Allocation Remove] Failed for server:',
+      serverIdentifier,
+      'allocation:',
+      allocationId,
+      error,
+    );
     throw createError({
       status: 500,
       message: 'Failed to remove allocation from server',

@@ -415,7 +415,8 @@ async function copyToken() {
               :loading="isCreating"
               :disabled="isCreating"
               @click="
-                () => createApiKey({ data: createForm } as unknown as FormSubmitEvent<KeyFormSchema>)
+                () =>
+                  createApiKey({ data: createForm } as unknown as FormSubmitEvent<KeyFormSchema>)
               "
             >
               {{ t('common.create') }}

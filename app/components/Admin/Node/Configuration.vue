@@ -200,7 +200,12 @@ const configYaml = computed(() => {
             >
               Copy
             </UButton>
-            <UButton icon="i-lucide-download" variant="subtle" size="sm" @click="downloadConfigFile">
+            <UButton
+              icon="i-lucide-download"
+              variant="subtle"
+              size="sm"
+              @click="downloadConfigFile"
+            >
               Download
             </UButton>
           </div>
