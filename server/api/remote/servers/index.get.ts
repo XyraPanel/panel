@@ -18,6 +18,67 @@ function safeJsonParse(value: string | null | undefined, defaultValue: unknown =
   }
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Internal'],
+    summary: 'Remote list node servers',
+    description:
+      'Retrieves a paginated list of all servers assigned to the authenticated node, including their full configuration and environment.',
+    parameters: [
+      {
+        in: 'query',
+        name: 'page',
+        schema: { type: 'integer', default: 0 },
+        description: 'Page number (0-indexed)',
+      },
+      {
+        in: 'query',
+        name: 'per_page',
+        schema: { type: 'integer', default: 50 },
+        description: 'Number of servers per page',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Server list successfully retrieved',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      uuid: { type: 'string', format: 'uuid' },
+                      settings: { type: 'object' },
+                      process_configuration: { type: 'object' },
+                    },
+                  },
+                },
+                meta: {
+                  type: 'object',
+                  properties: {
+                    current_page: { type: 'integer' },
+                    from: { type: 'integer' },
+                    last_page: { type: 'integer' },
+                    per_page: { type: 'integer' },
+                    to: { type: 'integer' },
+                    total: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Unauthorized Wings node' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
     const nodeId = await getNodeIdFromAuth(event);

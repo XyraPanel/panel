@@ -175,6 +175,45 @@ async function fetchFullDashboard(): Promise<ClientDashboardResponse> {
   };
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['System'],
+    summary: 'Get dashboard summary',
+    description:
+      'Retrieves an overview of the panel state, including metrics, recent activity, node summaries, and quick links.',
+    parameters: [
+      {
+        in: 'query',
+        name: 'section',
+        schema: { type: 'string', enum: ['full', 'metrics'], default: 'full' },
+        description: 'Whether to retrieve the full dashboard or just metrics',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Dashboard data successfully retrieved',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                metrics: { type: 'array', items: { type: 'object' } },
+                activity: { type: 'array', items: { type: 'object' } },
+                quickLinks: { type: 'array', items: { type: 'object' } },
+                maintenance: { type: 'array', items: { type: 'object' } },
+                nodes: { type: 'array', items: { type: 'object' } },
+                generatedAt: { type: 'string', format: 'date-time' },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<ClientDashboardResponse> => {
   await requireAccountUser(event);
   const section = resolveSection(event);

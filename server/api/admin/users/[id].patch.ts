@@ -8,6 +8,59 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { adminUpdateUserSchema } from '#shared/schema/admin/users';
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin'],
+    summary: 'Update user',
+    description: "Modifies an existing user's profile, credentials, or administrative status.",
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'User internal ID',
+      },
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              email: { type: 'string', format: 'email' },
+              username: { type: 'string' },
+              password: { type: 'string', format: 'password' },
+              role: { type: 'string' },
+              rootAdmin: { type: 'boolean' },
+              nameFirst: { type: 'string' },
+              nameLast: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'User successfully updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Administrator privileges required' },
+      404: { description: 'User not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);
@@ -17,7 +70,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'User ID is required' });
   }
 
-  const rawBody = await readValidatedBodyWithLimit(event, adminUpdateUserSchema, BODY_SIZE_LIMITS.SMALL);
+  const rawBody = await readValidatedBodyWithLimit(
+    event,
+    adminUpdateUserSchema,
+    BODY_SIZE_LIMITS.SMALL,
+  );
 
   try {
     let body = rawBody;

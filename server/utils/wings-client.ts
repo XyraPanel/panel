@@ -287,15 +287,18 @@ export class WingsClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      const response = await fetch(`${this.baseUrl}/api/servers/${serverUuid}/files/write?${params}`, {
-        method: 'POST',
-        headers: {
-          Authorization: this.getToken(),
-          'Content-Type': 'text/plain',
+      const response = await fetch(
+        `${this.baseUrl}/api/servers/${serverUuid}/files/write?${params}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: this.getToken(),
+            'Content-Type': 'text/plain',
+          },
+          body: content,
+          signal: controller.signal,
         },
-        body: content,
-        signal: controller.signal,
-      });
+      );
       clearTimeout(timeoutId);
       if (!response.ok) {
         let errorMessage = `Failed to write file: ${response.status}`;
@@ -581,13 +584,8 @@ export class WingsClient {
     throw new WingsConnectionError('Invalid WebSocket token response');
   }
 
-  async getSignedDownloadUrl(
-    serverUuid: string,
-    backupUuid: string,
-  ): Promise<{ url: string }> {
-    const response = await this.request(
-      `/api/servers/${serverUuid}/backup/${backupUuid}/download`,
-    );
+  async getSignedDownloadUrl(serverUuid: string, backupUuid: string): Promise<{ url: string }> {
+    const response = await this.request(`/api/servers/${serverUuid}/backup/${backupUuid}/download`);
     if (isRecord(response) && typeof response.url === 'string') {
       return { url: response.url };
     }

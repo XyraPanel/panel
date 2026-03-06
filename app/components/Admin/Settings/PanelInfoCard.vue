@@ -14,7 +14,9 @@ const info = computed<PanelInformation | null>(() => data.value?.data ?? null);
 
 const releaseNotesOpen = ref(false);
 const releaseNotesLoading = ref(false);
-const releaseVersions = ref<Array<{ title: string; content: string; badge?: any; date?: string; }>>([]);
+const releaseVersions = ref<Array<{ title: string; content: string; badge?: any; date?: string }>>(
+  [],
+);
 const releaseNotesError = ref(false);
 type ReleaseData = {
   name?: string;
@@ -110,14 +112,14 @@ async function openReleaseNotes(url: string) {
   releaseNotesOpen.value = true;
   releaseNotesLoading.value = true;
   releaseVersions.value = [];
-      releaseNotesError.value = false;
+  releaseNotesError.value = false;
   try {
     const { marked } = await import('marked');
     const fetchExternal = $fetch as (
       input: string,
       init?: Record<string, unknown>,
     ) => Promise<unknown>;
-    
+
     let fetchUrl = url.trim();
     if (fetchUrl.startsWith('https://github.com/')) {
       fetchUrl = fetchUrl.replace('https://github.com/', 'https://api.github.com/repos/');
@@ -138,10 +140,11 @@ async function openReleaseNotes(url: string) {
     if (Array.isArray(releasePayload) && releasePayload.length > 0) {
       const parsedVersions = [];
       const currentVersion = info.value?.panelVersion;
-      
+
       const latestRelease = releasePayload[0];
       const currentRelease = releasePayload.find(
-        (r: ReleaseData) => (r.tag_name === currentVersion || r.name === currentVersion || r.tag === currentVersion)
+        (r: ReleaseData) =>
+          r.tag_name === currentVersion || r.name === currentVersion || r.tag === currentVersion,
       );
 
       const targetReleases = [latestRelease as ReleaseData];
@@ -150,16 +153,22 @@ async function openReleaseNotes(url: string) {
       }
 
       for (const release of targetReleases) {
-         if (!release) continue;
-         let rawMarkdown = release.markdown || release.body || release.description || '';
-         rawMarkdown = rawMarkdown.replace(/\[compare changes\]\([^)]+\)/gi, '').replace(/compare changes/gi, '').trim();
-         
-         parsedVersions.push({
-           title: release.name || release.tag_name || release.tag || 'Release',
-           date: release.publishedAt || release.createdAt,
-           badge: { label: 'Release', color: 'primary', variant: 'outline' },
-           content: (await marked.parse(rawMarkdown)).replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" '),
-         });
+        if (!release) continue;
+        let rawMarkdown = release.markdown || release.body || release.description || '';
+        rawMarkdown = rawMarkdown
+          .replace(/\[compare changes\]\([^)]+\)/gi, '')
+          .replace(/compare changes/gi, '')
+          .trim();
+
+        parsedVersions.push({
+          title: release.name || release.tag_name || release.tag || 'Release',
+          date: release.publishedAt || release.createdAt,
+          badge: { label: 'Release', color: 'primary', variant: 'outline' },
+          content: (await marked.parse(rawMarkdown)).replace(
+            /<a /g,
+            '<a target="_blank" rel="noopener noreferrer" ',
+          ),
+        });
       }
       releaseVersions.value = parsedVersions;
     } else if (
@@ -170,13 +179,19 @@ async function openReleaseNotes(url: string) {
     ) {
       const release = releasePayload as ReleaseData;
       let rawMarkdown = release.markdown || release.body || release.description || '';
-      rawMarkdown = rawMarkdown.replace(/\[compare changes\]\([^)]+\)/gi, '').replace(/compare changes/gi, '').trim();
+      rawMarkdown = rawMarkdown
+        .replace(/\[compare changes\]\([^)]+\)/gi, '')
+        .replace(/compare changes/gi, '')
+        .trim();
       releaseVersions.value = [
         {
           title: release.name || release.tag_name || release.tag || 'Release',
           date: release.publishedAt || release.createdAt,
           badge: { label: 'Release', color: 'primary', variant: 'outline' },
-          content: (await marked.parse(rawMarkdown)).replace(/<a /g, '<a target="_blank" rel="noopener noreferrer" '),
+          content: (await marked.parse(rawMarkdown)).replace(
+            /<a /g,
+            '<a target="_blank" rel="noopener noreferrer" ',
+          ),
         },
       ];
     } else if (typeof releasePayload === 'string') {
@@ -265,9 +280,16 @@ async function openReleaseNotes(url: string) {
             <div v-else-if="releaseNotesError" class="text-muted-foreground text-center py-8">
               {{ t('admin.settings.panelInfo.releaseNotesUnavailable') }}
             </div>
-            <UChangelogVersions v-else-if="releaseVersions.length" :versions="releaseVersions" :indicator="false">
+            <UChangelogVersions
+              v-else-if="releaseVersions.length"
+              :versions="releaseVersions"
+              :indicator="false"
+            >
               <template #body="{ version }">
-                <div class="text-[13px] text-muted-foreground [&_h3]:text-sm [&_h3]:font-bold [&_h3]:text-[var(--ui-primary)] [&_h3]:mt-3 [&_h3]:mb-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:space-y-0.5 [&_a]:text-[var(--ui-primary)] [&_a]:font-medium hover:[&_a]:opacity-80 [&_p]:my-1" v-html="version.content" />
+                <div
+                  class="text-[13px] text-muted-foreground [&_h3]:text-sm [&_h3]:font-bold [&_h3]:text-[var(--ui-primary)] [&_h3]:mt-3 [&_h3]:mb-1 [&_ul]:list-disc [&_ul]:pl-4 [&_ul]:space-y-0.5 [&_a]:text-[var(--ui-primary)] [&_a]:font-medium hover:[&_a]:opacity-80 [&_p]:my-1"
+                  v-html="version.content"
+                />
               </template>
             </UChangelogVersions>
             <div v-else class="text-muted-foreground text-center py-8">

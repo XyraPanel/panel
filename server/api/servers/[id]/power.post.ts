@@ -9,6 +9,62 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 import { serverPowerActionSchema } from '#shared/schema/server/operations';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Server Operations'],
+    summary: 'Send power action',
+    description:
+      'Sends a power control signal (start, stop, restart, kill) to the server instance via Wings.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Server internal ID, UUID, or identifier',
+      },
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              action: { type: 'string', enum: ['start', 'stop', 'restart', 'kill'] },
+            },
+            required: ['action'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Power action successfully queued',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Missing server identifier or invalid action' },
+      401: { description: 'Authentication required' },
+      403: { description: 'Missing server.power permission' },
+      500: { description: 'Wings daemon error or server misconfiguration' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id');
   if (!identifier) {

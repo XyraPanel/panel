@@ -72,7 +72,8 @@ export function toWingsHttpError(error: unknown, options: WingsErrorOptions = {}
     if (error.message === 'Multiple Wings nodes configured; specify nodeId') {
       return createError({
         status: 400,
-        message: 'Multiple Wings nodes configured: Select a Wings node by providing a node query parameter.',
+        message:
+          'Multiple Wings nodes configured: Select a Wings node by providing a node query parameter.',
         data: {
           nodeId: options.nodeId,
         },

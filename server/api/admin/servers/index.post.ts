@@ -30,7 +30,11 @@ export default defineEventHandler(async (event) => {
     const db = useDrizzle();
     const now = new Date().toISOString();
 
-    const [egg] = await db.select().from(tables.eggs).where(eq(tables.eggs.id, body.eggId)).limit(1);
+    const [egg] = await db
+      .select()
+      .from(tables.eggs)
+      .where(eq(tables.eggs.id, body.eggId))
+      .limit(1);
     if (!egg) {
       throw createError({ status: 404, message: 'Egg not found' });
     }
@@ -189,7 +193,11 @@ export default defineEventHandler(async (event) => {
           }
         }
       } catch (provisionError) {
-        debugError('[Server Creation: Background] Provisioning failed for server:', serverUuid, provisionError);
+        debugError(
+          '[Server Creation: Background] Provisioning failed for server:',
+          serverUuid,
+          provisionError,
+        );
 
         try {
           await db
@@ -200,7 +208,10 @@ export default defineEventHandler(async (event) => {
             })
             .where(eq(tables.servers.id, serverId));
         } catch (dbError) {
-          debugError('[Server Creation: Background] Failed to update server status to install_failed:', dbError);
+          debugError(
+            '[Server Creation: Background] Failed to update server status to install_failed:',
+            dbError,
+          );
         }
       }
     });

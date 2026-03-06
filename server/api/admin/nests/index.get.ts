@@ -7,14 +7,54 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import type { NestWithEggCount } from '#shared/types/admin';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin'],
+    summary: 'List nests',
+    description:
+      'Retrieves a list of all nests, which serve as categories for game server templates (eggs). Supports a simplified "options" view for dropdowns.',
+    parameters: [
+      {
+        in: 'query',
+        name: 'view',
+        schema: { type: 'string', enum: ['full', 'options'] },
+        description: 'Specify the detail level of the response',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Successfully retrieved list of nests',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: { type: 'object' },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Administrator privileges required' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NESTS, ADMIN_ACL_PERMISSIONS.READ);
 
-  const { view } = await getValidatedQuery(event, z.object({
-    view: z.union([z.string(), z.array(z.string())]).optional(),
-  }));
+  const { view } = await getValidatedQuery(
+    event,
+    z.object({
+      view: z.union([z.string(), z.array(z.string())]).optional(),
+    }),
+  );
   const normalizedView = Array.isArray(view) ? view[0] : view;
   const db = useDrizzle();
 

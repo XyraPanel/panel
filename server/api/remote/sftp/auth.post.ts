@@ -33,181 +33,236 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Internal'],
+    summary: 'Remote SFTP authentication',
+    description:
+      'Authenticates a user for SFTP access to a specific server. Used internally by Wings nodes.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              type: {
+                type: 'string',
+                enum: ['password', 'public_key'],
+                description: 'The type of authentication',
+              },
+              username: {
+                type: 'string',
+                description: 'The SFTP username (format: username.server_uuid)',
+              },
+              password: { type: 'string', description: 'The password or raw public key' },
+              ip: { type: 'string', description: 'The remote client IP address' },
+            },
+            required: ['type', 'username', 'password'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Authentication successful',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                server: { type: 'string', format: 'uuid' },
+                user: { type: 'string' },
+                permissions: { type: 'array', items: { type: 'string' } },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Invalid credentials' },
+      403: { description: 'Access denied' },
+      429: { description: 'Rate limit exceeded' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
-  const db = useDrizzle();
-  const body = await readValidatedBodyWithLimit(
-    event,
-    remoteSftpAuthSchema,
-    BODY_SIZE_LIMITS.SMALL,
-  );
-  const clientIp = getRequestIP(event, { xForwardedFor: true }) || body.ip || 'unknown';
+    const db = useDrizzle();
+    const body = await readValidatedBodyWithLimit(
+      event,
+      remoteSftpAuthSchema,
+      BODY_SIZE_LIMITS.SMALL,
+    );
+    const clientIp = getRequestIP(event, { xForwardedFor: true }) || body.ip || 'unknown';
 
-  if (!checkRateLimit(clientIp)) {
-    throw createError({
-      status: 429,
-      message: 'Too many SFTP authentication attempts. Please try again later.',
-    });
-  }
-
-  const { type, username, password: credential } = body;
-
-  const parts = username.split('.');
-  if (parts.length < 2) {
-    throw createError({
-      status: 401,
-      message: 'Invalid SFTP credentials format',
-    });
-  }
-
-  const serverIdentifier = parts[parts.length - 1]!;
-  const userIdentifier = parts.slice(0, -1).join('.');
-
-  const serverResult = await db
-    .select()
-    .from(tables.servers)
-    .where(eq(tables.servers.uuid, serverIdentifier))
-    .limit(1);
-
-  const server = serverResult[0];
-
-  if (!server) {
-    throw createError({
-      status: 401,
-      message: 'Invalid SFTP credentials',
-    });
-  }
-
-  const userResult = await db
-    .select()
-    .from(tables.users)
-    .where(eq(tables.users.username, userIdentifier))
-    .limit(1);
-
-  const user = userResult[0];
-
-  if (!user) {
-    throw createError({
-      status: 401,
-      message: 'Invalid SFTP credentials',
-    });
-  }
-
-  if (type === 'password') {
-    try {
-      const signInResult = await auth.api.signInUsername({
-        body: {
-          username: userIdentifier,
-          password: credential,
-          rememberMe: false,
-        },
-        headers: getAuthHeaders(event),
+    if (!checkRateLimit(clientIp)) {
+      throw createError({
+        status: 429,
+        message: 'Too many SFTP authentication attempts. Please try again later.',
       });
-
-      if (
-        !isRecord(signInResult) ||
-        typeof signInResult.token !== 'string' ||
-        signInResult.token.length === 0
-      ) {
-        throw createError({
-          status: 401,
-          message: 'Invalid SFTP credentials',
-        });
-      }
-
-      await db.delete(tables.sessions).where(eq(tables.sessions.sessionToken, signInResult.token));
-    } catch (error) {
-      if (error instanceof APIError) {
-        throw createError({
-          status: 401,
-          message: 'Invalid SFTP credentials',
-        });
-      }
-      throw error;
     }
-  } else if (type === 'public_key') {
-    try {
-      const cleanKey = credential.trim().split(/\s+/);
-      if (cleanKey.length < 2) {
-        throw new Error('Invalid key format');
-      }
 
-      const keyData = cleanKey[1];
-      if (!keyData) {
-        throw new Error('Invalid key data');
-      }
+    const { type, username, password: credential } = body;
 
-      const validKeyData = keyData;
-      const keyType = cleanKey[0];
-
-      const sshKeys = await db
-        .select({ fingerprint: tables.sshKeys.fingerprint, publicKey: tables.sshKeys.publicKey })
-        .from(tables.sshKeys)
-        .where(eq(tables.sshKeys.userId, user.id));
-
-      const sshKey = sshKeys.find((key) => {
-        const storedParts = key.publicKey.trim().split(/\s+/);
-        if (storedParts.length < 2) return false;
-
-        const storedType = storedParts[0];
-        const storedData = storedParts[1];
-
-        return storedType === keyType && storedData === validKeyData;
+    const parts = username.split('.');
+    if (parts.length < 2) {
+      throw createError({
+        status: 401,
+        message: 'Invalid SFTP credentials format',
       });
+    }
 
-      if (!sshKey) {
+    const serverIdentifier = parts[parts.length - 1]!;
+    const userIdentifier = parts.slice(0, -1).join('.');
+
+    const serverResult = await db
+      .select()
+      .from(tables.servers)
+      .where(eq(tables.servers.uuid, serverIdentifier))
+      .limit(1);
+
+    const server = serverResult[0];
+
+    if (!server) {
+      throw createError({
+        status: 401,
+        message: 'Invalid SFTP credentials',
+      });
+    }
+
+    const userResult = await db
+      .select()
+      .from(tables.users)
+      .where(eq(tables.users.username, userIdentifier))
+      .limit(1);
+
+    const user = userResult[0];
+
+    if (!user) {
+      throw createError({
+        status: 401,
+        message: 'Invalid SFTP credentials',
+      });
+    }
+
+    if (type === 'password') {
+      try {
+        const signInResult = await auth.api.signInUsername({
+          body: {
+            username: userIdentifier,
+            password: credential,
+            rememberMe: false,
+          },
+          headers: getAuthHeaders(event),
+        });
+
+        if (
+          !isRecord(signInResult) ||
+          typeof signInResult.token !== 'string' ||
+          signInResult.token.length === 0
+        ) {
+          throw createError({
+            status: 401,
+            message: 'Invalid SFTP credentials',
+          });
+        }
+
+        await db
+          .delete(tables.sessions)
+          .where(eq(tables.sessions.sessionToken, signInResult.token));
+      } catch (error) {
+        if (error instanceof APIError) {
+          throw createError({
+            status: 401,
+            message: 'Invalid SFTP credentials',
+          });
+        }
+        throw error;
+      }
+    } else if (type === 'public_key') {
+      try {
+        const cleanKey = credential.trim().split(/\s+/);
+        if (cleanKey.length < 2) {
+          throw new Error('Invalid key format');
+        }
+
+        const keyData = cleanKey[1];
+        if (!keyData) {
+          throw new Error('Invalid key data');
+        }
+
+        const validKeyData = keyData;
+        const keyType = cleanKey[0];
+
+        const sshKeys = await db
+          .select({ fingerprint: tables.sshKeys.fingerprint, publicKey: tables.sshKeys.publicKey })
+          .from(tables.sshKeys)
+          .where(eq(tables.sshKeys.userId, user.id));
+
+        const sshKey = sshKeys.find((key) => {
+          const storedParts = key.publicKey.trim().split(/\s+/);
+          if (storedParts.length < 2) return false;
+
+          const storedType = storedParts[0];
+          const storedData = storedParts[1];
+
+          return storedType === keyType && storedData === validKeyData;
+        });
+
+        if (!sshKey) {
+          throw createError({
+            status: 401,
+            message: 'Invalid SSH key',
+          });
+        }
+      } catch {
         throw createError({
           status: 401,
           message: 'Invalid SSH key',
         });
       }
-    } catch {
-      throw createError({
-        status: 401,
-        message: 'Invalid SSH key',
-      });
-    }
-  }
-
-  const isAdmin = user.role === 'admin';
-  const isOwner = server.ownerId === user.id;
-
-  let permissions: string[] = [];
-
-  if (isAdmin || isOwner) {
-    permissions = ['*'];
-  } else {
-    const subusers = await listServerSubusers(server.id);
-    const subuser = subusers.find((entry) => entry.userId === user.id);
-
-    if (!subuser) {
-      throw createError({
-        status: 403,
-        message: 'You do not have access to this server',
-      });
     }
 
-    permissions = subuser.permissions;
-  }
+    const isAdmin = user.role === 'admin';
+    const isOwner = server.ownerId === user.id;
 
-  await recordAuditEvent({
-    actor: user.email,
-    actorType: 'user',
-    action: 'sftp.auth',
-    targetType: 'server',
-    targetId: server.uuid,
-    metadata: {
-      ip: clientIp,
-      username,
-      successful: true,
-    },
-  });
+    let permissions: string[] = [];
 
-  return {
-    server: server.uuid,
-    user: user.username,
-    permissions,
-  };
+    if (isAdmin || isOwner) {
+      permissions = ['*'];
+    } else {
+      const subusers = await listServerSubusers(server.id);
+      const subuser = subusers.find((entry) => entry.userId === user.id);
+
+      if (!subuser) {
+        throw createError({
+          status: 403,
+          message: 'You do not have access to this server',
+        });
+      }
+
+      permissions = subuser.permissions;
+    }
+
+    await recordAuditEvent({
+      actor: user.email,
+      actorType: 'user',
+      action: 'sftp.auth',
+      targetType: 'server',
+      targetId: server.uuid,
+      metadata: {
+        ip: clientIp,
+        username,
+        successful: true,
+      },
+    });
+
+    return {
+      server: server.uuid,
+      user: user.username,
+      permissions,
+    };
   } catch (error) {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;

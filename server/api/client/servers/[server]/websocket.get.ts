@@ -34,6 +34,43 @@ function isMissingWingsServer(error: unknown): boolean {
   );
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Server Console'],
+    summary: 'Get WebSocket credentials',
+    description:
+      'Generates a one-time token and WebSocket URL for connecting to the server console via Wings.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'server',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Server internal ID, UUID, or identifier',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'WebSocket credentials successfully generated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                token: { type: 'string', description: 'Wings JWT authentication token' },
+                socket: { type: 'string', description: 'WebSocket endpoint URL' },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Missing websocket.connect permission' },
+      404: { description: 'Server not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<WebSocketToken | WebSocketUnavailable> => {
   const id = getRouterParam(event, 'server');
   if (!id || typeof id !== 'string') {

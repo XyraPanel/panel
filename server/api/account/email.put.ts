@@ -9,6 +9,51 @@ import {
   BODY_SIZE_LIMITS,
 } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Request email change',
+    description:
+      "Initiates a request to change the authenticated user's email address. Requires current password verification.",
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              email: { type: 'string', format: 'email', description: 'The new email address' },
+              password: {
+                type: 'string',
+                format: 'password',
+                description: 'Current account password for verification',
+              },
+            },
+            required: ['email', 'password'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Email change request successfully initiated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean' },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid password or request' },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<UpdateEmailResponse> => {
   assertMethod(event, 'PUT');
 

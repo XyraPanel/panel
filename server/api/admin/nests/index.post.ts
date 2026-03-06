@@ -7,6 +7,47 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { debugError } from '#server/utils/logger';
 import { createNestSchema } from '#shared/schema/admin/infrastructure';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin'],
+    summary: 'Create nest',
+    description: 'Registers a new nest category which will group related game server eggs.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string' },
+              author: { type: 'string' },
+              description: { type: 'string' },
+            },
+            required: ['name', 'author'],
+          },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Nest successfully created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Administrator privileges required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

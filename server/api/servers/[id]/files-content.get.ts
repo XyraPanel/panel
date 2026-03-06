@@ -7,6 +7,45 @@ import { recordServerActivity } from '#server/utils/server-activity';
 import { debugError } from '#server/utils/logger';
 import { z } from 'zod';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['File Manager'],
+    summary: 'Get file content',
+    description:
+      'Reads the text content of a file from the server instance instance via Wings. Used for the online file editor.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Server internal ID, UUID, or identifier',
+      },
+      {
+        in: 'query',
+        name: 'file',
+        required: true,
+        schema: { type: 'string' },
+        description: 'The path of the file to read',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'File content successfully read',
+        content: {
+          'text/plain': {
+            schema: { type: 'string' },
+          },
+        },
+      },
+      400: { description: 'Missing server identifier or file path' },
+      401: { description: 'Authentication required' },
+      403: { description: 'Missing server.files.read permission' },
+      502: { description: 'Wings daemon request failed' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   setHeader(event, 'Content-Type', 'application/json');
 

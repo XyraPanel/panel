@@ -3,8 +3,67 @@ import { auth, getAuthHeaders } from '#server/utils/auth';
 import { resolveSessionUser } from '#server/utils/auth/sessionUser';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { accountPasswordUpdateSchema } from '#shared/schema/account';
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import {
+  requireAccountUser,
+  readValidatedBodyWithLimit,
+  BODY_SIZE_LIMITS,
+} from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Update password',
+    description:
+      "Updates the authenticated user's password. Requires verification with the current password and will result in session revocation.",
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              currentPassword: {
+                type: 'string',
+                format: 'password',
+                description: 'Existing account password',
+              },
+              newPassword: {
+                type: 'string',
+                format: 'password',
+                description: 'The new password to set',
+              },
+            },
+            required: ['currentPassword', 'newPassword'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Password successfully updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    revokedSessions: { type: 'integer' },
+                    signedOut: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid passwords or request' },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT');

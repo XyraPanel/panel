@@ -120,8 +120,10 @@ const targetOptions = computed(() => {
   return buildOptionList(values);
 });
 
-const hasFilters = computed(
-  () => Boolean(searchTerm.value.trim() || filterState.actor || filterState.action || filterState.targetType),
+const hasFilters = computed(() =>
+  Boolean(
+    searchTerm.value.trim() || filterState.actor || filterState.action || filterState.targetType,
+  ),
 );
 
 function toggleEntry(id: string) {

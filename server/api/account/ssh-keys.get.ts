@@ -4,6 +4,67 @@ import { count, desc } from 'drizzle-orm';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'List SSH keys',
+    description:
+      "Retrieves a paginated list of all SSH public keys registered for the authenticated user's account.",
+    parameters: [
+      {
+        in: 'query',
+        name: 'page',
+        schema: { type: 'integer', default: 1 },
+        description: 'Page number for pagination',
+      },
+      {
+        in: 'query',
+        name: 'limit',
+        schema: { type: 'integer', default: 50, maximum: 100 },
+        description: 'Number of items per page',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'SSH keys successfully retrieved',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' },
+                      fingerprint: { type: 'string' },
+                      public_key: { type: 'string' },
+                      created_at: { type: 'string', format: 'date-time' },
+                    },
+                  },
+                },
+                pagination: {
+                  type: 'object',
+                  properties: {
+                    page: { type: 'integer' },
+                    perPage: { type: 'integer' },
+                    total: { type: 'integer' },
+                    totalPages: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const user = accountContext.user;

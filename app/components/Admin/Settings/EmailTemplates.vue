@@ -326,7 +326,12 @@ function cancelEdit() {
             </div>
 
             <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <UButton color="error" variant="ghost" class="w-full justify-center" @click="cancelEdit">
+              <UButton
+                color="error"
+                variant="ghost"
+                class="w-full justify-center"
+                @click="cancelEdit"
+              >
                 Back to Editor
               </UButton>
             </div>
@@ -379,7 +384,12 @@ function cancelEdit() {
             </div>
 
             <div class="flex flex-col gap-2 sm:flex-row sm:justify-end">
-              <UButton color="error" variant="ghost" class="w-full justify-center" @click="cancelEdit">
+              <UButton
+                color="error"
+                variant="ghost"
+                class="w-full justify-center"
+                @click="cancelEdit"
+              >
                 Cancel
               </UButton>
               <UButton

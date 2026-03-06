@@ -52,7 +52,11 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
-import type { ClientDashboardMetric, ClientDashboardResponse, DashboardData } from '#shared/types/dashboard';
+import type {
+  ClientDashboardMetric,
+  ClientDashboardResponse,
+  DashboardData,
+} from '#shared/types/dashboard';
 
 type AccountSessionCountResponse = {
   count: number;
@@ -213,5 +217,4 @@ useHead(() => ({
   title: welcomeTitle.value,
   meta: [{ name: 'description', content: t('dashboard.description') }],
 }));
-
 </script>

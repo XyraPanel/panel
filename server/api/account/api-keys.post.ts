@@ -12,6 +12,73 @@ import { APIError } from 'better-auth/api';
 import { getAuth } from '#server/utils/auth';
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Create API key',
+    description:
+      'Generates a new personal API key for the authenticated user. Note: The secret token is only returned once upon creation.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              memo: { type: 'string', description: 'A short description or name for the API key' },
+              allowedIps: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Optional list of IP addresses allowed to use this key',
+              },
+              expiresAt: {
+                type: 'string',
+                format: 'date-time',
+                description: 'Optional expiration timestamp for the key',
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'API key successfully created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    identifier: { type: 'string' },
+                    description: { type: 'string', nullable: true },
+                    allowed_ips: { type: 'array', items: { type: 'string' } },
+                    last_used_at: { type: 'string', format: 'date-time', nullable: true },
+                    created_at: { type: 'string', format: 'date-time' },
+                  },
+                },
+                meta: {
+                  type: 'object',
+                  properties: {
+                    secret_token: {
+                      type: 'string',
+                      description: 'The raw API key secret (only shown once)',
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid request body' },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
   const accountContext = await requireAccountUser(event);
   const user = accountContext.user;

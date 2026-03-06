@@ -2,6 +2,48 @@ import { auth, getAuthHeaders } from '#server/utils/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAuth } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Revoke session',
+    description:
+      'Terminates a specific active session identified by its token for the authenticated user.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'token',
+        required: true,
+        schema: { type: 'string' },
+        description: 'The session token to revoke',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Session successfully revoked',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    revoked: { type: 'boolean' },
+                    currentSessionRevoked: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Missing session token' },
+      401: { description: 'Authentication required' },
+      404: { description: 'Session not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'DELETE');
 

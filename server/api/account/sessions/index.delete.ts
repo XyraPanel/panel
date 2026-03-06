@@ -3,6 +3,46 @@ import { getAuth, getAuthHeaders } from '#server/utils/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { getValidatedQuery, requireAuth } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Revoke sessions',
+    description:
+      'Terminates multiple active sessions for the authenticated user. Can optionally include the current session.',
+    parameters: [
+      {
+        in: 'query',
+        name: 'includeCurrent',
+        schema: { type: 'boolean', default: false },
+        description: 'Whether to also revoke the session currently being used',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Sessions successfully revoked',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    revoked: { type: 'integer' },
+                    currentSessionRevoked: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAuth(event);
 

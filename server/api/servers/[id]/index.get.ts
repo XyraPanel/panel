@@ -10,6 +10,54 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 import type { PanelServerDetails, ServerAllocationSummary } from '#shared/types/server';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Server'],
+    summary: 'Get server details',
+    description:
+      "Retrieves complete details for a specific server, its network configuration, resource limits, and the user's effective permissions.",
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Server internal ID, UUID, or identifier',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Server details retrieved successfully',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    uuid: { type: 'string' },
+                    identifier: { type: 'string' },
+                    name: { type: 'string' },
+                    status: { type: 'string', nullable: true },
+                    limits: { type: 'object' },
+                    allocations: { type: 'object' },
+                    permissions: { type: 'array', items: { type: 'string' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Unauthorized to view this server' },
+      404: { description: 'Server not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id');
   if (!identifier) {

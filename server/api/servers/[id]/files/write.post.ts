@@ -10,6 +10,63 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 import { writeFileSchema } from '#shared/schema/server/operations';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['File Manager'],
+    summary: 'Save file content',
+    description:
+      'Creates or updates a file with the provided text content directly through the Wings node.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'id',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Server internal ID, UUID, or identifier',
+      },
+    ],
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              path: { type: 'string', description: 'Relative path of the file to write' },
+              content: { type: 'string', description: 'The text content to save' },
+            },
+            required: ['path', 'content'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'File successfully saved',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Missing server.files.write permission' },
+      422: { description: 'Unprocessable Entity: Missing path or content' },
+      500: { description: 'Wings daemon error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const identifier = getRouterParam(event, 'id');
   if (!identifier) {

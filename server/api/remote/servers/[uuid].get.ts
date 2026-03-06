@@ -39,6 +39,44 @@ function safeJsonParse(value: string | null | undefined, defaultValue: unknown =
   }
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Internal'],
+    summary: 'Remote get server config',
+    description:
+      'Retrieves the complete internal configuration for a specific server, including environment, limits, and process management details. Used by Wings nodes.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'uuid',
+        required: true,
+        schema: { type: 'string', format: 'uuid' },
+        description: 'The UUID of the server',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Server configuration successfully retrieved',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                settings: { type: 'object' },
+                process_configuration: { type: 'object' },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Unauthorized Wings node' },
+      403: { description: 'Server not assigned to this node' },
+      404: { description: 'Server not found' },
+      500: { description: 'Configuration generation error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   const { uuid } = getRouterParams(event);
   if (!uuid || typeof uuid !== 'string') {

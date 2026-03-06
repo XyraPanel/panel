@@ -8,6 +8,57 @@ import {
 } from '#server/utils/security';
 import { twoFactorVerifySchema } from '#shared/schema/account';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Verify 2FA code',
+    description:
+      'Verifies a TOTP code to complete the two-factor authentication setup for the authenticated user.',
+    requestBody: {
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              code: { type: 'string', description: 'The 6-digit TOTP code' },
+              trustDevice: {
+                type: 'boolean',
+                default: false,
+                description: 'Whether to trust this device for future logins',
+              },
+            },
+            required: ['code'],
+          },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: '2FA successfully verified and enabled',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Invalid TOTP code' },
+      401: { description: 'Authentication required' },
+      500: { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user } = await requireAccountUser(event);
 

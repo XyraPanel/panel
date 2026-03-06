@@ -109,9 +109,11 @@ export default defineNuxtConfig({
           manualChunks(id) {
             if (id.includes('@xterm')) return 'xterm';
             if (id.includes('monaco-editor')) return 'monaco';
-            if (id.includes('echarts') || id.includes('vue-echarts') || id.includes('zrender')) return 'echarts';
-            if (id.includes('node_modules/vue/') || id.includes('node_modules/@vueuse/')) return 'vendor';
-          }
+            if (id.includes('echarts') || id.includes('vue-echarts') || id.includes('zrender'))
+              return 'echarts';
+            if (id.includes('node_modules/vue/') || id.includes('node_modules/@vueuse/'))
+              return 'vendor';
+          },
         },
       },
       chunkSizeWarningLimit: 1000,
@@ -648,6 +650,14 @@ export default defineNuxtConfig({
     experimental: {
       tasks: true, // NOTE: The panel will remain in a BETA STATE until Nitro tasks are stable. See https://github.com/nuxt/nitro/issues/1105
       websocket: true,
+      openAPI: true,
+    },
+    openAPI: {
+      ui: {
+        scalar: {
+          route: '/_docs/scalar',
+        },
+      },
     },
     handlers: [
       {

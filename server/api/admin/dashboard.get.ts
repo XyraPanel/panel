@@ -230,6 +230,49 @@ async function fetchIncidents(): Promise<DashboardIncident[]> {
   }));
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin'],
+    summary: 'Get admin dashboard data',
+    description:
+      'Retrieves a comprehensive overview of the panel state, including node health, registered servers, and recent audit events. Use the section parameter to filter results for faster updates.',
+    parameters: [
+      {
+        in: 'query',
+        name: 'section',
+        schema: { type: 'string', enum: ['full', 'critical', 'incidents'] },
+        description: 'Specify which part of the dashboard to fetch',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Dashboard data retrieved successfully',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    metrics: { type: 'array', items: { type: 'object' } },
+                    nodes: { type: 'array', items: { type: 'object' } },
+                    incidents: { type: 'array', items: { type: 'object' } },
+                    operations: { type: 'array', items: { type: 'object' } },
+                    generatedAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      401: { description: 'Authentication required' },
+      403: { description: 'Administrator privileges required' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<{ data: DashboardResponse }> => {
   await requireAdmin(event);
   await requireAdminApiKeyPermission(

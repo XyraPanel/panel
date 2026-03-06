@@ -2,6 +2,46 @@ import { type H3Event } from 'h3';
 import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Internal'],
+    summary: 'Remote get server install script',
+    description:
+      'Retrieves the installation script and container metadata for a specific server. Used by Wings nodes during server setup.',
+    parameters: [
+      {
+        in: 'path',
+        name: 'uuid',
+        required: true,
+        schema: { type: 'string', format: 'uuid' },
+        description: 'The UUID of the server',
+      },
+    ],
+    responses: {
+      200: {
+        description: 'Install metadata successfully retrieved',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                container_image: { type: 'string' },
+                entrypoint: { type: 'string' },
+                script: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      400: { description: 'Missing server UUID' },
+      401: { description: 'Unauthorized Wings node' },
+      403: { description: 'Server not assigned to this node' },
+      404: { description: 'Server not found' },
+      500: { description: 'Egg configuration missing' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   const { uuid } = getRouterParams(event);
   if (!uuid || typeof uuid !== 'string') {
