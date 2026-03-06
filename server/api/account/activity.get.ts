@@ -9,7 +9,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Get account activity',
-    description: 'Retrieves a paginated list of audit events associated with the authenticated user\'s account.',
+    description:
+      "Retrieves a paginated list of audit events associated with the authenticated user's account.",
     parameters: [
       {
         in: 'query',
@@ -114,7 +115,7 @@ export default defineEventHandler(async (event) => {
   const actorConditions = Array.from(actorIdentifiers).map((identifier) =>
     eq(tables.auditEvents.actor, identifier),
   );
- 
+
   const initialFilter = or(...actorConditions);
   const filters: SQL[] = initialFilter ? [initialFilter] : [];
 
@@ -177,7 +178,14 @@ export default defineEventHandler(async (event) => {
     action: 'account.activity.viewed',
     targetType: 'user',
     targetId: user.id,
-    metadata: { page, limit, total, search: search ?? null, action: action ?? null, targetType: targetType ?? null },
+    metadata: {
+      page,
+      limit,
+      total,
+      search: search ?? null,
+      action: action ?? null,
+      targetType: targetType ?? null,
+    },
   });
 
   return {

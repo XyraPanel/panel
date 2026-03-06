@@ -16,7 +16,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Create API key',
-    description: 'Generates a new personal API key for the authenticated user. Note: The secret token is only returned once upon creation.',
+    description:
+      'Generates a new personal API key for the authenticated user. Note: The secret token is only returned once upon creation.',
     requestBody: {
       content: {
         'application/json': {
@@ -24,15 +25,15 @@ defineRouteMeta({
             type: 'object',
             properties: {
               memo: { type: 'string', description: 'A short description or name for the API key' },
-              allowedIps: { 
-                type: 'array', 
-                items: { type: 'string' }, 
-                description: 'Optional list of IP addresses allowed to use this key' 
+              allowedIps: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Optional list of IP addresses allowed to use this key',
               },
-              expiresAt: { 
-                type: 'string', 
-                format: 'date-time', 
-                description: 'Optional expiration timestamp for the key' 
+              expiresAt: {
+                type: 'string',
+                format: 'date-time',
+                description: 'Optional expiration timestamp for the key',
               },
             },
           },
@@ -60,7 +61,10 @@ defineRouteMeta({
                 meta: {
                   type: 'object',
                   properties: {
-                    secret_token: { type: 'string', description: 'The raw API key secret (only shown once)' },
+                    secret_token: {
+                      type: 'string',
+                      description: 'The raw API key secret (only shown once)',
+                    },
                   },
                 },
               },

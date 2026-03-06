@@ -6,7 +6,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Revoke session',
-    description: 'Terminates a specific active session identified by its token for the authenticated user.',
+    description:
+      'Terminates a specific active session identified by its token for the authenticated user.',
     parameters: [
       {
         in: 'path',

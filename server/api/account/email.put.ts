@@ -13,7 +13,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Request email change',
-    description: 'Initiates a request to change the authenticated user\'s email address. Requires current password verification.',
+    description:
+      "Initiates a request to change the authenticated user's email address. Requires current password verification.",
     requestBody: {
       content: {
         'application/json': {
@@ -21,7 +22,11 @@ defineRouteMeta({
             type: 'object',
             properties: {
               email: { type: 'string', format: 'email', description: 'The new email address' },
-              password: { type: 'string', format: 'password', description: 'Current account password for verification' },
+              password: {
+                type: 'string',
+                format: 'password',
+                description: 'Current account password for verification',
+              },
             },
             required: ['email', 'password'],
           },

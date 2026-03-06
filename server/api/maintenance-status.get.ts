@@ -4,7 +4,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['System'],
     summary: 'Get maintenance status',
-    description: 'Checks if the panel is currently in maintenance mode and retrieves the related system broadcast message.',
+    description:
+      'Checks if the panel is currently in maintenance mode and retrieves the related system broadcast message.',
     responses: {
       200: {
         description: 'Successfully retrieved maintenance status',

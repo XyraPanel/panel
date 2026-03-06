@@ -76,7 +76,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'Update Wings node',
-    description: 'Modifies an existing Wings node\'s configuration, including networking, security, and resource allocation.',
+    description:
+      "Modifies an existing Wings node's configuration, including networking, security, and resource allocation.",
     parameters: [
       {
         in: 'path',

@@ -3,22 +3,34 @@ import { auth, getAuthHeaders } from '#server/utils/auth';
 import { resolveSessionUser } from '#server/utils/auth/sessionUser';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { accountPasswordUpdateSchema } from '#shared/schema/account';
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
-
+import {
+  requireAccountUser,
+  readValidatedBodyWithLimit,
+  BODY_SIZE_LIMITS,
+} from '#server/utils/security';
 
 defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Update password',
-    description: 'Updates the authenticated user\'s password. Requires verification with the current password and will result in session revocation.',
+    description:
+      "Updates the authenticated user's password. Requires verification with the current password and will result in session revocation.",
     requestBody: {
       content: {
         'application/json': {
           schema: {
             type: 'object',
             properties: {
-              currentPassword: { type: 'string', format: 'password', description: 'Existing account password' },
-              newPassword: { type: 'string', format: 'password', description: 'The new password to set' },
+              currentPassword: {
+                type: 'string',
+                format: 'password',
+                description: 'Existing account password',
+              },
+              newPassword: {
+                type: 'string',
+                format: 'password',
+                description: 'The new password to set',
+              },
             },
             required: ['currentPassword', 'newPassword'],
           },

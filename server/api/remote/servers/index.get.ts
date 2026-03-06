@@ -22,7 +22,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Internal'],
     summary: 'Remote list node servers',
-    description: 'Retrieves a paginated list of all servers assigned to the authenticated node, including their full configuration and environment.',
+    description:
+      'Retrieves a paginated list of all servers assigned to the authenticated node, including their full configuration and environment.',
     parameters: [
       {
         in: 'query',

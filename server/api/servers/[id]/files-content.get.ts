@@ -11,7 +11,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['File Manager'],
     summary: 'Get file content',
-    description: 'Reads the text content of a file from the server instance instance via Wings. Used for the online file editor.',
+    description:
+      'Reads the text content of a file from the server instance instance via Wings. Used for the online file editor.',
     parameters: [
       {
         in: 'path',

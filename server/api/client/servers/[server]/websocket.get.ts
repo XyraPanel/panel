@@ -38,7 +38,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Server Console'],
     summary: 'Get WebSocket credentials',
-    description: 'Generates a one-time token and WebSocket URL for connecting to the server console via Wings.',
+    description:
+      'Generates a one-time token and WebSocket URL for connecting to the server console via Wings.',
     parameters: [
       {
         in: 'path',

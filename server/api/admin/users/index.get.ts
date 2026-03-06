@@ -9,7 +9,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'List users',
-    description: 'Retrieves a paginated list of all users in the panel. Supports searching by email or username.',
+    description:
+      'Retrieves a paginated list of all users in the panel. Supports searching by email or username.',
     parameters: [
       {
         in: 'query',

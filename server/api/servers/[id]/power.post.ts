@@ -13,7 +13,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Server Operations'],
     summary: 'Send power action',
-    description: 'Sends a power control signal (start, stop, restart, kill) to the server instance via Wings.',
+    description:
+      'Sends a power control signal (start, stop, restart, kill) to the server instance via Wings.',
     parameters: [
       {
         in: 'path',

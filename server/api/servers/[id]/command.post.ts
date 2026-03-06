@@ -13,7 +13,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Server Operations'],
     summary: 'Send console command',
-    description: 'Sends a specific text command to be executed in the server\'s running console/stdin.',
+    description:
+      "Sends a specific text command to be executed in the server's running console/stdin.",
     parameters: [
       {
         in: 'path',

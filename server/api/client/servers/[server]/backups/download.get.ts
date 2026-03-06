@@ -47,9 +47,12 @@ defineRouteMeta({
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');
-  const { backup: backupUuid } = await getValidatedQuery(event, z.object({
-    backup: z.string(),
-  }));
+  const { backup: backupUuid } = await getValidatedQuery(
+    event,
+    z.object({
+      backup: z.string(),
+    }),
+  );
 
   if (!serverId || !backupUuid) {
     throw createError({

@@ -8,7 +8,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Server Operations'],
     summary: 'List server databases',
-    description: 'Retrieves all databases associated with a specific server instance, including connection details and host information.',
+    description:
+      'Retrieves all databases associated with a specific server instance, including connection details and host information.',
     parameters: [
       {
         in: 'path',

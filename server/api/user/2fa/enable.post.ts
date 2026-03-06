@@ -12,15 +12,23 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Initiate 2FA enablement',
-    description: 'Starts the process of enabling two-factor authentication by generating a TOTP URI and backup/recovery codes. Requires current password verification.',
+    description:
+      'Starts the process of enabling two-factor authentication by generating a TOTP URI and backup/recovery codes. Requires current password verification.',
     requestBody: {
       content: {
         'application/json': {
           schema: {
             type: 'object',
             properties: {
-              password: { type: 'string', format: 'password', description: 'Current account password for verification' },
-              issuer: { type: 'string', description: 'Optional name of the issuer (e.g., XyraPanel)' },
+              password: {
+                type: 'string',
+                format: 'password',
+                description: 'Current account password for verification',
+              },
+              issuer: {
+                type: 'string',
+                description: 'Optional name of the issuer (e.g., XyraPanel)',
+              },
             },
             required: ['password'],
           },
@@ -38,7 +46,10 @@ defineRouteMeta({
                 data: {
                   type: 'object',
                   properties: {
-                    uri: { type: 'string', description: 'The TOTP provision URI (use this for generating QR codes)' },
+                    uri: {
+                      type: 'string',
+                      description: 'The TOTP provision URI (use this for generating QR codes)',
+                    },
                     secret: { type: 'string', description: 'The raw TOTP secret key' },
                     recoveryTokens: { type: 'array', items: { type: 'string' } },
                     backupCodes: { type: 'array', items: { type: 'string' } },

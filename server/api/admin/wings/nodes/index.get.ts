@@ -6,7 +6,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'List Wings nodes',
-    description: 'Retrieves a list of all configured Wings nodes in the panel for administrative overview.',
+    description:
+      'Retrieves a list of all configured Wings nodes in the panel for administrative overview.',
     responses: {
       200: {
         description: 'Successfully retrieved list of nodes',

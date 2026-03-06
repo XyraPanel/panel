@@ -18,7 +18,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'Create node allocations',
-    description: 'Bulk creates network allocations (IP/Port pairs) for a specific Wings node. Supports CIDR notation for IP addresses and ranges for ports.',
+    description:
+      'Bulk creates network allocations (IP/Port pairs) for a specific Wings node. Supports CIDR notation for IP addresses and ranges for ports.',
     parameters: [
       {
         in: 'path',
@@ -35,9 +36,10 @@ defineRouteMeta({
             type: 'object',
             properties: {
               ip: { type: 'string', description: 'IP address or CIDR notation' },
-              ports: { 
+              ports: {
                 type: 'string',
-                description: 'Port numbers, ranges (e.g., "25565-25575"), or comma-separated list. Can also be a single integer or an array of integers.'
+                description:
+                  'Port numbers, ranges (e.g., "25565-25575"), or comma-separated list. Can also be a single integer or an array of integers.',
               },
               alias: { type: 'string', description: 'Optional alias for the IP address' },
             },

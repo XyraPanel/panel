@@ -14,7 +14,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Server'],
     summary: 'Get server details',
-    description: 'Retrieves complete details for a specific server, its network configuration, resource limits, and the user\'s effective permissions.',
+    description:
+      "Retrieves complete details for a specific server, its network configuration, resource limits, and the user's effective permissions.",
     parameters: [
       {
         in: 'path',

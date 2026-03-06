@@ -29,8 +29,15 @@ defineRouteMeta({
           schema: {
             type: 'object',
             properties: {
-              root: { type: 'string', description: 'The absolute root directory containing the files to delete' },
-              files: { type: 'array', items: { type: 'string' }, description: 'The filenames to delete relative to root' },
+              root: {
+                type: 'string',
+                description: 'The absolute root directory containing the files to delete',
+              },
+              files: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'The filenames to delete relative to root',
+              },
             },
             required: ['root', 'files'],
           },

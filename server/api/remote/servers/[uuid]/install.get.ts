@@ -6,7 +6,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Internal'],
     summary: 'Remote get server install script',
-    description: 'Retrieves the installation script and container metadata for a specific server. Used by Wings nodes during server setup.',
+    description:
+      'Retrieves the installation script and container metadata for a specific server. Used by Wings nodes during server setup.',
     parameters: [
       {
         in: 'path',

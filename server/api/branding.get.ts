@@ -6,7 +6,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['System'],
     summary: 'Get branding settings',
-    description: 'Retrieves current panel branding configurations, including logo visibility and asset URLs.',
+    description:
+      'Retrieves current panel branding configurations, including logo visibility and asset URLs.',
     responses: {
       200: {
         description: 'Successfully retrieved branding settings',

@@ -13,7 +13,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Verify 2FA recovery token',
-    description: 'Validates a 2FA recovery token to allow account access when the primary TOTP device is unavailable.',
+    description:
+      'Validates a 2FA recovery token to allow account access when the primary TOTP device is unavailable.',
     requestBody: {
       content: {
         'application/json': {

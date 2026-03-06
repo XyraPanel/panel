@@ -9,7 +9,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'Create Wings node',
-    description: 'Registers a new physical server as a Wings node in the panel, allowing it to host game servers.',
+    description:
+      'Registers a new physical server as a Wings node in the panel, allowing it to host game servers.',
     requestBody: {
       content: {
         'application/json': {

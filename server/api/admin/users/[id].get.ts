@@ -9,7 +9,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'Get user details',
-    description: 'Retrieves comprehensive administrative details for a specific user, including profile information, resource usage statistics, and security/session metrics.',
+    description:
+      'Retrieves comprehensive administrative details for a specific user, including profile information, resource usage statistics, and security/session metrics.',
     parameters: [
       {
         in: 'path',

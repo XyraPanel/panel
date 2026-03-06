@@ -8,7 +8,7 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Delete SSH key',
-    description: 'Deletes a specific SSH key registered on the authenticated user\'s account.',
+    description: "Deletes a specific SSH key registered on the authenticated user's account.",
     parameters: [
       {
         in: 'path',

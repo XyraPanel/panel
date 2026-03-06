@@ -43,7 +43,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Internal'],
     summary: 'Remote get server config',
-    description: 'Retrieves the complete internal configuration for a specific server, including environment, limits, and process management details. Used by Wings nodes.',
+    description:
+      'Retrieves the complete internal configuration for a specific server, including environment, limits, and process management details. Used by Wings nodes.',
     parameters: [
       {
         in: 'path',

@@ -13,7 +13,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['File Manager'],
     summary: 'Create directory',
-    description: 'Creates a new directory at the specified location within the server\'s disk using Wings.',
+    description:
+      "Creates a new directory at the specified location within the server's disk using Wings.",
     parameters: [
       {
         in: 'path',

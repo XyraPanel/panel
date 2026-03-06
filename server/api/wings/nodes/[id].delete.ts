@@ -7,7 +7,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'Delete Wings node',
-    description: 'Removes a Wings node from the panel. This operation is irreversible and may impact servers assigned to the node.',
+    description:
+      'Removes a Wings node from the panel. This operation is irreversible and may impact servers assigned to the node.',
     parameters: [
       {
         in: 'path',

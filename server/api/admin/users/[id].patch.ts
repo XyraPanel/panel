@@ -12,7 +12,7 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'Update user',
-    description: 'Modifies an existing user\'s profile, credentials, or administrative status.',
+    description: "Modifies an existing user's profile, credentials, or administrative status.",
     parameters: [
       {
         in: 'path',
@@ -70,7 +70,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'User ID is required' });
   }
 
-  const rawBody = await readValidatedBodyWithLimit(event, adminUpdateUserSchema, BODY_SIZE_LIMITS.SMALL);
+  const rawBody = await readValidatedBodyWithLimit(
+    event,
+    adminUpdateUserSchema,
+    BODY_SIZE_LIMITS.SMALL,
+  );
 
   try {
     let body = rawBody;

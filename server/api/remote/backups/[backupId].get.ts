@@ -6,7 +6,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Internal'],
     summary: 'Remote get backup parts',
-    description: 'Retrieves multi-part upload metadata for a specific backup for a Wings node. Used for S3 uploads.',
+    description:
+      'Retrieves multi-part upload metadata for a specific backup for a Wings node. Used for S3 uploads.',
     parameters: [
       {
         in: 'path',

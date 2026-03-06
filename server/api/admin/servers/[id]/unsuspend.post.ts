@@ -48,7 +48,10 @@ export default defineEventHandler(async (event) => {
       };
     }
 
-    await db.update(tables.servers).set({ suspended: false }).where(eq(tables.servers.id, serverId));
+    await db
+      .update(tables.servers)
+      .set({ suspended: false })
+      .where(eq(tables.servers.id, serverId));
 
     if (server.nodeId) {
       const [node] = await db

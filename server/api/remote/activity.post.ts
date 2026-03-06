@@ -11,7 +11,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Internal'],
     summary: 'Remote activity batch',
-    description: 'Receives and processes a batch of activity/audit logs from a remote Wings node. Used for centralized logging.',
+    description:
+      'Receives and processes a batch of activity/audit logs from a remote Wings node. Used for centralized logging.',
     requestBody: {
       content: {
         'application/json': {
@@ -24,9 +25,21 @@ defineRouteMeta({
                   type: 'object',
                   properties: {
                     event: { type: 'string', description: 'The action/event name' },
-                    user: { type: 'string', nullable: true, description: 'The user identifier or system' },
-                    server: { type: 'string', nullable: true, description: 'The server UUID or identifier' },
-                    ip: { type: 'string', nullable: true, description: 'The client IP associated with the event' },
+                    user: {
+                      type: 'string',
+                      nullable: true,
+                      description: 'The user identifier or system',
+                    },
+                    server: {
+                      type: 'string',
+                      nullable: true,
+                      description: 'The server UUID or identifier',
+                    },
+                    ip: {
+                      type: 'string',
+                      nullable: true,
+                      description: 'The client IP associated with the event',
+                    },
                     timestamp: { type: 'string', format: 'date-time' },
                     metadata: { type: 'object', nullable: true },
                   },
@@ -78,7 +91,10 @@ export default defineEventHandler(async (event: H3Event) => {
     const insertedCount = activities.length;
     let successCount = 0;
 
-    const serverCache = new Map<string, Awaited<ReturnType<typeof findServerByIdentifier>> | null>();
+    const serverCache = new Map<
+      string,
+      Awaited<ReturnType<typeof findServerByIdentifier>> | null
+    >();
 
     for (const activity of activities) {
       try {

@@ -8,7 +8,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'List SSH keys',
-    description: 'Retrieves a paginated list of all SSH public keys registered for the authenticated user\'s account.',
+    description:
+      "Retrieves a paginated list of all SSH public keys registered for the authenticated user's account.",
     parameters: [
       {
         in: 'query',

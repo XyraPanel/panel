@@ -6,7 +6,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Internal'],
     summary: 'Internal system seed',
-    description: 'Seeds the system with initial data such as default administrator and email templates. Requires Authorization: Bearer <SEED_SECRET>.',
+    description:
+      'Seeds the system with initial data such as default administrator and email templates. Requires Authorization: Bearer <SEED_SECRET>.',
     responses: {
       200: {
         description: 'System successfully seeded',
@@ -47,7 +48,9 @@ export default defineEventHandler(async (event) => {
   // Architectural boundary satisfaction
   type _SharedModel = FileManagerOptions;
 
-  const body = await readValidatedBodyWithLimit(event, z.any(), BODY_SIZE_LIMITS.LARGE).catch(() => ({}));
+  const body = await readValidatedBodyWithLimit(event, z.any(), BODY_SIZE_LIMITS.LARGE).catch(
+    () => ({}),
+  );
 
   try {
     const adminResult = await runTask('seed-admin', { payload: body });

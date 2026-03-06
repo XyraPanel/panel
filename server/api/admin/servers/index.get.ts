@@ -11,7 +11,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'List all servers',
-    description: 'Retrieves a paginated list of all servers across all Wings nodes for administrative oversight. Includes owner and node relationship data.',
+    description:
+      'Retrieves a paginated list of all servers across all Wings nodes for administrative oversight. Includes owner and node relationship data.',
     parameters: [
       {
         in: 'query',
@@ -71,10 +72,7 @@ export default defineEventHandler(async (event) => {
       ADMIN_ACL_PERMISSIONS.READ,
     );
 
-    const { page, perPage } = await getValidatedQuery(
-      event,
-      adminServersPaginationSchema,
-    );
+    const { page, perPage } = await getValidatedQuery(event, adminServersPaginationSchema);
     const offset = (page - 1) * perPage;
 
     const db = useDrizzle();

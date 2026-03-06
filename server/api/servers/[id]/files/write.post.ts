@@ -14,7 +14,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['File Manager'],
     summary: 'Save file content',
-    description: 'Creates or updates a file with the provided text content directly through the Wings node.',
+    description:
+      'Creates or updates a file with the provided text content directly through the Wings node.',
     parameters: [
       {
         in: 'path',

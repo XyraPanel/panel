@@ -5,7 +5,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Get current user profile',
-    description: 'Retrieves the currently authenticated user\'s profile information, including roles and permissions.',
+    description:
+      "Retrieves the currently authenticated user's profile information, including roles and permissions.",
     responses: {
       200: {
         description: 'User profile retrieved successfully',

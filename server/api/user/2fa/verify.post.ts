@@ -12,7 +12,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Verify 2FA code',
-    description: 'Verifies a TOTP code to complete the two-factor authentication setup for the authenticated user.',
+    description:
+      'Verifies a TOTP code to complete the two-factor authentication setup for the authenticated user.',
     requestBody: {
       content: {
         'application/json': {
@@ -20,7 +21,11 @@ defineRouteMeta({
             type: 'object',
             properties: {
               code: { type: 'string', description: 'The 6-digit TOTP code' },
-              trustDevice: { type: 'boolean', default: false, description: 'Whether to trust this device for future logins' },
+              trustDevice: {
+                type: 'boolean',
+                default: false,
+                description: 'Whether to trust this device for future logins',
+              },
             },
             required: ['code'],
           },

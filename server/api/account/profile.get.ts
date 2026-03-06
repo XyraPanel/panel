@@ -6,7 +6,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Get account profile',
-    description: 'Retrieves the profile information for the authenticated user direct from the database.',
+    description:
+      'Retrieves the profile information for the authenticated user direct from the database.',
     responses: {
       200: {
         description: 'Account profile retrieved',

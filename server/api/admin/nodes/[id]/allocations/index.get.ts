@@ -8,7 +8,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'List node allocations',
-    description: 'Retrieves all network allocations (IP/Port pairs) associated with a specific Wings node.',
+    description:
+      'Retrieves all network allocations (IP/Port pairs) associated with a specific Wings node.',
     parameters: [
       {
         in: 'path',

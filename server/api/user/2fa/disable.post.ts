@@ -12,14 +12,19 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Disable 2FA',
-    description: 'Disables two-factor authentication for the authenticated user. Requires current password verification for security.',
+    description:
+      'Disables two-factor authentication for the authenticated user. Requires current password verification for security.',
     requestBody: {
       content: {
         'application/json': {
           schema: {
             type: 'object',
             properties: {
-              password: { type: 'string', format: 'password', description: 'Current account password for verification' },
+              password: {
+                type: 'string',
+                format: 'password',
+                description: 'Current account password for verification',
+              },
             },
             required: ['password'],
           },

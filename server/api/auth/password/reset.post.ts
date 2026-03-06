@@ -8,15 +8,23 @@ defineRouteMeta({
   openAPI: {
     tags: ['Auth'],
     summary: 'Reset password with token',
-    description: 'Completes the password reset process using a valid secret token and sets a new account password.',
+    description:
+      'Completes the password reset process using a valid secret token and sets a new account password.',
     requestBody: {
       content: {
         'application/json': {
           schema: {
             type: 'object',
             properties: {
-              token: { type: 'string', description: 'The password reset token from the recovery email' },
-              password: { type: 'string', format: 'password', description: 'The new account password to set' },
+              token: {
+                type: 'string',
+                description: 'The password reset token from the recovery email',
+              },
+              password: {
+                type: 'string',
+                format: 'password',
+                description: 'The new account password to set',
+              },
             },
             required: ['token', 'password'],
           },
@@ -54,7 +62,6 @@ export default defineEventHandler(async (event) => {
     passwordResetPerformSchema,
     BODY_SIZE_LIMITS.SMALL,
   );
-
 
   try {
     await auth.api.resetPassword({

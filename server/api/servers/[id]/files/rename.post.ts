@@ -13,7 +13,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['File Manager'],
     summary: 'Rename files',
-    description: 'Renames or moves files and directories within a specified root directory using Wings.',
+    description:
+      'Renames or moves files and directories within a specified root directory using Wings.',
     parameters: [
       {
         in: 'path',

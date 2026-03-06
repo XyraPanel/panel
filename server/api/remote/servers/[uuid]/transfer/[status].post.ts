@@ -7,7 +7,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Internal'],
     summary: 'Remote complete server transfer',
-    description: 'Callback for Wings nodes to report the final status of a server transfer operation between nodes.',
+    description:
+      'Callback for Wings nodes to report the final status of a server transfer operation between nodes.',
     parameters: [
       {
         in: 'path',
@@ -54,138 +55,138 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event: H3Event) => {
   try {
-  assertMethod(event, 'POST');
-  const db = useDrizzle();
-  const { uuid, status } = getRouterParams(event);
+    assertMethod(event, 'POST');
+    const db = useDrizzle();
+    const { uuid, status } = getRouterParams(event);
 
-  if (!uuid || typeof uuid !== 'string') {
-    throw createError({ status: 400, message: 'Missing server UUID' });
-  }
+    if (!uuid || typeof uuid !== 'string') {
+      throw createError({ status: 400, message: 'Missing server UUID' });
+    }
 
-  if (status !== 'success' && status !== 'failure') {
-    throw createError({ status: 400, message: 'Invalid transfer status' });
-  }
+    if (status !== 'success' && status !== 'failure') {
+      throw createError({ status: 400, message: 'Invalid transfer status' });
+    }
 
-  const nodeId = await getNodeIdFromAuth(event);
+    const nodeId = await getNodeIdFromAuth(event);
 
-  const successful = status === 'success';
+    const successful = status === 'success';
 
-  const serverRows = await db
-    .select()
-    .from(tables.servers)
-    .where(eq(tables.servers.uuid, uuid))
-    .limit(1);
+    const serverRows = await db
+      .select()
+      .from(tables.servers)
+      .where(eq(tables.servers.uuid, uuid))
+      .limit(1);
 
-  const server = serverRows[0];
+    const server = serverRows[0];
 
-  if (!server) {
-    throw createError({ status: 404, message: 'Server not found' });
-  }
+    if (!server) {
+      throw createError({ status: 404, message: 'Server not found' });
+    }
 
-  const transferRows = await db
-    .select()
-    .from(tables.serverTransfers)
-    .where(
-      and(
-        eq(tables.serverTransfers.serverId, server.id),
-        eq(tables.serverTransfers.archived, false),
-      ),
-    )
-    .orderBy(tables.serverTransfers.createdAt)
-    .limit(1);
+    const transferRows = await db
+      .select()
+      .from(tables.serverTransfers)
+      .where(
+        and(
+          eq(tables.serverTransfers.serverId, server.id),
+          eq(tables.serverTransfers.archived, false),
+        ),
+      )
+      .orderBy(tables.serverTransfers.createdAt)
+      .limit(1);
 
-  const transfer = transferRows[0];
+    const transfer = transferRows[0];
 
-  if (!transfer) {
-    throw createError({
-      status: 409,
-      message: 'No active transfer: No transfer record found for this server.',
-    });
-  }
+    if (!transfer) {
+      throw createError({
+        status: 409,
+        message: 'No active transfer: No transfer record found for this server.',
+      });
+    }
 
-  const now = new Date().toISOString();
-  const oldAdditionalAllocations = parseAllocationList(transfer.oldAdditionalAllocations);
-  const newAdditionalAllocations = parseAllocationList(transfer.newAdditionalAllocations);
+    const now = new Date().toISOString();
+    const oldAdditionalAllocations = parseAllocationList(transfer.oldAdditionalAllocations);
+    const newAdditionalAllocations = parseAllocationList(transfer.newAdditionalAllocations);
 
-  if (successful) {
-    await db.transaction(async (tx) => {
-      const allocationsToRelease = [transfer.oldAllocation, ...oldAdditionalAllocations];
+    if (successful) {
+      await db.transaction(async (tx) => {
+        const allocationsToRelease = [transfer.oldAllocation, ...oldAdditionalAllocations];
 
-      if (allocationsToRelease.length > 0) {
+        if (allocationsToRelease.length > 0) {
+          await tx
+            .update(tables.serverAllocations)
+            .set({ serverId: null, updatedAt: now })
+            .where(inArray(tables.serverAllocations.id, allocationsToRelease));
+        }
+
+        const assignments = [transfer.newAllocation, ...newAdditionalAllocations];
+        if (assignments.length > 0) {
+          await tx
+            .update(tables.serverAllocations)
+            .set({ serverId: server.id, updatedAt: now })
+            .where(
+              and(
+                inArray(tables.serverAllocations.id, assignments),
+                eq(tables.serverAllocations.nodeId, transfer.newNode),
+              ),
+            );
+        }
+
         await tx
-          .update(tables.serverAllocations)
-          .set({ serverId: null, updatedAt: now })
-          .where(inArray(tables.serverAllocations.id, allocationsToRelease));
-      }
+          .update(tables.servers)
+          .set({
+            status: null,
+            nodeId: transfer.newNode,
+            allocationId: transfer.newAllocation,
+            updatedAt: now,
+          })
+          .where(eq(tables.servers.id, server.id));
 
-      const assignments = [transfer.newAllocation, ...newAdditionalAllocations];
-      if (assignments.length > 0) {
         await tx
-          .update(tables.serverAllocations)
-          .set({ serverId: server.id, updatedAt: now })
-          .where(
-            and(
-              inArray(tables.serverAllocations.id, assignments),
-              eq(tables.serverAllocations.nodeId, transfer.newNode),
-            ),
-          );
-      }
+          .update(tables.serverTransfers)
+          .set({ successful: true, archived: true, updatedAt: now })
+          .where(eq(tables.serverTransfers.id, transfer.id));
+      });
+    } else {
+      await db.transaction(async (tx) => {
+        const allocationsToRelease = [transfer.newAllocation, ...newAdditionalAllocations];
+        if (allocationsToRelease.length > 0) {
+          await tx
+            .update(tables.serverAllocations)
+            .set({ serverId: null, updatedAt: now })
+            .where(inArray(tables.serverAllocations.id, allocationsToRelease));
+        }
 
-      await tx
-        .update(tables.servers)
-        .set({
-          status: null,
-          nodeId: transfer.newNode,
-          allocationId: transfer.newAllocation,
-          updatedAt: now,
-        })
-        .where(eq(tables.servers.id, server.id));
-
-      await tx
-        .update(tables.serverTransfers)
-        .set({ successful: true, archived: true, updatedAt: now })
-        .where(eq(tables.serverTransfers.id, transfer.id));
-    });
-  } else {
-    await db.transaction(async (tx) => {
-      const allocationsToRelease = [transfer.newAllocation, ...newAdditionalAllocations];
-      if (allocationsToRelease.length > 0) {
         await tx
-          .update(tables.serverAllocations)
-          .set({ serverId: null, updatedAt: now })
-          .where(inArray(tables.serverAllocations.id, allocationsToRelease));
-      }
+          .update(tables.servers)
+          .set({ status: 'transfer_failed', updatedAt: now })
+          .where(eq(tables.servers.id, server.id));
 
-      await tx
-        .update(tables.servers)
-        .set({ status: 'transfer_failed', updatedAt: now })
-        .where(eq(tables.servers.id, server.id));
+        await tx
+          .update(tables.serverTransfers)
+          .set({ successful: false, archived: true, updatedAt: now })
+          .where(eq(tables.serverTransfers.id, transfer.id));
+      });
+    }
 
-      await tx
-        .update(tables.serverTransfers)
-        .set({ successful: false, archived: true, updatedAt: now })
-        .where(eq(tables.serverTransfers.id, transfer.id));
+    await recordAuditEventFromRequest(event, {
+      actor: 'wings',
+      actorType: 'system',
+      action: successful ? 'server.transfer_completed' : 'server.transfer_failed',
+      targetType: 'server',
+      targetId: server.uuid,
+      metadata: {
+        node_id: nodeId,
+        successful,
+      },
     });
-  }
 
-  await recordAuditEventFromRequest(event, {
-    actor: 'wings',
-    actorType: 'system',
-    action: successful ? 'server.transfer_completed' : 'server.transfer_failed',
-    targetType: 'server',
-    targetId: server.uuid,
-    metadata: {
-      node_id: nodeId,
-      successful,
-    },
-  });
-
-  return {
-    data: {
-      success: true,
-      status: successful ? null : 'transfer_failed',
-    },
-  };
+    return {
+      data: {
+        success: true,
+        status: successful ? null : 'transfer_failed',
+      },
+    };
   } catch (error) {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;

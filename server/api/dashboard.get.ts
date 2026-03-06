@@ -179,7 +179,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['System'],
     summary: 'Get dashboard summary',
-    description: 'Retrieves an overview of the panel state, including metrics, recent activity, node summaries, and quick links.',
+    description:
+      'Retrieves an overview of the panel state, including metrics, recent activity, node summaries, and quick links.',
     parameters: [
       {
         in: 'query',

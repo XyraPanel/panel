@@ -14,7 +14,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Update account profile',
-    description: 'Updates the authenticated user\'s profile information, such as their username or email address.',
+    description:
+      "Updates the authenticated user's profile information, such as their username or email address.",
     requestBody: {
       content: {
         'application/json': {

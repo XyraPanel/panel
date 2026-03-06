@@ -8,7 +8,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['File Manager'],
     summary: 'Upload files',
-    description: 'Uploads one or more files to a specific directory on the server instance using multipart form data.',
+    description:
+      'Uploads one or more files to a specific directory on the server instance using multipart form data.',
     parameters: [
       {
         in: 'path',
@@ -25,7 +26,11 @@ defineRouteMeta({
             type: 'object',
             properties: {
               directory: { type: 'string', description: 'Target directory for the upload' },
-              files: { type: 'array', items: { type: 'string', format: 'binary' }, description: 'One or more files to upload' },
+              files: {
+                type: 'array',
+                items: { type: 'string', format: 'binary' },
+                description: 'One or more files to upload',
+              },
             },
             required: ['directory', 'files'],
           },

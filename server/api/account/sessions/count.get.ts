@@ -6,7 +6,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Get session count',
-    description: 'Retrieves the total number of active sessions for the currently authenticated user.',
+    description:
+      'Retrieves the total number of active sessions for the currently authenticated user.',
     responses: {
       200: {
         description: 'Successfully retrieved session count',

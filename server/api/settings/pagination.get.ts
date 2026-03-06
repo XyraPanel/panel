@@ -4,7 +4,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['System'],
     summary: 'Get pagination settings',
-    description: 'Retrieves current system-wide pagination configuration, such as the default items per page.',
+    description:
+      'Retrieves current system-wide pagination configuration, such as the default items per page.',
     responses: {
       200: {
         description: 'Successfully retrieved pagination settings',

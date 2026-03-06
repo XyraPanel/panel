@@ -9,7 +9,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'List servers across all nodes',
-    description: 'Retrieves a list of all servers registered in the panel, optionally filtered by node ID. Supports offset-based pagination.',
+    description:
+      'Retrieves a list of all servers registered in the panel, optionally filtered by node ID. Supports offset-based pagination.',
     parameters: [
       {
         in: 'query',

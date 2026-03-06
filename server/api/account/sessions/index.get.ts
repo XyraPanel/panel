@@ -15,7 +15,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'List active sessions',
-    description: 'Retrieves a paginated list of all active login sessions for the authenticated user, including device and location metadata.',
+    description:
+      'Retrieves a paginated list of all active login sessions for the authenticated user, including device and location metadata.',
     parameters: [
       {
         in: 'query',

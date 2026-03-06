@@ -52,7 +52,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Create SSH key',
-    description: 'Registers a new SSH public key for the authenticated user\'s account. Validates the key format and fingerprint.',
+    description:
+      "Registers a new SSH public key for the authenticated user's account. Validates the key format and fingerprint.",
     requestBody: {
       content: {
         'application/json': {
@@ -123,7 +124,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ status: 409, message: 'This SSH key already exists' });
     }
 
-    const userKeys = await db.select().from(tables.sshKeys).where(eq(tables.sshKeys.userId, user.id));
+    const userKeys = await db
+      .select()
+      .from(tables.sshKeys)
+      .where(eq(tables.sshKeys.userId, user.id));
 
     if (userKeys.length >= 25) {
       throw createError({ status: 400, message: 'Maximum of 25 SSH keys allowed per account' });

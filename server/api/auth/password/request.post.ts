@@ -11,14 +11,18 @@ defineRouteMeta({
   openAPI: {
     tags: ['Auth'],
     summary: 'Request password reset',
-    description: 'Initiates a password reset flow by sending a reset email to the associated account. Returns a generic success message to prevent user enumeration.',
+    description:
+      'Initiates a password reset flow by sending a reset email to the associated account. Returns a generic success message to prevent user enumeration.',
     requestBody: {
       content: {
         'application/json': {
           schema: {
             type: 'object',
             properties: {
-              identity: { type: 'string', description: 'The email or username of the account to reset' },
+              identity: {
+                type: 'string',
+                description: 'The email or username of the account to reset',
+              },
             },
             required: ['identity'],
           },

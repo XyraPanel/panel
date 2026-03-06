@@ -10,7 +10,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['File Manager'],
     summary: 'Get file download URL',
-    description: 'Generates a secure, short-lived download URL for a specific file, served directly by the Wings node.',
+    description:
+      'Generates a secure, short-lived download URL for a specific file, served directly by the Wings node.',
     parameters: [
       {
         in: 'path',

@@ -7,7 +7,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'List all Wings nodes',
-    description: 'Retrieves a list of all nodes registered in the panel, including their connection status and basic hardware specifications.',
+    description:
+      'Retrieves a list of all nodes registered in the panel, including their connection status and basic hardware specifications.',
     responses: {
       200: {
         description: 'Nodes successfully retrieved',

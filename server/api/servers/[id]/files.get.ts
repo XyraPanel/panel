@@ -11,7 +11,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['File Manager'],
     summary: 'List directory contents',
-    description: 'Retrieves a list of files and folders within a specified directory on the server\'s disk via Wings.',
+    description:
+      "Retrieves a list of files and folders within a specified directory on the server's disk via Wings.",
     parameters: [
       {
         in: 'path',
@@ -133,7 +134,8 @@ export default defineEventHandler(async (event: H3Event) => {
     if (server.status === 'installing') {
       throw createError({
         status: 400,
-        message: 'Server not ready: The server is currently installing. Please wait for installation to complete.',
+        message:
+          'Server not ready: The server is currently installing. Please wait for installation to complete.',
         data: {
           serverUuid: server.uuid,
           status: server.status,

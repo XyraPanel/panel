@@ -10,7 +10,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Internal'],
     summary: 'Remote complete server archive',
-    description: 'Callback for Wings nodes to report the final status of a server archiving operation.',
+    description:
+      'Callback for Wings nodes to report the final status of a server archiving operation.',
     parameters: [
       {
         in: 'path',
@@ -63,65 +64,65 @@ defineRouteMeta({
 
 export default defineEventHandler(async (event: H3Event) => {
   try {
-  const db = useDrizzle();
-  const { uuid } = getRouterParams(event);
+    const db = useDrizzle();
+    const { uuid } = getRouterParams(event);
 
-  if (!uuid || typeof uuid !== 'string') {
-    throw createError({ status: 400, message: 'Missing server UUID' });
-  }
+    if (!uuid || typeof uuid !== 'string') {
+      throw createError({ status: 400, message: 'Missing server UUID' });
+    }
 
-  const nodeId = await getNodeIdFromAuth(event);
+    const nodeId = await getNodeIdFromAuth(event);
 
-  const { successful } = await readValidatedBodyWithLimit(
-    event,
-    remoteServerArchiveStatusSchema,
-    BODY_SIZE_LIMITS.SMALL,
-  );
+    const { successful } = await readValidatedBodyWithLimit(
+      event,
+      remoteServerArchiveStatusSchema,
+      BODY_SIZE_LIMITS.SMALL,
+    );
 
-  const serverRows = await db
-    .select()
-    .from(tables.servers)
-    .where(eq(tables.servers.uuid, uuid))
-    .limit(1);
+    const serverRows = await db
+      .select()
+      .from(tables.servers)
+      .where(eq(tables.servers.uuid, uuid))
+      .limit(1);
 
-  const server = serverRows[0];
+    const server = serverRows[0];
 
-  if (!server) {
-    throw createError({ status: 404, message: 'Server not found' });
-  }
+    if (!server) {
+      throw createError({ status: 404, message: 'Server not found' });
+    }
 
-  if (server.nodeId !== nodeId) {
-    throw createError({ status: 403, message: 'Server does not belong to this node' });
-  }
+    if (server.nodeId !== nodeId) {
+      throw createError({ status: 403, message: 'Server does not belong to this node' });
+    }
 
-  if (successful) {
-    await db
-      .update(tables.servers)
-      .set({
-        status: 'archived',
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(tables.servers.id, server.id));
-  }
+    if (successful) {
+      await db
+        .update(tables.servers)
+        .set({
+          status: 'archived',
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(tables.servers.id, server.id));
+    }
 
-  await recordAuditEvent({
-    actor: 'wings-daemon',
-    actorType: 'daemon',
-    action: (successful ? 'server.archive_success' : 'server.archive_failed') as ActivityAction,
-    targetType: 'server',
-    targetId: uuid,
-    metadata: {
-      status: successful ? 'success' : 'failed',
-      archivedAt: new Date().toISOString(),
-    },
-  });
+    await recordAuditEvent({
+      actor: 'wings-daemon',
+      actorType: 'daemon',
+      action: (successful ? 'server.archive_success' : 'server.archive_failed') as ActivityAction,
+      targetType: 'server',
+      targetId: uuid,
+      metadata: {
+        status: successful ? 'success' : 'failed',
+        archivedAt: new Date().toISOString(),
+      },
+    });
 
-  return {
-    data: {
-      success: true,
-      archived: successful,
-    },
-  };
+    return {
+      data: {
+        success: true,
+        archived: successful,
+      },
+    };
   } catch (error) {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;

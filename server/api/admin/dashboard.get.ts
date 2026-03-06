@@ -234,7 +234,8 @@ defineRouteMeta({
   openAPI: {
     tags: ['Admin'],
     summary: 'Get admin dashboard data',
-    description: 'Retrieves a comprehensive overview of the panel state, including node health, registered servers, and recent audit events. Use the section parameter to filter results for faster updates.',
+    description:
+      'Retrieves a comprehensive overview of the panel state, including node health, registered servers, and recent audit events. Use the section parameter to filter results for faster updates.',
     parameters: [
       {
         in: 'query',

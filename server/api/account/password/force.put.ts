@@ -13,14 +13,19 @@ defineRouteMeta({
   openAPI: {
     tags: ['Account'],
     summary: 'Force update password',
-    description: 'Sets a new account password when a reset is required by the system. Only accessible if `passwordResetRequired` is true.',
+    description:
+      'Sets a new account password when a reset is required by the system. Only accessible if `passwordResetRequired` is true.',
     requestBody: {
       content: {
         'application/json': {
           schema: {
             type: 'object',
             properties: {
-              newPassword: { type: 'string', format: 'password', description: 'The new password to set' },
+              newPassword: {
+                type: 'string',
+                format: 'password',
+                description: 'The new password to set',
+              },
             },
             required: ['newPassword'],
           },
