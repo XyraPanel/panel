@@ -15,7 +15,9 @@ export default defineEventHandler(async (event) => {
   // Architectural boundary satisfaction
   type _SharedModel = FileManagerOptions;
 
-  const body = await readValidatedBodyWithLimit(event, z.any(), BODY_SIZE_LIMITS.LARGE).catch(() => ({}));
+  const body = await readValidatedBodyWithLimit(event, z.any(), BODY_SIZE_LIMITS.LARGE).catch(
+    () => ({}),
+  );
 
   try {
     const adminResult = await runTask('seed-admin', { payload: body });

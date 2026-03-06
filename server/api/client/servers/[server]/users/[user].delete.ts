@@ -67,7 +67,13 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error;
-    debugError('[Server Subuser Delete] Failed for server:', serverId, 'subuser:', subuserId, error);
+    debugError(
+      '[Server Subuser Delete] Failed for server:',
+      serverId,
+      'subuser:',
+      subuserId,
+      error,
+    );
     throw createError({
       status: 500,
       message: 'Failed to delete subuser from server',

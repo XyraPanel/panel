@@ -346,7 +346,10 @@ watch(
                         </p>
                       </div>
                       <div class="flex flex-col gap-1 sm:col-span-4">
-                        <code class="block w-fit break-all rounded bg-muted/50 px-1 py-0.5 text-xs font-mono sm:truncate border border-default">{{ node.baseURL }}</code>
+                        <code
+                          class="block w-fit break-all rounded bg-muted/50 px-1 py-0.5 text-xs font-mono sm:truncate border border-default"
+                          >{{ node.baseURL }}</code
+                        >
                         <div class="flex flex-wrap items-center gap-1.5 mt-0.5">
                           <UBadge
                             :color="node.allowInsecure ? 'warning' : 'success'"
@@ -354,7 +357,11 @@ watch(
                             size="xs"
                             class="font-normal"
                           >
-                            {{ node.allowInsecure ? t('admin.nodes.tlsVerificationDisabled') : t('admin.nodes.tlsVerificationEnforced') }}
+                            {{
+                              node.allowInsecure
+                                ? t('admin.nodes.tlsVerificationDisabled')
+                                : t('admin.nodes.tlsVerificationEnforced')
+                            }}
                           </UBadge>
                           <span class="text-[10px] text-muted-foreground flex items-center gap-1">
                             <UIcon name="i-lucide-clock" class="size-3" />
@@ -529,7 +536,6 @@ watch(
               </li>
             </ul>
           </div>
-
         </div>
       </template>
 

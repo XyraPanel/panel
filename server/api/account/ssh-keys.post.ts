@@ -73,7 +73,10 @@ export default defineEventHandler(async (event) => {
       throw createError({ status: 409, message: 'This SSH key already exists' });
     }
 
-    const userKeys = await db.select().from(tables.sshKeys).where(eq(tables.sshKeys.userId, user.id));
+    const userKeys = await db
+      .select()
+      .from(tables.sshKeys)
+      .where(eq(tables.sshKeys.userId, user.id));
 
     if (userKeys.length >= 25) {
       throw createError({ status: 400, message: 'Maximum of 25 SSH keys allowed per account' });

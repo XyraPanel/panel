@@ -3,7 +3,11 @@ import { getWingsClientForServer } from '#server/utils/wings-client';
 import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
-import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import {
+  requireAccountUser,
+  readValidatedBodyWithLimit,
+  BODY_SIZE_LIMITS,
+} from '#server/utils/security';
 import { logger } from '#server/utils/logger';
 import { z } from 'zod';
 
@@ -33,7 +37,7 @@ export default defineEventHandler(async (event) => {
   const { truncate } = await readValidatedBodyWithLimit(
     event,
     restoreBackupSchema,
-    BODY_SIZE_LIMITS.SMALL
+    BODY_SIZE_LIMITS.SMALL,
   );
 
   const db = useDrizzle();

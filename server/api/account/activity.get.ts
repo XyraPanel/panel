@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
   const actorConditions = Array.from(actorIdentifiers).map((identifier) =>
     eq(tables.auditEvents.actor, identifier),
   );
- 
+
   const initialFilter = or(...actorConditions);
   const filters: SQL[] = initialFilter ? [initialFilter] : [];
 
@@ -98,7 +98,14 @@ export default defineEventHandler(async (event) => {
     action: 'account.activity.viewed',
     targetType: 'user',
     targetId: user.id,
-    metadata: { page, limit, total, search: search ?? null, action: action ?? null, targetType: targetType ?? null },
+    metadata: {
+      page,
+      limit,
+      total,
+      search: search ?? null,
+      action: action ?? null,
+      targetType: targetType ?? null,
+    },
   });
 
   return {

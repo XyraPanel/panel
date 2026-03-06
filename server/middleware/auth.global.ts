@@ -179,10 +179,7 @@ export default defineEventHandler(async (event) => {
     const hasAuthHeader = Boolean(authorization);
     const hasApiKeyHeader = Boolean(apiKey);
 
-    if (
-      hasApiKeyHeader ||
-      (hasAuthHeader && authorization?.startsWith('Bearer '))
-    ) {
+    if (hasApiKeyHeader || (hasAuthHeader && authorization?.startsWith('Bearer '))) {
       const apiKeyValue = apiKey
         ? apiKey
         : authorization?.startsWith('Bearer ')

@@ -83,7 +83,13 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error;
-    debugError('[Server Database Delete] Failed for server:', serverId, 'database:', databaseId, error);
+    debugError(
+      '[Server Database Delete] Failed for server:',
+      serverId,
+      'database:',
+      databaseId,
+      error,
+    );
     throw createError({
       status: 500,
       message: 'Failed to delete database',
