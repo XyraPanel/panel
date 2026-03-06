@@ -3,12 +3,15 @@ import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { decryptToken } from '#server/utils/wings/encryption';
 import { generateBackupDownloadToken } from '#server/utils/wings-tokens';
-import { requireAccountUser } from '#server/utils/security';
+import { requireAccountUser, getValidatedQuery } from '#server/utils/security';
+import { z } from 'zod';
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');
-  const backupUuid = getRouterParam(event, 'backup');
+  const { backup: backupUuid } = await getValidatedQuery(event, z.object({
+    backup: z.string(),
+  }));
 
   if (!serverId || !backupUuid) {
     throw createError({

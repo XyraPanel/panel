@@ -98,7 +98,7 @@ async function createBackup() {
 }
 
 function downloadBackup(backupUuid: string) {
-  const url = `/api/client/servers/${serverId.value}/backups/${backupUuid}/download`;
+  const url = `/api/client/servers/${serverId.value}/backups/download?backup=${backupUuid}`;
   window.open(url, '_blank');
 
   toast.add({
@@ -126,6 +126,7 @@ async function confirmRestore() {
   try {
     await $fetch(`/api/client/servers/${serverId.value}/backups/${backupUuid}/restore`, {
       method: 'POST',
+      body: {},
     });
 
     toast.add({
