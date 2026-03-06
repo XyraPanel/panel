@@ -5,6 +5,7 @@ import type {
   WingsBackup,
 } from '#shared/types/wings-client';
 import { decryptToken } from './wings/encryption';
+import { debugError } from '#server/utils/logger';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -286,7 +287,7 @@ export class WingsClient {
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
 
     try {
-      await fetch(`${this.baseUrl}/api/servers/${serverUuid}/files/write?${params}`, {
+      const response = await fetch(`${this.baseUrl}/api/servers/${serverUuid}/files/write?${params}`, {
         method: 'POST',
         headers: {
           Authorization: this.getToken(),
@@ -296,6 +297,16 @@ export class WingsClient {
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
+      if (!response.ok) {
+        let errorMessage = `Failed to write file: ${response.status}`;
+        try {
+          const body = await response.text();
+          if (body) errorMessage += ` - ${body}`;
+        } catch {
+          /* ignore */
+        }
+        throw new WingsConnectionError(errorMessage);
+      }
     } catch (error) {
       clearTimeout(timeoutId);
       if (error instanceof Error && error.name === 'AbortError') {
@@ -383,7 +394,7 @@ export class WingsClient {
       body: JSON.stringify({
         url,
         directory,
-        filename,
+        file_name: filename,
         use_header: useHeader,
         foreground,
       }),
@@ -457,12 +468,12 @@ export class WingsClient {
   async createBackup(
     serverUuid: string,
     backupUuid: string,
-    ignored?: string,
+    ignore?: string,
     adapter: 'wings' | 's3' = 'wings',
   ): Promise<void> {
     await this.request(`/api/servers/${serverUuid}/backup`, {
       method: 'POST',
-      body: JSON.stringify({ name: backupUuid, ignored, adapter }),
+      body: JSON.stringify({ uuid: backupUuid, ignore, adapter }),
     });
   }
 
@@ -472,13 +483,21 @@ export class WingsClient {
     });
   }
 
-  async restoreBackup(serverUuid: string, backupUuid: string): Promise<void> {
+  async restoreBackup(
+    serverUuid: string,
+    backupUuid: string,
+    adapter: 'wings' | 's3' = 'wings',
+    truncateDirectory: boolean = false,
+  ): Promise<void> {
     await this.request(`/api/servers/${serverUuid}/backup/${backupUuid}/restore`, {
       method: 'POST',
+      body: JSON.stringify({ adapter, truncate_directory: truncateDirectory }),
     });
   }
 
   async streamBackupDownload(serverUuid: string, backupUuid: string): Promise<Response> {
+    // Note: getBackupDownloadUrl is a synchronous helper that returns a string URL,
+    // unlike other async URL getters (e.g. getFileDownloadUrl), so it is safe to use directly.
     const downloadUrl = this.getBackupDownloadUrl(serverUuid, backupUuid);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.timeout);
@@ -565,14 +584,12 @@ export class WingsClient {
   async getSignedDownloadUrl(
     serverUuid: string,
     backupUuid: string,
-  ): Promise<{ token: string; socket: string }> {
-    const response = await this.request(`/api/servers/${serverUuid}/backup/${backupUuid}/download`);
-    if (
-      isRecord(response) &&
-      typeof response.token === 'string' &&
-      typeof response.socket === 'string'
-    ) {
-      return { token: response.token, socket: response.socket };
+  ): Promise<{ url: string }> {
+    const response = await this.request(
+      `/api/servers/${serverUuid}/backup/${backupUuid}/download`,
+    );
+    if (isRecord(response) && typeof response.url === 'string') {
+      return { url: response.url };
     }
     throw new WingsConnectionError('Invalid signed download url response');
   }

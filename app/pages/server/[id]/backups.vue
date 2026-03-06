@@ -97,29 +97,15 @@ async function createBackup() {
   }
 }
 
-async function downloadBackup(backupUuid: string) {
-  operatingBackupId.value = backupUuid;
-  try {
-    const response = await $fetch<{ attributes: { url: string } }>(
-      `/api/client/servers/${serverId.value}/backups/${backupUuid}/download`,
-    );
+function downloadBackup(backupUuid: string) {
+  const url = `/api/client/servers/${serverId.value}/backups/${backupUuid}/download`;
+  window.open(url, '_blank');
 
-    await navigateTo(response.attributes.url, { external: true, open: { target: '_blank' } });
-
-    toast.add({
-      title: t('common.success'),
-      description: t('server.backups.downloadStarted'),
-      color: 'success',
-    });
-  } catch (err) {
-    toast.add({
-      title: t('common.error'),
-      description: err instanceof Error ? err.message : t('server.backups.downloadFailed'),
-      color: 'error',
-    });
-  } finally {
-    operatingBackupId.value = null;
-  }
+  toast.add({
+    title: t('common.success'),
+    description: t('server.backups.downloadStarted'),
+    color: 'success',
+  });
 }
 
 function openRestoreModal(backup: ServerBackup) {

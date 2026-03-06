@@ -21,7 +21,7 @@ const { data: identity } = await useFetch<{ user: { role: string | null } | null
   '/api/account/identity',
   {
     key: 'account-identity',
-    default: () => ({ user: { role: 'user' } }),
+    default: () => ({ user: null }),
   },
 );
 
@@ -55,7 +55,7 @@ const {
 const servers = computed(() => (serversResponse.value as ServersResponse | null)?.data ?? []);
 const error = computed(() => {
   if (!fetchError.value) return null;
-  return fetchError.value instanceof Error ? fetchError.value.message : t('server.list.title');
+  return fetchError.value instanceof Error ? fetchError.value.message : t('server.list.errorLoadingServers');
 });
 
 const filteredServers = computed(() => {

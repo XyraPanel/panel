@@ -1,8 +1,8 @@
-import { getServerWithAccess } from '#server/utils/server-helpers';
 import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
+import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { decryptToken } from '#server/utils/wings/encryption';
-import { generateBackupDownloadToken } from '../../../../../../../server/utils/wings-tokens';
+import { generateBackupDownloadToken } from '#server/utils/wings-tokens';
 import { requireAccountUser } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
@@ -62,13 +62,6 @@ export default defineEventHandler(async (event) => {
 
   const tokenSecret = decryptToken(node.tokenSecret);
 
-  if (!server.uuid) {
-    throw createError({
-      status: 500,
-      message: 'Server UUID is missing',
-    });
-  }
-
   const downloadToken = await generateBackupDownloadToken(
     {
       serverUuid: server.uuid,
@@ -77,11 +70,27 @@ export default defineEventHandler(async (event) => {
     tokenSecret,
   );
 
-  const downloadUrl = `${node.scheme}://${node.fqdn}:${node.daemonListen}/download/backup?token=${downloadToken}`;
+  const baseUrl = `${node.scheme}://${node.fqdn}:${node.daemonListen}`;
+  const remoteUrl = `${baseUrl}/api/servers/${server.uuid}/backup/${backupUuid}/download?token=${downloadToken}`;
 
-  return {
-    attributes: {
-      url: downloadUrl,
+  const result = await $fetch.raw(remoteUrl, {
+    responseType: 'stream',
+    headers: {
+      Authorization: `Bearer ${tokenSecret}`,
     },
-  };
+  });
+
+  const headers = result.headers;
+  const contentType = headers.get('content-type') || 'application/octet-stream';
+  const contentLength = headers.get('content-length');
+  const contentDisposition =
+    headers.get('content-disposition') || `attachment; filename="backup-${backupUuid}.tar.gz"`;
+
+  setHeaders(event, {
+    'Content-Type': contentType,
+    'Content-Disposition': contentDisposition,
+    ...(contentLength && { 'Content-Length': contentLength }),
+  });
+
+  return result.body;
 });

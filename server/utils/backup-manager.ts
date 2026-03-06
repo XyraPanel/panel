@@ -88,6 +88,7 @@ export class BackupManager {
         .update(tables.serverBackups)
         .set({
           isSuccessful: false,
+          completedAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         })
         .where(eq(tables.serverBackups.id, backupId));
@@ -168,7 +169,12 @@ export class BackupManager {
       throw new Error('Cannot restore failed backup');
     }
 
-    await client.restoreBackup(serverUuid, backupUuid);
+    await client.restoreBackup(
+      serverUuid,
+      backupUuid,
+      backup.disk === 's3' ? 's3' : 'wings',
+      truncate,
+    );
 
     if (!options.skipAudit && options.userId) {
       await recordAuditEvent({

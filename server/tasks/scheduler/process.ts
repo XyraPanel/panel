@@ -5,22 +5,21 @@ import { backupManager } from '#server/utils/backup-manager';
 import { recordAuditEvent } from '#server/utils/audit';
 import { debugLog, debugError } from '#server/utils/logger';
 
-function parseCronField(field: string): number | null {
-  if (!field || field === '*' || field.startsWith('*/')) return null;
-  const val = parseInt(field);
-  return isNaN(val) ? null : val;
+function matchesCronField(field: string, value: number): boolean {
+  if (!field || field === '*') return true;
+  if (field.startsWith('*/')) {
+    const step = parseInt(field.slice(2));
+    if (isNaN(step) || step <= 0) return true;
+    return value % step === 0;
+  }
+  const exact = parseInt(field);
+  return !isNaN(exact) && value === exact;
 }
 
-function parseNextRun(cronExpression: string): Date {
-  const now = new Date();
+function parseNextRun(cronExpression: string, fromDate?: Date): Date {
+  const now = fromDate || new Date();
   const parts = cronExpression.trim().split(/\s+/);
   const [mf = '*', hf = '*', df = '*', monf = '*', wdf = '*'] = parts;
-
-  const targetMinute = parseCronField(mf);
-  const targetHour = parseCronField(hf);
-  const targetDay = parseCronField(df);
-  const targetMonth = parseCronField(monf);
-  const targetWeekday = parseCronField(wdf);
 
   const nextRun = new Date(now);
   nextRun.setSeconds(0);
@@ -29,20 +28,16 @@ function parseNextRun(cronExpression: string): Date {
 
   for (let i = 0; i < 60 * 24 * 366; i++) {
     const ok =
-      (targetMinute === null || nextRun.getMinutes() === targetMinute) &&
-      (targetHour === null || nextRun.getHours() === targetHour) &&
-      (targetDay === null || nextRun.getDate() === targetDay) &&
-      (targetMonth === null || nextRun.getMonth() === targetMonth - 1) &&
-      (targetWeekday === null || nextRun.getDay() === targetWeekday);
+      matchesCronField(mf, nextRun.getMinutes()) &&
+      matchesCronField(hf, nextRun.getHours()) &&
+      matchesCronField(df, nextRun.getDate()) &&
+      matchesCronField(monf, nextRun.getMonth() + 1) &&
+      matchesCronField(wdf, nextRun.getDay());
     if (ok) return nextRun;
     nextRun.setMinutes(nextRun.getMinutes() + 1);
   }
 
-  const fallback = new Date(now);
-  fallback.setMinutes(fallback.getMinutes() + 1);
-  fallback.setSeconds(0);
-  fallback.setMilliseconds(0);
-  return fallback;
+  return nextRun;
 }
 
 export default defineTask({
@@ -65,13 +60,18 @@ export default defineTask({
 
       for (const schedule of schedules) {
         try {
-          const nextRun = parseNextRun(schedule.cron);
-          const lastRun = schedule.lastRunAt ? new Date(schedule.lastRunAt) : null;
+          const nextRunAt = schedule.nextRunAt ? new Date(schedule.nextRunAt) : null;
 
-          const timeSinceLastRun = lastRun ? now.getTime() - lastRun.getTime() : Infinity;
-          const isOverdue = !lastRun || timeSinceLastRun > 65000;
+          if (!nextRunAt) {
+            const initialNextRun = parseNextRun(schedule.cron, now);
+            await db
+              .update(tables.serverSchedules)
+              .set({ nextRunAt: initialNextRun.toISOString() })
+              .where(eq(tables.serverSchedules.id, schedule.id));
+            continue;
+          }
 
-          if (isOverdue && nextRun <= now) {
+          if (nextRunAt <= now) {
             await processSchedule(schedule.id, db);
             processedSchedules.push(schedule.id);
           }

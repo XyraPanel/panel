@@ -13,6 +13,9 @@ const packageJsonCandidates = [
   resolve(__dirname, '../../../package.json'),
 ];
 
+// Maximum size of logs to upload in a single paste (256KB) to avoid huge payloads.
+const MAX_PASTE_SIZE_BYTES = 256 * 1024;
+
 let projectRoot;
 let pkg;
 
@@ -21,7 +24,16 @@ for (const candidate of packageJsonCandidates) {
     pkg = JSON.parse(await readFile(candidate, 'utf8'));
     projectRoot = dirname(candidate);
     break;
-  } catch {}
+  } catch (error) {
+    if (error && error.code === 'ENOENT') {
+      continue;
+    }
+    consola.error(
+      `Failed to read or parse package.json at ${candidate}:`,
+      error,
+    );
+    break;
+  }
 }
 
 if (!pkg || !projectRoot) {
@@ -285,7 +297,9 @@ const pm2StartCommand = createPm2Command(
   { env: envArg, name: nameArg, ecosystem: ecosystemArg },
   async (args) => {
     const ecosystemPath = resolvePath(args.ecosystem);
-    if (!(await ensureFile(ecosystemPath))) throw new Error('Ecosystem file not found');
+    if (!(await ensureFile(ecosystemPath))) {
+      return;
+    }
     const procName = args.name?.trim();
     const envBlock = args.env?.trim();
     if (!procName) throw new Error('PM2 process name is required');
@@ -294,15 +308,24 @@ const pm2StartCommand = createPm2Command(
   },
 );
 
+function validatePm2NameAndEnv(args) {
+  const procName = args.name?.trim();
+  const envBlock = args.env?.trim();
+  if (!procName) {
+    throw new Error('PM2 process name is required');
+  }
+  if (!envBlock) {
+    throw new Error('PM2 env must be provided (env or env_production)');
+  }
+  return { procName, envBlock };
+}
+
 const pm2ReloadCommand = createPm2Command(
   'reload',
   'Reload the running PM2 process',
   { env: envArg, name: nameArg },
   (args) => {
-    const procName = args.name?.trim();
-    const envBlock = args.env?.trim();
-    if (!procName) throw new Error('PM2 process name is required');
-    if (!envBlock) throw new Error('PM2 env must be provided (env or env_production)');
+    const { procName, envBlock } = validatePm2NameAndEnv(args);
     return ['reload', procName, '--env', envBlock, '--update-env'];
   },
 );
@@ -312,10 +335,7 @@ const pm2RestartCommand = createPm2Command(
   'Restart the PM2 process',
   { env: envArg, name: nameArg },
   (args) => {
-    const procName = args.name?.trim();
-    const envBlock = args.env?.trim();
-    if (!procName) throw new Error('PM2 process name is required');
-    if (!envBlock) throw new Error('PM2 env must be provided (env or env_production)');
+    const { procName, envBlock } = validatePm2NameAndEnv(args);
     return ['restart', procName, '--env', envBlock, '--update-env'];
   },
 );
@@ -426,7 +446,7 @@ const pm2PasteLogsCommand = defineCommand({
       return raw;
     })();
 
-    const maxBytes = 256 * 1024;
+    const maxBytes = MAX_PASTE_SIZE_BYTES;
     const bodyContent = filtered.length > maxBytes ? filtered.slice(-maxBytes) : filtered;
 
     const expiresMap = {
