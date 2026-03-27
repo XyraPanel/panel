@@ -91,7 +91,9 @@ export default defineEventHandler(async (event) => {
     return {
       data: {
         success: true,
-        message: body.reinstall ? 'Egg changed and reinstall initiated' : 'Egg changed successfully',
+        message: body.reinstall
+          ? 'Egg changed and reinstall initiated'
+          : 'Egg changed successfully',
         eggId: egg.id,
         eggName: egg.name,
       },

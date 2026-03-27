@@ -8,9 +8,12 @@ import { z } from 'zod';
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');
-  const { file: rawFile } = await getValidatedQuery(event, z.object({
-    file: z.string().optional(),
-  }));
+  const { file: rawFile } = await getValidatedQuery(
+    event,
+    z.object({
+      file: z.string().optional(),
+    }),
+  );
   const file = rawFile ?? '';
 
   if (!serverId) {
