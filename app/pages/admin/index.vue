@@ -118,7 +118,11 @@ onMounted(() => {
         <section class="space-y-4 sm:space-y-6">
           <div
             class="grid gap-4"
-            :class="metrics.length === 4 ? 'sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4' : 'sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3'"
+            :class="
+              metrics.length === 4
+                ? 'sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-4'
+                : 'sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-3'
+            "
           >
             <template v-if="showCriticalSkeleton">
               <UCard v-for="i in 3" :key="`metric-skeleton-${i}`" :ui="{ body: 'space-y-3' }">

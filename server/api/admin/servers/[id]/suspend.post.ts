@@ -67,7 +67,10 @@ export default defineEventHandler(async (event) => {
             .set({ suspended: false })
             .where(eq(tables.servers.id, serverId));
 
-          debugError(`[Admin Server Suspend] Failed to terminate on Wings for server: ${server.uuid}`, error);
+          debugError(
+            `[Admin Server Suspend] Failed to terminate on Wings for server: ${server.uuid}`,
+            error,
+          );
           throw createError({
             status: 500,
             message: 'Failed to suspend server: could not connect to node',
