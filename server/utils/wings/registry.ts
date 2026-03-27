@@ -785,9 +785,7 @@ export async function remoteGetFileContents(
 
     if (!response.ok) {
       const errorText = await response.text().catch(() => '');
-      throw new Error(
-        `HTTP ${response.status}${errorText ? ` - ${errorText}` : ''}`,
-      );
+      throw new Error(`HTTP ${response.status}${errorText ? ` - ${errorText}` : ''}`);
     }
 
     const content = await response.text();

@@ -97,7 +97,13 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     if (error && typeof error === 'object' && 'statusCode' in error) throw error;
-    debugError('[Server Allocation Patch] Failed for server:', serverIdentifier, 'allocation:', allocationId, error);
+    debugError(
+      '[Server Allocation Patch] Failed for server:',
+      serverIdentifier,
+      'allocation:',
+      allocationId,
+      error,
+    );
     throw createError({
       status: 500,
       message: 'Failed to update allocation details',

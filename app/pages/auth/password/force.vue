@@ -131,12 +131,7 @@ async function onSubmit(event: FormSubmitEvent<PasswordForceBody>) {
 </script>
 
 <template>
-  <UAuthForm
-    :schema="schema"
-    :fields="fields"
-    :submit="submitProps"
-    @submit="onSubmit"
-  >
+  <UAuthForm :schema="schema" :fields="fields" :submit="submitProps" @submit="onSubmit">
     <template #title>
       <div class="flex flex-col items-center gap-3 text-center">
         <img

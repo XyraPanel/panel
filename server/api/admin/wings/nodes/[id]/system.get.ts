@@ -13,11 +13,20 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'Missing node id' });
   }
 
-  const { version } = await getValidatedQuery(event, z.object({
-    version: z.coerce.number().min(1).default(2),
-  }).or(z.object({
-    v: z.coerce.number().min(1).default(2),
-  }).transform((data) => ({ version: data.v }))));
+  const { version } = await getValidatedQuery(
+    event,
+    z
+      .object({
+        version: z.coerce.number().min(1).default(2),
+      })
+      .or(
+        z
+          .object({
+            v: z.coerce.number().min(1).default(2),
+          })
+          .transform((data) => ({ version: data.v })),
+      ),
+  );
 
   const systemInfo = await remoteGetSystemInformation(id, version);
 
