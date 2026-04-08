@@ -85,8 +85,7 @@ const ADMIN_NAV_ITEMS = computed<AdminNavItem[]>(() => [
         label: t('admin.navigation.servicePacks'),
         to: '/admin/nests',
         permission: ['admin.nests.read', 'admin.eggs.read'],
-        active:
-          route.path.startsWith('/admin/nests') || route.path.startsWith('/admin/eggs'),
+        active: route.path.startsWith('/admin/nests') || route.path.startsWith('/admin/eggs'),
       },
       {
         id: 'admin-mounts',
@@ -307,20 +306,19 @@ const dashboardSearchGroups = computed<CommandPaletteGroup<CommandPaletteItem>[]
     },
   }));
 
-  const clientItems: CommandPaletteItem[] = CLIENT_NAV_ITEMS.value
-    .map((item) => ({
-      id: item.id,
-      label: item.label,
-      suffix: item.to,
-      to: item.to,
-      onSelect: (evt) => {
-        evt?.preventDefault?.();
-        if (item.to) {
-          router.push(item.to);
-        }
-        dashboardSearchOpen.value = false;
-      },
-    }));
+  const clientItems: CommandPaletteItem[] = CLIENT_NAV_ITEMS.value.map((item) => ({
+    id: item.id,
+    label: item.label,
+    suffix: item.to,
+    to: item.to,
+    onSelect: (evt) => {
+      evt?.preventDefault?.();
+      if (item.to) {
+        router.push(item.to);
+      }
+      dashboardSearchOpen.value = false;
+    },
+  }));
 
   const accountItems: CommandPaletteItem[] = [
     {
@@ -437,7 +435,10 @@ const navigateToSecuritySettings = async (event?: MouseEvent) => {
 
       <template #footer="{ collapsed }">
         <UDropdownMenu
-          :items="[accountNavItems, [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }]]"
+          :items="[
+            accountNavItems,
+            [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }],
+          ]"
           class="w-full"
         >
           <UButton

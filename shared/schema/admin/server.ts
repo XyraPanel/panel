@@ -44,7 +44,10 @@ export const serverBuildFormSchema = z.object({
     .number()
     .min(10, 'Block I/O must be at least 10')
     .max(1000, 'Block I/O cannot exceed 1000'),
-  threads: z.union([z.string(), z.number()]).transform((v) => (v === '' ? undefined : String(v))).optional(),
+  threads: z
+    .union([z.string(), z.number()])
+    .transform((v) => (v === '' ? undefined : String(v)))
+    .optional(),
   oomDisabled: z.boolean().optional(),
   databaseLimit: emptyToUndefinedNumber,
   allocationLimit: emptyToUndefinedNumber,

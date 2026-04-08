@@ -44,7 +44,6 @@
     "generate-pwa-assets": "pwa-assets-generator --preset minimal-2023 public/logo.png"
   },
   "dependencies": {
-    "@xyra/cli": "workspace:*",
     "@nuxt/a11y": "1.0.0-alpha.1",
     "@nuxt/hints": "1.0.0-alpha.8",
     "@nuxt/scripts": "0.13.2",
@@ -58,6 +57,7 @@
     "@xterm/addon-search": "^0.16.0",
     "@xterm/addon-web-links": "^0.12.0",
     "@xterm/xterm": "^6.0.0",
+    "@xyra/cli": "workspace:*",
     "bcryptjs": "^3.0.3",
     "better-auth": "^1.4.19",
     "consola": "^3.4.2",

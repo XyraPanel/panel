@@ -74,7 +74,8 @@ export default defineEventHandler(async (event: H3Event) => {
     if (server.status === 'installing') {
       throw createError({
         status: 400,
-        message: 'Server not ready: The server is currently installing. Please wait for installation to complete.',
+        message:
+          'Server not ready: The server is currently installing. Please wait for installation to complete.',
         data: {
           serverUuid: server.uuid,
           status: server.status,
