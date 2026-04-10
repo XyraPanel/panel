@@ -12,9 +12,12 @@ export default defineEventHandler(async (event) => {
 
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NESTS, ADMIN_ACL_PERMISSIONS.READ);
 
-  const { view } = await getValidatedQuery(event, z.object({
-    view: z.union([z.string(), z.array(z.string())]).optional(),
-  }));
+  const { view } = await getValidatedQuery(
+    event,
+    z.object({
+      view: z.union([z.string(), z.array(z.string())]).optional(),
+    }),
+  );
   const normalizedView = Array.isArray(view) ? view[0] : view;
   const db = useDrizzle();
 
