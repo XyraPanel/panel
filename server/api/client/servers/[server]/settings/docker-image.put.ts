@@ -123,7 +123,7 @@ export default defineEventHandler(async (event) => {
     throw createError({
       status: 500,
       message: 'Internal Server Error',
-      data: { error: error instanceof Error ? error.message : 'Unknown error' }
+      data: { error: error instanceof Error ? error.message : 'Unknown error' },
     });
   }
 });
