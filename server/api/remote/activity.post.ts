@@ -19,7 +19,10 @@ export default defineEventHandler(async (event: H3Event) => {
     const insertedCount = activities.length;
     let successCount = 0;
 
-    const serverCache = new Map<string, Awaited<ReturnType<typeof findServerByIdentifier>> | null>();
+    const serverCache = new Map<
+      string,
+      Awaited<ReturnType<typeof findServerByIdentifier>> | null
+    >();
 
     for (const activity of activities) {
       try {
