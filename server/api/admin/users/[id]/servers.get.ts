@@ -15,10 +15,13 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const { page, limit } = await getValidatedQuery(event, z.object({
-    page: z.coerce.number().min(1).catch(1).default(1),
-    limit: z.coerce.number().min(1).max(100).catch(50).default(50),
-  }));
+  const { page, limit } = await getValidatedQuery(
+    event,
+    z.object({
+      page: z.coerce.number().min(1).catch(1).default(1),
+      limit: z.coerce.number().min(1).max(100).catch(50).default(50),
+    }),
+  );
   const offset = (page - 1) * limit;
 
   const db = useDrizzle();
