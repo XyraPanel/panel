@@ -56,7 +56,10 @@ export default defineEventHandler(async (event) => {
         const isNotFound = errorMessage.includes('404') || errorMessage.includes('does not exist');
 
         if (!isNotFound) {
-          debugError(`[Admin Server Delete] Failed to remove ${server.uuid} from Wings node:`, error);
+          debugError(
+            `[Admin Server Delete] Failed to remove ${server.uuid} from Wings node:`,
+            error,
+          );
           throw createError({
             status: 409,
             message:
