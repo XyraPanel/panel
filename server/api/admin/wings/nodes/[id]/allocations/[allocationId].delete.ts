@@ -7,64 +7,68 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
   try {
-  const { id: nodeId, allocationId } = getRouterParams(event);
+    const { id: nodeId, allocationId } = getRouterParams(event);
 
-  if (!nodeId || typeof nodeId !== 'string') {
-    throw createError({ status: 400, message: 'Missing node id' });
-  }
+    if (!nodeId || typeof nodeId !== 'string') {
+      throw createError({ status: 400, message: 'Missing node id' });
+    }
 
-  if (!allocationId || typeof allocationId !== 'string') {
-    throw createError({ status: 400, message: 'Missing allocation id' });
-  }
+    if (!allocationId || typeof allocationId !== 'string') {
+      throw createError({ status: 400, message: 'Missing allocation id' });
+    }
 
-  const session = await requireAdmin(event);
-  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NODES, ADMIN_ACL_PERMISSIONS.WRITE);
+    const session = await requireAdmin(event);
+    await requireAdminApiKeyPermission(
+      event,
+      ADMIN_ACL_RESOURCES.NODES,
+      ADMIN_ACL_PERMISSIONS.WRITE,
+    );
 
-  const db = useDrizzle();
+    const db = useDrizzle();
 
-  const [allocation] = await db
-    .select()
-    .from(tables.serverAllocations)
-    .where(
-      and(
-        eq(tables.serverAllocations.id, allocationId),
-        eq(tables.serverAllocations.nodeId, nodeId),
-      ),
-    )
-    .limit(1);
+    const [allocation] = await db
+      .select()
+      .from(tables.serverAllocations)
+      .where(
+        and(
+          eq(tables.serverAllocations.id, allocationId),
+          eq(tables.serverAllocations.nodeId, nodeId),
+        ),
+      )
+      .limit(1);
 
-  if (!allocation) {
-    throw createError({ status: 404, message: 'Allocation not found' });
-  }
+    if (!allocation) {
+      throw createError({ status: 404, message: 'Allocation not found' });
+    }
 
-  if (allocation.serverId) {
-    throw createError({
-      status: 400,
-      message: 'Cannot delete allocation assigned to a server',
+    if (allocation.serverId) {
+      throw createError({
+        status: 400,
+        message: 'Cannot delete allocation assigned to a server',
+      });
+    }
+
+    await db.delete(tables.serverAllocations).where(eq(tables.serverAllocations.id, allocationId));
+
+    await recordAuditEventFromRequest(event, {
+      actor: session.user.email || session.user.id,
+      actorType: 'user',
+      action: 'admin.node.allocation.deleted',
+      targetType: 'node',
+      targetId: nodeId,
+      metadata: {
+        allocationId,
+        ip: allocation.ip,
+        port: allocation.port,
+      },
     });
-  }
 
-  await db.delete(tables.serverAllocations).where(eq(tables.serverAllocations.id, allocationId));
-
-  await recordAuditEventFromRequest(event, {
-    actor: session.user.email || session.user.id,
-    actorType: 'user',
-    action: 'admin.node.allocation.deleted',
-    targetType: 'node',
-    targetId: nodeId,
-    metadata: {
-      allocationId,
-      ip: allocation.ip,
-      port: allocation.port,
-    },
-  });
-
-  return {
-    data: {
-      success: true,
-      message: 'Allocation deleted successfully',
-    },
-  };
+    return {
+      data: {
+        success: true,
+        message: 'Allocation deleted successfully',
+      },
+    };
   } catch (error) {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;

@@ -39,7 +39,8 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    const trimmedIpAlias = typeof ipAlias === 'string' && ipAlias.trim().length > 0 ? ipAlias.trim() : null;
+    const trimmedIpAlias =
+      typeof ipAlias === 'string' && ipAlias.trim().length > 0 ? ipAlias.trim() : null;
 
     await db
       .update(tables.serverAllocations)
