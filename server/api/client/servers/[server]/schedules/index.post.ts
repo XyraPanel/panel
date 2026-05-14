@@ -61,82 +61,82 @@ function calculateNextRun(cronExpression: string): string {
 
 export default defineEventHandler(async (event) => {
   try {
-  const accountContext = await requireAccountUser(event);
-  const serverId = getRouterParam(event, 'server');
+    const accountContext = await requireAccountUser(event);
+    const serverId = getRouterParam(event, 'server');
 
-  if (!serverId) {
-    throw createError({
-      status: 400,
-      message: 'Server identifier is required',
+    if (!serverId) {
+      throw createError({
+        status: 400,
+        message: 'Server identifier is required',
+      });
+    }
+
+    const { server } = await getServerWithAccess(serverId, accountContext.session);
+
+    await requireServerPermission(event, {
+      serverId: server.id,
+      requiredPermissions: ['server.schedule.create'],
     });
-  }
 
-  const { server } = await getServerWithAccess(serverId, accountContext.session);
+    const body = await readValidatedBodyWithLimit(
+      event,
+      createScheduleSchema,
+      BODY_SIZE_LIMITS.SMALL,
+    );
 
-  await requireServerPermission(event, {
-    serverId: server.id,
-    requiredPermissions: ['server.schedule.create'],
-  });
+    const cronString = `${body.cron.minute} ${body.cron.hour} ${body.cron.day_of_month} ${body.cron.month} ${body.cron.day_of_week}`;
 
-  const body = await readValidatedBodyWithLimit(
-    event,
-    createScheduleSchema,
-    BODY_SIZE_LIMITS.SMALL,
-  );
+    const db = useDrizzle();
+    const scheduleId = randomUUID();
+    const now = new Date().toISOString();
 
-  const cronString = `${body.cron.minute} ${body.cron.hour} ${body.cron.day_of_month} ${body.cron.month} ${body.cron.day_of_week}`;
+    const nextRunAt = calculateNextRun(cronString);
 
-  const db = useDrizzle();
-  const scheduleId = randomUUID();
-  const now = new Date().toISOString();
+    await db.insert(tables.serverSchedules).values({
+      id: scheduleId,
+      serverId: server.id,
+      name: body.name,
+      cron: cronString,
+      action: 'none',
+      enabled: body.is_active ?? true,
+      nextRunAt,
+      lastRunAt: null,
+      createdAt: now,
+      updatedAt: now,
+    });
 
-  const nextRunAt = calculateNextRun(cronString);
+    const [schedule] = await db
+      .select()
+      .from(tables.serverSchedules)
+      .where(eq(tables.serverSchedules.id, scheduleId))
+      .limit(1);
 
-  await db.insert(tables.serverSchedules).values({
-    id: scheduleId,
-    serverId: server.id,
-    name: body.name,
-    cron: cronString,
-    action: 'none',
-    enabled: body.is_active ?? true,
-    nextRunAt,
-    lastRunAt: null,
-    createdAt: now,
-    updatedAt: now,
-  });
+    await invalidateScheduleCaches({ serverId: server.id, scheduleId });
 
-  const [schedule] = await db
-    .select()
-    .from(tables.serverSchedules)
-    .where(eq(tables.serverSchedules.id, scheduleId))
-    .limit(1);
+    await recordAuditEventFromRequest(event, {
+      actor: accountContext.user.id,
+      actorType: 'user',
+      action: 'server.schedule.create',
+      targetType: 'server',
+      targetId: server.id,
+      metadata: { scheduleId, name: body.name, cron: cronString },
+    });
 
-  await invalidateScheduleCaches({ serverId: server.id, scheduleId });
-
-  await recordAuditEventFromRequest(event, {
-    actor: accountContext.user.id,
-    actorType: 'user',
-    action: 'server.schedule.create',
-    targetType: 'server',
-    targetId: server.id,
-    metadata: { scheduleId, name: body.name, cron: cronString },
-  });
-
-  return {
-    data: {
-      id: schedule!.id,
-      name: schedule!.name,
-      cron: schedule!.cron,
-      is_active: schedule!.enabled,
-      is_processing: false,
-      only_when_online: false,
-      last_run_at: schedule!.lastRunAt,
-      next_run_at: schedule!.nextRunAt,
-      created_at: schedule!.createdAt,
-      updated_at: schedule!.updatedAt,
-      tasks: [],
-    },
-  };
+    return {
+      data: {
+        id: schedule!.id,
+        name: schedule!.name,
+        cron: schedule!.cron,
+        is_active: schedule!.enabled,
+        is_processing: false,
+        only_when_online: false,
+        last_run_at: schedule!.lastRunAt,
+        next_run_at: schedule!.nextRunAt,
+        created_at: schedule!.createdAt,
+        updated_at: schedule!.updatedAt,
+        tasks: [],
+      },
+    };
   } catch (error) {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
