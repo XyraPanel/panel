@@ -165,7 +165,13 @@ function handleFileChange(event: Event) {
             >
               <div class="flex-1">
                 <div class="flex items-center gap-2 min-w-0">
-                  <UButton icon="i-lucide-arrow-left" size="xs" variant="ghost" to="/admin/nests" :aria-label="t('common.back')" />
+                  <UButton
+                    icon="i-lucide-arrow-left"
+                    size="xs"
+                    variant="ghost"
+                    to="/admin/nests"
+                    :aria-label="t('common.back')"
+                  />
                   <h1 class="text-xl font-semibold break-words">{{ nest.name }}</h1>
                 </div>
                 <p v-if="nest.description" class="mt-1 text-sm text-muted-foreground">
