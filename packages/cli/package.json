@@ -1,10 +1,10 @@
 {
   "name": "@xyra/cli",
   "version": "0.1.0-alpha.3",
-  "type": "module",
   "bin": {
     "xyra": "./bin/xyra.mjs"
   },
+  "type": "module",
   "exports": {
     ".": "./src/index.mjs"
   },

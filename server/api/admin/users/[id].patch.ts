@@ -17,7 +17,11 @@ export default defineEventHandler(async (event) => {
     throw createError({ status: 400, message: 'User ID is required' });
   }
 
-  const rawBody = await readValidatedBodyWithLimit(event, adminUpdateUserSchema, BODY_SIZE_LIMITS.SMALL);
+  const rawBody = await readValidatedBodyWithLimit(
+    event,
+    adminUpdateUserSchema,
+    BODY_SIZE_LIMITS.SMALL,
+  );
 
   try {
     let body = rawBody;
