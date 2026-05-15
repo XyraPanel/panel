@@ -7,70 +7,73 @@ import { requireAccountUser } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
   try {
-  const accountContext = await requireAccountUser(event);
-  const serverId = getRouterParam(event, 'server');
-  const backupUuid = getRouterParam(event, 'backup');
+    const accountContext = await requireAccountUser(event);
+    const serverId = getRouterParam(event, 'server');
+    const backupUuid = getRouterParam(event, 'backup');
 
-  if (!serverId || !backupUuid) {
-    throw createError({
-      status: 400,
-      message: 'Server and backup identifiers are required',
-    });
-  }
+    if (!serverId || !backupUuid) {
+      throw createError({
+        status: 400,
+        message: 'Server and backup identifiers are required',
+      });
+    }
 
-  const { server } = await getServerWithAccess(serverId, accountContext.session);
+    const { server } = await getServerWithAccess(serverId, accountContext.session);
 
-  await requireServerPermission(event, {
-    serverId: server.id,
-    requiredPermissions: ['server.backup.download'],
-  });
-
-  const db = useDrizzle();
-  const [backup] = await db
-    .select()
-    .from(tables.serverBackups)
-    .where(
-      and(eq(tables.serverBackups.uuid, backupUuid), eq(tables.serverBackups.serverId, server.id)),
-    )
-    .limit(1);
-
-  if (!backup) {
-    throw createError({
-      status: 404,
-      message: 'Backup not found',
-    });
-  }
-
-  const newLockStatus = !backup.isLocked;
-
-  await db
-    .update(tables.serverBackups)
-    .set({ isLocked: !backup.isLocked })
-    .where(eq(tables.serverBackups.uuid, backupUuid));
-
-  await recordAuditEventFromRequest(event, {
-    actor: accountContext.user.email || accountContext.user.id,
-    actorType: 'user',
-    action: backup.isLocked ? 'server.backup.unlocked' : 'server.backup.locked',
-    targetType: 'backup',
-    targetId: backupUuid,
-    metadata: {
+    await requireServerPermission(event, {
       serverId: server.id,
-      backupName: backup?.name,
-      isLocked: !backup.isLocked,
-    },
-  });
+      requiredPermissions: ['server.backup.download'],
+    });
 
-  await invalidateServerBackupsCache(server.id);
+    const db = useDrizzle();
+    const [backup] = await db
+      .select()
+      .from(tables.serverBackups)
+      .where(
+        and(
+          eq(tables.serverBackups.uuid, backupUuid),
+          eq(tables.serverBackups.serverId, server.id),
+        ),
+      )
+      .limit(1);
 
-  return {
-    object: 'backup',
-    attributes: {
-      uuid: backup.uuid,
-      name: backup.name,
-      is_locked: newLockStatus,
-    },
-  };
+    if (!backup) {
+      throw createError({
+        status: 404,
+        message: 'Backup not found',
+      });
+    }
+
+    const newLockStatus = !backup.isLocked;
+
+    await db
+      .update(tables.serverBackups)
+      .set({ isLocked: !backup.isLocked })
+      .where(eq(tables.serverBackups.uuid, backupUuid));
+
+    await recordAuditEventFromRequest(event, {
+      actor: accountContext.user.email || accountContext.user.id,
+      actorType: 'user',
+      action: backup.isLocked ? 'server.backup.unlocked' : 'server.backup.locked',
+      targetType: 'backup',
+      targetId: backupUuid,
+      metadata: {
+        serverId: server.id,
+        backupName: backup?.name,
+        isLocked: !backup.isLocked,
+      },
+    });
+
+    await invalidateServerBackupsCache(server.id);
+
+    return {
+      object: 'backup',
+      attributes: {
+        uuid: backup.uuid,
+        name: backup.name,
+        is_locked: newLockStatus,
+      },
+    };
   } catch (error) {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
