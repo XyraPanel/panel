@@ -28,10 +28,7 @@ for (const candidate of packageJsonCandidates) {
     if (error && error.code === 'ENOENT') {
       continue;
     }
-    consola.error(
-      `Failed to read or parse package.json at ${candidate}:`,
-      error,
-    );
+    consola.error(`Failed to read or parse package.json at ${candidate}:`, error);
     break;
   }
 }

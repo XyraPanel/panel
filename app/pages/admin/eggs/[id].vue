@@ -373,11 +373,7 @@ async function handleExportEgg() {
                 :title="t('admin.eggs.noVariablesDefined')"
                 :description="t('admin.eggs.noVariablesDefinedDescription')"
               >
-                <UButton
-                  class="mt-4"
-                  size="sm"
-                  variant="subtle"
-                  @click="openCreateVariableModal"
+                <UButton class="mt-4" size="sm" variant="subtle" @click="openCreateVariableModal"
                   >{{ t('admin.eggs.addFirstVariable') }}
                 </UButton>
               </UEmpty>
