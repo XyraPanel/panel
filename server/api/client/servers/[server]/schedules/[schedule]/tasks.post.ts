@@ -10,100 +10,100 @@ import { requireAccountUser } from '#server/utils/security';
 
 export default defineEventHandler(async (event) => {
   try {
-  const serverId = getRouterParam(event, 'server');
-  const scheduleId = getRouterParam(event, 'schedule');
+    const serverId = getRouterParam(event, 'server');
+    const scheduleId = getRouterParam(event, 'schedule');
 
-  if (!serverId || !scheduleId) {
-    throw createError({
-      status: 400,
-      message: 'Server and schedule identifiers are required',
+    if (!serverId || !scheduleId) {
+      throw createError({
+        status: 400,
+        message: 'Server and schedule identifiers are required',
+      });
+    }
+
+    const accountContext = await requireAccountUser(event);
+    const { server, user } = await getServerWithAccess(serverId, accountContext.session);
+
+    await requireServerPermission(event, {
+      serverId: server.id,
+      requiredPermissions: ['server.schedule.update'],
+      allowOwner: true,
+      allowAdmin: true,
     });
-  }
 
-  const accountContext = await requireAccountUser(event);
-  const { server, user } = await getServerWithAccess(serverId, accountContext.session);
+    const db = useDrizzle();
+    const [schedule] = await db
+      .select()
+      .from(tables.serverSchedules)
+      .where(
+        and(
+          eq(tables.serverSchedules.id, scheduleId),
+          eq(tables.serverSchedules.serverId, server.id),
+        ),
+      )
+      .limit(1);
 
-  await requireServerPermission(event, {
-    serverId: server.id,
-    requiredPermissions: ['server.schedule.update'],
-    allowOwner: true,
-    allowAdmin: true,
-  });
+    if (!schedule) {
+      throw createError({
+        status: 404,
+        message: 'Schedule not found',
+      });
+    }
 
-  const db = useDrizzle();
-  const [schedule] = await db
-    .select()
-    .from(tables.serverSchedules)
-    .where(
-      and(
-        eq(tables.serverSchedules.id, scheduleId),
-        eq(tables.serverSchedules.serverId, server.id),
-      ),
-    )
-    .limit(1);
+    const body = await readValidatedBodyWithLimit(event, createTaskSchema, BODY_SIZE_LIMITS.MEDIUM);
 
-  if (!schedule) {
-    throw createError({
-      status: 404,
-      message: 'Schedule not found',
+    const existingTasks = await db
+      .select({ sequenceId: tables.serverScheduleTasks.sequenceId })
+      .from(tables.serverScheduleTasks)
+      .where(eq(tables.serverScheduleTasks.scheduleId, scheduleId));
+
+    const nextSequenceId =
+      existingTasks.length > 0 ? Math.max(...existingTasks.map((t) => t.sequenceId)) + 1 : 1;
+
+    const taskId = randomUUID();
+    const now = new Date().toISOString();
+
+    await db.insert(tables.serverScheduleTasks).values({
+      id: taskId,
+      scheduleId,
+      sequenceId: nextSequenceId,
+      action: body.action,
+      payload: body.payload,
+      timeOffset: body.time_offset ?? 0,
+      continueOnFailure: body.continue_on_failure ?? false,
+      isQueued: false,
+      createdAt: now,
+      updatedAt: now,
     });
-  }
 
-  const body = await readValidatedBodyWithLimit(event, createTaskSchema, BODY_SIZE_LIMITS.MEDIUM);
+    const [task] = await db
+      .select()
+      .from(tables.serverScheduleTasks)
+      .where(eq(tables.serverScheduleTasks.id, taskId))
+      .limit(1);
 
-  const existingTasks = await db
-    .select({ sequenceId: tables.serverScheduleTasks.sequenceId })
-    .from(tables.serverScheduleTasks)
-    .where(eq(tables.serverScheduleTasks.scheduleId, scheduleId));
+    await invalidateScheduleCaches({ serverId: server.id, scheduleId });
 
-  const nextSequenceId =
-    existingTasks.length > 0 ? Math.max(...existingTasks.map((t) => t.sequenceId)) + 1 : 1;
+    await recordServerActivity({
+      event,
+      actorId: user.id,
+      action: 'server.schedule.task.created',
+      server: { id: server.id, uuid: server.uuid },
+      metadata: { scheduleId, taskId, action: body.action },
+    });
 
-  const taskId = randomUUID();
-  const now = new Date().toISOString();
-
-  await db.insert(tables.serverScheduleTasks).values({
-    id: taskId,
-    scheduleId,
-    sequenceId: nextSequenceId,
-    action: body.action,
-    payload: body.payload,
-    timeOffset: body.time_offset ?? 0,
-    continueOnFailure: body.continue_on_failure ?? false,
-    isQueued: false,
-    createdAt: now,
-    updatedAt: now,
-  });
-
-  const [task] = await db
-    .select()
-    .from(tables.serverScheduleTasks)
-    .where(eq(tables.serverScheduleTasks.id, taskId))
-    .limit(1);
-
-  await invalidateScheduleCaches({ serverId: server.id, scheduleId });
-
-  await recordServerActivity({
-    event,
-    actorId: user.id,
-    action: 'server.schedule.task.created',
-    server: { id: server.id, uuid: server.uuid },
-    metadata: { scheduleId, taskId, action: body.action },
-  });
-
-  return {
-    data: {
-      id: task!.id,
-      sequence_id: task!.sequenceId,
-      action: task!.action,
-      payload: task!.payload,
-      time_offset: task!.timeOffset,
-      is_queued: task!.isQueued,
-      continue_on_failure: task!.continueOnFailure,
-      created_at: task!.createdAt,
-      updated_at: task!.updatedAt,
-    },
-  };
+    return {
+      data: {
+        id: task!.id,
+        sequence_id: task!.sequenceId,
+        action: task!.action,
+        payload: task!.payload,
+        time_offset: task!.timeOffset,
+        is_queued: task!.isQueued,
+        continue_on_failure: task!.continueOnFailure,
+        created_at: task!.createdAt,
+        updated_at: task!.updatedAt,
+      },
+    };
   } catch (error) {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
