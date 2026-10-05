@@ -5,6 +5,8 @@ import type {
   AdminWingsNodeServerSummary,
 } from '#shared/types/admin';
 import { requireAdmin } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { getWingsNode } from '#server/utils/wings/nodesStore';
 import { remoteGetSystemInformation } from '#server/utils/wings/registry';
 import { isH3Error } from '#server/utils/wings/http';
@@ -59,6 +61,7 @@ export default defineEventHandler(async (event) => {
   }
 
   await requireAdmin(event);
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NODES, ADMIN_ACL_PERMISSIONS.READ);
 
   const db = useDrizzle();
   const node = await getWingsNode(id);

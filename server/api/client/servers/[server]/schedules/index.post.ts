@@ -59,6 +59,77 @@ function calculateNextRun(cronExpression: string): string {
   return fallback.toISOString();
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Schedules'],
+    summary: 'Create a schedule',
+    description:
+      'Creates a new schedule (with no tasks) using a five-field cron specification. Requires the server.schedule.create permission.',
+    parameters: [{ name: 'server', in: 'path', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['name', 'cron'],
+            properties: {
+              name: { type: 'string', minLength: 1, maxLength: 255 },
+              cron: {
+                type: 'object',
+                required: ['minute', 'hour', 'day_of_month', 'month', 'day_of_week'],
+                properties: {
+                  minute: { type: 'string' },
+                  hour: { type: 'string' },
+                  day_of_month: { type: 'string' },
+                  month: { type: 'string' },
+                  day_of_week: { type: 'string' },
+                },
+              },
+              is_active: { type: 'boolean' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Schedule created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    cron: { type: 'string' },
+                    is_active: { type: 'boolean' },
+                    is_processing: { type: 'boolean' },
+                    only_when_online: { type: 'boolean' },
+                    last_run_at: { type: 'string', format: 'date-time', nullable: true },
+                    next_run_at: { type: 'string', format: 'date-time', nullable: true },
+                    created_at: { type: 'string', format: 'date-time' },
+                    updated_at: { type: 'string', format: 'date-time' },
+                    tasks: { type: 'array', items: {} },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.schedule.create permission' },
+      '404': { description: 'Server not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
   const accountContext = await requireAccountUser(event);

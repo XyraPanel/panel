@@ -5,6 +5,37 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { requireAccountUser } from '#server/utils/security';
 import { recordServerActivity } from '#server/utils/server-activity';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Schedules'],
+    summary: 'Delete a schedule task',
+    description: 'Removes a single task from a schedule. Requires the server.schedule.update permission.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'schedule', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'task', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    responses: {
+      '200': {
+        description: 'Task deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: { data: { type: 'object', properties: { success: { type: 'boolean' } } } },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing identifiers' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.schedule.update permission' },
+      '404': { description: 'Server, schedule, or task not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
   const serverIdentifier = getRouterParam(event, 'server');

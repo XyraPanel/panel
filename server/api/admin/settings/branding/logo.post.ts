@@ -2,6 +2,8 @@ import { promises as fs, existsSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { join, extname } from 'pathe';
 import { requireAdmin } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { SETTINGS_KEYS, getSetting, setSetting } from '#server/utils/settings';
 import { getUploadsPath } from '#server/utils/storage';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
@@ -31,8 +33,62 @@ function toPublicPath(filepath: string) {
   return `/${relative}`;
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Settings'],
+    summary: 'Upload branding logo',
+    description:
+      'Uploads a new panel logo (PNG/JPEG/WebP/SVG, max 2MB) and replaces the existing one. Requires an admin session with the panel_settings:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'multipart/form-data': {
+          schema: {
+            type: 'object',
+            required: ['logo'],
+            properties: {
+              logo: { type: 'string', format: 'binary', description: 'Logo image file' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Logo uploaded',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    url: { type: 'string', description: 'Public path of the uploaded logo' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'No form data received' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing panel_settings:write ACL permission' },
+      '413': { description: 'Logo exceeds the 2MB size limit' },
+      '415': { description: 'Unsupported image format' },
+      '422': { description: 'Logo file is required' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.PANEL_SETTINGS,
+    ADMIN_ACL_PERMISSIONS.WRITE,
+  );
 
   const formData = await readMultipartFormData(event);
   if (!formData) {

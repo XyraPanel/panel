@@ -3,6 +3,52 @@ import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Get a server\'s startup configuration',
+    description:
+      'Returns the server\'s startup command, Docker image, environment variables, and egg summary. Requires an admin session with the servers:read ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': {
+        description: 'Startup configuration',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    startup: { type: 'string' },
+                    dockerImage: { type: 'string' },
+                    dockerImages: { type: 'object' },
+                    environment: { type: 'object', additionalProperties: { type: 'string' } },
+                    egg: {
+                      type: 'object',
+                      nullable: true,
+                      properties: {
+                        id: { type: 'string' },
+                        name: { type: 'string' },
+                        startup: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:read ACL permission' },
+      '404': { description: 'Server not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
   await requireAdminApiKeyPermission(

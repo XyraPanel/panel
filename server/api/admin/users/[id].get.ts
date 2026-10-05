@@ -5,6 +5,87 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Users'],
+    summary: 'Get user details',
+    description:
+      'Returns detailed profile, stats (server/API key/activity counts), and security information (sessions, last login IP, unique IPs) for the target user. Requires an admin session with the users:read ACL permission.',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'User ID',
+      },
+    ],
+    responses: {
+      '200': {
+        description: 'User details',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    user: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        username: { type: 'string', nullable: true },
+                        email: { type: 'string', nullable: true },
+                        firstName: { type: 'string', nullable: true },
+                        lastName: { type: 'string', nullable: true },
+                        name: { type: 'string', nullable: true },
+                        language: { type: 'string', nullable: true },
+                        role: { type: 'string', nullable: true },
+                        rootAdmin: { type: 'boolean' },
+                        twoFactorEnabled: { type: 'boolean' },
+                        emailVerified: { type: 'boolean' },
+                        emailVerifiedAt: { type: 'string', format: 'date-time', nullable: true },
+                        suspended: { type: 'boolean' },
+                        suspendedAt: { type: 'string', format: 'date-time', nullable: true },
+                        suspensionReason: { type: 'string', nullable: true },
+                        passwordResetRequired: { type: 'boolean' },
+                        createdAt: { type: 'string', format: 'date-time' },
+                        updatedAt: { type: 'string', format: 'date-time' },
+                      },
+                    },
+                    stats: {
+                      type: 'object',
+                      properties: {
+                        serverCount: { type: 'integer' },
+                        apiKeyCount: { type: 'integer' },
+                        activityCount: { type: 'integer' },
+                      },
+                    },
+                    security: {
+                      type: 'object',
+                      properties: {
+                        lastLogin: { type: 'string', format: 'date-time', nullable: true },
+                        lastLoginIp: { type: 'string', nullable: true },
+                        uniqueIps: { type: 'array', items: { type: 'string' } },
+                        activeSessions: { type: 'integer' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'User ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing users:read ACL permission' },
+      '404': { description: 'User not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ);

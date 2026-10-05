@@ -6,6 +6,46 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import type { DatabaseHostListItem } from '#shared/types/admin';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Database Hosts'],
+    summary: 'List database hosts',
+    description:
+      'Returns all configured database hosts with their assigned database counts. Requires an admin session with the database-hosts:read ACL permission.',
+    responses: {
+      '200': {
+        description: 'List of database hosts',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' },
+                      hostname: { type: 'string' },
+                      port: { type: 'integer' },
+                      username: { type: 'string' },
+                      maxDatabases: { type: 'integer', nullable: true },
+                      databaseCount: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing database-hosts:read ACL permission' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

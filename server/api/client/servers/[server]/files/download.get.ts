@@ -1,7 +1,8 @@
 import { getServerWithAccess } from '#server/utils/server-helpers';
-import { getWingsClientForServer } from '#server/utils/wings-client';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
+import { requireNodeRow, findWingsNode } from '#server/utils/wings/nodesStore';
+import { generateWingsJWT } from '#server/utils/wings/jwt';
 import { logger } from '#server/utils/logger';
 import { z } from 'zod';
 
@@ -34,9 +35,33 @@ export default defineEventHandler(async (event) => {
     requiredPermissions: ['server.files.download'],
   });
 
+  if (!server.nodeId) {
+    throw createError({ status: 500, message: 'Server has no node assigned' });
+  }
+
   try {
-    const { client } = await getWingsClientForServer(server.uuid);
-    const downloadUrl = client.getFileDownloadUrl(server.uuid, file);
+    const nodeRow = await requireNodeRow(server.nodeId);
+    const node = await findWingsNode(server.nodeId);
+    if (!node) {
+      throw createError({ status: 500, message: 'Node not found' });
+    }
+
+    const downloadToken = await generateWingsJWT(
+      {
+        tokenSecret: nodeRow.tokenSecret,
+        baseUrl: `${node.scheme}://${node.fqdn}:${node.daemonListen}`,
+      },
+      {
+        user: { id: accountContext.user.id, uuid: accountContext.user.id },
+        server: { uuid: server.uuid },
+        expiresIn: 900,
+        scope: 'file-download',
+        extraClaims: { file_path: file },
+      },
+    );
+
+    const wingsBaseUrl = `${node.scheme}://${node.fqdn}:${node.daemonListen}`;
+    const downloadUrl = `${wingsBaseUrl}/download/file?token=${downloadToken}`;
 
     return {
       attributes: {
@@ -44,6 +69,9 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
     logger.error('Failed to get download URL from Wings:', error);
     throw createError({
       status: 500,

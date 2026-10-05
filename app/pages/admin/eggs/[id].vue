@@ -8,6 +8,7 @@ definePageMeta({
 });
 
 const route = useRoute();
+const router = useRouter();
 const { t } = useI18n();
 const toast = useToast();
 const requestFetch = useRequestFetch();
@@ -32,6 +33,8 @@ const variableToDelete = ref<EggVariable | null>(null);
 const isSubmitting = ref(false);
 const isSavingConfig = ref(false);
 const isDeletingVariable = ref(false);
+const showDeleteEggModal = ref(false);
+const isDeletingEgg = ref(false);
 
 const resetDeleteVariableModal = () => {
   showDeleteVariableModal.value = false;
@@ -45,6 +48,7 @@ const configForm = reactive({
   scriptContainer: '',
   scriptEntry: '',
   scriptInstall: '',
+  forceOutgoingIp: false,
 });
 
 watch(
@@ -56,6 +60,7 @@ watch(
     configForm.scriptContainer = value?.scriptContainer ?? '';
     configForm.scriptEntry = value?.scriptEntry ?? '';
     configForm.scriptInstall = value?.scriptInstall ?? '';
+    configForm.forceOutgoingIp = value?.forceOutgoingIp ?? false;
   },
   { immediate: true },
 );
@@ -163,6 +168,7 @@ async function handleSaveConfig() {
         scriptContainer: configForm.scriptContainer || null,
         scriptEntry: configForm.scriptEntry || null,
         scriptInstall: configForm.scriptInstall || null,
+        forceOutgoingIp: configForm.forceOutgoingIp,
       },
     });
 
@@ -231,6 +237,26 @@ async function handleExportEgg() {
     });
   }
 }
+
+async function handleDeleteEgg() {
+  if (!egg.value) return;
+
+  isDeletingEgg.value = true;
+  try {
+    await $fetch(`/api/admin/eggs/${eggId.value}`, { method: 'DELETE' });
+    toast.add({ title: t('admin.eggs.eggDeleted'), color: 'success' });
+    await router.push(`/admin/nests/${egg.value.nestId}`);
+  } catch (err) {
+    toast.add({
+      title: t('admin.eggs.deleteFailed'),
+      description: err instanceof Error ? err.message : t('common.errorOccurred'),
+      color: 'error',
+    });
+  } finally {
+    isDeletingEgg.value = false;
+    showDeleteEggModal.value = false;
+  }
+}
 </script>
 
 <template>
@@ -284,6 +310,16 @@ async function handleExportEgg() {
                 >
                   {{ t('admin.eggs.exportEgg') }}
                 </UButton>
+                <UButton
+                  icon="i-lucide-trash"
+                  size="sm"
+                  color="error"
+                  variant="outline"
+                  class="w-full sm:w-auto justify-center"
+                  @click="showDeleteEggModal = true"
+                >
+                  {{ t('admin.eggs.deleteEgg') }}
+                </UButton>
               </div>
             </header>
 
@@ -326,6 +362,13 @@ async function handleExportEgg() {
                     class="w-full"
                     :disabled="isSavingConfig"
                   />
+                </UFormField>
+
+                <UFormField :label="t('admin.eggs.forceOutgoingIp')" name="forceOutgoingIp">
+                  <USwitch v-model="configForm.forceOutgoingIp" :disabled="isSavingConfig" />
+                  <template #help>
+                    {{ t('admin.eggs.forceOutgoingIpHelp') }}
+                  </template>
                 </UFormField>
 
                 <div class="flex w-full flex-col gap-2 sm:flex-row sm:justify-end">
@@ -658,6 +701,46 @@ async function handleExportEgg() {
           @click="handleDeleteVariable"
         >
           {{ t('admin.eggs.deleteVariable') }}
+        </UButton>
+      </template>
+    </UModal>
+
+    <UModal
+      v-model:open="showDeleteEggModal"
+      :title="t('admin.eggs.deleteEgg')"
+      :description="t('admin.eggs.confirmDeleteEggDescription')"
+      :ui="{ footer: 'flex-col gap-2 sm:flex-row sm:gap-3' }"
+    >
+      <template #body>
+        <UAlert color="error" variant="subtle" icon="i-lucide-alert-triangle" class="mb-4">
+          <template #title>{{ t('common.warning') }}</template>
+          <template #description>{{ t('admin.eggs.deleteEggWarning') }}</template>
+        </UAlert>
+        <div v-if="egg" class="rounded-md bg-muted p-3 text-sm">
+          <p class="font-medium">
+            {{ t('common.name') }}: <span class="text-foreground">{{ egg.name }}</span>
+          </p>
+        </div>
+      </template>
+
+      <template #footer>
+        <UButton
+          variant="ghost"
+          class="w-full flex-1 justify-center"
+          :disabled="isDeletingEgg"
+          @click="showDeleteEggModal = false"
+        >
+          {{ t('common.cancel') }}
+        </UButton>
+        <UButton
+          color="error"
+          variant="subtle"
+          icon="i-lucide-trash-2"
+          class="w-full flex-1 justify-center"
+          :loading="isDeletingEgg"
+          @click="handleDeleteEgg"
+        >
+          {{ t('admin.eggs.deleteEgg') }}
         </UButton>
       </template>
     </UModal>

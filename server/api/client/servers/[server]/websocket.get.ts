@@ -5,6 +5,7 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { getNodeForServer } from '#server/utils/server-helpers';
 import { resolveNodeConnection } from '#server/utils/wings/nodesStore';
 import { getWingsClientForServer } from '#server/utils/wings-client';
+import { logger } from '#server/utils/logger';
 import type { Permission } from '#shared/types/server';
 
 interface WebSocketToken {
@@ -46,7 +47,7 @@ export default defineEventHandler(async (event): Promise<WebSocketToken | WebSoc
   const accountContext = await requireAccountUser(event);
   const { server, user } = await getServerWithAccess(id, accountContext.session);
 
-  const websocketPermissions: Permission[] = ['websocket.connect'];
+  const websocketPermissions: Permission[] = ['server.console'];
 
   await requireServerPermission(event, {
     serverId: server.id,
@@ -73,9 +74,13 @@ export default defineEventHandler(async (event): Promise<WebSocketToken | WebSoc
       };
     }
 
+    logger.error(
+      `[Websocket] Failed to prepare session for server ${server.uuid}:`,
+      error instanceof Error ? error.message : error,
+    );
     throw createError({
       status: 502,
-      message: `Failed to prepare websocket session: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      message: 'Failed to prepare websocket session: could not reach the Wings node.',
     });
   }
 

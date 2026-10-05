@@ -114,7 +114,7 @@ export default defineEventHandler(async (event) => {
       });
     }
 
-    if (error && typeof error === 'object' && 'status' in error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
     }
 

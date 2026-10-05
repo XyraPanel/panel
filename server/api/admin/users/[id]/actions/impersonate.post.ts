@@ -42,13 +42,52 @@ function extractHeaders(value: unknown): Headers | undefined {
   return candidate instanceof Headers ? candidate : undefined;
 }
 
-function extractResponsePayload(value: unknown): unknown {
-  if (!isRecord(value)) return value;
-
-  return 'response' in value ? value.response : value;
-}
-
 import { debugError } from '#server/utils/logger';
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Users'],
+    summary: 'Impersonate a user',
+    description:
+      'Sensitive action: starts an impersonation session as the target user, setting an impersonation session cookie on the response. Cannot target the calling admin or a banned user. The raw session token is never included in the JSON response. Requires an admin session with the users:write ACL permission.',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'User ID to impersonate',
+      },
+    ],
+    responses: {
+      '200': {
+        description: 'Impersonation session started; session cookie set on the response',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description: 'User ID is required, cannot impersonate yourself, or cannot impersonate a banned user',
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing users:write ACL permission' },
+      '404': { description: 'User not found' },
+      '500': { description: 'Failed to impersonate user' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
@@ -116,12 +155,12 @@ export default defineEventHandler(async (event) => {
       },
     });
 
-    const responsePayload = extractResponsePayload(impersonateResponse);
-    const responseData = isRecord(responsePayload) ? responsePayload : {};
-
+    // Deliberately not returning better-auth's response payload here — it includes
+    // the impersonation session token, and the cookie set above already carries the
+    // session. Echoing it back in the JSON body would needlessly expose a stealable
+    // credential to anything with response access (logs, browser extensions, etc).
     return {
       data: {
-        ...responseData,
         success: true,
       },
     };

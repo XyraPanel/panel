@@ -7,6 +7,48 @@ import { getWingsClientForServer } from '#server/utils/wings-client';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Delete a server',
+    description:
+      'Deletes the server from Wings (unless force=true) and removes its DB record along with related allocations, limits, startup env, schedules, databases, subusers, backups, and mount links. Requires an admin session with the servers:write ACL permission.',
+    parameters: [
+      { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+      {
+        name: 'force',
+        in: 'query',
+        schema: { type: 'string' },
+        description: 'Set to "true" to delete the panel record even if the Wings node is unreachable',
+      },
+    ],
+    responses: {
+      '200': {
+        description: 'Server deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: { success: { type: 'boolean' }, message: { type: 'string' } },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:write ACL permission' },
+      '404': { description: 'Server not found' },
+      '409': { description: 'Failed to delete from Wings node (use force=true to override)' },
+      '500': { description: 'Failed to delete server' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

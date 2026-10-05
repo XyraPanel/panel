@@ -141,6 +141,7 @@ export const createEggSchema = z.object({
   description: z.string().optional(),
   features: z.array(z.string()).optional(),
   fileDenylist: z.array(z.string()).optional(),
+  forceOutgoingIp: z.boolean().optional(),
   updateUrl: z.string().optional(),
   dockerImage: z.string().min(1),
   dockerImages: z.array(z.string()).optional(),

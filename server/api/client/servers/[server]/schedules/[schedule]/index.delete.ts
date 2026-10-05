@@ -5,6 +5,33 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Schedules'],
+    summary: 'Delete a schedule',
+    description: 'Deletes a schedule and its tasks. Requires the server.schedule.delete permission.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'schedule', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    responses: {
+      '200': {
+        description: 'Schedule deleted',
+        content: {
+          'application/json': {
+            schema: { type: 'object', properties: { success: { type: 'boolean' } } },
+          },
+        },
+      },
+      '400': { description: 'Server or schedule identifier missing' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.schedule.delete permission' },
+      '404': { description: 'Server or schedule not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
   const accountContext = await requireAccountUser(event);

@@ -18,6 +18,58 @@ function safeJsonParse(value: string | null | undefined, defaultValue: unknown =
   }
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Remote (Wings)'],
+    summary: 'List server configurations for this node',
+    description:
+      'Called by the Wings daemon on startup/sync to fetch the full runtime configuration (settings, environment, process configuration) for every server assigned to it. Requires a valid node Bearer token; the node is resolved from the token and results are scoped to that node.',
+    parameters: [
+      { name: 'page', in: 'query', schema: { type: 'integer', minimum: 0, default: 0 } },
+      { name: 'per_page', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 500, default: 50 } },
+    ],
+    responses: {
+      '200': {
+        description: 'Paginated list of server configurations for this node',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      uuid: { type: 'string' },
+                      settings: { type: 'object', additionalProperties: true },
+                      process_configuration: { type: 'object', additionalProperties: true },
+                    },
+                  },
+                },
+                meta: {
+                  type: 'object',
+                  properties: {
+                    current_page: { type: 'integer' },
+                    from: { type: 'integer' },
+                    last_page: { type: 'integer' },
+                    per_page: { type: 'integer' },
+                    to: { type: 'integer' },
+                    total: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Missing or invalid Wings authentication token' },
+      '403': { description: 'Node token not recognized/authorized' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
     const nodeId = await getNodeIdFromAuth(event);

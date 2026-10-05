@@ -8,6 +8,53 @@ import { createEggSchema } from '#shared/schema/admin/eggs';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Eggs'],
+    summary: 'Create an egg',
+    description:
+      'Creates a new egg under a nest. Requires an admin session with the eggs:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['nestId', 'author', 'name', 'dockerImage', 'startup'],
+            properties: {
+              nestId: { type: 'string', format: 'uuid' },
+              author: { type: 'string' },
+              name: { type: 'string', maxLength: 255 },
+              description: { type: 'string', maxLength: 1000 },
+              features: { type: 'array', items: { type: 'string' } },
+              fileDenylist: { type: 'array', items: { type: 'string' } },
+              forceOutgoingIp: { type: 'boolean' },
+              updateUrl: { type: 'string', maxLength: 2048 },
+              dockerImage: { type: 'string' },
+              dockerImages: { type: 'array', items: { type: 'string' } },
+              startup: { type: 'string' },
+              configFiles: { type: 'object', additionalProperties: true },
+              configStartup: { type: 'object', additionalProperties: true },
+              configStop: { type: 'string' },
+              configLogs: { type: 'object', additionalProperties: true },
+              scriptContainer: { type: 'string' },
+              scriptEntry: { type: 'string' },
+              scriptInstall: { type: 'string' },
+              copyScriptFrom: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': { description: 'Egg created' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing eggs:write ACL permission' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -28,6 +75,7 @@ export default defineEventHandler(async (event) => {
       description: body.description?.trim() || null,
       features: body.features ? JSON.stringify(body.features) : null,
       fileDenylist: body.fileDenylist ? JSON.stringify(body.fileDenylist) : null,
+      forceOutgoingIp: body.forceOutgoingIp ?? false,
       updateUrl: body.updateUrl?.trim() || null,
       dockerImage: body.dockerImage.trim(),
       dockerImages: body.dockerImages ? JSON.stringify(body.dockerImages) : null,

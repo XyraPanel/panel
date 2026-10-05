@@ -11,6 +11,54 @@ const restoreBackupSchema = z.object({
   truncate: z.boolean().optional().default(false),
 });
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Backups'],
+    summary: 'Restore a backup',
+    description:
+      'Restores server files from a backup via Wings. Stops the server first if it is running. Requires the server.backup.restore permission.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server UUID or identifier' },
+      { name: 'backup', in: 'path', required: true, schema: { type: 'string' }, description: 'Backup UUID' },
+    ],
+    requestBody: {
+      required: false,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              truncate: { type: 'boolean', default: false, description: 'Whether to remove files not present in the backup' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Backup restore initiated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean' },
+                message: { type: 'string' },
+                wasRunning: { type: 'boolean' },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing server or backup identifier' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.backup.restore permission' },
+      '404': { description: 'Server or backup not found' },
+      '500': { description: 'Failed to restore backup on Wings' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');
@@ -82,7 +130,12 @@ export default defineEventHandler(async (event) => {
       }
     }
 
-    await client.restoreBackup(server.uuid, backup.uuid);
+    await client.restoreBackup(
+      server.uuid,
+      backup.uuid,
+      backup.disk === 's3' ? 's3' : 'wings',
+      truncate,
+    );
 
     await recordAuditEventFromRequest(event, {
       actor: accountContext.user.email || accountContext.user.id,

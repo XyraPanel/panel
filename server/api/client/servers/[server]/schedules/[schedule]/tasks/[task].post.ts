@@ -9,8 +9,72 @@ import { updateTaskSchema } from '#shared/schema/server/operations';
 import { invalidateScheduleCaches } from '#server/utils/serversStore';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
+import { permissionForScheduleTaskAction } from '#server/utils/schedules';
 
 type ScheduleTaskUpdate = typeof tables.serverScheduleTasks.$inferInsert;
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Schedules'],
+    summary: 'Update a schedule task',
+    description:
+      'Partially updates a task\'s action, payload, offset, or failure behavior. Requires the server.schedule.update permission, plus the permission for the (possibly new) action unless the caller is the owner or an admin.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'schedule', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'task', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              action: { type: 'string', minLength: 1, maxLength: 255 },
+              payload: { type: 'string', minLength: 1, maxLength: 10000 },
+              time_offset: { type: 'integer', minimum: 0, maximum: 3600 },
+              continue_on_failure: { type: 'boolean' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Task updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    sequenceId: { type: 'integer' },
+                    action: { type: 'string' },
+                    payload: { type: 'string' },
+                    timeOffset: { type: 'integer' },
+                    isQueued: { type: 'boolean' },
+                    continueOnFailure: { type: 'boolean' },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.schedule.update permission or the task-action permission' },
+      '404': { description: 'Server, schedule, or task not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event) => {
   try {
@@ -71,6 +135,17 @@ export default defineEventHandler(async (event) => {
     throw createError({
       status: 404,
       message: 'Task not found',
+    });
+  }
+
+  const effectiveAction = body.action ?? task.action;
+  const requiredActionPermission = permissionForScheduleTaskAction(effectiveAction);
+  if (requiredActionPermission) {
+    await requireServerPermission(event, {
+      serverId: server.id,
+      requiredPermissions: [requiredActionPermission],
+      allowOwner: true,
+      allowAdmin: true,
     });
   }
 

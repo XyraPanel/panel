@@ -120,6 +120,7 @@ CREATE TABLE "eggs" (
 	"description" text,
 	"features" text,
 	"file_denylist" text,
+	"force_outgoing_ip" boolean DEFAULT false NOT NULL,
 	"update_url" text,
 	"docker_image" text NOT NULL,
 	"docker_images" text,

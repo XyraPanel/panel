@@ -11,6 +11,65 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { count, desc } from 'drizzle-orm';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'List active sessions',
+    description:
+      'Returns a paginated list of the authenticated account\'s active sessions, with device/browser/OS metadata where available.',
+    parameters: [
+      { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+      { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 } },
+    ],
+    responses: {
+      '200': {
+        description: 'Paginated session list',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      token: { type: 'string' },
+                      issuedAt: { type: 'string' },
+                      expiresAt: { type: 'string' },
+                      expiresAtTimestamp: { type: 'integer' },
+                      isCurrent: { type: 'boolean' },
+                      ipAddress: { type: 'string' },
+                      userAgent: { type: 'string' },
+                      browser: { type: 'string' },
+                      os: { type: 'string' },
+                      device: { type: 'string' },
+                      lastSeenAt: { type: 'string', nullable: true },
+                      firstSeenAt: { type: 'string', nullable: true },
+                      fingerprint: { type: 'string', nullable: true },
+                    },
+                  },
+                },
+                currentToken: { type: 'string', nullable: true },
+                pagination: {
+                  type: 'object',
+                  properties: {
+                    page: { type: 'integer' },
+                    perPage: { type: 'integer' },
+                    total: { type: 'integer' },
+                    totalPages: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<AccountSessionsResponse> => {
   const middlewareAuth = event.context.auth;
   const accountContext = middlewareAuth

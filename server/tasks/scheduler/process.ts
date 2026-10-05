@@ -4,6 +4,7 @@ import { serverManager } from '#server/utils/server-manager';
 import { backupManager } from '#server/utils/backup-manager';
 import { recordAuditEvent } from '#server/utils/audit';
 import { debugLog, debugError } from '#server/utils/logger';
+import { withAdvisoryLock } from '#server/utils/advisory-lock';
 
 function matchesCronField(field: string, value: number): boolean {
   if (!field || field === '*') return true;
@@ -52,42 +53,48 @@ export default defineTask({
     const errors: string[] = [];
 
     try {
-      debugLog(`[${now.toISOString()}] Processing scheduled tasks...`);
+      const ran = await withAdvisoryLock('scheduler:process', async () => {
+        debugLog(`[${now.toISOString()}] Processing scheduled tasks...`);
 
-      const schedules = await db.query.serverSchedules.findMany({
-        where: (s, { eq: whereEq }) => whereEq(s.enabled, true),
+        const schedules = await db.query.serverSchedules.findMany({
+          where: (s, { eq: whereEq }) => whereEq(s.enabled, true),
+        });
+
+        for (const schedule of schedules) {
+          try {
+            const nextRunAt = schedule.nextRunAt ? new Date(schedule.nextRunAt) : null;
+
+            if (!nextRunAt) {
+              const initialNextRun = parseNextRun(schedule.cron, now);
+              await db
+                .update(tables.serverSchedules)
+                .set({ nextRunAt: initialNextRun.toISOString() })
+                .where(eq(tables.serverSchedules.id, schedule.id));
+              continue;
+            }
+
+            if (nextRunAt <= now) {
+              await processSchedule(schedule.id, db);
+              processedSchedules.push(schedule.id);
+            }
+          } catch (scheduleError) {
+            const errorMsg = `Schedule ${schedule.id} failed: ${scheduleError instanceof Error ? scheduleError.message : 'Unknown error'}`;
+            debugError(errorMsg);
+            errors.push(errorMsg);
+          }
+        }
+
+        return schedules.length;
       });
 
-      for (const schedule of schedules) {
-        try {
-          const nextRunAt = schedule.nextRunAt ? new Date(schedule.nextRunAt) : null;
-
-          if (!nextRunAt) {
-            const initialNextRun = parseNextRun(schedule.cron, now);
-            await db
-              .update(tables.serverSchedules)
-              .set({ nextRunAt: initialNextRun.toISOString() })
-              .where(eq(tables.serverSchedules.id, schedule.id));
-            continue;
-          }
-
-          if (nextRunAt <= now) {
-            await processSchedule(schedule.id, db);
-            processedSchedules.push(schedule.id);
-          }
-        } catch (scheduleError) {
-          const errorMsg = `Schedule ${schedule.id} failed: ${scheduleError instanceof Error ? scheduleError.message : 'Unknown error'}`;
-          debugError(errorMsg);
-          errors.push(errorMsg);
-        }
-      }
-
+      const totalSchedules = ran ?? 0;
       const result = {
         processedAt: now.toISOString(),
         schedulesProcessed: processedSchedules.length,
-        totalSchedules: schedules.length,
+        totalSchedules,
         errors: errors.length,
         processedScheduleIds: processedSchedules,
+        skipped: ran === undefined,
       };
 
       debugLog(`[${now.toISOString()}] Task processing complete:`, result);
@@ -100,88 +107,91 @@ export default defineTask({
   },
 });
 
-async function processSchedule(scheduleId: string, db: ReturnType<typeof useDrizzle>) {
-  const runningTasks = new Map<string, boolean>();
+export async function processSchedule(scheduleId: string, db: ReturnType<typeof useDrizzle>) {
+  const ran = await withAdvisoryLock(`schedule:${scheduleId}`, () =>
+    runSchedule(scheduleId, db),
+  );
 
-  if (runningTasks.has(scheduleId)) {
-    debugLog(`Schedule ${scheduleId} is already running, skipping...`);
+  if (ran === undefined) {
+    debugLog(`Schedule ${scheduleId} is already running elsewhere, skipping...`);
+  }
+}
+
+async function runSchedule(scheduleId: string, db: ReturnType<typeof useDrizzle>) {
+  const executedAt = new Date();
+
+  const schedule = await db.query.serverSchedules.findFirst({
+    where: (s, { eq: whereEq }) => whereEq(s.id, scheduleId),
+  });
+
+  if (!schedule || !schedule.enabled) {
     return;
   }
 
-  runningTasks.set(scheduleId, true);
-  const executedAt = new Date();
+  const tasks = await db.query.serverScheduleTasks.findMany({
+    where: (t, { eq: whereEq }) => whereEq(t.scheduleId, scheduleId),
+    orderBy: (t, { asc }) => [asc(t.sequenceId)],
+  });
 
-  try {
-    const schedule = await db.query.serverSchedules.findFirst({
-      where: (s, { eq: whereEq }) => whereEq(s.id, scheduleId),
-    });
-
-    if (!schedule || !schedule.enabled) {
-      return;
-    }
-
-    const tasks = await db.query.serverScheduleTasks.findMany({
-      where: (t, { eq: whereEq }) => whereEq(t.scheduleId, scheduleId),
-      orderBy: (t, { asc }) => [asc(t.sequenceId)],
-    });
-
-    if (tasks.length === 0) {
-      debugLog(`No tasks found for schedule ${scheduleId}`);
-      return;
-    }
-
-    const server = await db.query.servers.findFirst({
-      where: (s, { eq: whereEq }) => whereEq(s.id, schedule.serverId),
-    });
-
-    if (!server) {
-      throw new Error('Server not found');
-    }
-
-    debugLog(
-      `Executing ${tasks.length} tasks for schedule "${schedule.name}" on server ${server.uuid}`,
-    );
-
-    let allTasksSucceeded = true;
-
-    for (const task of tasks) {
-      if (task.timeOffset > 0) {
-        debugLog(`Waiting ${task.timeOffset}s before executing task ${task.id}`);
-        await new Promise((resolve) => setTimeout(resolve, task.timeOffset * 1000));
-      }
-
-      try {
-        await executeTask(task, server, schedule);
-        debugLog(`Task ${task.id} (${task.action}) completed successfully`);
-      } catch (taskError) {
-        const errorMsg = `Task ${task.id} failed: ${taskError instanceof Error ? taskError.message : 'Unknown error'}`;
-        console.error(errorMsg);
-        allTasksSucceeded = false;
-
-        if (!task.continueOnFailure) {
-          debugLog(`Task ${task.id} failed and continueOnFailure is false, stopping execution`);
-          break;
-        }
-      }
-    }
-
-    const nextRun = parseNextRun(schedule.cron);
-
-    await db
-      .update(tables.serverSchedules)
-      .set({
-        lastRunAt: executedAt.toISOString(),
-        nextRunAt: nextRun.toISOString(),
-        updatedAt: new Date().toISOString(),
-      })
-      .where(eq(tables.serverSchedules.id, scheduleId));
-
-    debugLog(
-      `Schedule ${scheduleId} completed (success: ${allTasksSucceeded}). Next run: ${nextRun.toISOString()}`,
-    );
-  } finally {
-    runningTasks.delete(scheduleId);
+  if (tasks.length === 0) {
+    debugLog(`No tasks found for schedule ${scheduleId}`);
+    return;
   }
+
+  const server = await db.query.servers.findFirst({
+    where: (s, { eq: whereEq }) => whereEq(s.id, schedule.serverId),
+  });
+
+  if (!server) {
+    throw new Error('Server not found');
+  }
+
+  if (server.suspended) {
+    debugLog(`Server ${server.uuid} is suspended, skipping schedule "${schedule.name}"`);
+    return;
+  }
+
+  debugLog(
+    `Executing ${tasks.length} tasks for schedule "${schedule.name}" on server ${server.uuid}`,
+  );
+
+  let allTasksSucceeded = true;
+
+  for (const task of tasks) {
+    if (task.timeOffset > 0) {
+      debugLog(`Waiting ${task.timeOffset}s before executing task ${task.id}`);
+      await new Promise((resolve) => setTimeout(resolve, task.timeOffset * 1000));
+    }
+
+    try {
+      await executeTask(task, server, schedule);
+      debugLog(`Task ${task.id} (${task.action}) completed successfully`);
+    } catch (taskError) {
+      const errorMsg = `Task ${task.id} failed: ${taskError instanceof Error ? taskError.message : 'Unknown error'}`;
+      console.error(errorMsg);
+      allTasksSucceeded = false;
+
+      if (!task.continueOnFailure) {
+        debugLog(`Task ${task.id} failed and continueOnFailure is false, stopping execution`);
+        break;
+      }
+    }
+  }
+
+  const nextRun = parseNextRun(schedule.cron);
+
+  await db
+    .update(tables.serverSchedules)
+    .set({
+      lastRunAt: executedAt.toISOString(),
+      nextRunAt: nextRun.toISOString(),
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(tables.serverSchedules.id, scheduleId));
+
+  debugLog(
+    `Schedule ${scheduleId} completed (success: ${allTasksSucceeded}). Next run: ${nextRun.toISOString()}`,
+  );
 }
 
 async function executeTask(

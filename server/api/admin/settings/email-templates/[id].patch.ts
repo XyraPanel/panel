@@ -1,10 +1,70 @@
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { emailTemplateUpdateSchema } from '#shared/schema/admin/settings';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Settings'],
+    summary: 'Update an email template',
+    description:
+      'Overwrites the HTML content of an email template. Requires an admin session with the panel_settings:write ACL permission.',
+    parameters: [
+      { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Template ID, e.g. "password-reset"' },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['content'],
+            properties: {
+              content: { type: 'string', description: 'New HTML content for the template' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Template updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    message: { type: 'string' },
+                    updatedAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing template ID, or invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing panel_settings:write ACL permission' },
+      '404': { description: 'Template not found' },
+      '500': { description: 'Failed to update template' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.PANEL_SETTINGS,
+    ADMIN_ACL_PERMISSIONS.WRITE,
+  );
 
   const id = getRouterParam(event, 'id');
   if (!id) {

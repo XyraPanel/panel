@@ -32,6 +32,43 @@ export async function requireAdminApiKeyPermission(
   }
 }
 
+/**
+ * When the caller is authenticated via an API key (not a live session), a new key
+ * they mint must not carry more access than the calling key itself has — otherwise a
+ * deliberately narrow-scoped key (e.g. api_keys:write only) could mint itself a
+ * fully-privileged replacement, defeating the point of scoping. Session-authenticated
+ * admins are unrestricted, matching how an interactively-logged-in admin is trusted.
+ */
+export function requireApiKeyPermissionSubset(
+  event: H3Event,
+  requestedPermissions: ApiKeyPermissions,
+): void {
+  const callerPermissions = getContextApiKeyPermissions(event);
+  if (!callerPermissions) {
+    return;
+  }
+
+  for (const [resource, actions] of Object.entries(requestedPermissions)) {
+    if (!Array.isArray(actions)) {
+      continue;
+    }
+
+    for (const action of actions) {
+      const aclAction =
+        action === 'write' || action === 'delete'
+          ? ADMIN_ACL_PERMISSIONS.WRITE
+          : ADMIN_ACL_PERMISSIONS.READ;
+
+      if (!checkApiKeyPermission(callerPermissions, resource, aclAction)) {
+        throw createError({
+          status: 403,
+          message: `Cannot grant "${resource}: ${action}" — it exceeds the calling API key's own permissions`,
+        });
+      }
+    }
+  }
+}
+
 export const ADMIN_ENDPOINT_RESOURCE_MAP: Record<
   string,
   { resource: AdminAclResource; action: AdminAclPermission }

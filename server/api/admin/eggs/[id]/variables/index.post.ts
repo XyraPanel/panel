@@ -9,6 +9,44 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Eggs'],
+    summary: 'Create an egg variable',
+    description:
+      'Adds a new startup/environment variable definition to an egg. Requires an admin session with the eggs:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['name', 'envVariable', 'defaultValue'],
+            properties: {
+              name: { type: 'string', maxLength: 255 },
+              description: { type: 'string' },
+              envVariable: { type: 'string', maxLength: 255 },
+              defaultValue: { type: 'string' },
+              userViewable: { type: 'boolean', default: true },
+              userEditable: { type: 'boolean', default: true },
+              rules: { type: 'string', description: 'Pterodactyl validation rule string' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': { description: 'Variable created' },
+      '400': { description: 'Egg ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing eggs:write ACL permission' },
+      '404': { description: 'Egg not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

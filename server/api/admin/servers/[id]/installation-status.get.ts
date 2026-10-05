@@ -6,6 +6,43 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { checkInstallationStatus } from '#server/utils/server-provisioning';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Check a server\'s installation status',
+    description:
+      'Polls Wings for the server\'s current install/container status and syncs the panel status if installation just completed. Requires an admin session with the servers:read ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': {
+        description: 'Installation status',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    status: { type: 'string' },
+                    installing: { type: 'boolean' },
+                    serverStatus: { type: 'string', nullable: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:read ACL permission' },
+      '404': { description: 'Server not found' },
+      '500': { description: 'Failed to check installation status' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

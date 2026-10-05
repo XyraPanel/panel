@@ -195,9 +195,15 @@ export type Permission =
   | 'server.files.download'
   | 'server.files.compress'
   | 'server.backup.create'
+  | 'server.backup.read'
   | 'server.backup.restore'
   | 'server.backup.delete'
   | 'server.backup.download'
+  | 'server.allocation.read'
+  | 'server.allocation.create'
+  | 'server.allocation.update'
+  | 'server.allocation.delete'
+  | 'server.allocation.*'
   | 'server.database.create'
   | 'server.database.read'
   | 'server.database.update'
@@ -274,6 +280,7 @@ export interface UserPermissions {
   userId: string;
   isAdmin: boolean;
   serverPermissions: Map<string, Permission[]>;
+  ownedServerIds: Set<string>;
 }
 
 export interface PermissionMiddlewareOptions {
@@ -1010,12 +1017,6 @@ export interface FileOperation {
   content?: string;
   permissions?: string;
   files?: string[];
-}
-
-export interface FileUploadResult {
-  success: boolean;
-  uploadUrl?: string;
-  error?: string;
 }
 
 export type TaskAction = 'command' | 'power' | 'backup';

@@ -9,6 +9,7 @@ import {
   BODY_SIZE_LIMITS,
 } from '#server/utils/security';
 import { pullFileSchema } from '#shared/schema/server/operations';
+import { assertSafeRemoteUrl } from '#server/utils/ssrf-guard';
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
@@ -33,6 +34,8 @@ export default defineEventHandler(async (event) => {
     pullFileSchema,
     BODY_SIZE_LIMITS.SMALL,
   );
+
+  await assertSafeRemoteUrl(url);
 
   try {
     const { client } = await getWingsClientForServer(server.uuid);

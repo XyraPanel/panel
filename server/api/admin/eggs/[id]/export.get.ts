@@ -4,6 +4,30 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Eggs'],
+    summary: 'Export an egg',
+    description:
+      'Returns a Pterodactyl-compatible egg export file (JSON, PTDL_v2) as a downloadable attachment. Requires an admin session with the eggs:read ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': {
+        description: 'Egg export file',
+        content: {
+          'application/json': {
+            schema: { type: 'object', description: 'Pterodactyl egg export format' },
+          },
+        },
+      },
+      '400': { description: 'Egg ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing eggs:read ACL permission' },
+      '404': { description: 'Egg not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -38,11 +62,12 @@ export default defineEventHandler(async (event) => {
     name: egg.name,
     author: egg.author || 'unknown@unknown.com',
     description: egg.description || '',
-    features: null,
+    features: egg.features ? JSON.parse(egg.features) : null,
     docker_images: egg.dockerImages
       ? JSON.parse(egg.dockerImages)
       : { [egg.dockerImage]: egg.dockerImage },
-    file_denylist: [],
+    file_denylist: egg.fileDenylist ? JSON.parse(egg.fileDenylist) : [],
+    force_outgoing_ip: Boolean(egg.forceOutgoingIp),
     startup: egg.startup || '',
     config: {
       files: egg.configFiles ? JSON.parse(egg.configFiles) : {},

@@ -9,6 +9,7 @@ import { generateId } from 'better-auth';
 
 import { adminCreateUserSchema } from '#shared/schema/admin/users';
 import { debugError } from '#server/utils/logger';
+import { useHooks } from '#server/utils/hooks';
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
@@ -90,6 +91,8 @@ export default defineEventHandler(async (event) => {
         role: body.role,
       },
     });
+
+    await useHooks().emit('user.created', { id: userId });
 
     return {
       data: {

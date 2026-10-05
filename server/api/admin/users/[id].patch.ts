@@ -8,6 +8,75 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { adminUpdateUserSchema } from '#shared/schema/admin/users';
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Users'],
+    summary: 'Update a user',
+    description:
+      'Updates one or more fields on the target user, including sensitive changes such as email (clears email verification), role, and password (sensitive: sets a new password directly). Requires an admin session with the users:write ACL permission.',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'User ID',
+      },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              username: { type: 'string', minLength: 1, maxLength: 255 },
+              email: { type: 'string', format: 'email' },
+              password: { type: 'string', minLength: 8, description: 'Sensitive: sets a new password directly' },
+              name: { type: 'string', maxLength: 511 },
+              nameFirst: { type: 'string', maxLength: 255, nullable: true },
+              nameLast: { type: 'string', maxLength: 255, nullable: true },
+              language: { type: 'string', maxLength: 10 },
+              rootAdmin: { type: 'boolean' },
+              role: { type: 'string', enum: ['admin', 'user'] },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'User updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    username: { type: 'string', nullable: true },
+                    email: { type: 'string', nullable: true },
+                    name: { type: 'string', nullable: true },
+                    role: { type: 'string' },
+                    createdAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'User ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing users:write ACL permission' },
+      '404': { description: 'User not found' },
+      '500': { description: 'Failed to update user' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);

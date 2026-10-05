@@ -2,10 +2,13 @@ import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { z } from 'zod';
 import { desc, count } from 'drizzle-orm';
 import { getValidatedQuery, requireAdmin } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ);
 
   const id = getRouterParam(event, 'id');
   if (!id) {

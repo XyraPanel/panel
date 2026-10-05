@@ -8,6 +8,72 @@ import {
   BODY_SIZE_LIMITS,
 } from '#server/utils/security';
 import { serverStartupVariableSchema } from '#shared/schema/server/operations';
+import { validateEggVariableValue } from '#server/utils/egg-variable-rules';
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server'],
+    summary: 'Update a startup environment variable',
+    description:
+      "Updates the value of one of the server's egg startup variables, validated against the egg variable's rules. Requires the server.settings.update permission (or server owner/admin). The variable must be marked user-editable on its egg.",
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server identifier or UUID' },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['key'],
+            properties: {
+              key: { type: 'string', description: 'Egg environment variable name' },
+              value: { type: 'string', nullable: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Variable updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    object: { type: 'string' },
+                    attributes: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        description: { type: 'string', nullable: true },
+                        env_variable: { type: 'string' },
+                        default_value: { type: 'string', nullable: true },
+                        server_value: { type: 'string' },
+                        is_editable: { type: 'boolean' },
+                        rules: { type: 'string' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server identifier is missing' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing permission, or variable is not user-editable' },
+      '404': { description: 'Server or variable not found' },
+      '422': { description: 'Value fails the variable\'s validation rules' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event) => {
   try {
@@ -59,6 +125,14 @@ export default defineEventHandler(async (event) => {
     throw createError({
       status: 403,
       message: 'This variable cannot be edited',
+    });
+  }
+
+  const validation = validateEggVariableValue(eggVariable.rules, normalizedValue);
+  if (!validation.valid) {
+    throw createError({
+      status: 422,
+      message: validation.error || 'Invalid value for this variable',
     });
   }
 

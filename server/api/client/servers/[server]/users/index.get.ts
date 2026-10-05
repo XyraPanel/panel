@@ -3,6 +3,44 @@ import { listServerSubusers } from '#server/utils/subusers';
 import { requireAccountUser } from '#server/utils/security';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Subusers'],
+    summary: 'List subusers',
+    description:
+      'Returns all subusers granted access to the server. Requires the server.users.read permission (owner/admin always allowed).',
+    parameters: [{ name: 'server', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': {
+        description: 'Subusers for the server',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      permissions: { type: 'array', items: { type: 'string' } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server identifier missing' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.users.read permission' },
+      '404': { description: 'Server not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server');
 

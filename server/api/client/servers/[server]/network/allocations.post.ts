@@ -7,6 +7,49 @@ import { recordServerActivity } from '#server/utils/server-activity';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Network'],
+    summary: 'Assign a new allocation matching the primary IP',
+    description:
+      'Assigns a free allocation on the same node and IP as the server\'s current primary allocation, up to the server\'s allocation limit. Requires the server.allocation.create permission (owner/admin always allowed). Note: this route shares the same path as POST /network/allocations/index.post.ts; only one handler will actually be registered by Nitro.',
+    parameters: [{ name: 'server', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': {
+        description: 'Allocation assigned',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    ip: { type: 'string' },
+                    port: { type: 'integer' },
+                    ip_alias: { type: 'string', nullable: true },
+                    is_primary: { type: 'boolean' },
+                    notes: { type: 'string', nullable: true },
+                    assigned: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description:
+          'No allocation limit set, limit reached, server has no node/primary allocation, or no free allocations on the node',
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.allocation.create permission' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server');
 
@@ -22,7 +65,7 @@ export default defineEventHandler(async (event) => {
 
   await requireServerPermission(event, {
     serverId: server.id,
-    requiredPermissions: ['allocation.create'],
+    requiredPermissions: ['server.allocation.create'],
     allowOwner: true,
     allowAdmin: true,
   });

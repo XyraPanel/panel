@@ -17,6 +17,7 @@ export interface Egg {
   description: string | null;
   features: string | null;
   fileDenylist: string | null;
+  forceOutgoingIp: boolean;
   updateUrl: string | null;
   dockerImage: string;
   dockerImages: string | null;

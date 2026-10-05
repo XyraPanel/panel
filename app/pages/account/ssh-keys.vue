@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue';
+import { colorizeJson } from '~/utils/json-highlight';
 
 definePageMeta({
   auth: true,
@@ -412,7 +413,7 @@ async function confirmDelete() {
                 </div>
                 <pre
                   class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
-                ><code>{{ formatJson(getFullKeyData(key)) }}</code></pre>
+                ><code v-html="colorizeJson(formatJson(getFullKeyData(key)))"></code></pre>
               </div>
             </div>
           </div>

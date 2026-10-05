@@ -26,6 +26,8 @@ export async function generateWingsJWT(
     ...(options.user?.id && { user_id: options.user.id }),
     ...(options.server?.uuid && { server_uuid: options.server.uuid }),
     ...(options.permissions && { permissions: options.permissions }),
+    ...(options.scope && { scope: options.scope }),
+    ...options.extraClaims,
   })
     .setProtectedHeader({
       alg: 'HS256',

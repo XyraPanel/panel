@@ -7,6 +7,39 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Suspend a server',
+    description:
+      'Marks the server as suspended and kills its running process on Wings. Rolls back the suspended flag if the Wings sync/kill fails. Requires an admin session with the servers:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': {
+        description: 'Server suspended (or was already suspended)',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: { success: { type: 'boolean' }, message: { type: 'string' } },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:write ACL permission' },
+      '404': { description: 'Server not found' },
+      '500': { description: 'Failed to suspend server (e.g. could not connect to node)' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -60,6 +93,7 @@ export default defineEventHandler(async (event) => {
       if (node) {
         try {
           const { client } = await getWingsClientForServer(server.uuid);
+          await client.syncServer(server.uuid);
           await client.sendPowerAction(server.uuid, 'kill');
         } catch (error) {
           await db

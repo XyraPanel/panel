@@ -8,6 +8,67 @@ import { createDatabaseHostSchema } from '#shared/schema/admin/infrastructure';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Database Hosts'],
+    summary: 'Create a database host',
+    description:
+      'Registers a new database host that can be used to provision server databases. Requires an admin session with the database-hosts:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['name', 'hostname', 'username', 'password'],
+            properties: {
+              name: { type: 'string', maxLength: 255 },
+              hostname: { type: 'string', maxLength: 255 },
+              port: { type: 'integer', minimum: 1, maximum: 65535, default: 3306 },
+              username: { type: 'string', maxLength: 255 },
+              password: { type: 'string' },
+              database: { type: 'string', maxLength: 255 },
+              nodeId: { type: 'string', format: 'uuid', description: 'Restrict host to a specific node' },
+              maxDatabases: { type: 'integer', minimum: 0, nullable: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Database host created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    hostname: { type: 'string' },
+                    port: { type: 'integer' },
+                    nodeId: { type: 'string', nullable: true },
+                    maxDatabases: { type: 'integer', nullable: true },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing database-hosts:write ACL permission' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

@@ -4,6 +4,31 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Get a server\'s full detail',
+    description:
+      'Returns the server record with owner, node, egg, nest, allocations, resource limits, databases, and mounts. Requires an admin session with the servers:read ACL permission.',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'Server ID, UUID, or identifier',
+      },
+    ],
+    responses: {
+      '200': { description: 'Full server detail' },
+      '400': { description: 'Server ID required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:read ACL permission' },
+      '404': { description: 'Server not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

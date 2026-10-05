@@ -3,6 +3,40 @@ import { useDrizzle, tables, eq, and, inArray } from '#server/utils/drizzle';
 import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Remote (Wings)'],
+    summary: 'Reset stuck server states for this node',
+    description:
+      'Called by the Wings daemon on restart to clear any servers stuck in "installing" or "restoring_backup" status for this node, since the daemon restart interrupted those operations. Requires a valid node Bearer token.',
+    responses: {
+      '200': {
+        description: 'Stuck servers reset',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    reset_count: { type: 'integer' },
+                    servers: { type: 'array', items: { type: 'string' }, description: 'Server UUIDs reset' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Missing or invalid Wings authentication token' },
+      '403': { description: 'Node token not recognized/authorized' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
   assertMethod(event, 'POST');

@@ -8,10 +8,79 @@ import {
 } from '#server/utils/security';
 import { createSubuserSchema } from '#shared/schema/server/subusers';
 import { invalidateServerSubusersCache } from '#server/utils/subusers';
-import { requireServerPermission } from '#server/utils/permission-middleware';
+import {
+  requireServerPermission,
+  requireGrantablePermissions,
+} from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 
 import { debugError } from '#server/utils/logger';
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Subusers'],
+    summary: 'Add a subuser',
+    description:
+      'Grants an existing panel user (looked up by email) access to the server with the given permissions. Requires the server.users.create permission (owner/admin always allowed); requested permissions are filtered to what the caller may grant.',
+    parameters: [{ name: 'server', in: 'path', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['email', 'permissions'],
+            properties: {
+              email: { type: 'string', format: 'email', maxLength: 191 },
+              permissions: {
+                type: 'array',
+                items: { type: 'string' },
+                minItems: 1,
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Subuser added',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    user: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        username: { type: 'string' },
+                        email: { type: 'string' },
+                        image: { type: 'string', nullable: true },
+                      },
+                    },
+                    permissions: { type: 'array', items: { type: 'string' } },
+                    created_at: { type: 'string', format: 'date-time' },
+                    updated_at: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid request body, or user is already a subuser' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.users.create permission' },
+      '404': { description: 'No user found with that email address' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server');
@@ -35,6 +104,11 @@ export default defineEventHandler(async (event) => {
   });
 
   const body = await readValidatedBodyWithLimit(event, createSubuserSchema, BODY_SIZE_LIMITS.SMALL);
+  const grantedPermissions = await requireGrantablePermissions(
+    event,
+    server.id,
+    body.permissions,
+  );
 
   try {
     const db = useDrizzle();
@@ -76,7 +150,7 @@ export default defineEventHandler(async (event) => {
       id: subuserId,
       serverId: server.id,
       userId: targetUser.id,
-      permissions: JSON.stringify(body.permissions),
+      permissions: JSON.stringify(grantedPermissions),
       createdAt: now,
       updatedAt: now,
     });
@@ -98,7 +172,7 @@ export default defineEventHandler(async (event) => {
         subuserId,
         targetUserId: targetUser.id,
         targetUserEmail: targetUser.email,
-        permissions: body.permissions,
+        permissions: grantedPermissions,
       },
     });
 

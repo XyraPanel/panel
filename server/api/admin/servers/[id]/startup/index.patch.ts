@@ -6,6 +6,54 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { updateServerStartupSchema } from '~~/shared/schema/admin/server';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Update a server\'s startup configuration',
+    description:
+      'Updates the startup command, Docker image, and/or environment variables for a server, verifying the write succeeded. Requires an admin session with the servers:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              startup: { type: 'string' },
+              dockerImage: { type: 'string' },
+              environment: { type: 'object', additionalProperties: { type: 'string' } },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Startup configuration updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: { success: { type: 'boolean' }, message: { type: 'string' } },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:write ACL permission' },
+      '404': { description: 'Server not found' },
+      '500': { description: 'Failed to save server configuration' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
   const session = await requireAdmin(event);

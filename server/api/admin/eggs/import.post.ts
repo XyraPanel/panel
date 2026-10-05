@@ -9,6 +9,60 @@ import { eggImportSchema } from '#shared/schema/admin/eggs';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Eggs'],
+    summary: 'Import an egg',
+    description:
+      'Imports an egg from a Pterodactyl-compatible egg export (PTDL_v1/v2, JSON body) into a target nest, creating the egg and its variables. Requires an admin session with the eggs:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['nestId', 'eggData'],
+            properties: {
+              nestId: { type: 'string', description: 'Target nest ID' },
+              eggData: {
+                type: 'object',
+                description: 'Parsed contents of a Pterodactyl egg export JSON file',
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Egg imported',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean' },
+                data: {
+                  type: 'object',
+                  properties: { id: { type: 'string' } },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': {
+        description:
+          'Missing nestId/eggData, unsupported egg format version, or egg file missing required fields',
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing eggs:write ACL permission' },
+      '404': { description: 'Target nest not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<EggImportResponse> => {
   const session = await requireAdmin(event);
 
@@ -75,6 +129,7 @@ export default defineEventHandler(async (event): Promise<EggImportResponse> => {
       description: typedEggData.description || null,
       features: typedEggData.features ? JSON.stringify(typedEggData.features) : null,
       fileDenylist: typedEggData.file_denylist ? JSON.stringify(typedEggData.file_denylist) : null,
+      forceOutgoingIp: Boolean(typedEggData.force_outgoing_ip),
       updateUrl: typedEggData.meta?.update_url || null,
       dockerImage: firstImage,
       dockerImages: JSON.stringify(dockerImages),

@@ -7,6 +7,73 @@ import type { ActivityAction } from '#shared/types/audit';
 import { remoteActivityBatchSchema } from '#shared/schema/wings';
 import { debugWarn, debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Remote (Wings)'],
+    summary: 'Report a batch of server activity events',
+    description:
+      'Called by the Wings daemon to forward a batch of server activity/audit events to the panel. Requires a valid node Bearer token (Authorization header) resolved via the node token identifier.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['data'],
+            properties: {
+              data: {
+                type: 'array',
+                items: {
+                  type: 'object',
+                  required: ['event', 'timestamp'],
+                  properties: {
+                    event: { type: 'string', description: 'Activity event/action key' },
+                    timestamp: {
+                      oneOf: [{ type: 'string' }, { type: 'number' }],
+                      description: 'Event timestamp',
+                    },
+                    server: { type: 'string', description: 'Server UUID/identifier' },
+                    user: { type: 'string' },
+                    metadata: { type: 'object', additionalProperties: true },
+                    ip: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Batch processed (individual invalid entries are skipped, not rejected)',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    received: { type: 'integer' },
+                    processed: { type: 'integer' },
+                    failed: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'The Authorization header was not in a valid format' },
+      '401': { description: 'Missing or invalid Wings authentication token' },
+      '403': { description: 'Node token not recognized/authorized' },
+      '500': { description: 'Fatal error while processing the activity batch' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   await getNodeIdFromAuth(event);
   const { data: activities } = await readValidatedBodyWithLimit(

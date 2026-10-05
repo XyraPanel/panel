@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AccountActivityItem, PaginatedAccountActivityResponse } from '#shared/types/account';
+import { colorizeJson } from '~/utils/json-highlight';
 
 definePageMeta({
   auth: true,
@@ -381,7 +382,7 @@ function exportCsv() {
                 <pre
                   class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
                 >
-<code>{{ formatJson(getFullAuditData(entry)) }}</code>
+<code v-html="colorizeJson(formatJson(getFullAuditData(entry)))"></code>
 </pre>
               </div>
             </div>

@@ -1,10 +1,73 @@
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { renderEmailTemplate } from '#server/utils/email-templates';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { emailTemplatePreviewSchema } from '#shared/schema/admin/settings';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Settings'],
+    summary: 'Preview an email template',
+    description:
+      'Renders an email template with the supplied data (or with placeholder tokens if a value matches "{{ token }}") and returns styled HTML for preview. Requires an admin session with the panel_settings:read ACL permission.',
+    parameters: [
+      { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Template ID, e.g. "password-reset"' },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['data'],
+            properties: {
+              data: {
+                type: 'object',
+                additionalProperties: { type: 'string' },
+                description: 'Key-value map of template variables',
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Rendered preview HTML',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    subject: { type: 'string' },
+                    html: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing template ID, or invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing panel_settings:read ACL permission' },
+      '500': { description: 'Failed to render template' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.PANEL_SETTINGS,
+    ADMIN_ACL_PERMISSIONS.READ,
+  );
 
   const id = getRouterParam(event, 'id');
   if (!id) {

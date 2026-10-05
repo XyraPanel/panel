@@ -300,6 +300,15 @@ function createAuth() {
     appName: runtimeConfig.public.appName || 'XyraPanel',
     emailAndPassword: {
       enabled: true,
+      // Deliberately not setting requireEmailVerification: true here. It's a static
+      // boolean better-auth reads once at boot, but this panel's mail configuration
+      // is stored in the `settings` DB table (server/utils/settings.ts), not env
+      // vars, and isn't knowable synchronously when this config object is built.
+      // Enabling it unconditionally would strand any self-hosted install that
+      // hasn't configured SMTP yet — every account, including the seeded admin,
+      // would be permanently unable to sign in with no way to receive a
+      // verification email. Unverified accounts getting a working session is a
+      // real gap, but a lockout with no recovery path is worse.
       password: {
         hash: async (password: string) => {
           return await bcrypt.hash(password, 12);
@@ -388,6 +397,18 @@ function createAuth() {
         '/change-password': {
           window: 60,
           max: 5,
+        },
+        '/forget-password': {
+          window: 300,
+          max: 3,
+        },
+        '/reset-password': {
+          window: 300,
+          max: 5,
+        },
+        '/send-verification-email': {
+          window: 300,
+          max: 3,
         },
         '/api-key/create': {
           window: 60,

@@ -46,12 +46,15 @@ const extraConnectSources = process.env.NUXT_SECURITY_CONNECT_SRC
 const connectSrcDirectives = ["'self'", 'https:', 'wss:', 'ws:', ...extraConnectSources];
 const enableCspReportOnly = process.env.NUXT_SECURITY_CSP_REPORT_ONLY === 'true';
 const cspReportUri = process.env.NUXT_SECURITY_CSP_REPORT_URI?.trim() || null;
-const hasRedisRateLimitConfig = Boolean(process.env.REDIS_HOST && process.env.REDIS_PORT);
+// Redis is already a hard dependency in production (session/cache storage, see
+// server/plugins/storage.ts), so default the rate limiter onto it too — an in-memory
+// lruCache limiter is per-process and gives every PM2 cluster worker its own bucket,
+// silently weakening rate limits under multi-instance deployment. Opt out explicitly
+// with NUXT_SECURITY_RATE_LIMIT_DRIVER=lruCache if you really want per-process limits.
 const preferredRateLimiterDriver = (
-  process.env.NUXT_SECURITY_RATE_LIMIT_DRIVER || 'lruCache'
+  process.env.NUXT_SECURITY_RATE_LIMIT_DRIVER || (isDev ? 'lruCache' : 'redis')
 ).trim();
-const shouldUseRedisRateLimiter =
-  !isDev && preferredRateLimiterDriver === 'redis' && hasRedisRateLimitConfig;
+const shouldUseRedisRateLimiter = !isDev && preferredRateLimiterDriver !== 'lruCache';
 
 const globalRateLimiterDriver = shouldUseRedisRateLimiter
   ? ({
@@ -98,6 +101,7 @@ export default defineNuxtConfig({
     '@nuxtjs/i18n',
     '@nuxt/a11y',
     '@nuxt/hints',
+    '@sentry/nuxt/module',
   ],
   vite: {
     ssr: {
@@ -466,6 +470,7 @@ export default defineNuxtConfig({
       turnstile: {
         siteKey: process.env.NUXT_PUBLIC_TURNSTILE_SITE_KEY || '',
       },
+      sentryDsn: process.env.SENTRY_DSN || process.env.NUXT_PUBLIC_SENTRY_DSN || '',
       i18n: {
         baseUrl:
           process.env.NUXT_PUBLIC_I18N_BASE_URL ||
@@ -475,6 +480,22 @@ export default defineNuxtConfig({
       },
     },
   },
+
+  // Sentry only uploads source maps (and produces build-time noise) when an auth
+  // token is configured; self-hosters who don't set SENTRY_* env vars get a no-op
+  // SDK at runtime (see sentry.client.config.ts / sentry.server.config.ts).
+  ...(process.env.SENTRY_AUTH_TOKEN
+    ? {
+        sentry: {
+          sourceMapsUploadOptions: {
+            org: process.env.SENTRY_ORG,
+            project: process.env.SENTRY_PROJECT,
+            authToken: process.env.SENTRY_AUTH_TOKEN,
+          },
+        },
+        sourcemap: { client: 'hidden' },
+      }
+    : {}),
 
   security: isDev
     ? {
@@ -648,6 +669,22 @@ export default defineNuxtConfig({
     experimental: {
       tasks: true, // NOTE: The panel will remain in a BETA STATE until Nitro tasks are stable. See https://github.com/nuxt/nitro/issues/1105
       websocket: true,
+      openAPI: true,
+    },
+    openAPI: {
+      meta: {
+        title: 'XyraPanel API',
+        description: 'HTTP API for the XyraPanel game server management panel.',
+        version: process.env.npm_package_version || '0.1.0',
+      },
+      route: '/_openapi.json',
+      production: false,
+      ui: {
+        scalar: {
+          route: '/_docs',
+        },
+        swagger: false,
+      },
     },
     handlers: [
       {

@@ -12,6 +12,59 @@ const powerActionSchema = z.object({
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Send a power action to a server',
+    description:
+      'Sends start/stop/restart/kill to the server\'s Wings daemon. If the server has never been installed and action is "start", triggers installation instead and starts automatically once it completes. Requires an admin session with the servers:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['action'],
+            properties: {
+              action: { type: 'string', enum: ['start', 'stop', 'restart', 'kill'] },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Power action sent (or installation triggered)',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    action: { type: 'string' },
+                    serverId: { type: 'string' },
+                    serverUuid: { type: 'string' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing server id, no assigned node, or missing egg/allocation for install' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:write ACL permission' },
+      '404': { description: 'Server or node not found' },
+      '500': { description: 'Failed to send power command' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { id: serverId } = getRouterParams(event);
   if (!serverId || typeof serverId !== 'string') {

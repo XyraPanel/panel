@@ -25,6 +25,7 @@ const newPasswordSchema = z
 const accountProfileBaseSchema = z.object({
   username: usernameSchema.optional(),
   email: emailSchema.optional(),
+  currentPassword: currentPasswordSchema.optional(),
 });
 
 export const accountProfileFormSchema = accountProfileBaseSchema.required({
@@ -40,6 +41,14 @@ export const accountProfileUpdateSchema = accountProfileBaseSchema.superRefine((
       code: 'custom',
       message: 'Provide username or email to update',
       path: ['username'],
+    });
+  }
+
+  if (data.email !== undefined && data.currentPassword === undefined) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'Current password is required to change your email address',
+      path: ['currentPassword'],
     });
   }
 });
@@ -175,10 +184,6 @@ export const passwordResetPerformSchema = z.object({
 export const twoFactorVerifySchema = z.object({
   code: z.string().trim().min(1, 'TOTP code is required'),
   trustDevice: z.boolean().optional(),
-});
-
-export const twoFactorRecoverySchema = z.object({
-  token: z.string().trim().min(1, 'Recovery token is required'),
 });
 
 export const twoFactorEnableSchema = z.object({

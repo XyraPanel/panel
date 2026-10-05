@@ -2,6 +2,39 @@ import { useDrizzle } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Get account profile',
+    description: 'Returns the authenticated account\'s profile (id, username, email, role).',
+    responses: {
+      '200': {
+        description: 'Account profile',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    username: { type: 'string' },
+                    email: { type: 'string' },
+                    role: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '404': { description: 'User not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const sessionUser = accountContext.user;

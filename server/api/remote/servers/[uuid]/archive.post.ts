@@ -6,6 +6,53 @@ import type { ActivityAction } from '#shared/types/audit';
 import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { remoteServerArchiveStatusSchema } from '#shared/schema/wings';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Remote (Wings)'],
+    summary: 'Report server archive completion status',
+    description:
+      'Called by the Wings daemon when archiving a server (e.g. before deletion) finishes, to mark the server as archived. Requires a valid node Bearer token; the server must be assigned to the authenticating node.',
+    parameters: [
+      { name: 'uuid', in: 'path', required: true, schema: { type: 'string' }, description: 'Server UUID' },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['successful'],
+            properties: { successful: { type: 'boolean' } },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Archive status recorded',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: { success: { type: 'boolean' }, archived: { type: 'boolean' } },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing server UUID, or Authorization header not in a valid format' },
+      '401': { description: 'Missing or invalid Wings authentication token' },
+      '403': { description: 'Node token not recognized, or server does not belong to this node' },
+      '404': { description: 'Server not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
   const db = useDrizzle();

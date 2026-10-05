@@ -5,6 +5,7 @@ import type { FormSubmitEvent } from '@nuxt/ui';
 import type { ApiKeyResponse } from '#shared/types/api';
 import { createApiKeyFormSchema } from '#shared/schema/account';
 import type { CreateApiKeyFormInput } from '#shared/schema/account';
+import { colorizeJson } from '~/utils/json-highlight';
 
 definePageMeta({
   auth: true,
@@ -630,7 +631,7 @@ async function copyToken() {
                 </div>
                 <pre
                   class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
-                ><code>{{ formatJson(getFullKeyData(key)) }}</code></pre>
+                ><code v-html="colorizeJson(formatJson(getFullKeyData(key)))"></code></pre>
               </div>
             </div>
           </div>

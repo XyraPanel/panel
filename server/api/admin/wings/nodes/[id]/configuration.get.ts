@@ -1,10 +1,13 @@
 import { requireAdmin } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { getWingsNodeConfigurationById } from '#server/utils/wings/nodesStore';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { useRuntimeConfig, getRequestURL } from '#imports';
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.NODES, ADMIN_ACL_PERMISSIONS.READ);
   const { id } = getRouterParams(event);
   if (!id) {
     throw createError({ status: 400, message: 'Missing node id' });

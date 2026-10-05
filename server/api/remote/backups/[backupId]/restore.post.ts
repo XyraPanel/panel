@@ -5,6 +5,48 @@ import { BODY_SIZE_LIMITS, readValidatedBodyWithLimit } from '#server/utils/secu
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { remoteBackupRestoreStatusSchema } from '#shared/schema/wings';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Remote (Wings)'],
+    summary: 'Report backup restore completion status',
+    description:
+      'Called by the Wings daemon when a backup restore operation finishes, to clear the restoring status on the server (or mark it as restore_failed). Requires a valid node Bearer token.',
+    parameters: [
+      { name: 'backupId', in: 'path', required: true, schema: { type: 'string' }, description: 'Backup UUID' },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['successful'],
+            properties: { successful: { type: 'boolean' } },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Restore status recorded',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: { data: { type: 'object', properties: { success: { type: 'boolean' } } } },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing backup ID, or Authorization header not in a valid format' },
+      '401': { description: 'Missing or invalid Wings authentication token' },
+      '403': { description: 'Node token not recognized/authorized' },
+      '404': { description: 'Backup not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   try {
   const db = useDrizzle();

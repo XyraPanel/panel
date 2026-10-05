@@ -7,6 +7,48 @@ import { recordServerActivity } from '#server/utils/server-activity';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Network'],
+    summary: 'Set primary allocation',
+    description:
+      'Marks the given allocation as the server\'s primary allocation. Requires the server.allocation.update permission (owner/admin always allowed).',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'allocation', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    responses: {
+      '200': {
+        description: 'Primary allocation set',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    ip: { type: 'string' },
+                    ipAlias: { type: 'string', nullable: true },
+                    port: { type: 'integer' },
+                    notes: { type: 'string', nullable: true },
+                    isPrimary: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.allocation.update permission' },
+      '404': { description: 'Server or allocation not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server');
   const allocationId = getRouterParam(event, 'allocation');
@@ -23,7 +65,7 @@ export default defineEventHandler(async (event) => {
 
   await requireServerPermission(event, {
     serverId: server.id,
-    requiredPermissions: ['allocation.update'],
+    requiredPermissions: ['server.allocation.update'],
     allowOwner: true,
     allowAdmin: true,
   });

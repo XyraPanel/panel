@@ -320,6 +320,7 @@ function cancelEdit() {
               <label class="block text-sm font-semibold mb-2">Rendered Preview</label>
               <iframe
                 :srcDoc="previewHtml"
+                sandbox=""
                 class="w-full h-96 border border-default rounded-lg"
                 title="Email preview"
               />

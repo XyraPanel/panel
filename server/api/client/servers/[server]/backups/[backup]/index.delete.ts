@@ -6,6 +6,40 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Backups'],
+    summary: 'Delete a backup',
+    description:
+      'Deletes a backup from Wings and removes its record. Requires the server.backup.delete permission. Locked backups cannot be deleted.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server UUID or identifier' },
+      { name: 'backup', in: 'path', required: true, schema: { type: 'string' }, description: 'Backup UUID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Backup deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean' },
+                message: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing server or backup identifier' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.backup.delete permission, or backup is locked' },
+      '404': { description: 'Server or backup not found' },
+      '500': { description: 'Failed to delete backup' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');

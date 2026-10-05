@@ -33,7 +33,7 @@ export async function requireServerPermission(
   const isAdmin = userPermissions.isAdmin;
   const serverPerms = userPermissions.serverPermissions.get(options.serverId) || [];
 
-  const isOwner = serverPerms.length > 0 && serverPerms.includes('server.view');
+  const isOwner = userPermissions.ownedServerIds.has(options.serverId);
 
   if (isAdmin && options.allowAdmin !== false) {
     return {
@@ -84,6 +84,64 @@ export async function requireServerPermission(
   };
 }
 
+/**
+ * Validates that permissions being granted to a subuser are (a) recognized Permission
+ * values and (b) a subset of the granting actor's own effective permissions on this
+ * server — otherwise a subuser could grant themselves or another subuser more access
+ * than they have, including admin.* hierarchy shorthand that expands to full control.
+ * Real admins bypass the subset check (they already have unrestricted access), but
+ * still only real Permission values, never arbitrary strings.
+ */
+export async function requireGrantablePermissions(
+  event: H3Event,
+  serverId: string,
+  requestedPermissions: string[],
+): Promise<Permission[]> {
+  const session = await getServerSession(event);
+  const user = resolveSessionUser(session);
+
+  if (!user?.id) {
+    throw createError({
+      status: 401,
+      message: 'Authentication required',
+    });
+  }
+
+  const allPermissions = new Set<string>(permissionManager.getAllPermissions());
+  const isPermission = (p: string): p is Permission => allPermissions.has(p);
+
+  if (!requestedPermissions.every(isPermission)) {
+    const invalid = requestedPermissions.filter((p) => !isPermission(p));
+    throw createError({
+      status: 400,
+      message: `Unknown permission(s): ${invalid.join(', ')}`,
+    });
+  }
+
+  const validated = requestedPermissions;
+
+  const userPermissions = await permissionManager.getUserPermissions(user.id);
+  if (userPermissions.isAdmin) {
+    return validated;
+  }
+
+  const actorPermissions = new Set(
+    userPermissions.ownedServerIds.has(serverId)
+      ? permissionManager.getAllPermissions().filter((p) => !p.startsWith('admin.'))
+      : (userPermissions.serverPermissions.get(serverId) ?? []),
+  );
+
+  const disallowed = validated.filter((p) => !actorPermissions.has(p));
+  if (disallowed.length > 0) {
+    throw createError({
+      status: 403,
+      message: `Cannot grant permission(s) you do not have: ${disallowed.join(', ')}`,
+    });
+  }
+
+  return validated;
+}
+
 export async function requirePermission(
   event: H3Event,
   permission: Permission,
@@ -125,7 +183,7 @@ export async function requireAnyPermission(
   const isAdmin = userPermissions.isAdmin;
   const serverPerms = userPermissions.serverPermissions.get(serverId) || [];
 
-  const isOwner = serverPerms.length > 0 && serverPerms.includes('server.view');
+  const isOwner = userPermissions.ownedServerIds.has(serverId);
 
   if (isAdmin || isOwner) {
     return {

@@ -4,6 +4,68 @@ import { useDrizzle, tables } from '#server/utils/drizzle';
 import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Nests'],
+    summary: 'Get a nest',
+    description:
+      'Returns a single nest along with the eggs that belong to it. Requires an admin session with the nests:read ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': {
+        description: 'Nest and its eggs',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    nest: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'string' },
+                        uuid: { type: 'string' },
+                        author: { type: 'string' },
+                        name: { type: 'string' },
+                        description: { type: 'string', nullable: true },
+                        createdAt: { type: 'string', format: 'date-time' },
+                        updatedAt: { type: 'string', format: 'date-time' },
+                      },
+                    },
+                    eggs: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          uuid: { type: 'string' },
+                          nestId: { type: 'string' },
+                          author: { type: 'string' },
+                          name: { type: 'string' },
+                          description: { type: 'string', nullable: true },
+                          dockerImage: { type: 'string' },
+                          createdAt: { type: 'string', format: 'date-time' },
+                          updatedAt: { type: 'string', format: 'date-time' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Nest ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing nests:read ACL permission' },
+      '404': { description: 'Nest not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
 

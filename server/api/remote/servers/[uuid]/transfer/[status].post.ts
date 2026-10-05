@@ -2,6 +2,8 @@ import { type H3Event } from 'h3';
 import { useDrizzle, tables, eq, and, inArray } from '#server/utils/drizzle';
 import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
+import { getWingsClientForNode } from '#server/utils/wings-client';
+import { logger } from '#server/utils/logger';
 
 export default defineEventHandler(async (event: H3Event) => {
   try {
@@ -54,6 +56,13 @@ export default defineEventHandler(async (event: H3Event) => {
     });
   }
 
+  if (nodeId !== transfer.oldNode && nodeId !== transfer.newNode) {
+    throw createError({
+      status: 403,
+      message: 'This node is not a party to the active transfer for this server.',
+    });
+  }
+
   const now = new Date().toISOString();
   const oldAdditionalAllocations = parseAllocationList(transfer.oldAdditionalAllocations);
   const newAdditionalAllocations = parseAllocationList(transfer.newAdditionalAllocations);
@@ -97,6 +106,16 @@ export default defineEventHandler(async (event: H3Event) => {
         .set({ successful: true, archived: true, updatedAt: now })
         .where(eq(tables.serverTransfers.id, transfer.id));
     });
+
+    try {
+      const oldNodeClient = await getWingsClientForNode(transfer.oldNode);
+      await oldNodeClient.deleteServer(server.uuid);
+    } catch (error) {
+      logger.error(
+        `[Transfer] Failed to delete server ${server.uuid} from old node ${transfer.oldNode} after successful transfer:`,
+        error,
+      );
+    }
   } else {
     await db.transaction(async (tx) => {
       const allocationsToRelease = [transfer.newAllocation, ...newAdditionalAllocations];
@@ -141,7 +160,6 @@ export default defineEventHandler(async (event: H3Event) => {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
     }
-    const { logger } = await import('#server/utils/logger');
     logger.error('Unhandled API exception', error);
     throw createError({
       status: 500,

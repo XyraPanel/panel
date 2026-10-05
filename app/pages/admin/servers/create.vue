@@ -99,15 +99,22 @@ const userSelectItems = computed(() => {
   }));
 });
 
-watch(
-  () => currentUser.value?.id,
-  (userId) => {
-    if (userId && !form.value.ownerId) {
-      form.value.ownerId = userId;
-    }
-  },
-  { immediate: true },
-);
+// Defaulting the owner to the current admin depends on client-only session state
+// (better-auth's useSession only resolves in the browser). Applying it via onMounted
+// rather than an immediate watch keeps the server-rendered placeholder and the
+// client's pre-hydration render in sync — the default is applied as a normal
+// reactive update after hydration completes, not during it.
+onMounted(() => {
+  watch(
+    () => currentUser.value?.id,
+    (userId) => {
+      if (userId && !form.value.ownerId) {
+        form.value.ownerId = userId;
+      }
+    },
+    { immediate: true },
+  );
+});
 
 const selectedNest = ref<Nest | null>(null);
 const availableEggs = ref<Egg[]>([]);

@@ -1,7 +1,51 @@
 import { requireAdmin } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Settings'],
+    summary: 'List email template definitions',
+    description:
+      'Returns the static catalog of email templates (id, name, description, and interpolation variables) available for editing. Requires an admin session with the panel_settings:read ACL permission.',
+    responses: {
+      '200': {
+        description: 'List of email template definitions',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' },
+                      description: { type: 'string' },
+                      variables: { type: 'array', items: { type: 'string' } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing panel_settings:read ACL permission' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event);
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.PANEL_SETTINGS,
+    ADMIN_ACL_PERMISSIONS.READ,
+  );
 
   const templates = [
     {

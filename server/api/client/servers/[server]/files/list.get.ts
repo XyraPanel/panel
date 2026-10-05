@@ -163,7 +163,6 @@ export default defineEventHandler(async (event) => {
     throw createError({
       status: 500,
       message: 'Failed to list files',
-      data: { error: error instanceof Error ? error.message : 'Unknown error' },
     });
   }
 });

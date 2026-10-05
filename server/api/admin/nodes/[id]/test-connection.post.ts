@@ -8,6 +8,44 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Nodes'],
+    summary: 'Test connectivity to a node\'s Wings daemon',
+    description:
+      'Attempts to connect to the given node\'s Wings daemon and fetch system info, updating lastSeenAt on success. Requires an admin session with the nodes:read ACL permission. Connection failures are returned as a 200 response with connected: false rather than an error status.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': {
+        description: 'Connection test result (success or failure, both returned as 200)',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    connected: { type: 'boolean' },
+                    message: { type: 'string' },
+                    systemInfo: { type: 'object' },
+                    errorType: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Node ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing nodes:read ACL permission' },
+      '404': { description: 'Node not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

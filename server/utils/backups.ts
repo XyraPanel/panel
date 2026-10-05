@@ -21,7 +21,11 @@ export async function listServerBackups(serverId: string): Promise<ServerBackup[
         .select()
         .from(tables.serverBackups)
         .where(eq(tables.serverBackups.serverId, serverId))
-        .orderBy(desc(tables.serverBackups.createdAt));
+        .orderBy(desc(tables.serverBackups.createdAt))
+        // Defensive backstop — normally bounded per-server by serverLimits.backupLimit,
+        // but that's admin-configurable with no upper bound enforced, so this guards
+        // the pathological case rather than real usage.
+        .limit(250);
 
       return backups.map((row) => ({
         id: row.id,

@@ -482,6 +482,7 @@ export const eggs = pgTable('eggs', {
   description: text('description'),
   features: text('features'),
   fileDenylist: text('file_denylist'),
+  forceOutgoingIp: boolean('force_outgoing_ip').notNull().default(false),
   updateUrl: text('update_url'),
   dockerImage: text('docker_image').notNull(),
   dockerImages: text('docker_images'),

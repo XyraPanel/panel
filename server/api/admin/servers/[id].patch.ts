@@ -6,6 +6,61 @@ import { requireRouteParam } from '#server/utils/http/params';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { serverBuildSchema } from '#shared/schema/admin/server';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Update a server\'s build configuration',
+    description:
+      'Updates resource limits (CPU, memory, swap, disk, IO, threads), OOM-kill setting, and database/allocation/backup limits, then syncs the change to Wings. Requires an admin session with the servers:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              cpu: { type: 'integer', description: 'CPU limit percentage, 0 = unlimited' },
+              memory: { type: 'integer', description: 'Memory limit in MB, 0 = unlimited' },
+              swap: { type: 'integer' },
+              disk: { type: 'integer', description: 'Disk limit in MB, 0 = unlimited' },
+              io: { type: 'integer' },
+              threads: { type: 'string', nullable: true },
+              oomDisabled: { type: 'boolean' },
+              databaseLimit: { type: 'integer', nullable: true },
+              allocationLimit: { type: 'integer', nullable: true },
+              backupLimit: { type: 'integer', nullable: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Build configuration updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: { success: { type: 'boolean' }, message: { type: 'string' } },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server ID required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:write ACL permission' },
+      '404': { description: 'Server not found' },
+      '500': { description: 'Database updated but failed to sync configuration with Wings' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PATCH');
 

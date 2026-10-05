@@ -97,7 +97,7 @@ function createFormState(source?: MailSettings | null): FormSchema {
     host: source?.host ?? '',
     port: source?.port ?? '587',
     username: source?.username ?? '',
-    password: source?.password ?? '',
+    password: '',
     encryption: (source?.encryption as EncryptionValue | undefined) ?? 'tls',
     fromAddress: source?.fromAddress ?? '',
     fromName: source?.fromName ?? '',
@@ -157,17 +157,24 @@ async function handleSubmit(event: FormSubmitEvent<FormSchema>) {
 
   const persistedService = isPresetService ? event.data.service : '';
 
+  // The password field is never pre-filled from the server (see mail.get.ts) — an
+  // empty value here means "leave it unchanged", not "clear it", so omit the key
+  // entirely rather than sending an empty string that would overwrite the stored one.
+  const { password, ...payloadWithoutPassword } = payload;
+  const requestBody =
+    password.length > 0
+      ? { ...payload, service: persistedService }
+      : { ...payloadWithoutPassword, service: persistedService };
+
   try {
     await $fetch('/api/admin/settings/mail', {
       method: 'patch',
-      body: {
-        ...payload,
-        service: persistedService,
-      },
+      body: requestBody,
     });
 
     Object.assign(form, {
-      ...payload,
+      ...payloadWithoutPassword,
+      password: '',
       service: isPresetService ? event.data.service : CUSTOM_SERVICE_VALUE,
     });
 
@@ -316,11 +323,19 @@ async function handleTestEmail() {
           />
         </UFormField>
 
-        <UFormField :label="t('admin.settings.mailSettings.password')" name="password">
+        <UFormField
+          :label="t('admin.settings.mailSettings.password')"
+          name="password"
+          :hint="settings?.hasPassword ? t('admin.settings.mailSettings.passwordSetHint') : undefined"
+        >
           <UInput
             v-model="form.password"
             type="password"
-            :placeholder="t('auth.password')"
+            :placeholder="
+              settings?.hasPassword
+                ? t('admin.settings.mailSettings.passwordUnchangedPlaceholder')
+                : t('auth.password')
+            "
             :disabled="isSubmitting"
             class="w-full"
           />

@@ -1,12 +1,72 @@
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { SETTINGS_KEYS, deleteSetting, setSettings, type SettingKey } from '#server/utils/settings';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { generalSettingsSchema } from '#shared/schema/admin/settings';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Settings'],
+    summary: 'Update general panel settings',
+    description:
+      'Partially updates locale, timezone, branding, pagination, and telemetry settings. Requires an admin session with the panel_settings:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              locale: { type: 'string' },
+              timezone: { type: 'string' },
+              showBrandLogo: { type: 'boolean' },
+              brandLogoUrl: { type: 'string', nullable: true },
+              paginationLimit: { type: 'integer' },
+              telemetryEnabled: { type: 'boolean' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Settings updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    updatedKeys: { type: 'array', items: { type: 'string' } },
+                    deletedKeys: { type: 'array', items: { type: 'string' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'No settings provided to update, or invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing panel_settings:write ACL permission' },
+      '500': { description: 'Failed to update general settings' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.PANEL_SETTINGS,
+    ADMIN_ACL_PERMISSIONS.WRITE,
+  );
 
   const body = await readValidatedBodyWithLimit(
     event,

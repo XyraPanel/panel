@@ -41,7 +41,7 @@ const ADMIN_NAV_ITEMS = computed<AdminNavItem[]>(() => [
       },
       {
         id: 'admin-api-keys',
-        label: t('admin.apiKeys'),
+        label: t('admin.api.title'),
         to: '/admin/api',
         permission: 'admin.api.read',
       },
@@ -100,6 +100,11 @@ const ADMIN_NAV_ITEMS = computed<AdminNavItem[]>(() => [
         to: '/admin/settings',
         permission: 'admin.settings.read',
       },
+      {
+        id: 'admin-addons',
+        label: 'Addons',
+        to: '/admin/addons',
+      },
     ],
   },
   {
@@ -117,6 +122,27 @@ const ADMIN_NAV_ITEMS = computed<AdminNavItem[]>(() => [
     ],
   },
 ]);
+
+const { data: addonNavData } = useAddonNav('navigation.dashboard');
+const ADDON_NAV_ITEMS = computed<AdminNavItem[]>(() => {
+  const items = addonNavData.value?.items ?? [];
+  if (items.length === 0) return [];
+
+  return [
+    {
+      id: 'admin-addons-contributed',
+      label: 'Addons',
+      icon: 'i-lucide-puzzle',
+      order: 900,
+      children: items.map((item) => ({
+        id: `addon-nav-${item.url}`,
+        label: item.name,
+        to: item.url,
+        active: route.path === item.url || route.path.startsWith(`${item.url}/`),
+      })),
+    },
+  ];
+});
 
 const CLIENT_NAV_ITEMS = computed(() => [
   {
@@ -210,10 +236,28 @@ const adminSubtitle = computed(() => {
   return t('admin.navigation.infrastructureOverview');
 });
 
+// Permission filtering depends on client-only session state (better-auth's useSession
+// only resolves in the browser), so SSR always renders the unfiltered list. Filtering
+// only kicks in post-hydration — that's a normal reactive update, not a hydration
+// mismatch, whereas filtering during the initial client render (before this flips)
+// would diverge from the server-rendered HTML and break hydration on every admin page.
+const isHydrated = ref(false);
+onMounted(() => {
+  isHydrated.value = true;
+});
+
 const filteredNavItems = computed(() => {
-  return ADMIN_NAV_ITEMS.value
-    .filter((item) => storeIsSuperUser.value || authStore.hasPermission(item.permission ?? []))
-    .sort((a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY));
+  const sorted = [...ADMIN_NAV_ITEMS.value, ...ADDON_NAV_ITEMS.value].sort(
+    (a, b) => (a.order ?? Number.POSITIVE_INFINITY) - (b.order ?? Number.POSITIVE_INFINITY),
+  );
+
+  if (!isHydrated.value) {
+    return sorted;
+  }
+
+  return sorted.filter(
+    (item) => storeIsSuperUser.value || authStore.hasPermission(item.permission ?? []),
+  );
 });
 
 const navAriaLabel = computed(() => t('layout.adminNavigation'));
@@ -436,24 +480,41 @@ const navigateToSecuritySettings = async (event?: MouseEvent) => {
       </template>
 
       <template #footer="{ collapsed }">
-        <UDropdownMenu
-          :items="[accountNavItems, [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }]]"
-          class="w-full"
-        >
-          <UButton
-            color="neutral"
-            variant="ghost"
-            class="w-full justify-start"
-            :block="collapsed"
-            type="button"
-            @click.prevent
+        <ClientOnly>
+          <UDropdownMenu
+            :items="[accountNavItems, [{ label: t('auth.signOut'), click: handleSignOut, color: 'error' }]]"
+            class="w-full"
           >
-            <template #leading>
-              <UAvatar v-bind="userAvatar" size="sm" />
-            </template>
-            <span v-if="!collapsed">{{ userLabel }}</span>
-          </UButton>
-        </UDropdownMenu>
+            <UButton
+              color="neutral"
+              variant="ghost"
+              class="w-full justify-start"
+              :block="collapsed"
+              type="button"
+              @click.prevent
+            >
+              <template #leading>
+                <UAvatar v-bind="userAvatar" size="sm" />
+              </template>
+              <span v-if="!collapsed">{{ userLabel }}</span>
+            </UButton>
+          </UDropdownMenu>
+          <template #fallback>
+            <UButton
+              color="neutral"
+              variant="ghost"
+              class="w-full justify-start"
+              :block="collapsed"
+              type="button"
+              disabled
+            >
+              <template #leading>
+                <UAvatar size="sm" />
+              </template>
+              <span v-if="!collapsed">&nbsp;</span>
+            </UButton>
+          </template>
+        </ClientOnly>
       </template>
     </UDashboardSidebar>
     <UDashboardSearch

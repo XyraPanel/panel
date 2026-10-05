@@ -12,6 +12,62 @@ import { recordServerActivity } from '#server/utils/server-activity';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Network'],
+    summary: 'Update allocation notes',
+    description:
+      'Updates the notes field on a network allocation. Requires the server.allocation.update permission (owner/admin always allowed).',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'allocation', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              notes: { type: 'string', maxLength: 500, nullable: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Allocation updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    ip: { type: 'string' },
+                    port: { type: 'integer' },
+                    ipAlias: { type: 'string', nullable: true },
+                    notes: { type: 'string', nullable: true },
+                    isPrimary: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.allocation.update permission' },
+      '404': { description: 'Server or allocation not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server');
   const allocationId = getRouterParam(event, 'allocation');
@@ -28,7 +84,7 @@ export default defineEventHandler(async (event) => {
 
   await requireServerPermission(event, {
     serverId: server.id,
-    requiredPermissions: ['allocation.update'],
+    requiredPermissions: ['server.allocation.update'],
     allowOwner: true,
     allowAdmin: true,
   });

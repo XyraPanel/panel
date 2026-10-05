@@ -31,6 +31,7 @@ const profile = computed<SanitizedUser | null>(() => profileResponse.value?.data
 const transientError = ref<string | null>(null);
 const isSaving = ref(false);
 const pendingEmailChange = ref<string | null>(null);
+const currentPassword = ref('');
 
 const schema = accountProfileFormSchema;
 
@@ -62,6 +63,15 @@ const normalizedForm = computed(() => ({
   email: form.email.trim(),
 }));
 
+const isEmailChanging = computed(() => {
+  const current = profile.value;
+  if (!current) return false;
+
+  return pendingEmailChange.value !== null
+    ? normalizedForm.value.email !== pendingEmailChange.value
+    : normalizedForm.value.email !== current.email;
+});
+
 const hasChanges = computed(() => {
   const current = profile.value;
   if (!current) return false;
@@ -85,7 +95,9 @@ const loadError = computed(() => {
 });
 
 const showSkeleton = computed(() => profilePending.value && !profile.value);
-const disableSubmit = computed(() => !hasChanges.value || isSaving.value);
+const disableSubmit = computed(
+  () => !hasChanges.value || isSaving.value || (isEmailChanging.value && !currentPassword.value),
+);
 
 watch(
   () => status.value,
@@ -128,7 +140,7 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
 
     const result = await $fetch<AccountProfileResponse>('/api/account/profile', {
       method: 'PUT',
-      body: payload,
+      body: emailChanged ? { ...payload, currentPassword: currentPassword.value } : payload,
     });
 
     const emailAppliedImmediately = emailChanged && result?.data?.email === payload.email;
@@ -137,6 +149,8 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
     if (emailPendingVerification) {
       pendingEmailChange.value = payload.email;
     }
+
+    currentPassword.value = '';
 
     await authStore.syncSession();
     await nextTick();
@@ -206,6 +220,21 @@ async function handleSubmit(event: FormSubmitEvent<ProfileFormSchema>) {
               v-model="form.email"
               type="email"
               :placeholder="t('account.profile.enterEmail')"
+              class="w-full"
+            />
+          </UFormField>
+
+          <UFormField
+            v-if="isEmailChanging"
+            :label="t('account.profile.currentPassword')"
+            name="currentPassword"
+            required
+            class="md:col-span-2"
+          >
+            <UInput
+              v-model="currentPassword"
+              type="password"
+              :placeholder="t('account.profile.enterCurrentPassword')"
               class="w-full"
             />
           </UFormField>

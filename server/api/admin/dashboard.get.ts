@@ -18,6 +18,104 @@ import type {
 
 type DashboardSection = 'full' | 'critical' | 'incidents';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Dashboard'],
+    summary: 'Get admin dashboard data',
+    description:
+      'Returns dashboard metrics, Wings node statuses, recent audit incidents, and suggested operations. The "section" query param selects a subset (critical data only, incidents only, or both) to allow the UI to refresh sections independently. Requires an admin session with the dashboard:read ACL permission.',
+    parameters: [
+      {
+        name: 'section',
+        in: 'query',
+        schema: { type: 'string', enum: ['full', 'critical', 'incidents'], default: 'full' },
+      },
+    ],
+    responses: {
+      '200': {
+        description: 'Dashboard data',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    metrics: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          key: { type: 'string' },
+                          label: { type: 'string' },
+                          value: { type: 'integer' },
+                          icon: { type: 'string' },
+                          helper: { type: 'string', nullable: true },
+                        },
+                      },
+                    },
+                    nodes: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          name: { type: 'string' },
+                          fqdn: { type: 'string' },
+                          allowInsecure: { type: 'boolean' },
+                          maintenanceMode: { type: 'boolean' },
+                          lastSeenAt: { type: 'string', nullable: true },
+                          serverCount: { type: 'integer', nullable: true },
+                          status: { type: 'string', enum: ['online', 'maintenance', 'unknown'] },
+                          issue: { type: 'string', nullable: true },
+                        },
+                      },
+                    },
+                    incidents: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          occurredAt: { type: 'string', format: 'date-time' },
+                          action: { type: 'string' },
+                          actor: {
+                            type: 'object',
+                            nullable: true,
+                            properties: {
+                              label: { type: 'string' },
+                              userId: { type: 'string' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                    operations: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          key: { type: 'string' },
+                          label: { type: 'string' },
+                          detail: { type: 'string' },
+                        },
+                      },
+                    },
+                    generatedAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing dashboard:read ACL permission' },
+    },
+  },
+});
+
 function formatHelperRange(current: number, total: number, suffix: string): string {
   if (total === 0) return `0 ${suffix}`;
   return `${current}/${total} ${suffix}`;
@@ -229,6 +327,27 @@ async function fetchIncidents(): Promise<DashboardIncident[]> {
     actor: resolveActor(String(event.actor)),
   }));
 }
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Dashboard'],
+    summary: 'Get admin dashboard data',
+    description:
+      'Returns dashboard metrics, node health, recent audit incidents, and suggested operations. The `section` query param narrows the response to reduce load time: "critical" returns metrics/nodes/operations, "incidents" returns recent audit events, omitted returns everything. Requires an admin session with the dashboard:read ACL permission.',
+    parameters: [
+      {
+        name: 'section',
+        in: 'query',
+        schema: { type: 'string', enum: ['full', 'critical', 'incidents'] },
+      },
+    ],
+    responses: {
+      '200': { description: 'Dashboard data for the requested section' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing dashboard:read ACL permission' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event): Promise<{ data: DashboardResponse }> => {
   await requireAdmin(event);

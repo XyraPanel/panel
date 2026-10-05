@@ -10,6 +10,57 @@ import { APIError } from 'better-auth/api';
 import { auth, getAuthHeaders } from '#server/utils/auth';
 import { isEmailConfigured } from '#server/utils/email';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Update account profile',
+    description:
+      'Updates the authenticated account\'s username and/or email. Changing the email requires currentPassword and may trigger a verification email if email is configured.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              username: { type: 'string', minLength: 3, maxLength: 191 },
+              email: { type: 'string', format: 'email', maxLength: 191 },
+              currentPassword: { type: 'string', minLength: 8, description: 'Required when changing email' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Profile updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    username: { type: 'string' },
+                    email: { type: 'string' },
+                    role: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid input, incorrect password, or unable to update profile' },
+      '401': { description: 'Not authenticated' },
+      '404': { description: 'User not found' },
+      '409': { description: 'Username already in use' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT');
 
@@ -84,6 +135,26 @@ export default defineEventHandler(async (event) => {
     }
 
     if (body.email !== undefined && body.email !== oldEmail) {
+      try {
+        const verification = await auth.api.verifyPassword({
+          body: { password: body.currentPassword! },
+          headers,
+        });
+        if (!verification?.status) {
+          throw createError({ status: 400, message: 'Invalid password' });
+        }
+      } catch (error) {
+        if (error instanceof APIError) {
+          const statusCode =
+            typeof error.status === 'number' ? error.status : Number(error.status ?? 500) || 500;
+          throw createError({
+            statusCode,
+            message: error.message || 'Invalid password',
+          });
+        }
+        throw error;
+      }
+
       const emailEnabled = await isEmailConfigured();
 
       if (emailEnabled) {
@@ -156,7 +227,7 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
-    if (error && typeof error === 'object' && 'status' in error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
     }
     throw createError({

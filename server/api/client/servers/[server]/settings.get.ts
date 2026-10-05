@@ -5,6 +5,68 @@ import { useDrizzle, tables } from '#server/utils/drizzle';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server'],
+    summary: 'Get server settings',
+    description:
+      'Returns basic server info and resource limits (CPU, memory, disk, swap, IO, database/allocation/backup limits). Requires the server.settings.read permission.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server identifier or UUID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Server settings',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    server: {
+                      type: 'object',
+                      properties: {
+                        id: { type: 'integer' },
+                        uuid: { type: 'string' },
+                        identifier: { type: 'string' },
+                        name: { type: 'string' },
+                        description: { type: 'string', nullable: true },
+                        suspended: { type: 'boolean' },
+                      },
+                    },
+                    limits: {
+                      type: 'object',
+                      nullable: true,
+                      properties: {
+                        cpu: { type: 'integer', nullable: true },
+                        memory: { type: 'integer', nullable: true },
+                        disk: { type: 'integer', nullable: true },
+                        swap: { type: 'integer', nullable: true },
+                        io: { type: 'integer', nullable: true },
+                        threads: { type: 'integer', nullable: true },
+                        oomDisabled: { type: 'boolean' },
+                        databaseLimit: { type: 'integer', nullable: true },
+                        allocationLimit: { type: 'integer', nullable: true },
+                        backupLimit: { type: 'integer', nullable: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server identifier is missing' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.settings.read permission' },
+      '404': { description: 'Server not found or not accessible' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverIdentifier = getRouterParam(event, 'server');

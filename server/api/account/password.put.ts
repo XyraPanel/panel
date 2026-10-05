@@ -6,6 +6,55 @@ import { accountPasswordUpdateSchema } from '#shared/schema/account';
 import { requireAccountUser, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
 
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Change password',
+    description:
+      'Changes the authenticated account password (verifying the current password) and revokes all other sessions.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['currentPassword', 'newPassword'],
+            properties: {
+              currentPassword: { type: 'string', minLength: 8 },
+              newPassword: { type: 'string', minLength: 12 },
+              confirmPassword: { type: 'string', minLength: 12 },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Password changed',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    revokedSessions: { type: 'integer' },
+                    signedOut: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Incorrect current password, or new password invalid' },
+      '401': { description: 'Not authenticated' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'PUT');
 

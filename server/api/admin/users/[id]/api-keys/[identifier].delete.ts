@@ -6,6 +6,58 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Users'],
+    summary: "Delete a user's API key",
+    description:
+      'Permanently deletes one API key belonging to the target user, identified by its identifier. Destructive and irreversible. Requires an admin session with the users:write ACL permission.',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'User ID',
+      },
+      {
+        name: 'identifier',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'API key identifier',
+      },
+    ],
+    responses: {
+      '200': {
+        description: 'API key deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    userId: { type: 'string' },
+                    apiKeyIdentifier: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing user ID or API key identifier' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing users:write ACL permission' },
+      '404': { description: 'User or API key not found' },
+      '500': { description: 'Failed to delete user API key' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   assertMethod(event, 'DELETE');
   const session = await requireAdmin(event);

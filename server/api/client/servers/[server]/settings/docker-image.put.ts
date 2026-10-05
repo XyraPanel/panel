@@ -11,6 +11,61 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { recordServerActivity } from '#server/utils/server-activity';
 import { serverDockerImageUpdateSchema } from '#shared/schema/server/operations';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server'],
+    summary: 'Update the server Docker image',
+    description:
+      "Changes the server's Docker image to one of the images offered by its egg. Rejected if the image was manually set by an admin outside the egg's image list. Requires the server.settings.update permission.",
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server identifier or UUID' },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['docker_image'],
+            properties: {
+              docker_image: { type: 'string', description: 'One of the egg\'s available Docker images' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Docker image updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    object: { type: 'string' },
+                    attributes: {
+                      type: 'object',
+                      properties: { docker_image: { type: 'string' } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server identifier is missing, or image is manually set and cannot be changed' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.settings.update permission' },
+      '404': { description: 'Server or egg not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
     const { user, session } = await requireAccountUser(event);

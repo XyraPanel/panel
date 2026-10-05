@@ -54,6 +54,94 @@ function calculateNextRun(cronExpression: string): string {
 
 type ServerScheduleUpdate = typeof tables.serverSchedules.$inferInsert;
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Schedules'],
+    summary: 'Update a schedule',
+    description:
+      'Partially updates a schedule\'s name, cron expression, and/or active state. Requires the server.schedule.update permission.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'schedule', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', minLength: 1, maxLength: 255 },
+              cron: {
+                type: 'object',
+                properties: {
+                  minute: { type: 'string' },
+                  hour: { type: 'string' },
+                  day_of_month: { type: 'string' },
+                  month: { type: 'string' },
+                  day_of_week: { type: 'string' },
+                },
+              },
+              is_active: { type: 'boolean' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Schedule updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    cron: { type: 'string' },
+                    is_active: { type: 'boolean' },
+                    is_processing: { type: 'boolean' },
+                    only_when_online: { type: 'boolean' },
+                    last_run_at: { type: 'string', format: 'date-time', nullable: true },
+                    next_run_at: { type: 'string', format: 'date-time', nullable: true },
+                    created_at: { type: 'string', format: 'date-time' },
+                    updated_at: { type: 'string', format: 'date-time' },
+                    tasks: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          sequence_id: { type: 'integer' },
+                          action: { type: 'string' },
+                          payload: { type: 'string', nullable: true },
+                          time_offset: { type: 'integer' },
+                          is_queued: { type: 'boolean' },
+                          continue_on_failure: { type: 'boolean' },
+                          created_at: { type: 'string', format: 'date-time' },
+                          updated_at: { type: 'string', format: 'date-time' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.schedule.update permission' },
+      '404': { description: 'Server or schedule not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
   const accountContext = await requireAccountUser(event);

@@ -4,7 +4,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 import { type H3Event } from 'h3';
 import { getNodeIdFromAuth } from '#server/utils/wings/auth';
-import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
 import { debugError, debugWarn } from '#server/utils/logger';
 
 function safeJsonParse(value: string | null | undefined, defaultValue: unknown = {}): unknown {
@@ -38,6 +38,39 @@ function safeJsonParse(value: string | null | undefined, defaultValue: unknown =
     return defaultValue;
   }
 }
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Remote (Wings)'],
+    summary: 'Get full runtime configuration for a server',
+    description:
+      'Called by the Wings daemon to fetch the complete runtime configuration (settings, mounts, egg config file templates, process configuration) for a single server. Requires a valid node Bearer token; the server must be assigned to the authenticating node.',
+    parameters: [
+      { name: 'uuid', in: 'path', required: true, schema: { type: 'string' }, description: 'Server UUID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Full server configuration',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                settings: { type: 'object', additionalProperties: true },
+                process_configuration: { type: 'object', additionalProperties: true },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing server UUID, or Authorization header not in a valid format' },
+      '401': { description: 'Missing or invalid Wings authentication token' },
+      '403': { description: 'Node token not recognized, or server is not assigned to this node' },
+      '404': { description: 'Server not found' },
+      '500': { description: 'Server configuration error (missing primary allocation or egg)' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event: H3Event) => {
   const { uuid } = getRouterParams(event);
@@ -104,6 +137,47 @@ export default defineEventHandler(async (event: H3Event) => {
     .from(tables.serverStartupEnv)
     .where(eq(tables.serverStartupEnv.serverId, server.id));
 
+  let serverMounts: Array<{ target: string; source: string; read_only: boolean }> = [];
+  if (server.nodeId) {
+    const directMounts = await db
+      .select({
+        source: tables.mounts.source,
+        target: tables.mounts.target,
+        readOnly: tables.mounts.readOnly,
+      })
+      .from(tables.mountServer)
+      .innerJoin(tables.mounts, eq(tables.mountServer.mountId, tables.mounts.id))
+      .innerJoin(tables.mountNode, eq(tables.mountNode.mountId, tables.mounts.id))
+      .where(
+        and(eq(tables.mountServer.serverId, server.id), eq(tables.mountNode.nodeId, server.nodeId)),
+      );
+
+    const eggMounts = server.eggId
+      ? await db
+          .select({
+            source: tables.mounts.source,
+            target: tables.mounts.target,
+            readOnly: tables.mounts.readOnly,
+          })
+          .from(tables.mountEgg)
+          .innerJoin(tables.mounts, eq(tables.mountEgg.mountId, tables.mounts.id))
+          .innerJoin(tables.mountNode, eq(tables.mountNode.mountId, tables.mounts.id))
+          .where(
+            and(eq(tables.mountEgg.eggId, server.eggId), eq(tables.mountNode.nodeId, server.nodeId)),
+          )
+      : [];
+
+    const seen = new Set<string>();
+    serverMounts = [...directMounts, ...eggMounts]
+      .filter((m) => {
+        const key = `${m.source}:${m.target}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .map((m) => ({ target: m.target, source: m.source, read_only: Boolean(m.readOnly) }));
+  }
+
   const serverEnvMap = new Map<string, string>();
   for (const envVar of envVars) {
     serverEnvMap.set(envVar.key, envVar.value || '');
@@ -155,7 +229,7 @@ export default defineEventHandler(async (event: H3Event) => {
     ? {
         cpu: limits.cpu ?? 100,
         memory: limits.memory ?? 512,
-        swap: 0,
+        swap: limits.swap ?? 0,
         disk: limits.disk ?? 1024,
         io: limits.io ?? 500,
         threads: limits.threads,
@@ -197,7 +271,7 @@ export default defineEventHandler(async (event: H3Event) => {
     environment,
     labels: {},
     allocations: {
-      force_outgoing_ip: false,
+      force_outgoing_ip: Boolean(egg.forceOutgoingIp),
       default: {
         ip: primaryAllocation.ip,
         port: primaryAllocation.port,
@@ -214,10 +288,18 @@ export default defineEventHandler(async (event: H3Event) => {
       oom_disabled: Boolean(limitsWithDefaults.oomDisabled),
     },
     crash_detection_enabled: true,
-    mounts: [],
+    mounts: serverMounts,
     egg: {
       id: egg?.uuid || server.eggId || '',
-      file_denylist: [],
+      file_denylist: (() => {
+        if (!egg?.fileDenylist) return [];
+        try {
+          const parsed = JSON.parse(egg.fileDenylist);
+          return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+        } catch {
+          return [];
+        }
+      })(),
     },
     container: (() => {
       const selectedImage =

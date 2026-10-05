@@ -14,6 +14,83 @@ import { createAllocationSchema } from '#shared/schema/admin/infrastructure';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Nodes'],
+    summary: 'Bulk-create allocations for a node',
+    description:
+      'Creates port allocations for a node from an IP/CIDR and a port list or range. Existing IP:port pairs are skipped rather than erroring. Requires an admin session with the allocations:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['ip', 'ports'],
+            properties: {
+              ip: { type: 'string', description: 'IP address or CIDR notation' },
+              ports: {
+                oneOf: [
+                  { type: 'string', description: 'Port list/range, e.g. "25565,25570-25580"' },
+                  { type: 'array', items: { type: 'integer' } },
+                  { type: 'integer' },
+                ],
+              },
+              alias: { type: 'string', nullable: true },
+              ipAlias: { type: 'string', nullable: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Allocations created (and possibly some skipped as already existing)',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    created: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          ip: { type: 'string' },
+                          port: { type: 'integer' },
+                        },
+                      },
+                    },
+                    skipped: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: { ip: { type: 'string' }, port: { type: 'integer' } },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Node ID missing, invalid IP/CIDR, or invalid port format' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing allocations:write ACL permission' },
+      '409': { description: 'All specified allocations already exist' },
+      '500': { description: 'Failed to create allocations' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

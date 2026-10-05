@@ -84,7 +84,9 @@ export type ServerDatabaseCreateInput = z.infer<typeof serverDatabaseCreateSchem
 export const createServerSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().optional(),
-  userId: z.uuid(),
+  // Not a UUID — better-auth generates its own ID format for users.id (unlike
+  // the app-generated randomUUID() ids used for eggs/nests/allocations below).
+  userId: z.string().min(1),
   eggId: z.uuid(),
   nodeId: z.uuid(),
   allocationId: z.uuid(),
@@ -106,7 +108,9 @@ export const createServerSchema = z.object({
 export const createAdminServerSchema = z.object({
   name: z.string().min(1).max(255),
   description: z.string().optional(),
-  ownerId: z.string().uuid(),
+  // Not a UUID — better-auth generates its own ID format for users.id (unlike
+  // the app-generated randomUUID() ids used for eggs/nests/allocations below).
+  ownerId: z.string().min(1),
   eggId: z.string().uuid(),
   nestId: z.string().uuid().optional(),
   nodeId: z.string().min(1),
@@ -152,7 +156,8 @@ export const updateServerStartupSchema = z.object({
 export const updateServerDetailsSchema = z.object({
   name: z.string().min(1).max(255).optional(),
   description: z.string().optional(),
-  userId: z.uuid().optional(),
+  // Not a UUID — see createAdminServerSchema.ownerId above.
+  userId: z.string().min(1).optional(),
 });
 
 export const createServerDatabaseSchema = z.object({

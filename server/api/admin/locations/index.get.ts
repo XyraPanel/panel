@@ -6,6 +6,45 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import type { LocationWithNodeCount } from '#shared/types/admin';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Locations'],
+    summary: 'List locations',
+    description:
+      'Returns all locations with their assigned node counts. Requires an admin session with the locations:read ACL permission.',
+    responses: {
+      '200': {
+        description: 'List of locations',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      short: { type: 'string' },
+                      long: { type: 'string', nullable: true },
+                      createdAt: { type: 'string', format: 'date-time' },
+                      updatedAt: { type: 'string', format: 'date-time' },
+                      nodeCount: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing locations:read ACL permission' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

@@ -7,6 +7,89 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { sql } from 'drizzle-orm';
 import { adminServersPaginationSchema } from '#shared/schema/admin/server';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'List servers',
+    description:
+      'Returns a paginated list of servers with owner and node information. Requires an admin session with the servers:read ACL permission.',
+    parameters: [
+      {
+        name: 'page',
+        in: 'query',
+        schema: { type: 'integer', minimum: 1, default: 1 },
+      },
+      {
+        name: 'perPage',
+        in: 'query',
+        schema: { type: 'integer', minimum: 1 },
+      },
+    ],
+    responses: {
+      '200': {
+        description: 'Paginated list of servers',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'integer' },
+                      uuid: { type: 'string' },
+                      identifier: { type: 'string' },
+                      name: { type: 'string' },
+                      status: { type: 'string', nullable: true },
+                      owner: {
+                        type: 'object',
+                        nullable: true,
+                        properties: {
+                          id: { type: 'string' },
+                          username: { type: 'string' },
+                        },
+                      },
+                      node: {
+                        type: 'object',
+                        nullable: true,
+                        properties: {
+                          id: { type: 'integer' },
+                          name: { type: 'string' },
+                        },
+                      },
+                      created_at: { type: 'string', format: 'date-time' },
+                    },
+                  },
+                },
+                meta: {
+                  type: 'object',
+                  properties: {
+                    pagination: {
+                      type: 'object',
+                      properties: {
+                        total: { type: 'integer' },
+                        count: { type: 'integer' },
+                        per_page: { type: 'integer' },
+                        current_page: { type: 'integer' },
+                        total_pages: { type: 'integer' },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:read ACL permission' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
     const session = await requireAdmin(event);
@@ -99,7 +182,7 @@ export default defineEventHandler(async (event) => {
     };
   } catch (error) {
     logger.error('[GET] /api/admin/servers: Error:', error);
-    if (error && typeof error === 'object' && 'status' in error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
     }
     throw createError({

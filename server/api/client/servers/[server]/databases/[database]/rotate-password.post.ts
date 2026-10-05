@@ -7,6 +7,53 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAccountUser } from '#server/utils/security';
 import { rotateUserPassword } from '#server/utils/database-provisioner';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Databases'],
+    summary: 'Rotate database password',
+    description:
+      'Generates a new password for a server database and updates it at the database host. Requires the server.database.update permission.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server UUID or identifier' },
+      { name: 'database', in: 'path', required: true, schema: { type: 'string' }, description: 'Database ID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Password rotated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                object: { type: 'string', enum: ['server_database'] },
+                attributes: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    username: { type: 'string' },
+                  },
+                },
+                meta: {
+                  type: 'object',
+                  properties: {
+                    password: { type: 'string', description: 'The new plaintext password' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing server or database identifier' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.database.update permission' },
+      '404': { description: 'Server or database not found' },
+      '500': { description: 'Database host not found, or internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
   const accountContext = await requireAccountUser(event);

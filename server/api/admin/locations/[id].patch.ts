@@ -6,6 +6,61 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { updateLocationSchema } from '#shared/schema/admin/infrastructure';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Locations'],
+    summary: 'Update a location',
+    description:
+      'Updates the short code and/or long name of an existing location. Requires an admin session with the locations:write ACL permission.',
+    parameters: [
+      { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              short: { type: 'string', minLength: 1, maxLength: 60 },
+              long: { type: 'string', maxLength: 191 },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Location updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    short: { type: 'string' },
+                    long: { type: 'string', nullable: true },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing location ID, or invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing locations:write ACL permission' },
+      '404': { description: 'Location not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
   const session = await requireAdmin(event);

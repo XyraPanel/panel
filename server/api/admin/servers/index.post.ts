@@ -10,6 +10,82 @@ import { sendServerCreatedEmail, isEmailConfigured } from '#server/utils/email';
 import { createAdminServerSchema } from '#shared/schema/admin/server';
 
 import { debugError } from '#server/utils/logger';
+import { useHooks } from '#server/utils/hooks';
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Create a server',
+    description:
+      'Creates a server record, atomically claims the requested allocation, then provisions the server on Wings in the background (emails the owner on success if mail is configured). Requires an admin session with the servers:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['name', 'ownerId', 'nodeId', 'eggId', 'allocationId', 'memory', 'disk', 'io', 'cpu'],
+            properties: {
+              name: { type: 'string' },
+              description: { type: 'string', nullable: true },
+              ownerId: { type: 'string' },
+              nodeId: { type: 'string' },
+              nestId: { type: 'string', nullable: true },
+              eggId: { type: 'string' },
+              allocationId: { type: 'string' },
+              startup: { type: 'string' },
+              dockerImage: { type: 'string' },
+              skipScripts: { type: 'boolean' },
+              oomDisabled: { type: 'boolean' },
+              memory: { type: 'integer' },
+              disk: { type: 'integer' },
+              swap: { type: 'integer' },
+              io: { type: 'integer' },
+              cpu: { type: 'integer' },
+              threads: { type: 'string', nullable: true },
+              databases: { type: 'integer', nullable: true },
+              allocations: { type: 'integer', nullable: true },
+              backups: { type: 'integer', nullable: true },
+              environment: { type: 'object', additionalProperties: { type: 'string' } },
+              startOnCompletion: { type: 'boolean', default: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Server created (installation runs in the background)',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    uuid: { type: 'string' },
+                    identifier: { type: 'string' },
+                    name: { type: 'string' },
+                    status: { type: 'string' },
+                    createdAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Allocation does not belong to the selected node' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:write ACL permission' },
+      '404': { description: 'Egg, node, owner, or allocation not found' },
+      '409': { description: 'Allocation already assigned to a server' },
+      '500': { description: 'Failed to create server' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
@@ -109,8 +185,6 @@ export default defineEventHandler(async (event) => {
       updatedAt: now,
     };
 
-    await db.insert(tables.servers).values(newServer);
-
     const serverLimits = {
       serverId,
       memory: body.memory,
@@ -129,37 +203,48 @@ export default defineEventHandler(async (event) => {
       updatedAt: now,
     };
 
-    await db.insert(tables.serverLimits).values(serverLimits);
+    await db.transaction(async (tx) => {
+      // Claim the allocation atomically before creating anything else — two concurrent
+      // requests can both pass the "is it free" check above, so this UPDATE...WHERE
+      // serverId IS NULL is the actual race guard. If it claims zero rows, someone else
+      // got there first.
+      const claimed = await tx
+        .update(tables.serverAllocations)
+        .set({ serverId, isPrimary: true, updatedAt: now })
+        .where(
+          and(
+            eq(tables.serverAllocations.id, allocation.id),
+            isNull(tables.serverAllocations.serverId),
+          ),
+        )
+        .returning({ id: tables.serverAllocations.id });
 
-    await db
-      .update(tables.serverAllocations)
-      .set({
-        serverId,
-        isPrimary: true,
-        updatedAt: now,
-      })
-      .where(
-        and(
-          eq(tables.serverAllocations.id, allocation.id),
-          isNull(tables.serverAllocations.serverId),
-        ),
-      );
-
-    if (body.environment) {
-      const envVars = Object.entries(body.environment).map(([key, value]) => ({
-        id: randomUUID(),
-        serverId,
-        key,
-        value: String(value),
-        description: null,
-        isEditable: true,
-        createdAt: now,
-        updatedAt: now,
-      }));
-      if (envVars.length > 0) {
-        await db.insert(tables.serverStartupEnv).values(envVars);
+      if (claimed.length === 0) {
+        throw createError({
+          status: 409,
+          message: 'Allocation in use: Allocation already assigned to a server',
+        });
       }
-    }
+
+      await tx.insert(tables.servers).values(newServer);
+      await tx.insert(tables.serverLimits).values(serverLimits);
+
+      if (body.environment) {
+        const envVars = Object.entries(body.environment).map(([key, value]) => ({
+          id: randomUUID(),
+          serverId,
+          key,
+          value: String(value),
+          description: null,
+          isEditable: true,
+          createdAt: now,
+          updatedAt: now,
+        }));
+        if (envVars.length > 0) {
+          await tx.insert(tables.serverStartupEnv).values(envVars);
+        }
+      }
+    });
 
     const { invalidateServerCaches } = await import('#server/utils/serversStore');
     await invalidateServerCaches({
@@ -218,6 +303,8 @@ export default defineEventHandler(async (event) => {
         eggId: body.eggId,
       },
     });
+
+    await useHooks().emit('server.created', { id: serverId, userId: body.ownerId });
 
     return {
       data: {

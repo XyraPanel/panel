@@ -1,7 +1,7 @@
 import type { BaseActivityEvent } from './audit';
 import type { AdminUserResponse } from './api';
 import type { Allocation } from './server';
-import type { StoredWingsNode, WingsSystemInformation } from './wings';
+import type { WingsNodeSummary, WingsSystemInformation } from './wings';
 import type { Nest, Egg, EggVariable } from './nest';
 
 export interface AuditEventResponse extends BaseActivityEvent {
@@ -373,6 +373,7 @@ export interface MailSettings {
   port: string;
   username: string;
   password: string;
+  hasPassword: boolean;
   encryption: string;
   fromAddress: string;
   fromName: string;
@@ -435,7 +436,7 @@ export interface AdminWingsNodeStats {
 }
 
 export interface AdminWingsNodeDetail {
-  node: StoredWingsNode;
+  node: WingsNodeSummary;
   stats: AdminWingsNodeStats;
   recentServers: AdminWingsNodeServerSummary[];
   allocations: AdminWingsNodeAllocationSummary[];
@@ -483,7 +484,7 @@ export interface UpdateWingsNodePayload {
 }
 
 export interface UpdateWingsNodeResponse {
-  data: StoredWingsNode;
+  data: WingsNodeSummary;
 }
 
 export interface EggImportData {
@@ -498,6 +499,7 @@ export interface EggImportData {
   features?: string[] | null;
   docker_images?: Record<string, string>;
   file_denylist?: string[];
+  force_outgoing_ip?: boolean;
   startup?: string;
   config?: {
     files?: string | Record<string, unknown>;
@@ -667,8 +669,8 @@ export interface CreateMountPayload {
   target: string;
   readOnly?: boolean;
   userMountable?: boolean;
-  eggs?: string[];
-  nodes?: string[];
+  eggIds?: string[];
+  nodeIds?: string[];
 }
 
 export interface UpdateMountPayload {
@@ -678,8 +680,13 @@ export interface UpdateMountPayload {
   target?: string;
   readOnly?: boolean;
   userMountable?: boolean;
-  eggs?: string[];
-  nodes?: string[];
+  eggIds?: string[];
+  nodeIds?: string[];
+}
+
+export interface AdminMountDetail extends AdminMount {
+  eggIds: string[];
+  nodeIds: string[];
 }
 
 export interface DatabaseHost {

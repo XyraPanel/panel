@@ -37,14 +37,6 @@ function toScheme(value: string | undefined | null): 'http' | 'https' {
   return value === 'http' ? 'http' : 'https';
 }
 
-function getRowCount(result: {
-  rowCount?: number | bigint | null;
-  changes?: number | bigint | null;
-}): number {
-  const value = result?.rowCount ?? result?.changes ?? 0;
-  return typeof value === 'bigint' ? Number(value) : (value ?? 0);
-}
-
 function formatCombinedToken(identifier: string, secret: string): string {
   return `${identifier}.${secret}`;
 }
@@ -293,6 +285,14 @@ export async function getWingsNodeConfigurationById(
 
   const normalizedPanelUrl = panelUrl.replace(/\/$/, '');
 
+  const db = useDrizzle();
+  const nodeMounts = await db
+    .select({ source: tables.mounts.source })
+    .from(tables.mountNode)
+    .innerJoin(tables.mounts, eq(tables.mountNode.mountId, tables.mounts.id))
+    .where(eq(tables.mountNode.nodeId, row.id));
+  const allowedMounts = [...new Set(nodeMounts.map((m) => m.source))];
+
   return {
     debug: false,
     uuid: row.uuid,
@@ -314,7 +314,7 @@ export async function getWingsNodeConfigurationById(
         bind_port: toNumber(row.daemonSftp, 2022),
       },
     },
-    allowed_mounts: [],
+    allowed_mounts: allowedMounts,
     remote: normalizedPanelUrl || panelUrl,
   };
 }
@@ -554,9 +554,29 @@ export async function updateWingsNode(
 
 export async function deleteWingsNode(id: string): Promise<void> {
   const db = useDrizzle();
-  const result = await db.delete(tables.wingsNodes).where(eq(tables.wingsNodes.id, id));
-  const changes = getRowCount(result);
-  if (changes === 0) {
+
+  const [node] = await db.select().from(tables.wingsNodes).where(eq(tables.wingsNodes.id, id)).limit(1);
+  if (!node) {
     throw new Error(`Node ${id} not found`);
   }
+
+  const servers = await db
+    .select({ id: tables.servers.id })
+    .from(tables.servers)
+    .where(eq(tables.servers.nodeId, id));
+
+  if (servers.length > 0) {
+    throw new Error(`Cannot delete node with ${servers.length} assigned server(s)`);
+  }
+
+  const databaseHosts = await db
+    .select({ id: tables.databaseHosts.id })
+    .from(tables.databaseHosts)
+    .where(eq(tables.databaseHosts.nodeId, id));
+
+  if (databaseHosts.length > 0) {
+    throw new Error(`Cannot delete node with ${databaseHosts.length} assigned database host(s)`);
+  }
+
+  await db.delete(tables.wingsNodes).where(eq(tables.wingsNodes.id, id));
 }

@@ -12,6 +12,68 @@ import { APIError } from 'better-auth/api';
 import { getAuth } from '#server/utils/auth';
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Create an API key',
+    description:
+      'Creates a new API key for the authenticated account. The secret token is returned only once, in `meta.secret_token`.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              memo: { type: 'string', maxLength: 500, nullable: true, description: 'Description of the key' },
+              allowedIps: {
+                type: 'array',
+                items: { type: 'string' },
+                nullable: true,
+                description: 'IP allowlist for the key',
+              },
+              expiresAt: { type: 'string', format: 'date-time', nullable: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'API key created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    identifier: { type: 'string' },
+                    description: { type: 'string', nullable: true },
+                    allowed_ips: { type: 'array', items: { type: 'string' } },
+                    last_used_at: { type: 'string', nullable: true },
+                    created_at: { type: 'string' },
+                  },
+                },
+                meta: {
+                  type: 'object',
+                  properties: {
+                    secret_token: { type: 'string', description: 'Only returned on creation' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid request body, e.g. expiresAt not a valid future datetime' },
+      '401': { description: 'Not authenticated' },
+      '500': { description: 'Failed to create API key' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<ApiKeyResponse> => {
   const accountContext = await requireAccountUser(event);
   const user = accountContext.user;

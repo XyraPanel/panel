@@ -7,6 +7,45 @@ import { recordServerActivity } from '#server/utils/server-activity';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Network'],
+    summary: 'Assign a new allocation',
+    description:
+      'Assigns the first available allocation on the server\'s node to the server. Requires the server.allocation.create permission (owner/admin always allowed). Note: this route shares the same path as POST /network/allocations (allocations.post.ts); only one handler will actually be registered by Nitro.',
+    parameters: [{ name: 'server', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': {
+        description: 'Allocation assigned',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    ip: { type: 'string' },
+                    port: { type: 'integer' },
+                    ipAlias: { type: 'string', nullable: true },
+                    notes: { type: 'string', nullable: true },
+                    isPrimary: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Allocation limit reached, or missing server.allocation.create permission' },
+      '404': { description: 'No available allocations on this node' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server');
 
@@ -22,7 +61,7 @@ export default defineEventHandler(async (event) => {
 
   await requireServerPermission(event, {
     serverId: server.id,
-    requiredPermissions: ['allocation.create'],
+    requiredPermissions: ['server.allocation.create'],
     allowOwner: true,
     allowAdmin: true,
   });

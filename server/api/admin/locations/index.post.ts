@@ -6,6 +6,58 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { createLocationSchema } from '#shared/schema/admin/infrastructure';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Locations'],
+    summary: 'Create a location',
+    description:
+      'Creates a new location that Wings nodes can be assigned to. Requires an admin session with the locations:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['short'],
+            properties: {
+              short: { type: 'string', minLength: 1, maxLength: 60 },
+              long: { type: 'string', maxLength: 191 },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Location created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    short: { type: 'string' },
+                    long: { type: 'string', nullable: true },
+                    createdAt: { type: 'string', format: 'date-time' },
+                    updatedAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing locations:write ACL permission' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

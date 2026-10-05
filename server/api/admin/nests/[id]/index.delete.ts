@@ -7,6 +7,24 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Nests'],
+    summary: 'Delete a nest',
+    description:
+      'Deletes a nest. Fails if any eggs still belong to it. Requires an admin session with the nests:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': { description: 'Nest deleted' },
+      '400': { description: 'Nest ID is required, or eggs still belong to this nest' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing nests:write ACL permission' },
+      '404': { description: 'Nest not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

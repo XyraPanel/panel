@@ -5,6 +5,61 @@ import type { ServerStartupVariable } from '#shared/types/server';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server'],
+    summary: 'Get startup command and environment variables',
+    description:
+      'Returns the resolved startup command, available Docker images, environment variables, and editable startup variables (merged from the server\'s egg and per-server overrides). Requires the server.settings.read permission (or server owner/admin).',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server identifier or UUID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Startup configuration',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    startup: { type: 'string' },
+                    dockerImage: { type: 'string' },
+                    dockerImages: { type: 'object', additionalProperties: { type: 'string' } },
+                    environment: { type: 'object', additionalProperties: { type: 'string' } },
+                    variables: {
+                      type: 'array',
+                      items: {
+                        type: 'object',
+                        properties: {
+                          id: { type: 'string' },
+                          serverId: { type: 'integer' },
+                          key: { type: 'string' },
+                          value: { type: 'string' },
+                          description: { type: 'string', nullable: true },
+                          isEditable: { type: 'boolean' },
+                          createdAt: { type: 'string' },
+                          updatedAt: { type: 'string' },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server identifier is missing' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.settings.read permission' },
+      '404': { description: 'Server not found or not accessible' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server');
 

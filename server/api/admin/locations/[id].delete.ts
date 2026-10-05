@@ -5,6 +5,44 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Locations'],
+    summary: 'Delete a location',
+    description:
+      'Permanently deletes a location. Fails if any Wings nodes are still assigned to it. Requires an admin session with the locations:write ACL permission.',
+    parameters: [
+      { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    responses: {
+      '200': {
+        description: 'Location deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    deletedId: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing location ID, or location still has nodes assigned' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing locations:write ACL permission' },
+      '404': { description: 'Location not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
   const session = await requireAdmin(event);

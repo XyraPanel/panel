@@ -7,6 +7,24 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Mounts'],
+    summary: 'Delete a mount',
+    description:
+      'Deletes a mount point. Requires an admin session with the mounts:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': { description: 'Mount deleted' },
+      '400': { description: 'Mount ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing mounts:write ACL permission' },
+      '404': { description: 'Mount not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

@@ -9,6 +9,93 @@ import { getServerStatus } from '#server/utils/server-status';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server'],
+    summary: 'Get server details',
+    description:
+      'Returns full details for a server: status, limits, allocations, node, owner, and the caller\'s permissions on it. Requires the server.view permission.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server identifier or UUID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Server details',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'integer' },
+                    uuid: { type: 'string' },
+                    identifier: { type: 'string' },
+                    name: { type: 'string' },
+                    description: { type: 'string', nullable: true },
+                    status: { type: 'string', nullable: true },
+                    suspended: { type: 'boolean' },
+                    node: {
+                      type: 'object',
+                      properties: { id: { type: 'integer', nullable: true }, name: { type: 'string', nullable: true } },
+                    },
+                    limits: {
+                      type: 'object',
+                      properties: {
+                        memory: { type: 'integer', nullable: true },
+                        disk: { type: 'integer', nullable: true },
+                        cpu: { type: 'integer', nullable: true },
+                        swap: { type: 'integer', nullable: true },
+                        io: { type: 'integer', nullable: true },
+                      },
+                    },
+                    createdAt: { type: 'string' },
+                    allocations: {
+                      type: 'object',
+                      properties: {
+                        primary: {
+                          type: 'object',
+                          nullable: true,
+                          properties: {
+                            ip: { type: 'string' },
+                            port: { type: 'integer' },
+                            description: { type: 'string' },
+                          },
+                        },
+                        additional: {
+                          type: 'array',
+                          items: {
+                            type: 'object',
+                            properties: {
+                              ip: { type: 'string' },
+                              port: { type: 'integer' },
+                              description: { type: 'string' },
+                            },
+                          },
+                        },
+                      },
+                    },
+                    owner: {
+                      type: 'object',
+                      properties: { id: { type: 'string', nullable: true }, username: { type: 'string', nullable: true } },
+                    },
+                    permissions: { type: 'array', items: { type: 'string' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server identifier is missing' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.view permission on this server' },
+      '404': { description: 'Server not found or not accessible' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server');
   if (!serverIdentifier) {

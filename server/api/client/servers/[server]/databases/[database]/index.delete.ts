@@ -8,6 +8,40 @@ import { deprovisionDatabase } from '#server/utils/database-provisioner';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Databases'],
+    summary: 'Delete a database',
+    description:
+      'Deprovisions a server database and removes its record. Requires the server.database.delete permission.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server UUID or identifier' },
+      { name: 'database', in: 'path', required: true, schema: { type: 'string' }, description: 'Database ID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Database deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean' },
+                message: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing server or database identifier' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.database.delete permission' },
+      '404': { description: 'Server or database not found' },
+      '500': { description: 'Failed to delete database' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');

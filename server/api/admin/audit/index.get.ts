@@ -6,6 +6,65 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Audit'],
+    summary: 'List audit log events',
+    description:
+      'Returns a paginated, filterable list of audit log events with actor display names resolved. Requires an admin session with the audit:read ACL permission.',
+    parameters: [
+      { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+      { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 } },
+      { name: 'search', in: 'query', schema: { type: 'string' } },
+      { name: 'actor', in: 'query', schema: { type: 'string' } },
+      { name: 'action', in: 'query', schema: { type: 'string' } },
+      { name: 'targetType', in: 'query', schema: { type: 'string' } },
+    ],
+    responses: {
+      '200': {
+        description: 'Paginated audit events',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      occurredAt: { type: 'string', format: 'date-time' },
+                      actor: { type: 'string' },
+                      actorDisplay: { type: 'string' },
+                      actorUserId: { type: 'string' },
+                      actorEmail: { type: 'string' },
+                      action: { type: 'string' },
+                      target: { type: 'string' },
+                      details: { type: 'object' },
+                    },
+                  },
+                },
+                pagination: {
+                  type: 'object',
+                  properties: {
+                    page: { type: 'integer' },
+                    perPage: { type: 'integer' },
+                    total: { type: 'integer' },
+                    hasMore: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing audit:read ACL permission' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

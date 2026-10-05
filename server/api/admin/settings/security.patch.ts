@@ -1,12 +1,73 @@
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { SETTINGS_KEYS, setSettings } from '#server/utils/settings';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { securitySettingsSchema } from '#shared/schema/admin/settings';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Settings'],
+    summary: 'Update security settings',
+    description:
+      'Partially updates 2FA enforcement, maintenance mode, announcement, session timeout, and queue settings. Requires an admin session with the panel_settings:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              enforceTwoFactor: { type: 'boolean' },
+              maintenanceMode: { type: 'boolean' },
+              maintenanceMessage: { type: 'string', nullable: true },
+              announcementEnabled: { type: 'boolean' },
+              announcementMessage: { type: 'string', nullable: true },
+              sessionTimeoutMinutes: { type: 'integer' },
+              queueConcurrency: { type: 'integer' },
+              queueRetryLimit: { type: 'integer' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Security settings updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    updatedKeys: { type: 'array', items: { type: 'string' } },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'No settings provided, or invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing panel_settings:write ACL permission' },
+      '500': { description: 'Failed to update security settings' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.PANEL_SETTINGS,
+    ADMIN_ACL_PERMISSIONS.WRITE,
+  );
 
   const body = await readValidatedBodyWithLimit(
     event,

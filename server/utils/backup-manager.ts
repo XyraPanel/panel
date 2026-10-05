@@ -1,4 +1,4 @@
-import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
+import { useDrizzle, tables, eq, and, count } from '#server/utils/drizzle';
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { recordAuditEvent } from '#server/utils/audit';
 import { invalidateServerBackupsCache } from '#server/utils/backups';
@@ -25,6 +25,31 @@ export class BackupManager {
     const { client, server } = await getWingsClientForServer(serverUuid);
 
     const serverId = String(server.id);
+
+    const [limitsRow] = await this.db
+      .select({ backupLimit: tables.serverLimits.backupLimit })
+      .from(tables.serverLimits)
+      .where(eq(tables.serverLimits.serverId, serverId))
+      .limit(1);
+
+    const backupLimit = limitsRow?.backupLimit;
+    if (backupLimit !== null && backupLimit !== undefined) {
+      if (backupLimit <= 0) {
+        throw createError({ status: 400, message: 'Backups are disabled for this server.' });
+      }
+
+      const [countRow] = await this.db
+        .select({ value: count() })
+        .from(tables.serverBackups)
+        .where(eq(tables.serverBackups.serverId, serverId));
+
+      if ((countRow?.value ?? 0) >= backupLimit) {
+        throw createError({
+          status: 400,
+          message: `This server has reached its backup limit of ${backupLimit}. Delete an existing backup before creating a new one.`,
+        });
+      }
+    }
 
     const backupId = randomUUID();
     const backupUuid = randomUUID();

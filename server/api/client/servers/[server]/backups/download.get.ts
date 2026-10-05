@@ -1,10 +1,37 @@
 import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { requireServerPermission } from '#server/utils/permission-middleware';
-import { decryptToken } from '#server/utils/wings/encryption';
-import { generateBackupDownloadToken } from '#server/utils/wings-tokens';
+import { generateWingsJWT } from '#server/utils/wings/jwt';
 import { requireAccountUser, getValidatedQuery } from '#server/utils/security';
 import { z } from 'zod';
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Backups'],
+    summary: 'Download a backup',
+    description:
+      'Streams the backup archive directly from Wings, proxying the response. Requires the server.backup.download permission. A short-lived Wings JWT authorizes the underlying fetch.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server UUID or identifier' },
+      { name: 'backup', in: 'query', required: true, schema: { type: 'string' }, description: 'Backup UUID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Backup archive stream',
+        content: {
+          'application/octet-stream': {
+            schema: { type: 'string', format: 'binary' },
+          },
+        },
+      },
+      '400': { description: 'Missing server or backup identifier' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.backup.download permission' },
+      '404': { description: 'Server or backup not found' },
+      '500': { description: 'Server has no assigned Wings node, or node not found' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
@@ -63,24 +90,25 @@ export default defineEventHandler(async (event) => {
     });
   }
 
-  const tokenSecret = decryptToken(node.tokenSecret);
-
-  const downloadToken = await generateBackupDownloadToken(
+  const downloadToken = await generateWingsJWT(
     {
-      serverUuid: server.uuid,
-      backupUuid,
+      tokenSecret: node.tokenSecret,
+      baseUrl: `${node.scheme}://${node.fqdn}:${node.daemonListen}`,
     },
-    tokenSecret,
+    {
+      user: { id: accountContext.user.id, uuid: accountContext.user.id },
+      server: { uuid: server.uuid },
+      expiresIn: 900,
+      scope: 'backup-download',
+      extraClaims: { backup_uuid: backupUuid },
+    },
   );
 
   const baseUrl = `${node.scheme}://${node.fqdn}:${node.daemonListen}`;
-  const remoteUrl = `${baseUrl}/api/servers/${server.uuid}/backup/${backupUuid}/download?token=${downloadToken}`;
+  const remoteUrl = `${baseUrl}/download/backup?token=${downloadToken}`;
 
   const result = await $fetch.raw(remoteUrl, {
     responseType: 'stream',
-    headers: {
-      Authorization: `Bearer ${tokenSecret}`,
-    },
   });
 
   const headers = result.headers;

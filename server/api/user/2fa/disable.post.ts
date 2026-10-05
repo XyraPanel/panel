@@ -8,6 +8,41 @@ import {
 } from '#server/utils/security';
 import { twoFactorDisableSchema } from '#shared/schema/account';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['User - 2FA'],
+    summary: 'Disable two-factor authentication',
+    description: 'Disables TOTP-based 2FA for the authenticated account, verifying the current password.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['password'],
+            properties: { password: { type: 'string' } },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: '2FA disabled',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: { data: { type: 'object', properties: { success: { type: 'boolean' }, message: { type: 'string' } } } },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '500': { description: 'Failed to disable 2FA (e.g. incorrect password)' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user: sessionUser } = await requireAccountUser(event);
   const { password } = await readValidatedBodyWithLimit(

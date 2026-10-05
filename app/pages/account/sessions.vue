@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { authClient } from '~/utils/auth-client';
 import type { AccountSessionsResponse, UserSessionSummary } from '#shared/types/auth';
+import { colorizeJson } from '~/utils/json-highlight';
 
 definePageMeta({
   auth: true,
@@ -522,7 +523,7 @@ async function handleSignOutAll(includeCurrent = false) {
                 </div>
                 <pre
                   class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
-                ><code>{{ formatJson(getFullSessionData(session)) }}</code></pre>
+                ><code v-html="colorizeJson(formatJson(getFullSessionData(session)))"></code></pre>
               </div>
             </div>
           </div>

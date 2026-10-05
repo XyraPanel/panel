@@ -18,6 +18,62 @@ const changeEggSchema = z.object({
   startOnCompletion: z.boolean().default(true),
 });
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Change a server\'s egg',
+    description:
+      'Reassigns the server to a different egg, updating startup command and Docker image, optionally triggering a reinstall on Wings. Requires an admin session with the servers:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['eggId'],
+            properties: {
+              eggId: { type: 'string' },
+              nestId: { type: 'string' },
+              reinstall: { type: 'boolean', default: true },
+              skipScripts: { type: 'boolean', default: false },
+              startOnCompletion: { type: 'boolean', default: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Egg changed',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                    eggId: { type: 'string' },
+                    eggName: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:write ACL permission' },
+      '404': { description: 'Server or egg not found' },
+      '500': { description: 'Failed to change server egg' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

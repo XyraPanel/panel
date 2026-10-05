@@ -26,6 +26,9 @@
   },
   "rules": {
     "xyra-api-ruleset/require-security-calls": "error",
+    "xyra-api-ruleset/require-status-code-check": "error",
+    "xyra-api-ruleset/no-hardcoded-session-cookie": "error",
+    "xyra-api-ruleset/no-coerce-boolean": "error",
     "no-console": "off",
     "no-debugger": "error",
     "no-alert": "off",
@@ -77,6 +80,7 @@
     "build",
     ".vscode",
     ".idea",
+    ".docs",
     "pnpm-lock.yaml",
     "*.min.js"
   ]

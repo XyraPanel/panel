@@ -4,6 +4,66 @@ import type { ApiKeyPermissions, PermissionAction } from '#shared/types/admin';
 import { getServerSession } from '#server/utils/session';
 import { auth, getAuthHeaders } from '#server/utils/auth';
 import { requireSessionUser } from '#server/utils/auth/sessionUser';
+import { useDrizzle, tables, eq } from '#server/utils/drizzle';
+import { SETTINGS_KEYS, getSettings } from '#server/utils/settings';
+
+// Deliberately narrow: only the exact surface needed to view/complete 2FA setup.
+// Do NOT widen this to a blanket `/account` or `/api/account` prefix — that would
+// re-exempt sensitive mutating endpoints (minting API keys, adding SSH keys, changing
+// email) from the enforcement policy below, letting an under-enrolled account issue
+// durable credentials that then never have to satisfy the 2FA gate at all.
+const TWO_FACTOR_EXEMPT_PATTERNS = [
+  /^\/account\/security(?:\/|$)/,
+  /^\/api\/account\/password(?:\/|$)/,
+  /^\/api\/user\/2fa(?:\/|$)/,
+  /^\/api\/me(?:\/|$)/,
+  /^\/api\/branding(?:\/|$)/,
+];
+
+async function enforceTwoFactorIfRequired(
+  event: H3Event,
+  path: string,
+  requestUrl: string,
+  userId: string,
+  isApiRequest: boolean,
+) {
+  const isTwoFactorExempt = TWO_FACTOR_EXEMPT_PATTERNS.some((pattern) => pattern.test(path));
+  if (isTwoFactorExempt) {
+    return;
+  }
+
+  const settings = await getSettings([SETTINGS_KEYS.ENFORCE_TWO_FACTOR]);
+  if (settings[SETTINGS_KEYS.ENFORCE_TWO_FACTOR] !== 'true') {
+    return;
+  }
+
+  const [dbUser] = await useDrizzle()
+    .select({ twoFactorEnabled: tables.users.twoFactorEnabled })
+    .from(tables.users)
+    .where(eq(tables.users.id, userId))
+    .limit(1);
+
+  if (dbUser?.twoFactorEnabled) {
+    return;
+  }
+
+  if (isApiRequest) {
+    throw createError({
+      status: 403,
+      message: 'Two-factor authentication is required by your administrator.',
+    });
+  }
+
+  const searchParams = new URLSearchParams();
+  if (!path.startsWith('/account/')) {
+    searchParams.set('redirect', requestUrl);
+  }
+
+  const redirectTarget =
+    searchParams.size > 0 ? `/account/security?${searchParams.toString()}` : '/account/security';
+
+  return sendRedirect(event, redirectTarget, 302);
+}
 
 type EventContextWithAuth = H3Event['context'] & { auth?: AuthContext };
 
@@ -89,7 +149,12 @@ const PUBLIC_API_PATTERNS = [
   /^\/api\/auth(?:\/|$)/,
   /^\/api\/account\/register(?:\/|$)/,
   /^\/api\/branding(?:\/|$)/,
-  /^\/api\/application(?:\/|$)/,
+  // Wings bootstraps its own config before it has a node token in the usual sense, so
+  // this one route authenticates itself (timing-safe node-token check, see the route).
+  // Deliberately NOT a blanket /api/application prefix: any future Application API
+  // route (WHMCS-style external integrations) added under this namespace must be
+  // explicitly allowlisted here too, so it doesn't silently inherit public access.
+  /^\/api\/application\/nodes\/[^/]+\/configuration(?:\/|$)/,
   /^\/api\/_nuxt_icon(?:\/|$)/,
   /^\/api\/_nuxt(?:\/|$)/,
   /^\/api\/maintenance-status(?:\/|$)/,
@@ -155,6 +220,37 @@ export default defineEventHandler(async (event) => {
   const isApiRequest = path.startsWith('/api/');
 
   if (isApiRequest && isPublicApiPath(path)) {
+    // /api/auth/** must stay reachable while unauthenticated (login, register, forgot
+    // password). But if the caller already HAS a session flagged for a forced password
+    // reset, better-auth's own endpoints (mint an API key, disable 2FA, change email,
+    // delete account, ...) would otherwise be a clean way to route around the panel's
+    // force-reset gate below, which only runs for non-public paths. Block that case
+    // specifically, while still letting a flagged session sign out or check itself.
+    if (path.startsWith('/api/auth/')) {
+      const SAFE_WHILE_RESET_REQUIRED = new Set(['/api/auth/sign-out', '/api/auth/get-session']);
+
+      if (!SAFE_WHILE_RESET_REQUIRED.has(path) && !path.startsWith('/api/auth/password/')) {
+        const existingSession = await getServerSession(event);
+        if (existingSession?.user?.id) {
+          try {
+            const sessionUser = requireSessionUser(existingSession);
+            if (sessionUser.passwordResetRequired) {
+              throw createError({ status: 403, message: 'Password reset required.' });
+            }
+          } catch (error) {
+            if (
+              error &&
+              typeof error === 'object' &&
+              ('statusCode' in error || 'status' in error)
+            ) {
+              throw error;
+            }
+            // Malformed/incomplete session data — let the route itself handle it.
+          }
+        }
+      }
+    }
+
     return;
   }
 
@@ -210,6 +306,49 @@ export default defineEventHandler(async (event) => {
           });
         }
 
+        const [keyMetadata] = await useDrizzle()
+          .select({ allowedIps: tables.apiKeyMetadata.allowedIps })
+          .from(tables.apiKeyMetadata)
+          .where(eq(tables.apiKeyMetadata.apiKeyId, verification.key.id))
+          .limit(1);
+
+        if (keyMetadata?.allowedIps) {
+          let allowedIps: string[] = [];
+          try {
+            const parsed = JSON.parse(keyMetadata.allowedIps);
+            allowedIps = Array.isArray(parsed) ? parsed.filter((ip) => typeof ip === 'string') : [];
+          } catch {
+            allowedIps = [];
+          }
+
+          if (allowedIps.length > 0) {
+            const requestIp = getRequestIP(event, { xForwardedFor: true });
+            if (!requestIp || !allowedIps.includes(requestIp)) {
+              throw createError({
+                status: 403,
+                message: 'API key is not authorized from this IP address.',
+              });
+            }
+          }
+        }
+
+        const isForcedResetApiKeyPath = path.startsWith('/api/account/password/force');
+        if (!isForcedResetApiKeyPath) {
+          const db = useDrizzle();
+          const [dbUser] = await db
+            .select({ passwordResetRequired: tables.users.passwordResetRequired })
+            .from(tables.users)
+            .where(eq(tables.users.id, verification.key.userId))
+            .limit(1);
+
+          if (dbUser?.passwordResetRequired) {
+            throw createError({
+              status: 403,
+              message: 'Password reset required.',
+            });
+          }
+        }
+
         const resolvedUser: ResolvedSessionUser = {
           id: verification.key.userId,
           username: verification.key.userId,
@@ -232,9 +371,29 @@ export default defineEventHandler(async (event) => {
           },
         };
 
+        const twoFactorResult = await enforceTwoFactorIfRequired(
+          event,
+          path,
+          requestUrl,
+          verification.key.userId,
+          isApiRequest,
+        );
+        if (twoFactorResult !== undefined) {
+          return twoFactorResult;
+        }
+
         return;
       } catch (error) {
-        if (error && typeof error === 'object' && 'status' in error) {
+        // h3's createError({ status }) normalizes onto `.statusCode`, not `.status` —
+        // checking only 'status' let every createError thrown above (invalid key,
+        // IP not allowed, password reset required) get silently swallowed here and
+        // fall through to getServerSession()'s own independent API-key auth path
+        // below, bypassing all of these checks entirely.
+        if (
+          error &&
+          typeof error === 'object' &&
+          ('statusCode' in error || 'status' in error)
+        ) {
           throw error;
         }
 
@@ -299,6 +458,17 @@ export default defineEventHandler(async (event) => {
         : '/auth/password/force';
 
     return sendRedirect(event, redirectTarget, 302);
+  }
+
+  const twoFactorResult = await enforceTwoFactorIfRequired(
+    event,
+    path,
+    requestUrl,
+    user.id,
+    isApiRequest,
+  );
+  if (twoFactorResult !== undefined) {
+    return twoFactorResult;
   }
 
   ctx.auth = {

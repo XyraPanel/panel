@@ -8,6 +8,72 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Users'],
+    summary: 'Suspend or unsuspend a user',
+    description:
+      'Sensitive/destructive action: bans (suspends) or unbans the target user account, optionally with a reason and an expiry in seconds. A suspended user cannot log in. Requires an admin session with the users:write ACL permission.',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'User ID',
+      },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['action'],
+            properties: {
+              action: { type: 'string', enum: ['suspend', 'unsuspend'] },
+              reason: { type: 'string', maxLength: 500, nullable: true },
+              banExpiresIn: {
+                type: 'integer',
+                minimum: 1,
+                nullable: true,
+                description: 'Suspension duration in seconds (suspend action only)',
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Suspension status updated',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    action: { type: 'string', enum: ['suspend', 'unsuspend'] },
+                    suspended: { type: 'boolean' },
+                    reason: { type: 'string', nullable: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'User ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing users:write ACL permission' },
+      '500': { description: 'Failed to perform suspension action' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);

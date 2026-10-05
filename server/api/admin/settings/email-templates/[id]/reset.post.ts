@@ -1,4 +1,6 @@
 import { requireAdmin } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
@@ -13,8 +15,52 @@ const defaultTemplates: Record<string, string> = {
   'admin-user-created': `<h1>Account Created</h1><p>Hello,</p><p>An administrator has created an account for you on <strong>{{ appName }}</strong>.</p><p>Username: {{ username }}</p><p>A temporary password has been generated for you:</p><p>{{ temporaryPassword }}</p><p><strong>⚠️ Important:</strong> Please sign in and change this password immediately from your account security settings.</p><p><a href="{{ loginUrl }}" class="button">Sign In to Panel</a></p><p>If you have any questions, please contact your administrator.</p><p>© {{ year }} {{ appName }}. All rights reserved.</p><p>This is an automated message, please do not reply to this email.</p>`,
 };
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Settings'],
+    summary: 'Reset an email template to default',
+    description:
+      'Overwrites a stored email template with its built-in default HTML content. Requires an admin session with the panel_settings:write ACL permission.',
+    parameters: [
+      { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Template ID, e.g. "password-reset"' },
+    ],
+    responses: {
+      '200': {
+        description: 'Template reset',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    message: { type: 'string' },
+                    updatedAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing template ID' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing panel_settings:write ACL permission' },
+      '404': { description: 'No default template exists for this ID, or the stored template was not found' },
+      '500': { description: 'Failed to reset template' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(
+    event,
+    ADMIN_ACL_RESOURCES.PANEL_SETTINGS,
+    ADMIN_ACL_PERMISSIONS.WRITE,
+  );
 
   const id = getRouterParam(event, 'id');
   if (!id) {

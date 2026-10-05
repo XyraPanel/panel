@@ -6,6 +6,50 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { auth, getAuthHeaders } from '#server/utils/auth';
 import { APIError } from 'better-auth/api';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - API Keys'],
+    summary: 'Delete an admin API key',
+    description:
+      'Permanently deletes an admin API key by ID. Destructive and irreversible. Requires an admin session with the api-keys:write ACL permission.',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'API key ID',
+      },
+    ],
+    responses: {
+      '200': {
+        description: 'API key deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    deletedId: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'API key ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing api-keys:write ACL permission' },
+      '404': { description: 'API key not found' },
+      '500': { description: 'Failed to delete API key' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

@@ -1,7 +1,10 @@
 import { getServerWithAccess } from '#server/utils/server-helpers';
 import { useDrizzle, tables, eq, and } from '#server/utils/drizzle';
 import { invalidateServerSubusersCache } from '#server/utils/subusers';
-import { requireServerPermission } from '#server/utils/permission-middleware';
+import {
+  requireServerPermission,
+  requireGrantablePermissions,
+} from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 import {
   requireAccountUser,
@@ -38,6 +41,11 @@ export default defineEventHandler(async (event) => {
     serverSubuserPermissionsSchema,
     BODY_SIZE_LIMITS.SMALL,
   );
+  const grantedPermissions = await requireGrantablePermissions(
+    event,
+    server.id,
+    body.permissions,
+  );
 
   try {
     const db = useDrizzle();
@@ -60,7 +68,7 @@ export default defineEventHandler(async (event) => {
     await db
       .update(tables.serverSubusers)
       .set({
-        permissions: JSON.stringify(body.permissions),
+        permissions: JSON.stringify(grantedPermissions),
         updatedAt: now,
       })
       .where(eq(tables.serverSubusers.id, subuserId));
@@ -72,7 +80,7 @@ export default defineEventHandler(async (event) => {
       server: { id: server.id, uuid: server.uuid },
       metadata: {
         subuserId,
-        permissions: body.permissions,
+        permissions: grantedPermissions,
       },
     });
 

@@ -62,7 +62,14 @@ export default defineEventHandler(async (event): Promise<ServersResponse> => {
         ),
       )
       .where(and(...whereConditions))
-      .orderBy(desc(tables.servers.updatedAt));
+      .orderBy(desc(tables.servers.updatedAt))
+      // Defensive backstop, not real pagination — this page has no pagination UI
+      // (including the admin "all servers" toggle), so a normal user's own server
+      // count won't come close to this. It exists to cap the worst case (a platform
+      // with thousands of servers) from returning a multi-MB unbounded response.
+      // Once server counts approach this, the "all servers" toggle needs real
+      // pagination, not just a higher limit.
+      .limit(500);
 
     const serverUuids = servers.map((server) => server.uuid);
     const liveStatuses = await getMultipleServerStatuses(serverUuids);
@@ -109,7 +116,7 @@ export default defineEventHandler(async (event): Promise<ServersResponse> => {
     };
   } catch (error) {
     debugError('[GET] /api/servers: Error fetching servers:', error);
-    if (error && typeof error === 'object' && 'status' in error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
     }
     throw createError({

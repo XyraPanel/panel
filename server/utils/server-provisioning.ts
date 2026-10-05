@@ -1,4 +1,4 @@
-import { useDrizzle, tables, eq, inArray } from '#server/utils/drizzle';
+import { useDrizzle, tables, eq, inArray, and } from '#server/utils/drizzle';
 import { getWingsClient } from '#server/utils/wings-client';
 import { debugError, debugWarn } from '#server/utils/logger';
 import type { WingsClient } from '#server/utils/wings-client';
@@ -47,6 +47,7 @@ function buildEnvironmentVariables(
 
 function buildAllocationsConfig(
   context: ServerProvisioningContext,
+  forceOutgoingIp: boolean,
 ): WingsServerConfiguration['allocations'] {
   const mappings: Record<string, number[]> = {};
   const primaryIp = context.allocation.ip ?? '0.0.0.0';
@@ -67,7 +68,7 @@ function buildAllocationsConfig(
   }
 
   return {
-    force_outgoing_ip: false,
+    force_outgoing_ip: forceOutgoingIp,
     default: {
       ip: primaryIp,
       port: primaryPort,
@@ -137,9 +138,33 @@ async function buildProvisioningContext(
     .from(tables.eggVariables)
     .where(eq(tables.eggVariables.eggId, config.eggId));
 
-  const mounts = config.mountIds?.length
+  const explicitMountIds = config.mountIds?.length
     ? await db.select().from(tables.mounts).where(inArray(tables.mounts.id, config.mountIds))
     : [];
+
+  const eggMountRows = await db
+    .select({
+      id: tables.mounts.id,
+      uuid: tables.mounts.uuid,
+      name: tables.mounts.name,
+      description: tables.mounts.description,
+      source: tables.mounts.source,
+      target: tables.mounts.target,
+      readOnly: tables.mounts.readOnly,
+      userMountable: tables.mounts.userMountable,
+      createdAt: tables.mounts.createdAt,
+      updatedAt: tables.mounts.updatedAt,
+    })
+    .from(tables.mountEgg)
+    .innerJoin(tables.mounts, eq(tables.mountEgg.mountId, tables.mounts.id))
+    .innerJoin(tables.mountNode, eq(tables.mountNode.mountId, tables.mounts.id))
+    .where(and(eq(tables.mountEgg.eggId, config.eggId), eq(tables.mountNode.nodeId, config.nodeId)));
+
+  const mountsById = new Map<string, typeof tables.mounts.$inferSelect>();
+  for (const mount of [...explicitMountIds, ...eggMountRows]) {
+    mountsById.set(mount.id, mount);
+  }
+  const mounts = [...mountsById.values()];
 
   const [node] = await db
     .select()
@@ -196,7 +221,7 @@ export async function buildWingsServerConfig(
   const context = await buildProvisioningContext(config);
 
   const environment = buildEnvironmentVariables(context, config.environment);
-  const allocations = buildAllocationsConfig(context);
+  const allocations = buildAllocationsConfig(context, Boolean(context.egg.forceOutgoingIp));
   const mounts = buildMountsConfig(context);
 
   const wingsConfig: WingsServerConfiguration = {
@@ -229,7 +254,15 @@ export async function buildWingsServerConfig(
     mounts,
     egg: {
       id: context.egg.id,
-      file_denylist: [],
+      file_denylist: (() => {
+        if (!context.egg.fileDenylist) return [];
+        try {
+          const parsed = JSON.parse(context.egg.fileDenylist);
+          return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : [];
+        } catch {
+          return [];
+        }
+      })(),
     },
     container: {
       image:

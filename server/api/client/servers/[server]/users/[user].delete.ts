@@ -7,6 +7,34 @@ import { requireAccountUser } from '#server/utils/security';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Subusers'],
+    summary: 'Remove a subuser',
+    description:
+      'Revokes a subuser\'s access to the server. Requires the server.users.delete permission (owner/admin always allowed).',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'user', in: 'path', required: true, description: 'Subuser record id', schema: { type: 'string' } },
+    ],
+    responses: {
+      '200': {
+        description: 'Subuser removed',
+        content: {
+          'application/json': {
+            schema: { type: 'object', properties: { data: { type: 'object', properties: { success: { type: 'boolean' } } } } },
+          },
+        },
+      },
+      '400': { description: 'Missing identifiers' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.users.delete permission' },
+      '404': { description: 'Server or subuser not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const serverId = getRouterParam(event, 'server');
   const subuserId = getRouterParam(event, 'user');

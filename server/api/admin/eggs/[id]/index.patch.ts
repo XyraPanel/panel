@@ -8,6 +8,54 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Eggs'],
+    summary: 'Update an egg',
+    description:
+      'Partially updates an egg\'s configuration. Requires an admin session with the eggs:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              nestId: { type: 'string', format: 'uuid' },
+              name: { type: 'string', maxLength: 255 },
+              description: { type: 'string' },
+              features: { type: 'array', items: { type: 'string' } },
+              fileDenylist: { type: 'array', items: { type: 'string' } },
+              forceOutgoingIp: { type: 'boolean' },
+              updateUrl: { type: 'string' },
+              dockerImage: { type: 'string' },
+              dockerImages: { type: 'array', items: { type: 'string' } },
+              startup: { type: 'string' },
+              configFiles: { type: 'string', description: 'JSON string' },
+              configStartup: { type: 'string', description: 'JSON string' },
+              configStop: { type: 'string' },
+              configLogs: { type: 'string', description: 'JSON string' },
+              scriptContainer: { type: 'string' },
+              scriptEntry: { type: 'string' },
+              scriptInstall: { type: 'string' },
+              copyScriptFrom: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': { description: 'Egg updated' },
+      '400': { description: 'Egg ID is required, or no fields provided to update' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing eggs:write ACL permission' },
+      '404': { description: 'Egg not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -46,6 +94,7 @@ export default defineEventHandler(async (event) => {
       updates.features = body.features ? JSON.stringify(body.features) : null;
     if (body.fileDenylist !== undefined)
       updates.fileDenylist = body.fileDenylist ? JSON.stringify(body.fileDenylist) : null;
+    if (body.forceOutgoingIp !== undefined) updates.forceOutgoingIp = body.forceOutgoingIp;
     if (body.updateUrl !== undefined) updates.updateUrl = body.updateUrl ?? null;
     if (body.dockerImage !== undefined) updates.dockerImage = body.dockerImage;
     if (body.dockerImages !== undefined) {

@@ -46,12 +46,21 @@ function getCommonData(): TemplateData {
   };
 }
 
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function interpolateTemplate(template: string, data: TemplateData): string {
   let result = template;
   for (const [key, value] of Object.entries(data)) {
     if (value !== null && value !== undefined) {
       const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
-      result = result.replace(regex, String(value));
+      result = result.replace(regex, escapeHtml(String(value)));
     }
   }
   return result;

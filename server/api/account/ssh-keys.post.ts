@@ -48,6 +48,57 @@ function parseSSHPublicKey(publicKey: string): { fingerprint: string; valid: boo
   }
 }
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Add an SSH key',
+    description:
+      'Registers a new SSH public key on the authenticated account. Limited to 25 keys per account; duplicate fingerprints are rejected.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['name', 'publicKey'],
+            properties: {
+              name: { type: 'string', maxLength: 255, description: 'Label for the key' },
+              publicKey: { type: 'string', description: 'SSH public key, e.g. "ssh-ed25519 AAAA..."' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'SSH key created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    name: { type: 'string' },
+                    fingerprint: { type: 'string' },
+                    public_key: { type: 'string' },
+                    created_at: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid SSH public key format, or key limit (25) reached' },
+      '401': { description: 'Not authenticated' },
+      '409': { description: 'A key with this fingerprint already exists' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const user = accountContext.user;
@@ -125,9 +176,11 @@ export default defineEventHandler(async (event) => {
     if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
       throw error;
     }
+    const { logger } = await import('#server/utils/logger');
+    logger.error('[SSH Key Create] Failed:', error);
     throw createError({
       status: 500,
-      message: `Internal Server Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      message: 'Internal Server Error',
     });
   }
 });

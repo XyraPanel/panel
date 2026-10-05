@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AdminActivityEntry, AuditEventsPayload } from '#shared/types/admin';
+import { colorizeJson } from '~/utils/json-highlight';
 
 definePageMeta({
   auth: true,
@@ -417,7 +418,7 @@ function clearFilters() {
                       </div>
                       <pre
                         class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
-                      ><code>{{ formatJson(getFullAuditData(entry)) }}</code></pre>
+                      ><code v-html="colorizeJson(formatJson(getFullAuditData(entry)))"></code></pre>
                     </div>
                   </div>
                 </div>

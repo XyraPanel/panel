@@ -15,6 +15,68 @@ const createBackupSchema = z.object({
   ignored: z.string().trim().max(2048).optional(),
 });
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Backups'],
+    summary: 'Create a backup',
+    description:
+      'Requests a new backup of the server via Wings. Requires the server.backup.create permission.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server UUID or identifier' },
+    ],
+    requestBody: {
+      required: false,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              name: { type: 'string', maxLength: 255, description: 'Backup name' },
+              ignored: { type: 'string', maxLength: 2048, description: 'Newline-separated list of ignored file globs' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Backup created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                success: { type: 'boolean' },
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    uuid: { type: 'string' },
+                    name: { type: 'string' },
+                    size: { type: 'integer', nullable: true },
+                    isSuccessful: { type: 'boolean' },
+                    isLocked: { type: 'boolean' },
+                    checksum: { type: 'string', nullable: true },
+                    ignoredFiles: { type: 'string', nullable: true },
+                    completedAt: { type: 'string', nullable: true },
+                    createdAt: { type: 'string', nullable: true },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing server identifier' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.backup.create permission, or Wings authentication failed' },
+      '404': { description: 'Server not found' },
+      '503': { description: 'Wings daemon unavailable' },
+      '500': { description: 'Failed to create backup' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');
@@ -68,6 +130,10 @@ export default defineEventHandler(async (event) => {
       },
     };
   } catch (error) {
+    if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+      throw error;
+    }
+
     logger.error('Failed to create backup:', error);
 
     if (error instanceof WingsAuthError) {

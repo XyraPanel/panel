@@ -32,32 +32,42 @@ const permissionGroups = computed(() => [
   {
     key: 'console',
     title: t('server.users.console'),
-    perms: ['control.console'],
+    perms: ['server.console', 'server.command'],
   },
   {
     key: 'power',
     title: t('server.users.power'),
-    perms: ['control.power', 'control.start', 'control.stop', 'control.restart'],
+    perms: ['server.power'],
   },
   {
     key: 'files',
     title: t('server.users.fileManager'),
-    perms: ['files.read', 'files.write', 'files.delete'],
+    perms: ['server.files.read', 'server.files.write', 'server.files.delete'],
   },
   {
     key: 'backups',
     title: t('server.users.backups'),
-    perms: ['backups.read', 'backups.create', 'backups.delete', 'backups.restore'],
+    perms: [
+      'server.backup.read',
+      'server.backup.create',
+      'server.backup.delete',
+      'server.backup.restore',
+    ],
   },
   {
     key: 'databases',
     title: t('server.users.databases'),
-    perms: ['databases.read', 'databases.create', 'databases.delete'],
+    perms: ['server.database.read', 'server.database.create', 'server.database.delete'],
   },
   {
     key: 'schedules',
     title: t('server.users.schedules'),
-    perms: ['schedules.read', 'schedules.create', 'schedules.update', 'schedules.delete'],
+    perms: [
+      'server.schedule.read',
+      'server.schedule.create',
+      'server.schedule.update',
+      'server.schedule.delete',
+    ],
   },
 ]);
 

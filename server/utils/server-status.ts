@@ -8,7 +8,14 @@ import type { ServerStatus } from '#shared/types/server';
 import { getCacheItem, setCacheItem, deleteCacheItem } from './cache';
 import { buildServerStatusCacheKey } from './cache-keys';
 
-const SERVER_STATUS_CACHE_TTL = 5;
+// 20s rather than 5s: /api/servers (the list page) does a one-shot fetch with no
+// polling, so a longer TTL cuts cache-miss frequency (and the Wings fan-out below)
+// roughly 4x with no material loss of perceived freshness for a list view.
+const SERVER_STATUS_CACHE_TTL = 20;
+// Caps concurrent outbound Wings requests when the cache is cold (e.g. right after
+// a restart, or for a large uncached server list) — unbounded Promise.all here meant
+// a single page load could fire one HTTP request per server with no limit.
+const STATUS_FETCH_CONCURRENCY = 15;
 
 function isMissingWingsServerError(error: unknown): boolean {
   if (!(error instanceof Error)) {
@@ -115,34 +122,41 @@ export async function updateServerStatus(serverUuid: string): Promise<void> {
     .where(eq(tables.servers.uuid, serverUuid));
 }
 
+function toServerStatusError(serverUuid: string, reason: unknown): ServerStatus {
+  const message =
+    reason instanceof Error
+      ? reason.message
+      : typeof reason === 'string'
+        ? reason
+        : 'Failed to get status';
+
+  return {
+    serverId: 'unknown',
+    serverUuid,
+    state: 'error',
+    isOnline: false,
+    isSuspended: false,
+    lastChecked: new Date().toISOString(),
+    error: message,
+  };
+}
+
 export async function getMultipleServerStatuses(serverUuids: string[]): Promise<ServerStatus[]> {
-  const statuses = await Promise.allSettled(serverUuids.map((uuid) => getServerStatus(uuid)));
+  const results: ServerStatus[] = [];
 
-  return statuses.map((result, index) => {
-    if (result.status === 'fulfilled') {
-      return result.value;
-    }
+  for (let i = 0; i < serverUuids.length; i += STATUS_FETCH_CONCURRENCY) {
+    const batch = serverUuids.slice(i, i + STATUS_FETCH_CONCURRENCY);
+    const settled = await Promise.allSettled(batch.map((uuid) => getServerStatus(uuid)));
 
-    const reason = result.reason;
-    const message =
-      reason instanceof Error
-        ? reason.message
-        : typeof reason === 'string'
-          ? reason
-          : 'Failed to get status';
+    settled.forEach((result, index) => {
+      const serverUuid = batch[index] ?? 'unknown';
+      results.push(
+        result.status === 'fulfilled' ? result.value : toServerStatusError(serverUuid, result.reason),
+      );
+    });
+  }
 
-    const serverUuid = serverUuids[index] ?? 'unknown';
-
-    return {
-      serverId: 'unknown',
-      serverUuid,
-      state: 'error',
-      isOnline: false,
-      isSuspended: false,
-      lastChecked: new Date().toISOString(),
-      error: message,
-    };
-  });
+  return results;
 }
 
 export async function refreshAllServerStatuses(): Promise<void> {

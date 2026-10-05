@@ -4,6 +4,7 @@ import type {
   WingsNodeSummary,
   WingsSystemInformation,
 } from '#shared/types/wings';
+import { colorizeJsonValue } from '~/utils/json-highlight';
 
 definePageMeta({
   auth: true,
@@ -62,6 +63,7 @@ const {
   data: nodesResponse,
   pending,
   error,
+  refresh: refreshNodes,
 } = await useAsyncData('wings-nodes', () =>
   requestFetch<{ data: WingsNodeSummary[] }>('/api/wings/nodes'),
 );
@@ -97,6 +99,7 @@ async function handleCreateNode() {
     toast.add({ title: t('admin.nodes.nodeRegistered'), color: 'primary' });
     resetCreateForm();
     showCreate.value = false;
+    await refreshNodes();
   } catch (err) {
     const message = err instanceof Error ? err.message : t('admin.nodes.unableToRegisterNode');
     toast.add({
@@ -117,6 +120,7 @@ async function handleDeleteNode() {
     await $fetch(`/api/wings/nodes/${nodeToDelete.value.id}`, { method: 'DELETE' });
     toast.add({ title: t('admin.nodes.nodeRemoved'), color: 'primary' });
     resetDeleteModal();
+    await refreshNodes();
   } catch (err) {
     const message = err instanceof Error ? err.message : t('admin.nodes.unableToRemoveNode');
     toast.add({ title: t('admin.nodes.failedToRemoveNode'), description: message, color: 'error' });
@@ -583,10 +587,9 @@ watch(
             <label class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{{
               t('admin.nodes.latestSnapshot')
             }}</label>
-            <pre class="max-h-105 overflow-auto rounded bg-muted/40 p-3 text-xs leading-relaxed">
-      {{ JSON.stringify(systemModal.info, null, 2) }}
-    </pre
-            >
+            <pre
+              class="max-h-105 overflow-auto rounded bg-muted/40 p-3 text-xs leading-relaxed"
+            ><code v-html="colorizeJsonValue(systemModal.info)"></code></pre>
           </div>
         </div>
       </template>

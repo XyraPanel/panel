@@ -11,6 +11,59 @@ import {
 } from '#server/utils/security';
 import { serverPowerActionSchema } from '#shared/schema/server/operations';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server'],
+    summary: 'Send a power action',
+    description:
+      'Sends a power action (start, stop, restart, kill) to the server via the Wings daemon. Requires the server.power permission (or server owner/admin).',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server identifier or UUID' },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['action'],
+            properties: {
+              action: { type: 'string', enum: ['start', 'stop', 'restart', 'kill'] },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Power action sent',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server identifier is missing, or invalid power action' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.power permission, or Wings authentication failed' },
+      '404': { description: 'Server not found or not accessible' },
+      '500': { description: 'Failed to send power action to Wings' },
+      '503': { description: 'Wings daemon unavailable' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server');
 
@@ -72,7 +125,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       status: 500,
-      message: `Failed to send power action to Wings: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      message: 'Failed to send power action to Wings.',
     });
   }
 });

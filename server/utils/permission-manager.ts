@@ -33,9 +33,14 @@ export class PermissionManager {
       'server.files.download',
       'server.files.compress',
       'server.backup.create',
+      'server.backup.read',
       'server.backup.restore',
       'server.backup.delete',
       'server.backup.download',
+      'server.allocation.read',
+      'server.allocation.create',
+      'server.allocation.update',
+      'server.allocation.delete',
       'server.database.create',
       'server.database.read',
       'server.database.update',
@@ -70,9 +75,16 @@ export class PermissionManager {
     ],
     'server.backup.*': [
       'server.backup.create',
+      'server.backup.read',
       'server.backup.restore',
       'server.backup.delete',
       'server.backup.download',
+    ],
+    'server.allocation.*': [
+      'server.allocation.read',
+      'server.allocation.create',
+      'server.allocation.update',
+      'server.allocation.delete',
     ],
     'server.database.*': [
       'server.database.create',
@@ -107,9 +119,14 @@ export class PermissionManager {
       'server.files.download',
       'server.files.compress',
       'server.backup.create',
+      'server.backup.read',
       'server.backup.restore',
       'server.backup.delete',
       'server.backup.download',
+      'server.allocation.read',
+      'server.allocation.create',
+      'server.allocation.update',
+      'server.allocation.delete',
       'server.database.create',
       'server.database.read',
       'server.database.update',
@@ -136,7 +153,9 @@ export class PermissionManager {
       'server.files.upload',
       'server.files.download',
       'server.backup.create',
+      'server.backup.read',
       'server.backup.download',
+      'server.allocation.read',
       'server.database.read',
       'server.schedule.read',
       'server.settings.read',
@@ -147,7 +166,9 @@ export class PermissionManager {
       'server.console',
       'server.files.read',
       'server.files.download',
+      'server.backup.read',
       'server.backup.download',
+      'server.allocation.read',
       'server.database.read',
       'server.schedule.read',
       'server.settings.read',
@@ -194,12 +215,14 @@ export class PermissionManager {
     const isAdmin = user.rootAdmin;
 
     const serverPermissions = new Map<string, Permission[]>();
+    const ownedServerIds = new Set<string>();
 
     if (isAdmin) {
       return {
         userId,
         isAdmin: true,
         serverPermissions,
+        ownedServerIds,
       };
     }
 
@@ -210,6 +233,7 @@ export class PermissionManager {
 
     for (const server of ownedServers) {
       serverPermissions.set(server.id, this.defaultPermissionSets.owner);
+      ownedServerIds.add(server.id);
     }
 
     const subusers = await this.db
@@ -218,6 +242,11 @@ export class PermissionManager {
       .where(eq(tables.serverSubusers.userId, userId));
 
     for (const subuser of subusers) {
+      // Owned servers take precedence: a user can't be their own subuser via a stale row.
+      if (ownedServerIds.has(subuser.serverId)) {
+        continue;
+      }
+
       try {
         const permissions = this.safeParsePermissions(subuser.permissions);
         const validPermissions = permissions.filter((p) => this.getAllPermissions().includes(p));
@@ -225,7 +254,8 @@ export class PermissionManager {
         serverPermissions.set(subuser.serverId, expandedPermissions);
       } catch (error) {
         console.error(`Failed to parse permissions for subuser ${subuser.id}:`, error);
-        serverPermissions.set(subuser.serverId, this.defaultPermissionSets.viewer);
+        // Fail closed: an unparseable subuser grant should not confer any access.
+        serverPermissions.set(subuser.serverId, []);
       }
     }
 
@@ -233,6 +263,7 @@ export class PermissionManager {
       userId,
       isAdmin: false,
       serverPermissions,
+      ownedServerIds,
     };
   }
 
@@ -433,9 +464,14 @@ export class PermissionManager {
       'server.files.download',
       'server.files.compress',
       'server.backup.create',
+      'server.backup.read',
       'server.backup.restore',
       'server.backup.delete',
       'server.backup.download',
+      'server.allocation.read',
+      'server.allocation.create',
+      'server.allocation.update',
+      'server.allocation.delete',
       'server.database.create',
       'server.database.read',
       'server.database.update',
@@ -466,26 +502,31 @@ export class PermissionManager {
     return {
       ...userPermissions,
       serverPermissions: Array.from(userPermissions.serverPermissions.entries()),
+      ownedServerIds: Array.from(userPermissions.ownedServerIds),
     };
   }
 
   private deserializeUserPermissions(
     userPermissions: SerializedUserPermissions | UserPermissions,
   ): UserPermissions {
-    if (userPermissions.serverPermissions instanceof Map) {
-      return {
-        ...userPermissions,
-        serverPermissions: userPermissions.serverPermissions,
-      };
-    }
+    const serverPermissions =
+      userPermissions.serverPermissions instanceof Map
+        ? userPermissions.serverPermissions
+        : new Map(
+            Array.isArray(userPermissions.serverPermissions)
+              ? userPermissions.serverPermissions
+              : Object.entries(userPermissions.serverPermissions ?? {}),
+          );
 
-    const entries = Array.isArray(userPermissions.serverPermissions)
-      ? userPermissions.serverPermissions
-      : Object.entries(userPermissions.serverPermissions ?? {});
+    const ownedServerIds =
+      userPermissions.ownedServerIds instanceof Set
+        ? userPermissions.ownedServerIds
+        : new Set(userPermissions.ownedServerIds ?? []);
 
     return {
       ...userPermissions,
-      serverPermissions: new Map(entries),
+      serverPermissions,
+      ownedServerIds,
     };
   }
 
@@ -509,11 +550,15 @@ export class PermissionManager {
   }
 }
 
-type SerializedUserPermissions = Omit<UserPermissions, 'serverPermissions'> & {
+type SerializedUserPermissions = Omit<
+  UserPermissions,
+  'serverPermissions' | 'ownedServerIds'
+> & {
   serverPermissions:
     | Map<string, Permission[]>
     | Array<[string, Permission[]]>
     | Record<string, Permission[]>;
+  ownedServerIds: Set<string> | string[];
 };
 
 export const permissionManager = new PermissionManager();

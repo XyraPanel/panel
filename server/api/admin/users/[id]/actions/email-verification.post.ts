@@ -8,6 +8,67 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Users'],
+    summary: 'Change a user\'s email verification status',
+    description:
+      'Marks the target user\'s email as verified or unverified, or resends the verification link. Requires an admin session with the users:write ACL permission.',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'User ID',
+      },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['action'],
+            properties: {
+              action: {
+                type: 'string',
+                enum: ['mark-verified', 'mark-unverified', 'resend-link'],
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Action performed',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    action: { type: 'string', enum: ['mark-verified', 'mark-unverified', 'resend-link'] },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'User ID is required, or user is missing an email address (resend-link)' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing users:write ACL permission' },
+      '404': { description: 'User not found' },
+      '500': { description: 'Failed to perform email verification action' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);

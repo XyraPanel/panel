@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import type { AdminUserApiKeySummary, PaginatedApiKeysResponse } from '#shared/types/admin';
+import { colorizeJson } from '~/utils/json-highlight';
 
 interface Props {
   userId: string;
@@ -224,7 +225,7 @@ async function confirmApiKeyDelete() {
               </div>
               <pre
                 class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
-              ><code>{{ formatApiKeyJson(getFullApiKeyData(key)) }}</code></pre>
+              ><code v-html="colorizeJson(formatApiKeyJson(getFullApiKeyData(key)))"></code></pre>
             </div>
             <div class="flex justify-end">
               <UButton

@@ -2,6 +2,40 @@ import { type H3Event } from 'h3';
 import { getNodeIdFromAuth } from '#server/utils/wings/auth';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Remote (Wings)'],
+    summary: 'Get the install script for a server',
+    description:
+      "Called by the Wings daemon to fetch the egg's install script and container to run it in. Requires a valid node Bearer token; the server must be assigned to the authenticating node.",
+    parameters: [
+      { name: 'uuid', in: 'path', required: true, schema: { type: 'string' }, description: 'Server UUID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Install script details',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                container_image: { type: 'string' },
+                entrypoint: { type: 'string' },
+                script: { type: 'string' },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing server UUID, or Authorization header not in a valid format' },
+      '401': { description: 'Missing or invalid Wings authentication token' },
+      '403': { description: 'Node token not recognized, or server is not assigned to this node' },
+      '404': { description: 'Server not found' },
+      '500': { description: 'Server configuration error (missing egg configuration or egg not found)' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event: H3Event) => {
   const { uuid } = getRouterParams(event);
   if (!uuid || typeof uuid !== 'string') {

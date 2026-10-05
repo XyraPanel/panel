@@ -4,6 +4,55 @@ import { count, desc } from 'drizzle-orm';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'List SSH keys',
+    description: 'Returns a paginated list of SSH public keys registered on the authenticated account.',
+    parameters: [
+      { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+      { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 } },
+    ],
+    responses: {
+      '200': {
+        description: 'Paginated SSH key list',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      name: { type: 'string' },
+                      fingerprint: { type: 'string' },
+                      public_key: { type: 'string' },
+                      created_at: { type: 'string' },
+                    },
+                  },
+                },
+                pagination: {
+                  type: 'object',
+                  properties: {
+                    page: { type: 'integer' },
+                    perPage: { type: 'integer' },
+                    total: { type: 'integer' },
+                    totalPages: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const user = accountContext.user;

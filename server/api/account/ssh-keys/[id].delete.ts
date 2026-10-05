@@ -4,6 +4,33 @@ import { requireAccountUser } from '#server/utils/security';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'Delete an SSH key',
+    description: 'Deletes an SSH key owned by the authenticated account.',
+    parameters: [
+      { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'SSH key ID' },
+    ],
+    responses: {
+      '200': {
+        description: 'SSH key deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: { success: { type: 'boolean' }, message: { type: 'string' } },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing SSH key ID' },
+      '401': { description: 'Not authenticated' },
+      '404': { description: 'SSH key not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const user = accountContext.user;

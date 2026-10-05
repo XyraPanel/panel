@@ -4,6 +4,55 @@ import { count, desc } from 'drizzle-orm';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { getValidatedQuery, requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Account'],
+    summary: 'List API keys',
+    description: 'Returns a paginated list of API keys owned by the authenticated account.',
+    parameters: [
+      { name: 'page', in: 'query', schema: { type: 'integer', minimum: 1, default: 1 } },
+      { name: 'limit', in: 'query', schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 } },
+    ],
+    responses: {
+      '200': {
+        description: 'Paginated API key list',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      identifier: { type: 'string' },
+                      description: { type: 'string', nullable: true },
+                      allowed_ips: { type: 'array', items: { type: 'string' } },
+                      last_used_at: { type: 'string', nullable: true },
+                      created_at: { type: 'string' },
+                    },
+                  },
+                },
+                pagination: {
+                  type: 'object',
+                  properties: {
+                    page: { type: 'integer' },
+                    perPage: { type: 'integer' },
+                    total: { type: 'integer' },
+                    totalPages: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const accountContext = await requireAccountUser(event);
   const user = accountContext.user;

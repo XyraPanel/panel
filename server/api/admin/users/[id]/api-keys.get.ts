@@ -2,10 +2,84 @@ import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import { z } from 'zod';
 import { desc, count } from 'drizzle-orm';
 import { getValidatedQuery, requireAdmin } from '#server/utils/security';
+import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Users'],
+    summary: "List a user's API keys",
+    description:
+      'Returns a paginated list of API keys owned by the target user. Requires an admin session with the users:read ACL permission.',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'User ID',
+      },
+      {
+        name: 'page',
+        in: 'query',
+        required: false,
+        schema: { type: 'integer', minimum: 1, default: 1 },
+      },
+      {
+        name: 'limit',
+        in: 'query',
+        required: false,
+        schema: { type: 'integer', minimum: 1, maximum: 100, default: 50 },
+      },
+    ],
+    responses: {
+      '200': {
+        description: "Paginated list of the user's API keys",
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      identifier: { type: 'string', nullable: true },
+                      memo: { type: 'string', nullable: true },
+                      createdAt: { type: 'string', format: 'date-time' },
+                      lastUsedAt: { type: 'string', format: 'date-time', nullable: true },
+                      expiresAt: { type: 'string', format: 'date-time', nullable: true },
+                    },
+                  },
+                },
+                pagination: {
+                  type: 'object',
+                  properties: {
+                    page: { type: 'integer' },
+                    perPage: { type: 'integer' },
+                    total: { type: 'integer' },
+                    totalPages: { type: 'integer' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'User ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing users:read ACL permission' },
+      '404': { description: 'User not found' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
+  await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.READ);
 
   const id = getRouterParam(event, 'id');
   if (!id) {

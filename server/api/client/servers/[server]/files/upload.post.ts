@@ -69,6 +69,7 @@ export default defineEventHandler(async (event) => {
         user: { id: accountContext.user.id, uuid: accountContext.user.id },
         server: { uuid: serverUuid },
         expiresIn: 900,
+        scope: 'file-upload',
       },
     );
 

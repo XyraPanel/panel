@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import type { FormSubmitEvent } from '@nuxt/ui';
-import type { StoredWingsNode } from '#shared/types/wings';
+import type { WingsNodeSummary } from '#shared/types/wings';
 import { nodeSettingsFormSchema } from '#shared/schema/admin/infrastructure';
 import type { NodeSettingsFormInput } from '#shared/schema/admin/infrastructure';
 
 const props = defineProps<{
-  node: StoredWingsNode;
+  node: WingsNodeSummary;
 }>();
 
 const { t } = useI18n();
@@ -22,7 +22,7 @@ const schema = nodeSettingsFormSchema;
 
 type FormSchema = NodeSettingsFormInput;
 
-function createFormState(node: StoredWingsNode): FormSchema {
+function createFormState(node: WingsNodeSummary): FormSchema {
   return {
     name: node.name,
     description: node.description ?? '',

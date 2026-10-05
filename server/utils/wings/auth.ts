@@ -74,7 +74,7 @@ export async function getNodeIdFromAuth(event: H3Event): Promise<string> {
   return node.id;
 }
 
-function constantTimeCompare(a: string, b: string): boolean {
+export function constantTimeCompare(a: string, b: string): boolean {
   if (a.length !== b.length) {
     return false;
   }

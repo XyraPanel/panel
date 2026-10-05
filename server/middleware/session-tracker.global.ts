@@ -1,7 +1,10 @@
 import type { getServerSession } from '#server/utils/session';
+import { getSessionCookie } from 'better-auth/cookies';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
 import type { resolveSessionUser } from '#server/utils/auth/sessionUser';
 import { parseUserAgent } from '#server/utils/user-agent';
+import { sql } from 'drizzle-orm';
+import { useHooks } from '#server/utils/hooks';
 
 const TRACK_INTERVAL_MS = 60 * 1000;
 const TRACK_MAP_MAX = 5000;
@@ -40,7 +43,12 @@ export default defineEventHandler(async (event) => {
 
   if (path.startsWith('/api/wings') || path.startsWith('/api/remote')) return;
 
-  const cookieToken = getCookie(event, 'better-auth.session_token');
+  // getSessionCookie checks both the plain and `__Secure-`-prefixed cookie names,
+  // matching whichever one auth.ts's useSecureCookies setting actually produced —
+  // a hardcoded cookie name here would silently miss it in production.
+  const cookieToken = getSessionCookie(
+    new Headers({ cookie: getRequestHeader(event, 'cookie') || '' }),
+  );
   if (!cookieToken) {
     return;
   }
@@ -79,7 +87,11 @@ export default defineEventHandler(async (event) => {
       return;
     }
 
-    await db
+    // xmax = 0 is a standard Postgres tell for "this row was just INSERTed"
+    // (an UPDATE via ON CONFLICT bumps xmax to the updating transaction's id) —
+    // it's how we distinguish a brand-new session (a login) from a returning
+    // one without a second query.
+    const insertedRows = await db
       .insert(tables.sessionMetadata)
       .values({
         sessionToken: cookieToken,
@@ -101,7 +113,12 @@ export default defineEventHandler(async (event) => {
           browserName: deviceInfo.browser,
           osName: deviceInfo.os,
         },
-      });
+      })
+      .returning({ inserted: sql<boolean>`(xmax = 0)` });
+
+    if (insertedRows[0]?.inserted) {
+      await useHooks().emit('auth.login', { userId: contextAuth.user.id });
+    }
   } catch (error) {
     const isProduction = process.env.NODE_ENV === 'production';
     if (isProduction) {

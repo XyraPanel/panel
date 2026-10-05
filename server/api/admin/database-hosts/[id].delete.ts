@@ -7,6 +7,44 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Database Hosts'],
+    summary: 'Delete a database host',
+    description:
+      'Permanently deletes a database host. Fails if any server databases are still provisioned on it. Requires an admin session with the database-hosts:write ACL permission.',
+    parameters: [
+      { name: 'id', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    responses: {
+      '200': {
+        description: 'Database host deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    deletedId: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing host ID, or host still has databases assigned' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing database-hosts:write ACL permission' },
+      '404': { description: 'Database host not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

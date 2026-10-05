@@ -1,6 +1,6 @@
 import { getWingsClientForServer } from '#server/utils/wings-client';
 import { recordAuditEvent } from '#server/utils/audit';
-import type { FileManagerOptions, FileUploadResult } from '#shared/types/server';
+import type { FileManagerOptions } from '#shared/types/server';
 
 export class FileManager {
   private readonly MAX_FILE_SIZE = 10 * 1024 * 1024;
@@ -307,23 +307,6 @@ export class FileManager {
     }
 
     return { modified: files.length };
-  }
-
-  async getUploadUrl(serverUuid: string): Promise<FileUploadResult> {
-    try {
-      const { client } = await getWingsClientForServer(serverUuid);
-      const uploadUrl = await client.getFileUploadUrl(serverUuid);
-
-      return {
-        success: true,
-        uploadUrl,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to get upload URL',
-      };
-    }
   }
 
   getDownloadUrl(serverUuid: string, filePath: string): string {

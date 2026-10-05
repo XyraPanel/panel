@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { USwitch } from '#components';
-import type { AdminMountListItem, CreateMountPayload } from '#shared/types/admin';
+import type {
+  AdminMountListItem,
+  AdminMountDetail,
+  CreateMountPayload,
+} from '#shared/types/admin';
 
 definePageMeta({
   auth: true,
@@ -53,7 +57,9 @@ const showCreateModal = ref(false);
 const showDeleteModal = ref(false);
 const isSubmitting = ref(false);
 const isDeleting = ref(false);
+const isLoadingMount = ref(false);
 const mountToDelete = ref<AdminMountListItem | null>(null);
+const editingMountId = ref<string | null>(null);
 
 const resetDeleteModal = () => {
   showDeleteModal.value = false;
@@ -67,8 +73,8 @@ const form = ref<CreateMountPayload>({
   target: '',
   readOnly: false,
   userMountable: false,
-  eggs: [],
-  nodes: [],
+  eggIds: [],
+  nodeIds: [],
 });
 
 function resetForm() {
@@ -79,14 +85,43 @@ function resetForm() {
     target: '',
     readOnly: false,
     userMountable: false,
-    eggs: [],
-    nodes: [],
+    eggIds: [],
+    nodeIds: [],
   };
 }
 
 function openCreateModal() {
+  editingMountId.value = null;
   resetForm();
   showCreateModal.value = true;
+}
+
+async function openEditModal(mount: AdminMountListItem) {
+  editingMountId.value = mount.id;
+  showCreateModal.value = true;
+  isLoadingMount.value = true;
+  try {
+    const { data } = await $fetch<{ data: AdminMountDetail }>(`/api/admin/mounts/${mount.id}`);
+    form.value = {
+      name: data.name,
+      description: data.description ?? '',
+      source: data.source,
+      target: data.target,
+      readOnly: data.readOnly,
+      userMountable: data.userMountable,
+      eggIds: data.eggIds,
+      nodeIds: data.nodeIds,
+    };
+  } catch (err) {
+    toast.add({
+      title: t('admin.mounts.failedToLoadMounts'),
+      description: err instanceof Error ? err.message : t('common.errorOccurred'),
+      color: 'error',
+    });
+    showCreateModal.value = false;
+  } finally {
+    isLoadingMount.value = false;
+  }
 }
 
 async function handleSubmit() {
@@ -98,17 +133,26 @@ async function handleSubmit() {
   isSubmitting.value = true;
 
   try {
-    await $fetch('/api/admin/mounts', {
-      method: 'POST',
-      body: form.value,
-    });
-    toast.add({ title: t('admin.mounts.mountCreated'), color: 'success' });
+    if (editingMountId.value) {
+      await $fetch(`/api/admin/mounts/${editingMountId.value}`, {
+        method: 'PATCH',
+        body: form.value,
+      });
+      toast.add({ title: t('admin.mounts.mountUpdated'), color: 'success' });
+    } else {
+      await $fetch('/api/admin/mounts', {
+        method: 'POST',
+        body: form.value,
+      });
+      toast.add({ title: t('admin.mounts.mountCreated'), color: 'success' });
+    }
     showCreateModal.value = false;
+    editingMountId.value = null;
     resetForm();
     await refresh();
   } catch (err) {
     toast.add({
-      title: t('admin.mounts.createFailed'),
+      title: editingMountId.value ? t('admin.mounts.updateFailed') : t('admin.mounts.createFailed'),
       description: err instanceof Error ? err.message : t('common.errorOccurred'),
       color: 'error',
     });
@@ -236,6 +280,14 @@ async function handleDelete() {
 
                 <div class="flex flex-wrap items-center gap-2 sm:justify-end">
                   <UButton
+                    icon="i-lucide-pencil"
+                    size="xs"
+                    variant="ghost"
+                    :aria-label="t('common.edit')"
+                    class="w-full sm:w-auto justify-center"
+                    @click="openEditModal(mount)"
+                  />
+                  <UButton
                     icon="i-lucide-trash"
                     size="xs"
                     variant="ghost"
@@ -263,11 +315,18 @@ async function handleDelete() {
 
     <UModal
       v-model:open="showCreateModal"
-      :title="t('admin.mounts.createMount')"
-      :description="t('admin.mounts.createMountDescription')"
+      :title="editingMountId ? t('admin.mounts.editMount') : t('admin.mounts.createMount')"
+      :description="
+        editingMountId
+          ? t('admin.mounts.editMountDescription')
+          : t('admin.mounts.createMountDescription')
+      "
     >
       <template #body>
-        <form class="space-y-4" @submit.prevent="handleSubmit">
+        <div v-if="isLoadingMount" class="space-y-3">
+          <USkeleton v-for="i in 4" :key="i" class="h-10 w-full" />
+        </div>
+        <form v-else class="space-y-4" @submit.prevent="handleSubmit">
           <UFormField :label="t('admin.mounts.name')" name="name" required>
             <UInput
               v-model="form.name"
@@ -327,9 +386,9 @@ async function handleDelete() {
           </div>
 
           <div class="grid gap-4 sm:grid-cols-2">
-            <UFormField :label="t('admin.mounts.nodes')" name="nodes">
+            <UFormField :label="t('admin.mounts.nodes')" name="nodeIds">
               <USelect
-                v-model="form.nodes"
+                v-model="form.nodeIds"
                 :items="nodeOptions"
                 multiple
                 value-key="value"
@@ -338,9 +397,9 @@ async function handleDelete() {
               />
             </UFormField>
 
-            <UFormField :label="t('admin.mounts.eggs')" name="eggs">
+            <UFormField :label="t('admin.mounts.eggs')" name="eggIds">
               <USelect
-                v-model="form.eggs"
+                v-model="form.eggIds"
                 :items="eggOptions"
                 multiple
                 value-key="value"
@@ -358,7 +417,10 @@ async function handleDelete() {
             variant="ghost"
             class="w-full flex-1 justify-center"
             :disabled="isSubmitting"
-            @click="showCreateModal = false"
+            @click="
+              showCreateModal = false;
+              editingMountId = null;
+            "
           >
             {{ t('common.cancel') }}
           </UButton>
@@ -369,9 +431,10 @@ async function handleDelete() {
             variant="subtle"
             class="w-full flex-1 justify-center"
             :loading="isSubmitting"
-            :disabled="isSubmitting"
+            :disabled="isSubmitting || isLoadingMount"
+            @click="handleSubmit"
           >
-            {{ t('admin.mounts.createMount') }}
+            {{ editingMountId ? t('common.save') : t('admin.mounts.createMount') }}
           </UButton>
         </div>
       </template>

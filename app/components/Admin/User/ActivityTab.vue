@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import type { PaginatedActivityResponse } from '#shared/types/admin';
+import { colorizeJson } from '~/utils/json-highlight';
 
 interface Props {
   userId: string;
@@ -163,7 +164,7 @@ async function copyActivityJson(entry: (typeof activity.value)[0]) {
             </div>
             <pre
               class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
-            ><code>{{ formatActivityJson(getFullActivityData(entry)) }}</code></pre>
+            ><code v-html="colorizeJson(formatActivityJson(getFullActivityData(entry)))"></code></pre>
           </div>
         </div>
       </div>

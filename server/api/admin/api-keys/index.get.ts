@@ -4,6 +4,45 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - API Keys'],
+    summary: 'List admin API keys',
+    description:
+      'Returns all admin API keys with their identifiers and usage metadata (key secrets are never returned). Requires an admin session with the api-keys:read ACL permission.',
+    responses: {
+      '200': {
+        description: 'List of admin API keys',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      identifier: { type: 'string' },
+                      memo: { type: 'string', nullable: true },
+                      lastUsedAt: { type: 'string', format: 'date-time', nullable: true },
+                      expiresAt: { type: 'string', format: 'date-time', nullable: true },
+                      createdAt: { type: 'string', format: 'date-time' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing api-keys:read ACL permission' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

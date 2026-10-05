@@ -208,6 +208,10 @@ export interface WingsJWTOptions {
   expiresIn?: string | number;
   subject?: string;
   identifiedBy?: string;
+  /** Space-separated scope string Wings checks via Scoped.HasScope (e.g. "file-download"). */
+  scope?: string;
+  /** Additional JWT claims merged into the payload (e.g. backup_uuid, file_path). */
+  extraClaims?: Record<string, unknown>;
 }
 
 export interface WingsNodeAuthData {

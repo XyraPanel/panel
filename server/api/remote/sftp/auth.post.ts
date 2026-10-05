@@ -7,21 +7,24 @@ import { recordAuditEvent } from '#server/utils/audit';
 import { APIError } from 'better-auth/api';
 import { auth, getAuthHeaders } from '#server/utils/auth';
 import { remoteSftpAuthSchema } from '#shared/schema/wings';
+import { getNodeIdFromAuth } from '#server/utils/wings/auth';
+import { buildCacheKey, getCacheItem, setCacheItem } from '#server/utils/cache';
 
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const MAX_ATTEMPTS = 5;
-const RATE_LIMIT_WINDOW = 60000;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object';
 }
 
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const record = rateLimitMap.get(ip);
+// Backed by the shared Redis-mounted cache storage (see server/utils/cache.ts) so the
+// limit holds across PM2 cluster workers/instances, not just within one process.
+async function checkRateLimit(ip: string): Promise<boolean> {
+  const key = buildCacheKey('sftp-auth-rl', ip);
+  const record = await getCacheItem<{ count: number }>(key);
 
-  if (!record || now > record.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+  if (!record) {
+    await setCacheItem(key, { count: 1 }, { ttl: RATE_LIMIT_WINDOW_SECONDS });
     return true;
   }
 
@@ -29,12 +32,35 @@ function checkRateLimit(ip: string): boolean {
     return false;
   }
 
-  record.count++;
+  await setCacheItem(key, { count: record.count + 1 }, { ttl: RATE_LIMIT_WINDOW_SECONDS });
   return true;
+}
+
+async function logSftpFailure(params: {
+  username: string;
+  clientIp: string;
+  reason: string;
+  serverUuid?: string;
+}) {
+  await recordAuditEvent({
+    actor: params.username,
+    actorType: 'user',
+    action: 'sftp.auth.failed',
+    targetType: 'server',
+    targetId: params.serverUuid ?? null,
+    metadata: {
+      ip: params.clientIp,
+      username: params.username,
+      reason: params.reason,
+      successful: false,
+    },
+  });
 }
 
 export default defineEventHandler(async (event: H3Event) => {
   try {
+  await getNodeIdFromAuth(event);
+
   const db = useDrizzle();
   const body = await readValidatedBodyWithLimit(
     event,
@@ -43,7 +69,7 @@ export default defineEventHandler(async (event: H3Event) => {
   );
   const clientIp = getRequestIP(event, { xForwardedFor: true }) || body.ip || 'unknown';
 
-  if (!checkRateLimit(clientIp)) {
+  if (!(await checkRateLimit(clientIp))) {
     throw createError({
       status: 429,
       message: 'Too many SFTP authentication attempts. Please try again later.',
@@ -72,6 +98,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const server = serverResult[0];
 
   if (!server) {
+    await logSftpFailure({ username, clientIp, reason: 'unknown_server' });
     throw createError({
       status: 401,
       message: 'Invalid SFTP credentials',
@@ -87,6 +114,7 @@ export default defineEventHandler(async (event: H3Event) => {
   const user = userResult[0];
 
   if (!user) {
+    await logSftpFailure({ username, clientIp, reason: 'unknown_user', serverUuid: server.uuid });
     throw createError({
       status: 401,
       message: 'Invalid SFTP credentials',
@@ -118,6 +146,12 @@ export default defineEventHandler(async (event: H3Event) => {
       await db.delete(tables.sessions).where(eq(tables.sessions.sessionToken, signInResult.token));
     } catch (error) {
       if (error instanceof APIError) {
+        await logSftpFailure({
+          username,
+          clientIp,
+          reason: 'invalid_password',
+          serverUuid: server.uuid,
+        });
         throw createError({
           status: 401,
           message: 'Invalid SFTP credentials',
@@ -156,12 +190,27 @@ export default defineEventHandler(async (event: H3Event) => {
       });
 
       if (!sshKey) {
+        await logSftpFailure({
+          username,
+          clientIp,
+          reason: 'invalid_ssh_key',
+          serverUuid: server.uuid,
+        });
         throw createError({
           status: 401,
           message: 'Invalid SSH key',
         });
       }
-    } catch {
+    } catch (error) {
+      if (error && typeof error === 'object' && ('statusCode' in error || 'status' in error)) {
+        throw error;
+      }
+      await logSftpFailure({
+        username,
+        clientIp,
+        reason: 'invalid_ssh_key',
+        serverUuid: server.uuid,
+      });
       throw createError({
         status: 401,
         message: 'Invalid SSH key',
@@ -181,6 +230,12 @@ export default defineEventHandler(async (event: H3Event) => {
     const subuser = subusers.find((entry) => entry.userId === user.id);
 
     if (!subuser) {
+      await logSftpFailure({
+        username,
+        clientIp,
+        reason: 'no_server_access',
+        serverUuid: server.uuid,
+      });
       throw createError({
         status: 403,
         message: 'You do not have access to this server',

@@ -7,6 +7,70 @@ import { invalidateScheduleCaches } from '#server/utils/serversStore';
 import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordServerActivity } from '#server/utils/server-activity';
 import { requireAccountUser } from '#server/utils/security';
+import { permissionForScheduleTaskAction } from '#server/utils/schedules';
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Schedules'],
+    summary: 'Add a task to a schedule',
+    description:
+      'Appends a new task (appended at the next sequence position) to a schedule. Requires the server.schedule.update permission, plus the permission for the task\'s action (e.g. power/command/backup) unless the caller is the owner or an admin.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'schedule', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['action', 'payload'],
+            properties: {
+              action: { type: 'string', minLength: 1, maxLength: 255 },
+              payload: { type: 'string', minLength: 1, maxLength: 10000 },
+              time_offset: { type: 'integer', minimum: 0, maximum: 3600, default: 0 },
+              continue_on_failure: { type: 'boolean', default: false },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Task created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    sequence_id: { type: 'integer' },
+                    action: { type: 'string' },
+                    payload: { type: 'string' },
+                    time_offset: { type: 'integer' },
+                    is_queued: { type: 'boolean' },
+                    continue_on_failure: { type: 'boolean' },
+                    created_at: { type: 'string', format: 'date-time' },
+                    updated_at: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Invalid request body' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.schedule.update permission or the task-action permission' },
+      '404': { description: 'Server or schedule not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event) => {
   try {
@@ -50,6 +114,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readValidatedBodyWithLimit(event, createTaskSchema, BODY_SIZE_LIMITS.MEDIUM);
+
+  const requiredActionPermission = permissionForScheduleTaskAction(body.action);
+  if (requiredActionPermission) {
+    await requireServerPermission(event, {
+      serverId: server.id,
+      requiredPermissions: [requiredActionPermission],
+      allowOwner: true,
+      allowAdmin: true,
+    });
+  }
 
   const existingTasks = await db
     .select({ sequenceId: tables.serverScheduleTasks.sequenceId })

@@ -6,6 +6,23 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import type { EggWithVariables } from '#shared/types/admin';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Eggs'],
+    summary: 'Get an egg',
+    description:
+      'Returns full details for a single egg, including its variables. Requires an admin session with the eggs:read ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': { description: 'Egg details' },
+      '400': { description: 'Egg ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing eggs:read ACL permission' },
+      '404': { description: 'Egg not found' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -39,6 +56,7 @@ export default defineEventHandler(async (event) => {
     description: egg.description,
     features: egg.features ? JSON.parse(egg.features) : null,
     fileDenylist: egg.fileDenylist ? JSON.parse(egg.fileDenylist) : null,
+    forceOutgoingIp: Boolean(egg.forceOutgoingIp),
     updateUrl: egg.updateUrl,
     dockerImage: egg.dockerImage,
     dockerImages: egg.dockerImages ? JSON.parse(egg.dockerImages) : null,

@@ -7,6 +7,37 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { debugError } from '#server/utils/logger';
 import { createNestSchema } from '#shared/schema/admin/infrastructure';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Nests'],
+    summary: 'Create a nest',
+    description:
+      'Creates a new nest, the parent category grouping eggs. Requires an admin session with the nests:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['name', 'author'],
+            properties: {
+              name: { type: 'string', minLength: 1, maxLength: 255 },
+              description: { type: 'string', maxLength: 500 },
+              author: { type: 'string', minLength: 1 },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': { description: 'Nest created' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing nests:write ACL permission' },
+      '500': { description: 'Failed to create nest' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

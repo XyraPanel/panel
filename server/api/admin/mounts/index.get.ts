@@ -9,6 +9,28 @@ const querySchema = z.object({
   view: z.string().optional(),
 });
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Mounts'],
+    summary: 'List mounts',
+    description:
+      'Returns all mounts with egg/node/server association counts, or a lightweight {id, name} list when ?view=options is passed. Requires an admin session with the mounts:read ACL permission.',
+    parameters: [
+      {
+        name: 'view',
+        in: 'query',
+        schema: { type: 'string', enum: ['options'] },
+        description: 'Pass "options" for a minimal id/name list',
+      },
+    ],
+    responses: {
+      '200': { description: 'List of mounts' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing mounts:read ACL permission' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

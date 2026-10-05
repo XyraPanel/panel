@@ -9,6 +9,43 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Mounts'],
+    summary: 'Create a mount',
+    description:
+      'Creates a new mount and optionally associates it with nodes/eggs. Requires an admin session with the mounts:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['name', 'source', 'target'],
+            properties: {
+              name: { type: 'string', maxLength: 255 },
+              description: { type: 'string', maxLength: 500 },
+              source: { type: 'string' },
+              target: { type: 'string' },
+              readOnly: { type: 'boolean', default: false },
+              userMountable: { type: 'boolean', default: false },
+              nodeIds: { type: 'array', items: { type: 'string', format: 'uuid' } },
+              eggIds: { type: 'array', items: { type: 'string', format: 'uuid' } },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': { description: 'Mount created' },
+      '400': { description: 'One or more specified nodes/eggs were not found' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing mounts:write ACL permission' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

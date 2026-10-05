@@ -9,6 +9,57 @@ import type { ServerActionResponse } from '#shared/types/admin';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { serverActionSchema } from '#shared/schema/admin/actions';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Perform a lifecycle action on a server',
+    description:
+      'Executes one of suspend, unsuspend, reinstall, delete, start, stop, restart, or kill against the server via the server manager/Wings. Requires an admin session with the servers:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['action'],
+            properties: {
+              action: {
+                type: 'string',
+                enum: ['suspend', 'unsuspend', 'reinstall', 'delete', 'start', 'stop', 'restart', 'kill'],
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Action completed',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: { success: { type: 'boolean' }, message: { type: 'string' } },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server ID missing or invalid action' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, missing servers:write ACL permission, or Wings authentication failed' },
+      '404': { description: 'Server not found' },
+      '500': { description: 'Action failed' },
+      '503': { description: 'Wings daemon unavailable' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<ServerActionResponse> => {
   const session = await requireAdmin(event);
 

@@ -82,7 +82,16 @@ export class WingsClient {
   }
 
   private getToken(): string {
-    return `Bearer ${decryptToken(this.encryptedToken)}`;
+    try {
+      return `Bearer ${decryptToken(this.encryptedToken)}`;
+    } catch (error) {
+      // A decrypt failure is a credential problem, not a transient network one — it
+      // will fail identically on every retry. Without this, it fell into the generic
+      // WingsConnectionError branch below and got retried with backoff for no reason.
+      throw new WingsAuthError(
+        `Failed to decrypt Wings token: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 
   getAuthHeader(): string {
@@ -401,64 +410,6 @@ export class WingsClient {
     });
   }
 
-  async getFileDownloadUrl(serverUuid: string, filePath: string): Promise<string> {
-    const params = new URLSearchParams({ file: filePath });
-    const response = await this.request(`/api/servers/${serverUuid}/files/download?${params}`);
-    if (isRecord(response) && typeof response.url === 'string') {
-      return response.url;
-    }
-    throw new WingsConnectionError('Invalid download URL response');
-  }
-
-  async downloadFileStream(serverUuid: string, filePath: string): Promise<Response> {
-    const signedUrl = await this.getFileDownloadUrl(serverUuid, filePath);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-    try {
-      const response = await fetch(signedUrl, {
-        method: 'GET',
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        throw new WingsConnectionError(`Failed to download file contents: ${response.status}`);
-      }
-
-      if (!response.body) {
-        throw new WingsConnectionError('Wings responded without a stream body for file download');
-      }
-
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new WingsConnectionError(`Request timeout after ${this.timeout}ms`);
-      }
-      throw error;
-    }
-  }
-
-  async getFileUploadUrl(serverUuid: string, directory?: string): Promise<string> {
-    const params = new URLSearchParams();
-    if (directory) {
-      params.set('directory', directory);
-    }
-
-    const path =
-      params.size > 0
-        ? `/api/servers/${serverUuid}/files/upload?${params.toString()}`
-        : `/api/servers/${serverUuid}/files/upload`;
-
-    const response = await this.request(path);
-    if (isRecord(response) && typeof response.url === 'string') {
-      return response.url;
-    }
-    throw new WingsConnectionError('Invalid upload URL response');
-  }
-
   async listBackups(serverUuid: string): Promise<WingsBackup[]> {
     const data = await this.request(`/api/servers/${serverUuid}/backups`);
     if (!Array.isArray(data)) return [];
@@ -495,42 +446,6 @@ export class WingsClient {
     });
   }
 
-  async streamBackupDownload(serverUuid: string, backupUuid: string): Promise<Response> {
-    // Note: getBackupDownloadUrl is a synchronous helper that returns a string URL,
-    // unlike other async URL getters (e.g. getFileDownloadUrl), so it is safe to use directly.
-    const downloadUrl = this.getBackupDownloadUrl(serverUuid, backupUuid);
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-
-    try {
-      const response = await fetch(downloadUrl, {
-        headers: {
-          Authorization: this.getAuthHeader(),
-          Accept: 'application/octet-stream',
-        },
-        signal: controller.signal,
-      });
-
-      clearTimeout(timeoutId);
-
-      if (!response.ok || !response.body) {
-        throw new WingsConnectionError(`Failed to download backup: ${response.status}`);
-      }
-
-      return response;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new WingsConnectionError(`Request timeout after ${this.timeout}ms`);
-      }
-      throw error;
-    }
-  }
-
-  getBackupDownloadUrl(serverUuid: string, backupUuid: string): string {
-    return `${this.baseUrl}/api/servers/${serverUuid}/backup/${backupUuid}/download`;
-  }
-
   async createServer(serverUuid: string, config: Record<string, unknown>): Promise<void> {
     const payload = {
       uuid: serverUuid,
@@ -539,13 +454,6 @@ export class WingsClient {
     await this.request('/api/servers', {
       method: 'POST',
       body: JSON.stringify(payload),
-    });
-  }
-
-  async updateServer(serverUuid: string, config: Record<string, unknown>): Promise<void> {
-    await this.request(`/api/servers/${serverUuid}`, {
-      method: 'PATCH',
-      body: JSON.stringify(config),
     });
   }
 
@@ -569,30 +477,6 @@ export class WingsClient {
     });
   }
 
-  async getWebSocketToken(serverUuid: string): Promise<{ token: string; socket: string }> {
-    const response = await this.request(`/api/servers/${serverUuid}/ws`);
-    if (
-      isRecord(response) &&
-      typeof response.token === 'string' &&
-      typeof response.socket === 'string'
-    ) {
-      return { token: response.token, socket: response.socket };
-    }
-    throw new WingsConnectionError('Invalid WebSocket token response');
-  }
-
-  async getSignedDownloadUrl(
-    serverUuid: string,
-    backupUuid: string,
-  ): Promise<{ url: string }> {
-    const response = await this.request(
-      `/api/servers/${serverUuid}/backup/${backupUuid}/download`,
-    );
-    if (isRecord(response) && typeof response.url === 'string') {
-      return { url: response.url };
-    }
-    throw new WingsConnectionError('Invalid signed download url response');
-  }
 }
 
 export function getWingsClient(node: WingsNode): WingsClient {
@@ -650,4 +534,34 @@ export async function getWingsClientForServer(
     client: getWingsClient(wingsNode),
     server,
   };
+}
+
+export async function getWingsClientForNode(nodeId: string): Promise<WingsClient> {
+  const { useDrizzle, tables, eq } = await import('./drizzle');
+  const db = useDrizzle();
+
+  const nodeRows = await db
+    .select()
+    .from(tables.wingsNodes)
+    .where(eq(tables.wingsNodes.id, nodeId))
+    .limit(1);
+
+  const node = nodeRows[0];
+
+  if (!node) {
+    throw new Error('Node not found');
+  }
+
+  const wingsNode: WingsNode = {
+    id: node.id,
+    fqdn: node.fqdn,
+    scheme: node.scheme,
+    daemonListen: node.daemonListen,
+    daemonSftp: node.daemonSftp,
+    daemonBase: node.daemonBase,
+    tokenId: node.tokenIdentifier,
+    token: node.tokenSecret,
+  };
+
+  return getWingsClient(wingsNode);
 }

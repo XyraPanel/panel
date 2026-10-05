@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PaginatedServerActivityResponse, ServerActivityEvent } from '#shared/types/server';
+import { colorizeJson } from '~/utils/json-highlight';
 
 const { t } = useI18n();
 const route = useRoute();
@@ -261,7 +262,7 @@ function getActionColor(action: string): 'primary' | 'error' | 'warning' | 'neut
                   <pre
                     class="text-xs font-mono bg-default rounded-lg p-3 overflow-x-auto border border-default"
                   >
-<code>{{ formatJson(getFullEvent(entry)) }}</code>
+<code v-html="colorizeJson(formatJson(getFullEvent(entry)))"></code>
 </pre>
                 </div>
               </div>

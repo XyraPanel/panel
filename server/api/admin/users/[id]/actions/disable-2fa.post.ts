@@ -7,6 +7,63 @@ import { disableTwoFactorActionSchema } from '#shared/schema/admin/actions';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Users'],
+    summary: 'Disable two-factor authentication for a user',
+    description:
+      'Sensitive action: forcibly disables two-factor authentication for the target user, clearing their TOTP secret and any pending recovery tokens. Requires an admin session with the users:write ACL permission.',
+    parameters: [
+      {
+        name: 'id',
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+        description: 'User ID',
+      },
+    ],
+    requestBody: {
+      required: false,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              reason: { type: 'string', minLength: 1, maxLength: 500, description: 'Reason for disabling 2FA' },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: '2FA disabled (or already disabled)',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'User ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing users:write ACL permission' },
+      '404': { description: 'User not found' },
+      '500': { description: 'Failed to disable 2FA for the user' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
   await requireAdminApiKeyPermission(event, ADMIN_ACL_RESOURCES.USERS, ADMIN_ACL_PERMISSIONS.WRITE);

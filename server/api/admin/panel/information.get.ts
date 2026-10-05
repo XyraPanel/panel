@@ -32,6 +32,45 @@ const SUPPORT_URL = process.env.XYRA_SUPPORT_URL ?? 'https://xyrapanel.com/disco
 const DONATIONS_URL = process.env.XYRA_DONATIONS_URL ?? 'https://ko-fi.com/26bzz';
 const REPOSITORY_URL = process.env.XYRA_REPOSITORY_URL ?? 'https://github.com/XyraPanel/panel';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Panel'],
+    summary: 'Get panel information',
+    description:
+      'Returns panel version and links (docs, support, donations, repository). Requires an admin session with the panel_settings:read ACL permission.',
+    responses: {
+      '200': {
+        description: 'Panel information',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    panelVersion: { type: 'string' },
+                    latestPanelVersion: { type: 'string', nullable: true },
+                    isPanelUpToDate: { type: 'boolean', nullable: true },
+                    documentationUrl: { type: 'string' },
+                    supportUrl: { type: 'string' },
+                    donationsUrl: { type: 'string' },
+                    releaseNotesUrl: { type: 'string' },
+                    repositoryUrl: { type: 'string' },
+                    lastCheckedAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing panel_settings:read ACL permission' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event): Promise<{ data: PanelInformation }> => {
   const session = await requireAdmin(event);
 

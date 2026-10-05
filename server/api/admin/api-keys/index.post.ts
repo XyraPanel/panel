@@ -1,7 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { requireAdmin, readValidatedBodyWithLimit, BODY_SIZE_LIMITS } from '#server/utils/security';
 import { useDrizzle, tables, eq } from '#server/utils/drizzle';
-import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permissions';
+import {
+  requireAdminApiKeyPermission,
+  requireApiKeyPermissionSubset,
+} from '#server/utils/admin-api-permissions';
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import type { CreateApiKeyResponse } from '#shared/types/admin';
@@ -10,6 +13,75 @@ import type { AdminApiKeyPermissionAction } from '#shared/schema/admin/api-keys'
 import { APIError } from 'better-auth/api';
 import { getAuth } from '#server/utils/auth';
 type PermissionAction = AdminApiKeyPermissionAction;
+
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - API Keys'],
+    summary: 'Create an admin API key',
+    description:
+      'Creates a new admin API key for the current admin session, with optional IP allowlist, expiry, and ACL permission scoping. The raw secret is only ever returned in this response. The requested permission set must be a subset of the creating admin\'s own permissions. Requires an admin session with the api-keys:write ACL permission.',
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            properties: {
+              memo: { type: 'string', maxLength: 500, description: 'Description of the key' },
+              allowedIps: {
+                type: 'array',
+                items: { type: 'string' },
+                maxItems: 128,
+                description: 'IP addresses/CIDRs allowed to use this key',
+              },
+              expiresAt: { type: 'string', format: 'date-time', description: 'Future expiry datetime' },
+              permissions: {
+                type: 'object',
+                additionalProperties: {
+                  type: 'array',
+                  items: { type: 'string' },
+                },
+                description: 'Map of ACL resource to permitted actions',
+              },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'API key created',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    id: { type: 'string' },
+                    identifier: { type: 'string' },
+                    apiKey: { type: 'string', description: 'Raw key secret, shown only once' },
+                    memo: { type: 'string', nullable: true },
+                    createdAt: { type: 'string', format: 'date-time' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'expiresAt must be a valid future datetime' },
+      '401': { description: 'Not authenticated, or user not found in session' },
+      '403': {
+        description:
+          'Not an admin, missing api-keys:write ACL permission, or requested permissions exceed the caller\'s own',
+      },
+      '404': { description: 'User not found in database' },
+      '500': { description: 'Failed to create API key' },
+    },
+  },
+});
 
 export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyResponse }> => {
   const session = await requireAdmin(event);
@@ -50,6 +122,7 @@ export default defineEventHandler(async (event): Promise<{ data: CreateApiKeyRes
   );
   const trimmedMemo = body.memo?.trim() || null;
   const permissions: Record<string, PermissionAction[]> = body.permissions ?? {};
+  requireApiKeyPermissionSubset(event, permissions);
   const auth = getAuth();
 
   const now = new Date().toISOString();

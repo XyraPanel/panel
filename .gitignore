@@ -31,3 +31,5 @@ nginx/nginx.dev.conf
 nginx/nginx.local.conf
 docker-compose.local.yml
 public/uploads/branding
+
+.docs

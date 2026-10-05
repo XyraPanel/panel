@@ -11,6 +11,65 @@ import { recordServerActivity } from '#server/utils/server-activity';
 import { serverClientRenameSchema } from '#shared/schema/server/operations';
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server'],
+    summary: 'Rename the server',
+    description:
+      'Updates the server name and optionally its description. Requires the server.settings.update permission.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server identifier or UUID' },
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: {
+            type: 'object',
+            required: ['name'],
+            properties: {
+              name: { type: 'string' },
+              description: { type: 'string', nullable: true },
+            },
+          },
+        },
+      },
+    },
+    responses: {
+      '200': {
+        description: 'Server renamed',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    object: { type: 'string' },
+                    attributes: {
+                      type: 'object',
+                      properties: {
+                        name: { type: 'string' },
+                        description: { type: 'string', nullable: true },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server identifier is missing, or invalid rename payload' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.settings.update permission' },
+      '404': { description: 'Server not found or not accessible' },
+      '500': { description: 'Failed to rename server' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user, session } = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');

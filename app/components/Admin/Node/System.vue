@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { WingsSystemInformation } from '#shared/types/wings';
+import { colorizeJsonValue } from '~/utils/json-highlight';
 
 const props = defineProps<{
   nodeId: string;
@@ -158,7 +159,7 @@ const systemMetrics = computed(() => {
       <div class="rounded-lg bg-muted/30 p-4">
         <pre
           class="overflow-x-auto text-xs"
-        ><code>{{ JSON.stringify(systemInfo, null, 2) }}</code></pre>
+        ><code v-html="colorizeJsonValue(systemInfo)"></code></pre>
       </div>
     </UCard>
   </div>

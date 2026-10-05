@@ -7,6 +7,56 @@ import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import type { NestWithEggCount } from '#shared/types/admin';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Nests'],
+    summary: 'List nests',
+    description:
+      'Returns nests with their egg counts, or (with ?view=options) a lightweight id/name list for use in select inputs. Requires an admin session with the nests:read ACL permission.',
+    parameters: [
+      {
+        name: 'view',
+        in: 'query',
+        required: false,
+        schema: { type: 'string', enum: ['options'] },
+        description: 'Pass "options" to receive a minimal id/name list instead of full records',
+      },
+    ],
+    responses: {
+      '200': {
+        description: 'List of nests',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'array',
+                  items: {
+                    type: 'object',
+                    properties: {
+                      id: { type: 'string' },
+                      uuid: { type: 'string' },
+                      author: { type: 'string' },
+                      name: { type: 'string' },
+                      description: { type: 'string', nullable: true },
+                      createdAt: { type: 'string', format: 'date-time' },
+                      updatedAt: { type: 'string', format: 'date-time' },
+                      eggCount: { type: 'integer' },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing nests:read ACL permission' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 

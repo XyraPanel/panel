@@ -7,6 +7,39 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Servers'],
+    summary: 'Unsuspend a server',
+    description:
+      'Clears the server\'s suspended flag and syncs the change to Wings, rolling back if the sync fails. Requires an admin session with the servers:write ACL permission.',
+    parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'string' } }],
+    responses: {
+      '200': {
+        description: 'Server unsuspended (or was already unsuspended)',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: { success: { type: 'boolean' }, message: { type: 'string' } },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server ID is required' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing servers:write ACL permission' },
+      '404': { description: 'Server not found' },
+      '500': { description: 'Failed to sync unsuspension status with node' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const session = await requireAdmin(event);
 
@@ -60,7 +93,7 @@ export default defineEventHandler(async (event) => {
       if (node) {
         try {
           const { client } = await getWingsClientForServer(server.uuid);
-          await client.updateServer(server.uuid, { suspended: false });
+          await client.syncServer(server.uuid);
         } catch (error) {
           debugError('[Admin Server Unsuspend] Failed to sync with Wings:', error);
 

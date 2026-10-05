@@ -534,7 +534,7 @@ async function wingsFetch<T>(
           `Failed to connect to Wings daemon at ${fullUrl.origin} - check if Wings is running and accessible`,
         );
       }
-      if ('status' in error) {
+      if ('statusCode' in error || 'status' in error) {
         throw error;
       }
     }
@@ -714,7 +714,12 @@ export async function remoteListServerDirectory(
       })),
     };
   } catch (error) {
-    if (error && typeof error === 'object' && 'status' in error && error.status === 403) {
+    const errorStatus =
+      error && typeof error === 'object'
+        ? ('statusCode' in error ? error.statusCode : undefined) ??
+          ('status' in error ? error.status : undefined)
+        : undefined;
+    if (errorStatus === 403) {
       try {
         const { syncWingsNodeConfiguration } = await import('./nodesStore');
         const runtimeConfig = useRuntimeConfig();

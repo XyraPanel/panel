@@ -7,6 +7,45 @@ import { recordServerActivity } from '#server/utils/server-activity';
 
 import { debugError } from '#server/utils/logger';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Network'],
+    summary: 'Remove an allocation',
+    description:
+      'Detaches a non-primary network allocation from the server. Requires the server.allocation.delete permission (owner/admin always allowed). Fails if the server has no allocation limit set, or if the target is the primary allocation.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' } },
+      { name: 'allocation', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    responses: {
+      '200': {
+        description: 'Allocation removed',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'No allocation limit set on server, or target is the primary allocation' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.allocation.delete permission' },
+      '404': { description: 'Server or allocation not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const serverIdentifier = getRouterParam(event, 'server');
   const allocationId = getRouterParam(event, 'allocation');
@@ -23,12 +62,19 @@ export default defineEventHandler(async (event) => {
 
   await requireServerPermission(event, {
     serverId: server.id,
-    requiredPermissions: ['allocation.delete'],
+    requiredPermissions: ['server.allocation.delete'],
     allowOwner: true,
     allowAdmin: true,
   });
 
   try {
+    if (!server.allocationLimit) {
+      throw createError({
+        status: 400,
+        message: 'You cannot delete allocations for this server: no allocation limit is set.',
+      });
+    }
+
     const db = useDrizzle();
     const [allocation] = await db
       .select()

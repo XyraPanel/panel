@@ -7,6 +7,44 @@ import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { recordServerActivity } from '#server/utils/server-activity';
 import { getWingsClientForServer } from '#server/utils/wings-client';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server'],
+    summary: 'Reinstall the server',
+    description:
+      'Marks the server as installing and triggers a reinstall on the Wings daemon, re-running the egg install script. Requires the server.settings.update permission. Fails if the server is suspended.',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server identifier or UUID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Reinstall triggered',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Server identifier is missing' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.settings.update permission, or server is suspended' },
+      '404': { description: 'Server not found or not accessible' },
+      '500': { description: 'Failed to trigger reinstall on Wings' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   const { user, session } = await requireAccountUser(event);
   const serverId = getRouterParam(event, 'server');

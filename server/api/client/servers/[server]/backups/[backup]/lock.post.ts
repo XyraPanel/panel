@@ -5,6 +5,47 @@ import { requireServerPermission } from '#server/utils/permission-middleware';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 import { requireAccountUser } from '#server/utils/security';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Client - Server Backups'],
+    summary: 'Toggle backup lock',
+    description:
+      'Toggles the locked state of a backup; locked backups cannot be deleted. Requires the server.backup.delete permission (locking gates deletion, so it shares that permission).',
+    parameters: [
+      { name: 'server', in: 'path', required: true, schema: { type: 'string' }, description: 'Server UUID or identifier' },
+      { name: 'backup', in: 'path', required: true, schema: { type: 'string' }, description: 'Backup UUID' },
+    ],
+    responses: {
+      '200': {
+        description: 'Lock state toggled',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                object: { type: 'string', enum: ['backup'] },
+                attributes: {
+                  type: 'object',
+                  properties: {
+                    uuid: { type: 'string' },
+                    name: { type: 'string' },
+                    is_locked: { type: 'boolean' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing server or backup identifier' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Missing server.backup.delete permission' },
+      '404': { description: 'Server or backup not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
   const accountContext = await requireAccountUser(event);
@@ -20,9 +61,12 @@ export default defineEventHandler(async (event) => {
 
   const { server } = await getServerWithAccess(serverId, accountContext.session);
 
+  // Locking/unlocking gates deletion (see index.delete.ts), so it must require the
+  // same delete permission — a download-only subuser shouldn't be able to unlock (or
+  // lock) backups the owner protected.
   await requireServerPermission(event, {
     serverId: server.id,
-    requiredPermissions: ['server.backup.download'],
+    requiredPermissions: ['server.backup.delete'],
   });
 
   const db = useDrizzle();

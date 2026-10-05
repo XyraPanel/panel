@@ -5,6 +5,45 @@ import { requireAdminApiKeyPermission } from '#server/utils/admin-api-permission
 import { ADMIN_ACL_RESOURCES, ADMIN_ACL_PERMISSIONS } from '#server/utils/admin-acl';
 import { recordAuditEventFromRequest } from '#server/utils/audit';
 
+defineRouteMeta({
+  openAPI: {
+    tags: ['Admin - Wings Nodes'],
+    summary: 'Delete a node allocation',
+    description:
+      'Deletes an IP/port allocation from a Wings node. Fails if the allocation is currently assigned to a server. Requires an admin session with the nodes:write ACL permission.',
+    parameters: [
+      { name: 'id', in: 'path', required: true, schema: { type: 'string' }, description: 'Node ID' },
+      { name: 'allocationId', in: 'path', required: true, schema: { type: 'string' } },
+    ],
+    responses: {
+      '200': {
+        description: 'Allocation deleted',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'object',
+              properties: {
+                data: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean' },
+                    message: { type: 'string' },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+      '400': { description: 'Missing node/allocation ID, or allocation assigned to a server' },
+      '401': { description: 'Not authenticated' },
+      '403': { description: 'Not an admin, or missing nodes:write ACL permission' },
+      '404': { description: 'Allocation not found' },
+      '500': { description: 'Internal server error' },
+    },
+  },
+});
+
 export default defineEventHandler(async (event) => {
   try {
   const { id: nodeId, allocationId } = getRouterParams(event);
