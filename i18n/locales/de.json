@@ -1,5 +1,7 @@
 {
   "welcome": "Willkommen",
+  "Node details": "Node details",
+  "Inspect Wings node metrics and allocations": "Inspect Wings node metrics and allocations",
   "common": {
     "save": "Speichern",
     "cancel": "Abbrechen",
@@ -48,6 +50,7 @@
     "enabled": "Aktiviert",
     "disabled": "Deaktiviert",
     "active": "Aktiv",
+    "language": "Language",
     "inactive": "Inaktiv",
     "running": "Läuft",
     "offline": "Offline",
@@ -58,6 +61,7 @@
     "suspended": "Ausgesetzt",
     "transferring": "Wird übertragen",
     "navigation": "Navigation",
+    "now": "now",
     "user": "Benutzer",
     "server": "Server",
     "warning": "Warnung",
@@ -73,7 +77,13 @@
     "newest": "Newest",
     "oldest": "Oldest",
     "view": "View",
-    "toggleSection": "Toggle section"
+    "toggleSection": "Toggle section",
+    "errorOccurred": "An error occurred",
+    "exportCompleted": "Export completed",
+    "never": "Never",
+    "notes": "Notes",
+    "reason": "Reason",
+    "unexpectedError": "An unexpected error occurred"
   },
   "units": {
     "bytes": "bytes",
@@ -145,7 +155,8 @@
     "reEnterNewPassword": "Geben Sie das neue Passwort erneut ein",
     "passwordUpdateFailed": "Aktualisierung des Passworts fehlgeschlagen",
     "passwordChangedSuccessfully": "Ihr Passwort wurde erfolgreich geändert.",
-    "unableToUpdatePassword": "Passwort konnte nicht aktualisiert werden."
+    "unableToUpdatePassword": "Passwort konnte nicht aktualisiert werden.",
+    "failedToSignOut": "Failed to sign out"
   },
   "dashboard": {
     "title": "Übersicht",
@@ -180,8 +191,6 @@
     "profile": {
       "title": "Profil",
       "description": "Manage your account information.",
-      "profileDetails": "Profildetails",
-      "keepAccountUpdated": "Keep your account information up to date.",
       "profileUnavailable": "Profil nicht verfügbar",
       "noChangesDetected": "No changes detected",
       "updateBeforeSaving": "Update your profile details before saving.",
@@ -195,6 +204,8 @@
       "email": "Email",
       "updated": "Aktualisiert",
       "enterEmail": "Enter email address",
+      "currentPassword": "Current password",
+      "enterCurrentPassword": "Enter current password",
       "saveChanges": "Save changes"
     },
     "security": {
@@ -314,7 +325,10 @@
       "deleteAPIKey": "Delete API Key",
       "keyIdentifier": "Key Identifier:",
       "ipRestricted": "IP Restricted",
-      "apiKeyData": "API Key Data"
+      "apiKeyData": "API Key Data",
+      "sortOrder": "Sort order",
+      "showingKeys": "{count} API key(s) total",
+      "tokenNotReturned": "API key was created but the token was not returned. Please contact support."
     },
     "sessions": {
       "title": "Sessions",
@@ -356,19 +370,21 @@
       "current": "Current",
       "active": "Active:",
       "expires": "Expires:",
-      "sessionData": "Session Data",
-      "sessionRevokedTitle": "Session revoked",
-      "sessionRevokedDescription": "The selected session has been signed out.",
+      "sessionData": "Session data",
       "sessionsRevokedTitle": "Sessions revoked",
-      "sessionsRevokedDescription": "All other sessions have been revoked.",
+      "sessionsRevokedDescription": "Selected sessions have been revoked.",
+      "revoked": "Revoked",
+      "revokedSessionsSingular": "Revoked {count} session.",
+      "revokedSessionsPlural": "Revoked {count} sessions.",
       "failedToRevokeSession": "Failed to revoke session",
       "unableToRevokeSelectedSession": "Unable to revoke selected session.",
       "failedToRevokeSessions": "Failed to revoke sessions",
       "unableToRevokeSessions": "Unable to revoke sessions.",
-      "revokedSessionsSingular": "Revoked {count} session.",
       "neverUsed": "Never used",
-      "revokedSessionsPlural": "Revoked {count} sessions.",
-      "noSessionsRevoked": "No sessions were revoked."
+      "noSessionsRevoked": "No sessions were revoked.",
+      "sessionRevokedDescription": "The selected session has been signed out.",
+      "sessionRevokedTitle": "Session revoked",
+      "showingEvents": "Showing {count} events"
     },
     "sshKeys": {
       "title": "SSH Keys",
@@ -401,7 +417,8 @@
       "keyDeletedDescription": "The SSH key has been removed",
       "error": "Error",
       "failedToAddKey": "Failed to add SSH key",
-      "failedToDeleteKey": "Failed to delete SSH key"
+      "failedToDeleteKey": "Failed to delete SSH key",
+      "showingKeys": "Showing {count} SSH keys"
     },
     "activity": {
       "title": "Account activity",
@@ -415,7 +432,11 @@
       "copyJSON": "Copy JSON",
       "failedToLoad": "Failed to load account activity.",
       "showingEvents": "Showing {count} events",
-      "total": "Total"
+      "total": "Total",
+      "searchPlaceholder": "Search your activity",
+      "actionFilterPlaceholder": "Filter by action",
+      "targetFilterPlaceholder": "Filter by target type",
+      "clearFilters": "Clear filters"
     }
   },
   "server": {
@@ -466,14 +487,14 @@
       "scopeAllDescription": "Display every server in the panel (admin only).",
       "noServersFound": "No servers found",
       "tryAdjustingSearch": "Try adjusting your search terms",
-      "noServersAvailable": "No servers are available",
       "myAccess": "My access",
       "sharedAccess": "Shared access",
       "cpuLimit": "CPU limit",
       "diskLimit": "Disk limit",
       "memoryLimit": "Memory limit",
       "primaryAllocationLabel": "Primary allocation",
-      "noDescriptionProvided": "No description provided."
+      "noDescriptionProvided": "No description provided.",
+      "errorLoadingServers": "Error loading servers"
     },
     "details": {
       "serverOverview": "Server overview",
@@ -560,7 +581,8 @@
       "diskIO": "Disk I/O",
       "readMBs": "Read (MiB/s)",
       "writeMBs": "Write (MiB/s)",
-      "secondsAgo": "{count} second ago | {count} seconds ago"
+      "secondsAgo": "{count} second ago | {count} seconds ago",
+      "now": "Now"
     },
     "files": {
       "title": "Files",
@@ -612,7 +634,31 @@
       "newFolderPlaceholder": "Enter folder name",
       "createFolder": "Create Folder",
       "deleteSelectedItemsDescription": "The following items will be permanently deleted:",
-      "deleteSelected": "Delete Selected"
+      "deleteSelected": "Delete Selected",
+      "andMore": "and {count} more",
+      "archiveCreated": "Archive created",
+      "changesSavedSuccessfully": "Changes saved successfully",
+      "compressing": "Compressing…",
+      "confirmLeaveUnsavedChanges": "You have unsaved changes. Leave without saving?",
+      "copyingSelectedFiles": "Copying selected files…",
+      "deletingSelectedFiles": "Deleting selected files…",
+      "destinationDirectoryPlaceholder": "/path/to/destination",
+      "errorLoadingFile": "Error loading file",
+      "extracting": "Extracting…",
+      "failedToLoadFile": "Failed to load file",
+      "failedToLoadFileContents": "Failed to load file contents",
+      "failedToSaveFile": "Failed to save file",
+      "fileSaved": "File saved",
+      "moveItems": "Move items",
+      "movingSelectedFiles": "Moving selected files…",
+      "noFileSpecified": "No file specified",
+      "preparingDownload": "Preparing download…",
+      "pullingRemoteFile": "Pulling remote file…",
+      "saveFailed": "Save failed",
+      "saveKeyboardShortcut": "Ctrl+S",
+      "saveWithShortcut": "Save ({shortcut})",
+      "transferring": "Transferring…",
+      "unsavedChanges": "Unsaved changes"
     },
     "databases": {
       "title": "Databases",
@@ -747,7 +793,10 @@
       "dockerImageUpdated": "Docker Image Updated",
       "dockerImageUpdatedDescription": "The Docker image has been updated. Restart your server for changes to take effect.",
       "error": "Error",
-      "failedToUpdateDockerImage": "Failed to update Docker image"
+      "failedToUpdateDockerImage": "Failed to update Docker image",
+      "variableUpdateFailed": "Failed to update variable",
+      "variableUpdated": "Variable updated",
+      "variableUpdatedDescription": "The startup variable has been saved."
     },
     "schedules": {
       "title": "Schedules",
@@ -828,8 +877,53 @@
         "every5Minutes": "Every 5 minutes",
         "everyHour": "Every hour",
         "dailyAtMidnight": "Daily at midnight",
-        "weeklySunday": "Weekly on Sunday"
-      }
+        "weeklySunday": "Weekly on Sunday",
+        "dailyAtNoon": "Daily at noon",
+        "every12Hours": "Every 12 hours",
+        "every15Minutes": "Every 15 minutes",
+        "every30Minutes": "Every 30 minutes",
+        "every6Hours": "Every 6 hours",
+        "monthly1st": "Monthly on the 1st"
+      },
+      "actionType": "Action type",
+      "actionTypes": {
+        "backup": "Create backup",
+        "backupDescription": "Create a backup of the server.",
+        "command": "Send command",
+        "commandDescription": "Send a console command to the server.",
+        "powerAction": "Power action",
+        "powerActionDescription": "Start, stop, restart, or kill the server."
+      },
+      "basicInformation": "Basic information",
+      "changesSavedSuccessfully": "Changes saved successfully",
+      "configureAutomatedTasks": "Configure automated tasks for this server.",
+      "cronExpression": "Cron expression",
+      "cronFormat": "Format: minute hour day month weekday",
+      "cronFormatDayOfMonth": "Day of month (1-31)",
+      "cronFormatDayOfWeek": "Day of week (0-6)",
+      "cronFormatHour": "Hour (0-23)",
+      "cronFormatMinute": "Minute (0-59)",
+      "cronFormatMonth": "Month (1-12)",
+      "cronParse": {
+        "atHour": "at hour {hour}",
+        "atMinute": "at minute {minute}",
+        "everyMinute": "every minute",
+        "everyNHours": "every {n} hours",
+        "everyNMinutes": "every {n} minutes",
+        "inMonth": "in month {month}",
+        "onDay": "on day {day}",
+        "onDayOfWeek": "on {day}"
+      },
+      "editSchedule": "Edit schedule",
+      "failedToExecuteSchedule": "Failed to execute schedule",
+      "failedToLoadSchedule": "Failed to load schedule",
+      "forceRun": "Run now",
+      "invalidCronExpression": "Invalid cron expression",
+      "loadingSchedule": "Loading schedule…",
+      "saveFailed": "Failed to save schedule",
+      "scheduleExecuted": "Schedule executed",
+      "scheduleExecutedDescription": "The schedule ran successfully.",
+      "scheduleUpdated": "Schedule updated"
     },
     "users": {
       "title": "Users",
@@ -849,7 +943,7 @@
       "daysAgo": "{count} day ago | {count} days ago",
       "permissionGroups": "Permission Groups",
       "email": "Email",
-      "emailPlaceholder": "person\\u0040example.com",
+      "emailPlaceholder": "person{'@'}example.com",
       "selectedPermissionCount": "{count} selected",
       "permissionsInGroup": "{count} permissions",
       "permissionRequired": "Select at least one permission group.",
@@ -962,7 +1056,8 @@
         "adminCount": "{count} admin | {count} admins",
         "noUsersRecorded": "No users recorded",
         "dueWithin30Min": "{count} due within 30 min"
-      }
+      },
+      "unknownActor": "Unknown actor"
     },
     "schedules": {
       "title": "Schedules",
@@ -982,6 +1077,10 @@
     "users": {
       "title": "Users",
       "subtitle": "Audit panel accounts and Wings permissions",
+      "profile": {
+        "title": "User profile",
+        "subtitle": "Inspect panel access, owned servers, and activity"
+      },
       "user": "User",
       "email": "Email",
       "twoFactor": "2FA",
@@ -1048,9 +1147,35 @@
       "deleteSuccess": "User deleted successfully.",
       "impersonationStarted": "You are now impersonating this user",
       "impersonationRedirecting": "Redirecting you to their dashboard",
-      "impersonationFailed": "Unable to impersonate this user. Please try again."
+      "impersonationFailed": "Unable to impersonate this user. Please try again.",
+      "accountSuspended": "Account suspended",
+      "accountSuspendedDescription": "This user can no longer access the panel.",
+      "addEmailBeforeResendingVerification": "Add an email address before resending verification",
+      "confirmSuspendUser": "Suspend this user's account?",
+      "confirmUnsuspendUser": "Restore access for this user?",
+      "emailMarkedAsUnverified": "Email marked as unverified",
+      "emailMarkedAsVerified": "Email marked as verified",
+      "failedToLoadUserProfile": "Failed to load user profile",
+      "noEmailAddressAvailable": "No email address available",
+      "passwordResetLinkGenerated": "Password reset link generated",
+      "passwordResetLinkGeneratedAndEmailed": "Password reset link generated and emailed to the user",
+      "passwordResetRequired": "Password reset required",
+      "passwordResetRequiredDescription": "The user must set a new password on their next sign-in.",
+      "provideSuspensionReason": "Provide a reason for the suspension",
+      "suspendedAt": "Suspended at",
+      "temporaryPasswordCopiedToClipboard": "Temporary password copied to clipboard",
+      "temporaryPasswordCopyPrompt": "Copy this password now — it will not be shown again.",
+      "temporaryPasswordGenerated": "Temporary password generated",
+      "twoFactorDisabledForUser": "Two-factor authentication disabled for this user",
+      "unsuspendUser": "Unsuspend user",
+      "userMustUpdatePasswordOnNextLogin": "The user must update their password on next login.",
+      "userSuspended": "User suspended",
+      "userUnsuspended": "User unsuspended",
+      "verificationEmailResent": "Verification email resent"
     },
     "api": {
+      "title": "API Keys",
+      "subtitle": "Manage existing keys or create new ones for API access.",
       "activeKeys": "Active API Keys",
       "activeKeysDescription": "Manage existing keys or create new ones for API access.",
       "createApiKey": "Create API Key",
@@ -1107,10 +1232,17 @@
       "deleteApiKey": "Delete API key",
       "confirmDeleteDescription": "Revoking an API key immediately blocks further API access.",
       "deleteKeyWarning": "This action cannot be undone.",
-      "identifier": "Identifier"
+      "identifier": "Identifier",
+      "createApiKeyDescription": "Configure permissions and restrictions for the new API key.",
+      "sortOrder": "Sort order"
     },
     "servers": {
       "title": "Servers",
+      "subtitle": "Global view of panel servers synchronized with Wings",
+      "details": {
+        "title": "Server details",
+        "subtitle": "Manage server configuration and resources"
+      },
       "description": "Manage all servers in the panel.",
       "serverInventory": "Server Inventory",
       "createServer": "Create Server",
@@ -1165,6 +1297,7 @@
         "installationInitiated": "We are provisioning this server on Wings.",
         "failedToCreateOnWings": "Unable to create the server on Wings.",
         "targetNodeIdRequired": "Target node ID is required.",
+        "targetNodeLabel": "Target node",
         "transferInitiated": "Transfer initiated",
         "transferStarted": "Server transfer has started.",
         "failedToInitiateTransfer": "Unable to start server transfer.",
@@ -1203,11 +1336,13 @@
         "additionalAllocationsHelp": "Optional list of extra allocations to attach after the transfer completes.",
         "startServerAfterTransfer": "Start server after transfer",
         "startServerAfterTransferDescription": "Automatically power on the server once the transfer is finished.",
-        "startTransfer": "Start transfer"
+        "startTransfer": "Start transfer",
+        "deleteFailed": "Failed to delete server"
       },
       "create": {
         "title": "Create New Server",
         "subtitle": "Follow the steps below to create a new game server.",
+        "createServer": "Finish and create server",
         "serverName": "Server name",
         "serverNamePlaceholder": "My Minecraft server",
         "serverNameHelp": "A friendly name to identify this server in the panel.",
@@ -1285,14 +1420,26 @@
         "backupLimit": "Backup limit",
         "backupLimitPlaceholder": "3",
         "backupLimitHelp": "Maximum number of backups this server can create. Default is 3."
-      }
+      },
+      "serverDataNotAvailable": "Server data not available",
+      "showingServers": "Showing {count} servers",
+      "unableToLoadServer": "Unable to load server"
     },
     "nodes": {
       "title": "Nodes",
+      "subtitle": "Manage Wings daemons and monitor node health",
+      "details": {
+        "title": "Node details",
+        "subtitle": "Inspect Wings node metrics and allocations"
+      },
       "description": "Manage Wings nodes connected to the panel.",
       "nodeInventory": "Node inventory",
       "addNode": "Add node",
       "online": "Online",
+      "offline": "Offline",
+      "maintenance": "Maintenance",
+      "unknownNode": "Unknown Node",
+      "tls": "TLS",
       "http": "HTTP",
       "unableToLoadNodes": "Unable to load nodes",
       "noNodesLinked": "No nodes linked yet. Register a Wings node to begin managing infrastructure.",
@@ -1355,7 +1502,12 @@
       },
       "nodeSynced": "Node synchronized",
       "nodeSyncedDescription": "Wings daemon successfully synced with the panel.",
-      "nodeSyncFailed": "Failed to sync node",
+      "syncFailed": "Failed to sync node",
+      "failedToConnectToWings": "Could not connect to Wings daemon.",
+      "confirmRotateTokens": "Are you sure you want to rotate tokens for this node? Any current Wings session will be invalidated.",
+      "tokensRotated": "Tokens rotated",
+      "tokensRotatedDescription": "The API tokens for this node have been successfully rotated.",
+      "failedToActionNode": "Failed to perform action {action} on node",
       "ip": "IP",
       "port": "Port",
       "primary": "Primary",
@@ -1404,6 +1556,9 @@
       },
       "autoDeployConfiguration": "Auto-deploy configuration",
       "systemInformation": "System information",
+      "unableToLoadNodeDetails": "Unable to load node details",
+      "unableToContactWingsNode": "Unable to contact Wings node",
+      "noSystemDataReturned": "No system information was returned from Wings.",
       "allocations": {
         "filterByIpOrPort": "Filter by IP or port",
         "createAllocations": "Create allocations",
@@ -1418,7 +1573,19 @@
         "ipAlias": "IP alias",
         "actions": "Actions",
         "available": "Available",
-        "additional": "Additional"
+        "additional": "Additional",
+        "aliasUpdated": "Alias updated",
+        "assigned": "Assigned",
+        "assignedTo": "Assigned to {server}",
+        "failedToUpdateAlias": "Failed to update alias",
+        "invalidIpAddressOrCidr": "Invalid IP address or CIDR range",
+        "invalidPortRangeFormat": "Invalid port range format",
+        "ipAddressOrCidrRequired": "IP address or CIDR range is required",
+        "portsMustBePositiveIntegers": "Ports must be positive integers",
+        "provideAtLeastOnePort": "Provide at least one port",
+        "provideValidPortRange": "Provide a valid port range",
+        "showingAllocations": "Showing {count} allocations",
+        "unassigned": "Unassigned"
       },
       "servers": {
         "searchNameOrIdentifier": "Search name or identifier",
@@ -1456,13 +1623,39 @@
       "lastSeen": "Last seen",
       "systemSnapshot": "System snapshot",
       "recentServers": "Recent servers",
+      "noServersFound": "No servers found on this node.",
       "noServersForNodeYet": "No servers on this node yet.",
       "showingNodes": "Showing {count} nodes",
       "downloadConfiguration": "Download configuration",
-      "issueToken": "Issue token"
+      "issueToken": "Issue token",
+      "allocationDeleted": "Allocation deleted",
+      "allocationDeletedDescription": "The allocation has been removed from this node.",
+      "allocationDemoted": "Allocation demoted",
+      "allocationPromoted": "Allocation promoted to primary",
+      "allocationStatusChanged": "Allocation status changed",
+      "allocationsCreated": "Allocations created",
+      "allocationsCreatedDescription": "{count} allocations were added to this node.",
+      "cannotDelete": "Cannot delete node",
+      "cannotDeleteAssignedAllocation": "Cannot delete an allocation assigned to a server",
+      "cannotSetPrimaryForUnassigned": "Cannot set an unassigned allocation as primary",
+      "cannotTransferUnassignedAllocation": "Cannot transfer an unassigned allocation",
+      "confirmAllocationAction": "Are you sure you want to continue?",
+      "confirmCreateManyAllocations": "This will create {count} allocations. Continue?",
+      "confirmDeleteAllocation": "Delete this allocation?",
+      "failedToCreateAllocations": "Failed to create allocations",
+      "failedToDeleteAllocation": "Failed to delete allocation",
+      "failedToInitiateTransfer": "Failed to initiate transfer",
+      "failedToUpdateAllocation": "Failed to update allocation",
+      "ipAndPortsRequired": "IP address and ports are required",
+      "portRangeExceeded": "Port range exceeds the maximum allowed",
+      "portRangeInvalid": "Invalid port range",
+      "portsMustBeInRange": "Ports must be between 1 and 65535",
+      "transferInitiated": "Transfer initiated",
+      "transferringServers": "Transferring servers"
     },
     "locations": {
       "title": "Locations",
+      "subtitle": "Manage server locations.",
       "description": "Group nodes by physical or logical locations.",
       "allLocations": "All locations",
       "createLocation": "Create location",
@@ -1481,6 +1674,7 @@
       "createFailed": "Failed to create location",
       "confirmDelete": "Delete location {short}? Nodes assigned here will not be affected.",
       "deleteLocation": "Delete location",
+      "deleteLocationWarning": "This will permanently delete the location metadata. Nodes currently assigned to this location will need to be re-assigned or will remain associated with the deleted ID.",
       "confirmDeleteDescription": "Deleting a location only removes its grouping metadata. Nodes linked to it remain available.",
       "locationDeleted": "Location deleted",
       "deleteFailed": "Failed to delete location",
@@ -1494,6 +1688,7 @@
     },
     "nests": {
       "title": "Nests",
+      "subtitle": "Manage server nests and eggs.",
       "description": "Group eggs for similar server types.",
       "allNests": "All nests",
       "createNest": "Create nest",
@@ -1538,8 +1733,17 @@
         "startupCommandHelp": "Command executed to start servers created from this egg.",
         "eggJsonFile": "Egg JSON file",
         "eggJsonFileHelp": "Select an exported egg JSON file to import.",
-        "fileSelected": "File selected"
-      }
+        "fileSelected": "File selected",
+        "createFailed": "Failed to create egg",
+        "eggCreated": "Egg created",
+        "eggImportedSuccessfully": "Egg imported successfully",
+        "importFailed": "Failed to import egg",
+        "invalidEggFile": "Invalid egg file",
+        "noFileSelected": "No file selected",
+        "requiredFields": "Name and startup command are required"
+      },
+      "deleteNestWarning": "This cannot be undone. All eggs in this nest must be removed first.",
+      "failedToLoadNest": "Failed to load nest"
     },
     "settings": {
       "title": "Settings",
@@ -1647,6 +1851,8 @@
         "username": "Username",
         "usernamePlaceholder": "user{'@'}example.com",
         "password": "Password",
+        "passwordSetHint": "A password is already set. Leave blank to keep it unchanged.",
+        "passwordUnchangedPlaceholder": "Unchanged",
         "fromAddress": "From Address",
         "fromAddressPlaceholder": "noreply{'@'}example.com",
         "fromName": "From Name",
@@ -1683,19 +1889,33 @@
     },
     "activity": {
       "title": "Activity",
+      "subtitle": "Track panel-wide events mirrored from Wings",
       "description": "Review panel-wide audit events.",
       "target": "Target",
       "actor": "Actor",
+      "auditLog": "Audit log",
       "auditLogEntry": "Audit Log Entry",
       "copyJson": "Copy JSON",
-      "showingEvents": "Showing {current} of {total} events",
+      "showingEvents": "Showing {count} of {total} events",
       "exportCsv": "Export CSV",
+      "searchPlaceholder": "Search audit events",
+      "actorFilterPlaceholder": "Filter by actor",
+      "actionFilterPlaceholder": "Filter by action",
+      "targetFilterPlaceholder": "Filter by target type",
+      "clearFilters": "Clear filters",
+      "sortOrder": "Sort order",
       "noActivityYet": "No activity yet",
-      "noActivityYetDescription": "Activity logs will appear here as actions are performed."
+      "noActivityYetDescription": "Activity logs will appear here as actions are performed.",
+      "failedToLoadAuditEvents": "Failed to load audit events"
     },
-    "apiKeys": "API Keys",
+    "apiKeys": {
+      "expired": "Expired",
+      "expires": "Expires",
+      "lastUsed": "Last used"
+    },
     "databaseHosts": {
       "title": "Database Hosts",
+      "subtitle": "Manage database hosts.",
       "description": "Manage database hosts.",
       "allDatabaseHosts": "All Database Hosts",
       "addDatabaseHost": "Add Database Host",
@@ -1730,7 +1950,8 @@
       "failedToLoadDatabaseHosts": "Failed to load database hosts",
       "databasesPlaceholder": "{used} / {max}",
       "addHost": "Add Host",
-      "showingDatabaseHosts": "Showing {count} database hosts"
+      "showingDatabaseHosts": "Showing {count} database hosts",
+      "deleteHostWarning": "This cannot be undone. Servers using this host will lose their database connection."
     },
     "eggs": {
       "title": "Eggs",
@@ -1741,13 +1962,33 @@
       "exportEgg": "Export egg",
       "exportFailed": "Export failed",
       "failedToExportEgg": "The egg could not be exported. Try again.",
+      "deleteEgg": "Delete egg",
+      "eggDeleted": "Egg deleted",
+      "confirmDeleteEggDescription": "This permanently removes the egg and its variables.",
+      "deleteEggWarning": "This cannot be undone. Servers using this egg must be reassigned first.",
+      "deleteFailed": "Failed to delete egg",
       "configuration": "Configuration",
       "stopCommand": "Stop command",
+      "forceOutgoingIp": "Force outgoing IP",
+      "forceOutgoingIpHelp": "Force servers using this egg to bind outgoing connections to their allocated IP address.",
       "environmentVariables": "Environment variables",
       "addVariable": "Add variable",
       "addFirstVariable": "Add first variable",
       "noVariablesDefined": "No variables defined",
       "noVariablesDefinedDescription": "Add environment variables to customize server behavior.",
+      "createVariable": "Create Variable",
+      "addNewEnvironmentVariable": "Add a new environment variable",
+      "variableNamePlaceholder": "My Variable",
+      "variableNameHelp": "Display name shown throughout the panel.",
+      "variableDescriptionPlaceholder": "Optional description for this variable",
+      "envVariablePlaceholder": "SERVER_JARFILE",
+      "envVariableHelp": "Environment variable name used inside containers.",
+      "defaultValuePlaceholder": "server.jar",
+      "validationRules": "Validation rules",
+      "validationRulesPlaceholder": "required|string",
+      "validationRulesHelp": "Provide validation rules (e.g. regex or pipe-delimited list).",
+      "userViewable": "User viewable",
+      "userViewableHelp": "Allow end users to view this variable in the client.",
       "userEditable": "User editable",
       "hidden": "Hidden",
       "environmentVariable": "Environment variable",
@@ -1766,14 +2007,22 @@
       "createFailed": "Create failed",
       "confirmDeleteVariable": "Delete variable \"{name}\"?",
       "variableDeleted": "Variable deleted",
-      "deleteFailed": "Delete failed"
+      "deleteVariable": "Delete variable",
+      "confirmDeleteVariableDescription": "This action cannot be undone. The variable will be permanently removed.",
+      "updateEnvironmentVariable": "Update the environment variable settings below.",
+      "deleteVariableWarning": "Deleting this variable may break servers that depend on it."
     },
     "mounts": {
       "title": "Mounts",
+      "subtitle": "Manage server mounts.",
       "description": "Manage server mounts.",
       "allMounts": "All Mounts",
       "createMount": "Create Mount",
       "createMountDescription": "Configure a new mount point for servers.",
+      "editMount": "Edit Mount",
+      "editMountDescription": "Update this mount point and its node/egg assignments.",
+      "mountUpdated": "Mount updated",
+      "updateFailed": "Failed to update mount",
       "noMountsYet": "No mounts yet",
       "mountsDescription": "Mounts allow you to share directories across multiple servers.",
       "name": "Name",
@@ -1800,7 +2049,8 @@
       "deleteMount": "Delete mount",
       "confirmDeleteDescription": "Removing a mount detaches it from all servers. Ensure no workloads depend on it before continuing.",
       "deleteFailed": "Failed to delete mount",
-      "failedToLoadMounts": "Failed to load mounts"
+      "failedToLoadMounts": "Failed to load mounts",
+      "deleteMountWarning": "Removing a mount detaches it from all servers. Ensure no workloads depend on it before continuing."
     },
     "navigation": {
       "backToPanel": "Back to panel",
@@ -1823,7 +2073,20 @@
     "forbidden": "Forbidden",
     "serverError": "Server error",
     "networkError": "Network error",
-    "validationError": "Validation error"
+    "validationError": "Validation error",
+    "pageNotFound": "Page not found",
+    "pageNotFoundDescription": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "requestedResource": "Requested resource",
+    "goBack": "Go back",
+    "adminDashboard": "Admin dashboard",
+    "home": "Home",
+    "tryAgain": "Try again",
+    "apiEndpointNotFound": "API endpoint not found",
+    "authenticationRequired": "Authentication required",
+    "internalServerError": "Internal server error",
+    "noAdditionalContext": "No additional context available",
+    "serverPageNotFound": "Page not found",
+    "unexpectedPanelError": "An unexpected panel error occurred"
   },
   "validation": {
     "required": "This field is required",
@@ -1834,7 +2097,8 @@
     "invalidFormat": "Invalid format",
     "memoMaxLength": "Memo must be under 255 characters",
     "invalidIPs": "Enter valid IPv4 addresses separated by commas.",
-    "passwordRequired": "Password is required"
+    "passwordRequired": "Password is required",
+    "fillInAllRequiredFields": "Please fill in all required fields"
   },
   "layout": {
     "backToPanel": "Back to panel",
@@ -1855,6 +2119,13 @@
     "infrastructureOverview": "Infrastructure overview and controls",
     "copyright": "Copyright © {year}",
     "servicePacks": "Service Packs",
-    "auditLog": "Audit Log"
+    "auditLog": "Audit Log",
+    "adminNavigation": "Admin navigation",
+    "adminHeader": "Admin header",
+    "clientNavigation": "Main navigation"
+  },
+  "activity": {
+    "showingEvents": "Showing {count} events",
+    "total": "{count} total"
   }
 }
